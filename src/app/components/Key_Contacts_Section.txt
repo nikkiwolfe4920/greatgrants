@@ -1,0 +1,232 @@
+            {/* Key Contacts Tab */}
+            <TabsContent value="key-contacts" className="space-y-6">
+              {/* Leaders Section */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <User className="w-5 h-5 text-gray-400" />
+                    <h3 className="text-base font-semibold text-gray-900">Leaders</h3>
+                  </div>
+                  <Button
+                    onClick={handleAddLeader}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Leader
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  {leaders.map((leader, index) => (
+                    <div key={leader.id} className="p-4 border border-gray-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-sm font-medium text-gray-900">Leader {index + 1}</h4>
+                        <div className="flex items-center gap-3">
+                          {leader.isPrimaryContact ? (
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-teal-600 text-white border-teal-600 hover:bg-teal-700">
+                                Primary Contact
+                              </Badge>
+                              <Checkbox
+                                checked={true}
+                                onCheckedChange={() => toggleLeaderPrimaryContact(leader.id)}
+                                className="data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm text-gray-600">Primary Contact</label>
+                              <Checkbox
+                                checked={false}
+                                onCheckedChange={() => toggleLeaderPrimaryContact(leader.id)}
+                              />
+                            </div>
+                          )}
+                          {(!leader.isPrimaryContact && leaders.length > 1) && (
+                            <Button
+                              onClick={() => handleRemoveLeader(leader.id)}
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor={`leader-name-${leader.id}`}>
+                            Full Name <span className="text-red-500">*</span>
+                          </Label>
+                          <Input 
+                            id={`leader-name-${leader.id}`}
+                            value={leader.fullName}
+                            onChange={(e) => handleLeaderChange(leader.id, 'fullName', e.target.value)}
+                            placeholder="Enter full name"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor={`leader-email-${leader.id}`}>
+                              Email <span className="text-red-500">*</span>
+                            </Label>
+                            <Input 
+                              id={`leader-email-${leader.id}`}
+                              type="email"
+                              value={leader.email}
+                              onChange={(e) => handleLeaderChange(leader.id, 'email', e.target.value)}
+                              placeholder="email@example.org"
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor={`leader-phone-${leader.id}`}>
+                              Phone <span className="text-red-500">*</span>
+                            </Label>
+                            <Input 
+                              id={`leader-phone-${leader.id}`}
+                              type="tel"
+                              value={leader.phone}
+                              onChange={(e) => handleLeaderChange(leader.id, 'phone', e.target.value)}
+                              placeholder="+1 (555) 123-4567"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor={`leader-bio-${leader.id}`}>
+                            Bio <span className="text-red-500">*</span>
+                          </Label>
+                          <Textarea 
+                            id={`leader-bio-${leader.id}`}
+                            value={leader.bio}
+                            onChange={(e) => handleLeaderChange(leader.id, 'bio', e.target.value)}
+                            placeholder="This is my bio..."
+                            rows={3}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Board Members Section */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-gray-400" />
+                    <h3 className="text-base font-semibold text-gray-900">Board Members</h3>
+                  </div>
+                  <Button
+                    onClick={handleAddBoardMember}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Board Member
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  {boardMembers.map((member, index) => (
+                    <div key={member.id} className="p-4 border border-gray-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-sm font-medium text-gray-900">Board Member {index + 1}</h4>
+                        <div className="flex items-center gap-3">
+                          {member.isPrimaryContact ? (
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-teal-600 text-white border-teal-600 hover:bg-teal-700">
+                                Primary Contact
+                              </Badge>
+                              <Checkbox
+                                checked={true}
+                                onCheckedChange={() => toggleBoardMemberPrimaryContact(member.id)}
+                                className="data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm text-gray-600">Primary Contact</label>
+                              <Checkbox
+                                checked={false}
+                                onCheckedChange={() => toggleBoardMemberPrimaryContact(member.id)}
+                              />
+                            </div>
+                          )}
+                          {(!member.isPrimaryContact && boardMembers.length > 1) && (
+                            <Button
+                              onClick={() => handleRemoveBoardMember(member.id)}
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor={`board-name-${member.id}`}>
+                            Full Name <span className="text-red-500">*</span>
+                          </Label>
+                          <Input 
+                            id={`board-name-${member.id}`}
+                            value={member.fullName}
+                            onChange={(e) => handleBoardMemberChange(member.id, 'fullName', e.target.value)}
+                            placeholder="Enter full name"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor={`board-email-${member.id}`}>
+                              Email <span className="text-red-500">*</span>
+                            </Label>
+                            <Input 
+                              id={`board-email-${member.id}`}
+                              type="email"
+                              value={member.email}
+                              onChange={(e) => handleBoardMemberChange(member.id, 'email', e.target.value)}
+                              placeholder="email@example.org"
+                            />
+                          </div>
+
+                          <div>
+                            <Label htmlFor={`board-phone-${member.id}`}>
+                              Phone <span className="text-red-500">*</span>
+                            </Label>
+                            <Input 
+                              id={`board-phone-${member.id}`}
+                              type="tel"
+                              value={member.phone}
+                              onChange={(e) => handleBoardMemberChange(member.id, 'phone', e.target.value)}
+                              placeholder="+1 (555) 123-4567"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor={`board-bio-${member.id}`}>
+                            Bio <span className="text-red-500">*</span>
+                          </Label>
+                          <Textarea 
+                            id={`board-bio-${member.id}`}
+                            value={member.bio}
+                            onChange={(e) => handleBoardMemberChange(member.id, 'bio', e.target.value)}
+                            placeholder="This is my bio..."
+                            rows={3}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
