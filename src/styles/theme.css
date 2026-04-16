@@ -1,0 +1,198 @@
+@import './design-tokens.css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Map design tokens to component variables */
+  --font-size: var(--text-base);
+  --background: var(--bg-primary);
+  --foreground: var(--text-primary);
+  --card: var(--bg-primary);
+  --card-foreground: var(--text-primary);
+  --popover: var(--bg-primary);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--gray-900);
+  --primary-foreground: var(--text-white);
+  --secondary: var(--gray-100);
+  --secondary-foreground: var(--gray-900);
+  --muted: var(--gray-100);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--gray-100);
+  --accent-foreground: var(--gray-900);
+  --destructive: var(--error-600);
+  --destructive-foreground: var(--text-white);
+  --border: var(--border-primary);
+  --input: transparent;
+  --input-background: var(--bg-primary);
+  --switch-background: var(--gray-300);
+  --ring: var(--focus-ring);
+  --chart-1: var(--brand-600);
+  --chart-2: var(--brand-400);
+  --chart-3: var(--brand-200);
+  --chart-4: var(--success-600);
+  --chart-5: var(--warning-600);
+  --radius: var(--radius-lg);
+  --sidebar: var(--bg-secondary);
+  --sidebar-foreground: var(--text-primary);
+  --sidebar-primary: var(--gray-900);
+  --sidebar-primary-foreground: var(--bg-primary);
+  --sidebar-accent: var(--bg-primary);
+  --sidebar-accent-foreground: var(--text-secondary);
+  --sidebar-border: var(--border-primary);
+  --sidebar-ring: var(--gray-500);
+}
+
+.dark {
+  --background: var(--gray-25);
+  --foreground: var(--gray-900);
+  --card: var(--gray-50);
+  --card-foreground: var(--gray-900);
+  --popover: var(--gray-50);
+  --popover-foreground: var(--gray-900);
+  --primary: var(--gray-900);
+  --primary-foreground: var(--gray-50);
+  --secondary: var(--gray-200);
+  --secondary-foreground: var(--gray-900);
+  --muted: var(--gray-200);
+  --muted-foreground: var(--gray-600);
+  --accent: var(--gray-200);
+  --accent-foreground: var(--gray-900);
+  --destructive: var(--error-500);
+  --destructive-foreground: var(--gray-900);
+  --border: var(--gray-200);
+  --input: var(--gray-200);
+  --ring: var(--gray-500);
+  --sidebar: var(--gray-50);
+  --sidebar-foreground: var(--gray-900);
+  --sidebar-primary: var(--brand-600);
+  --sidebar-primary-foreground: var(--gray-900);
+  --sidebar-accent: var(--gray-200);
+  --sidebar-accent-foreground: var(--gray-900);
+  --sidebar-border: var(--gray-200);
+  --sidebar-ring: var(--gray-500);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: color-mix(in srgb, var(--ring) 50%, transparent);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+  }
+
+  /**
+  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
+  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
+  */
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  h1 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-2xl);
+    font-family: var(--font-display);
+  }
+
+  h2 {
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-xl);
+  }
+
+  h3 {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-lg);
+  }
+
+  h4 {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-base);
+  }
+
+  label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--leading-sm);
+    color: var(--text-secondary);
+  }
+
+  button {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--leading-base);
+  }
+
+  input {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--leading-base);
+  }
+
+  .writing-mode-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+  }
+
+  /* Custom radio button styling using design tokens */
+  input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--border-secondary);
+    border-radius: var(--radius-full);
+    background-color: var(--bg-primary);
+    cursor: pointer;
+    position: relative;
+  }
+
+  input[type="radio"]:checked {
+    background-color: var(--bg-brand);
+    border-color: var(--border-brand);
+    background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3'/%3e%3c/svg%3e");
+  }
+
+  input[type="radio"]:focus {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* Custom checkbox styling using design tokens */
+  input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--border-secondary);
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-primary);
+    cursor: pointer;
+    position: relative;
+  }
+
+  input[type="checkbox"]:checked {
+    background-color: var(--bg-brand);
+    border-color: var(--border-brand);
+    background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+  }
+
+  input[type="checkbox"]:focus {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  input[type="checkbox"]:disabled,
+  input[type="radio"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

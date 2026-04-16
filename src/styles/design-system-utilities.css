@@ -1,0 +1,197 @@
+/**
+ * Untitled UI Design System Utility Classes
+ * Pre-built utility classes that use design tokens
+ */
+
+@layer utilities {
+  /* ========================================
+     TEXT UTILITIES
+     ======================================== */
+  .text-display-2xl {
+    font-family: var(--font-display);
+    font-size: var(--text-7xl);
+    line-height: var(--leading-7xl);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: -0.02em;
+  }
+
+  .text-display-xl {
+    font-family: var(--font-display);
+    font-size: var(--text-6xl);
+    line-height: var(--leading-6xl);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: -0.02em;
+  }
+
+  .text-display-lg {
+    font-family: var(--font-display);
+    font-size: var(--text-5xl);
+    line-height: var(--leading-5xl);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: -0.02em;
+  }
+
+  .text-display-md {
+    font-family: var(--font-display);
+    font-size: var(--text-4xl);
+    line-height: var(--leading-4xl);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: -0.02em;
+  }
+
+  /* ========================================
+     SHADOW UTILITIES
+     ======================================== */
+  .shadow-xs {
+    box-shadow: var(--shadow-xs);
+  }
+
+  .shadow-sm {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .shadow-md {
+    box-shadow: var(--shadow-md);
+  }
+
+  .shadow-lg {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .shadow-xl {
+    box-shadow: var(--shadow-xl);
+  }
+
+  .shadow-2xl {
+    box-shadow: var(--shadow-2xl);
+  }
+
+  .shadow-3xl {
+    box-shadow: var(--shadow-3xl);
+  }
+
+  /* ========================================
+     SPACING UTILITIES
+     ======================================== */
+  .gap-system-2 {
+    gap: var(--spacing-2);
+  }
+
+  .gap-system-4 {
+    gap: var(--spacing-4);
+  }
+
+  .gap-system-8 {
+    gap: var(--spacing-8);
+  }
+
+  .gap-system-12 {
+    gap: var(--spacing-12);
+  }
+
+  .gap-system-16 {
+    gap: var(--spacing-16);
+  }
+
+  .gap-system-20 {
+    gap: var(--spacing-20);
+  }
+
+  .gap-system-24 {
+    gap: var(--spacing-24);
+  }
+
+  /* ========================================
+     SURFACE STYLES
+     ======================================== */
+  .surface-primary {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+  }
+
+  .surface-secondary {
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+  }
+
+  .surface-brand {
+    background-color: var(--bg-brand-light);
+    border: 1px solid var(--brand-200);
+    border-radius: var(--radius-lg);
+  }
+
+  /* ========================================
+     INTERACTIVE STATES
+     ======================================== */
+  .interactive-hover:hover {
+    background-color: var(--hover-overlay);
+  }
+
+  .interactive-pressed:active {
+    background-color: var(--pressed-overlay);
+  }
+
+  .focus-ring-brand:focus {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  .focus-ring-error:focus {
+    outline: 2px solid var(--focus-ring-error);
+    outline-offset: 2px;
+  }
+
+  /* ========================================
+     STATUS BADGES
+     ======================================== */
+  .badge-success {
+    background-color: var(--success-50);
+    color: var(--success-700);
+    border: 1px solid var(--success-200);
+    padding: var(--spacing-2) var(--spacing-10);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .badge-error {
+    background-color: var(--error-50);
+    color: var(--error-700);
+    border: 1px solid var(--error-200);
+    padding: var(--spacing-2) var(--spacing-10);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .badge-warning {
+    background-color: var(--warning-50);
+    color: var(--warning-700);
+    border: 1px solid var(--warning-200);
+    padding: var(--spacing-2) var(--spacing-10);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .badge-neutral {
+    background-color: var(--gray-50);
+    color: var(--gray-700);
+    border: 1px solid var(--gray-200);
+    padding: var(--spacing-2) var(--spacing-10);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .badge-brand {
+    background-color: var(--brand-50);
+    color: var(--brand-700);
+    border: 1px solid var(--brand-200);
+    padding: var(--spacing-2) var(--spacing-10);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--font-weight-medium);
+  }
+}
