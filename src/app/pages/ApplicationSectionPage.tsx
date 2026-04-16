@@ -783,7 +783,7 @@ In a world older and more complete than ours they move finished and complete, gi
                             handleAcceptAI();
                           }
                         }}
-                        className="w-4 h-4 rounded border-gray-300 text-[#8B5CF6] focus:ring-2 focus:ring-purple-500"
+                        className="w-4 h-4 rounded border-gray-300 accent-[#5925DC] focus:ring-2 focus:ring-purple-500"
                       />
                       <span className="text-sm text-[#8B5CF6] font-medium" style={{ fontFamily: 'Cabin, sans-serif' }}>
                         Accept AI Recommendation
