@@ -2714,24 +2714,24 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                   let iconElement = null;
 
                   if (completedCount === totalCount && totalCount > 0) {
-                    // All done: Green gradient
-                    badgeStyle = { background: 'linear-gradient(to left, #3ccb7f, #087443)' };
+                    // All done: Brand green gradient
+                    badgeStyle = { background: 'linear-gradient(45deg, #087443 0%, #3ccb7f 100%)' };
                     iconElement = (
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 19 19">
-                        <path d="M17.6667 8.57144V9.3381C17.6656 11.1351 17.0838 12.8837 16.0078 14.323C14.9318 15.7623 13.4194 16.8152 11.6961 17.3247C9.97286 17.8342 8.13105 17.773 6.44539 17.1503C4.75974 16.5275 3.32055 15.3765 2.34247 13.869C1.36439 12.3615 0.899827 10.5782 1.01806 8.78503C1.1363 6.99191 1.83101 5.28504 2.99857 3.919C4.16613 2.55295 5.74399 1.60092 7.49683 1.20489C9.24966 0.808862 11.0836 0.990051 12.725 1.72144M17.6667 2.66667L9.33333 11.0083L6.83333 8.50833" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 12 12" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M10.6667 5.52V6C10.6657 7.09 10.3253 8.15 9.6941 9.02C9.06296 9.89 8.17276 10.53 7.1528 10.84C6.1329 11.15 5.03916 11.11 4.04274 10.73C3.04631 10.35 2.20308 9.64 1.63628 8.72C1.06947 7.8 0.808496 6.72 0.893035 5.65C0.977573 4.57 1.40393 3.55 2.11291 2.73C2.82189 1.91 3.77446 1.34 4.8293 1.1C5.88414 0.86 6.98765 0.96 7.98297 1.38M10.6667 1.67L5.99997 6.34L4.49997 4.84" />
                       </svg>
                     );
-                  } else if (completedCount >= 6) {
-                    // Good progress: Blue gradient
-                    badgeStyle = { background: 'linear-gradient(to left, #717bbc, #3e4784)' };
+                  } else if (completedCount >= 5) {
+                    // Good progress (5-10): Yellow-blue gradient
+                    badgeStyle = { background: 'linear-gradient(164.65deg, rgb(255, 207, 113) 0%, rgb(35, 118, 221) 100%)' };
                     iconElement = (
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 12 11">
                         <path d="M5.88169 4.00207V6.00207M5.88169 8.00207H5.88669M5.18935 1.44793L1.07691 8.55124C0.848807 8.94524 0.734755 9.14223 0.751612 9.30392C0.766315 9.44494 0.8402 9.57309 0.954879 9.65647C1.08636 9.75207 1.31399 9.75207 1.76925 9.75207H9.99414C10.4494 9.75207 10.677 9.75207 10.8085 9.65647C10.9232 9.57309 10.9971 9.44494 11.0118 9.30392C11.0286 9.14223 10.9146 8.94524 10.6865 8.55124L6.57403 1.44793C6.34675 1.05535 6.23311 0.859057 6.08484 0.79313C5.95551 0.735623 5.80787 0.735623 5.67854 0.79313C5.53028 0.859057 5.41664 1.05535 5.18935 1.44793Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     );
                   } else {
-                    // Warning: new orange-red gradient from Figma
-                    badgeStyle = { background: 'linear-gradient(165.68deg, rgb(244, 144, 98) 0%, rgb(253, 55, 31) 100%)' };
+                    // Warning (0-4): Orange-red gradient
+                    badgeStyle = { background: 'linear-gradient(164.93deg, rgb(244, 144, 98) 0%, rgb(253, 55, 31) 100%)' };
                     iconElement = (
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 12 11">
                         <path d="M5.88169 4.00207V6.00207M5.88169 8.00207H5.88669M5.18935 1.44793L1.07691 8.55124C0.848807 8.94524 0.734755 9.14223 0.751612 9.30392C0.766315 9.44494 0.8402 9.57309 0.954879 9.65647C1.08636 9.75207 1.31399 9.75207 1.76925 9.75207H9.99414C10.4494 9.75207 10.677 9.75207 10.8085 9.65647C10.9232 9.57309 10.9971 9.44494 11.0118 9.30392C11.0286 9.14223 10.9146 8.94524 10.6865 8.55124L6.57403 1.44793C6.34675 1.05535 6.23311 0.859057 6.08484 0.79313C5.95551 0.735623 5.80787 0.735623 5.67854 0.79313C5.53028 0.859057 5.41664 1.05535 5.18935 1.44793Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -2775,24 +2775,24 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                   }}
                   onMouseEnter={() => setActiveRequirement('ein')}
                   onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'ein' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
+                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                    checklistItems.find(item => item.id === 'ein')?.completed
+                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
+                      : activeRequirement === 'ein' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'ein')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'ein')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
+                    {checklistItems.find(item => item.id === 'ein')?.completed ? (
+                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-gray-900 mb-0.5">EIN</div>
                       <div className="text-xs text-gray-600 leading-relaxed">
-                        Enter your 9-digit Employer Identification Number
+                        {checklistItems.find(item => item.id === 'ein')?.completed
+                          ? 'Your EIN is validated and ready'
+                          : 'Enter your 9-digit Employer Identification Number'}
                       </div>
                     </div>
                   </div>
@@ -2806,34 +2806,34 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                   }}
                   onMouseEnter={() => setActiveRequirement('uei')}
                   onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'uei' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
+                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                    checklistItems.find(item => item.id === 'uei')?.completed
+                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
+                      : activeRequirement === 'uei' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'uei')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'uei')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
+                    {checklistItems.find(item => item.id === 'uei')?.completed ? (
+                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-gray-900 mb-0.5">UEI</div>
                       <div className="text-xs text-gray-600 leading-relaxed">
-                        Enter your 12-character Unique Entity Identifier from SAM.gov or{' '}
-                        <a 
-                          href="https://sam.gov" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-teal-600 hover:text-teal-700 underline inline-flex items-center gap-0.5"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          register on SAM.gov to get a UEI
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
+                        {checklistItems.find(item => item.id === 'uei')?.completed
+                          ? 'Your UEI is verified and ready'
+                          : <>Enter your 12-character Unique Entity Identifier from SAM.gov or{' '}
+                            <a
+                              href="https://sam.gov"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-teal-600 hover:text-teal-700 underline inline-flex items-center gap-0.5"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              register on SAM.gov to get a UEI
+                              <ExternalLink className="w-3 h-3" />
+                            </a></>}
                       </div>
                     </div>
                   </div>
@@ -2847,24 +2847,24 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                   }}
                   onMouseEnter={() => setActiveRequirement('org-name')}
                   onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'org-name' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
+                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                    checklistItems.find(item => item.id === 'org-name')?.completed
+                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
+                      : activeRequirement === 'org-name' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'org-name')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'org-name')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
+                    {checklistItems.find(item => item.id === 'org-name')?.completed ? (
+                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-gray-900 mb-0.5">Organization Name</div>
                       <div className="text-xs text-gray-600 leading-relaxed">
-                        Complete your organization's legal name
+                        {checklistItems.find(item => item.id === 'org-name')?.completed
+                          ? "Your organization name is complete"
+                          : "Complete your organization's legal name"}
                       </div>
                     </div>
                   </div>
@@ -2878,24 +2878,24 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                   }}
                   onMouseEnter={() => setActiveRequirement('org-address')}
                   onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'org-address' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
+                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                    checklistItems.find(item => item.id === 'org-address')?.completed
+                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
+                      : activeRequirement === 'org-address' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'org-address')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'org-address')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
+                    {checklistItems.find(item => item.id === 'org-address')?.completed ? (
+                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-gray-900 mb-0.5">Organization Address</div>
                       <div className="text-xs text-gray-600 leading-relaxed">
-                        Complete your organization's legal address
+                        {checklistItems.find(item => item.id === 'org-address')?.completed
+                          ? "Your organization address is complete"
+                          : "Complete your organization's legal address"}
                       </div>
                     </div>
                   </div>
@@ -2909,24 +2909,24 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                   }}
                   onMouseEnter={() => setActiveRequirement('org-website')}
                   onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'org-website' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
+                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                    checklistItems.find(item => item.id === 'org-website')?.completed
+                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
+                      : activeRequirement === 'org-website' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'org-website')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'org-website')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
+                    {checklistItems.find(item => item.id === 'org-website')?.completed ? (
+                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-gray-900 mb-0.5">Organization Website</div>
                       <div className="text-xs text-gray-600 leading-relaxed">
-                        Complete your organization's web address
+                        {checklistItems.find(item => item.id === 'org-website')?.completed
+                          ? "Your website is complete"
+                          : "Complete your organization's web address"}
                       </div>
                     </div>
                   </div>
@@ -2952,24 +2952,24 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                   }}
                   onMouseEnter={() => setActiveRequirement('annual-budget')}
                   onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'annual-budget' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
+                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                    checklistItems.find(item => item.id === 'annual-budget')?.completed
+                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
+                      : activeRequirement === 'annual-budget' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'annual-budget')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'annual-budget')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
+                    {checklistItems.find(item => item.id === 'annual-budget')?.completed ? (
+                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-gray-900 mb-0.5">Annual Budget</div>
                       <div className="text-xs text-gray-600 leading-relaxed">
-                        Complete your annual budget
+                        {checklistItems.find(item => item.id === 'annual-budget')?.completed
+                          ? 'Your annual budget is complete'
+                          : 'Complete your annual budget'}
                       </div>
                     </div>
                   </div>
@@ -2983,24 +2983,24 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                   }}
                   onMouseEnter={() => setActiveRequirement('mission-statement')}
                   onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'mission-statement' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
+                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                    checklistItems.find(item => item.id === 'mission-statement')?.completed
+                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
+                      : activeRequirement === 'mission-statement' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'mission-statement')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'mission-statement')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
+                    {checklistItems.find(item => item.id === 'mission-statement')?.completed ? (
+                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-gray-900 mb-0.5">Mission Statement</div>
                       <div className="text-xs text-gray-600 leading-relaxed">
-                        Complete your mission statement
+                        {checklistItems.find(item => item.id === 'mission-statement')?.completed
+                          ? 'Your mission statement is complete'
+                          : 'Complete your mission statement'}
                       </div>
                     </div>
                   </div>
@@ -3014,24 +3014,24 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                   }}
                   onMouseEnter={() => setActiveRequirement('vision-statement')}
                   onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'vision-statement' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
+                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                    checklistItems.find(item => item.id === 'vision-statement')?.completed
+                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
+                      : activeRequirement === 'vision-statement' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'vision-statement')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'vision-statement')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
+                    {checklistItems.find(item => item.id === 'vision-statement')?.completed ? (
+                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-gray-900 mb-0.5">Vision Statement</div>
                       <div className="text-xs text-gray-600 leading-relaxed">
-                        Complete vision statement
+                        {checklistItems.find(item => item.id === 'vision-statement')?.completed
+                          ? 'Your vision statement is complete'
+                          : 'Complete vision statement'}
                       </div>
                     </div>
                   </div>
@@ -3057,24 +3057,24 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                   }}
                   onMouseEnter={() => setActiveRequirement('focus-areas')}
                   onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'focus-areas' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
+                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                    checklistItems.find(item => item.id === 'focus-areas')?.completed
+                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
+                      : activeRequirement === 'focus-areas' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'focus-areas')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'focus-areas')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
+                    {checklistItems.find(item => item.id === 'focus-areas')?.completed ? (
+                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-gray-900 mb-0.5">Add 2 or More Focus Areas</div>
                       <div className="text-xs text-gray-600 leading-relaxed">
-                        {Math.min(getFocusAreasCount(), 2)} of 2 Completed
+                        {checklistItems.find(item => item.id === 'focus-areas')?.completed
+                          ? '2 or more focus areas selected'
+                          : `${Math.min(getFocusAreasCount(), 2)} of 2 Completed`}
                       </div>
                     </div>
                   </div>
@@ -3100,34 +3100,34 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                   }}
                   onMouseEnter={() => setActiveRequirement('financial-readiness')}
                   onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'financial-readiness' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
+                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                    checklistItems.find(item => item.id === 'financial-readiness')?.completed
+                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
+                      : activeRequirement === 'financial-readiness' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'financial-readiness')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'financial-readiness')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
+                    {checklistItems.find(item => item.id === 'financial-readiness')?.completed ? (
+                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-gray-900 mb-0.5">Financial Readiness Questions</div>
                       <div className="text-xs text-gray-600 leading-relaxed">
-                        {(() => {
-                          const completedCount = [
-                            financialInfo.orgRegistrationType !== '',
-                            financialInfo.cfr200Compliant === 'yes',
-                            financialInfo.financialSystemTracking === 'yes',
-                            financialInfo.timeEffortReporting === 'yes',
-                            financialInfo.indirectCostAgreement.trim() !== '',
-                            financialInfo.costShareLiquidity === 'yes',
-                          ].filter(Boolean).length;
-                          return `${completedCount} of 6 Completed`;
-                        })()}
+                        {checklistItems.find(item => item.id === 'financial-readiness')?.completed
+                          ? 'All 6 questions answered'
+                          : (() => {
+                              const completedCount = [
+                                financialInfo.orgRegistrationType !== '',
+                                financialInfo.cfr200Compliant === 'yes',
+                                financialInfo.financialSystemTracking === 'yes',
+                                financialInfo.timeEffortReporting === 'yes',
+                                financialInfo.indirectCostAgreement.trim() !== '',
+                                financialInfo.costShareLiquidity === 'yes',
+                              ].filter(Boolean).length;
+                              return `${completedCount} of 6 Completed`;
+                            })()}
                       </div>
                     </div>
                   </div>
@@ -3153,35 +3153,35 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                   }}
                   onMouseEnter={() => setActiveRequirement('policies-compliance')}
                   onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'policies-compliance' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
+                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                    checklistItems.find(item => item.id === 'policies-compliance')?.completed
+                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
+                      : activeRequirement === 'policies-compliance' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'policies-compliance')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'policies-compliance')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
+                    {checklistItems.find(item => item.id === 'policies-compliance')?.completed ? (
+                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-gray-900 mb-0.5">Policies & Compliance Questions</div>
                       <div className="text-xs text-gray-600 leading-relaxed">
-                        {(() => {
-                          const completedCount = [
-                            policiesCompliance.complianceTrackingSoftware === 'yes',
-                            policiesCompliance.federalDataTracking === 'yes',
-                            policiesCompliance.demographicDataCollection === 'yes',
-                            policiesCompliance.internalControlsDocs === 'yes',
-                            policiesCompliance.procurementPolicies === 'yes',
-                            policiesCompliance.timeEffortPolicies === 'yes',
-                            policiesCompliance.conflictOfInterestPolicies === 'yes',
-                          ].filter(Boolean).length;
-                          return `${completedCount} of 7 Completed`;
-                        })()}
+                        {checklistItems.find(item => item.id === 'policies-compliance')?.completed
+                          ? 'All 7 questions answered'
+                          : (() => {
+                              const completedCount = [
+                                policiesCompliance.complianceTrackingSoftware === 'yes',
+                                policiesCompliance.federalDataTracking === 'yes',
+                                policiesCompliance.demographicDataCollection === 'yes',
+                                policiesCompliance.internalControlsDocs === 'yes',
+                                policiesCompliance.procurementPolicies === 'yes',
+                                policiesCompliance.timeEffortPolicies === 'yes',
+                                policiesCompliance.conflictOfInterestPolicies === 'yes',
+                              ].filter(Boolean).length;
+                              return `${completedCount} of 7 Completed`;
+                            })()}
                       </div>
                     </div>
                   </div>
@@ -3212,22 +3212,22 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
           let label = '';
           
           if (completedCount === totalCount && totalCount > 0) {
-            // All done: Green gradient
-            bgGradient = 'linear-gradient(to left, #3ccb7f, #087443)';
+            // All done: Brand green gradient
+            bgGradient = 'linear-gradient(135deg, #087443 0%, #3ccb7f 100%)';
             icon = (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 20 20">
-                <path d="M17.6667 8.57144V9.3381C17.6656 11.1351 17.0838 12.8837 16.0078 14.323C14.9318 15.7623 13.4194 16.8152 11.6961 17.3247C9.97286 17.8342 8.13105 17.773 6.44539 17.1503C4.75974 16.5275 3.32055 15.3765 2.34247 13.869C1.36439 12.3615 0.899827 10.5782 1.01806 8.78503C1.1363 6.99191 1.83101 5.28504 2.99857 3.919C4.16613 2.55295 5.74399 1.60092 7.49683 1.20489C9.24966 0.808862 11.0836 0.990051 12.725 1.72144M17.6667 2.66667L9.33333 11.0083L6.83333 8.50833" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 20 20" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18.3333 9.22V10C18.3321 11.98 17.6949 12.9 16.6752 14.47C15.6554 16.04 14.1466 17.25 12.3762 17.92C10.6059 18.58 8.66552 18.67 6.83932 18.17C5.01311 17.67 3.39716 16.6 2.23483 15.12C1.0725 13.64 0.424561 11.83 0.487785 9.98C0.551009 8.13 1.32164 6.36 2.58163 4.96C3.84162 3.57 5.52017 2.62 7.37337 2.28C9.22656 1.94 11.1419 2.23 12.8083 3.1M18.3333 4L10 12.34L7.5 9.84" />
               </svg>
             );
             label = 'REQUIRED';
-          } else if (completedCount >= 6) {
-            // Good progress: Blue gradient
-            bgGradient = 'linear-gradient(to left, #717bbc, #3e4784)';
+          } else if (completedCount >= 5) {
+            // Good progress (5-10): Yellow-blue gradient
+            bgGradient = 'linear-gradient(112.95deg, rgb(255, 207, 113) 0%, rgb(35, 118, 221) 100%)';
             icon = <AlertTriangle className="w-5 h-5" />;
             label = 'REQUIRED';
           } else {
-            // Warning: new orange-red gradient from Figma
-            bgGradient = 'linear-gradient(165.68deg, rgb(244, 144, 98) 0%, rgb(253, 55, 31) 100%)';
+            // Warning (0-4): Orange-red gradient
+            bgGradient = 'linear-gradient(112.95deg, rgb(244, 144, 98) 0%, rgb(253, 55, 31) 100%)';
             icon = <AlertTriangle className="w-5 h-5" />;
             label = 'REQUIRED';
           }
