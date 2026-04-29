@@ -1118,6 +1118,52 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
 
   const checklistItems = getChecklistItems();
 
+  // Render a right-rail checklist item with correct completed/active/default styling
+  const renderRailItem = (
+    id: string,
+    title: string,
+    todoText: React.ReactNode,
+    doneText: string
+  ) => {
+    const completed = checklistItems.find(item => item.id === id)?.completed ?? false;
+    const isActive = activeRequirement === id;
+    const cardStyle = completed
+      ? { backgroundColor: '#edfcf2', borderColor: '#aaf0c4' }
+      : isActive
+      ? { backgroundColor: '#ffffff', borderColor: '#0e9384' }
+      : { backgroundColor: '#ffffff', borderColor: '#e5e7eb' };
+    const circleStyle = completed
+      ? { borderColor: '#0e9384', backgroundColor: '#0e9384' }
+      : isActive
+      ? { borderColor: '#0e9384', backgroundColor: '#ffffff' }
+      : { borderColor: '#d1d5db', backgroundColor: '#ffffff' };
+
+    return (
+      <button
+        onClick={() => { handleRailItemClick(id); setActiveRequirement(id); }}
+        onMouseEnter={() => setActiveRequirement(id)}
+        onMouseLeave={() => setActiveRequirement(null)}
+        className="w-full text-left p-3 border rounded-[10px] transition-all"
+        style={cardStyle}
+      >
+        <div className="flex items-start gap-3">
+          <div
+            className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors"
+            style={circleStyle}
+          >
+            {completed && <Check className="w-3 h-3 text-white" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium text-gray-900 mb-0.5">{title}</div>
+            <div className="text-xs leading-relaxed" style={{ color: completed ? '#414651' : '#4b5563' }}>
+              {completed ? doneText : todoText}
+            </div>
+          </div>
+        </div>
+      </button>
+    );
+  };
+
   return (
     <div className="flex h-screen bg-white">
       {/* Left Sidebar */}
@@ -2714,24 +2760,24 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                   let iconElement = null;
 
                   if (completedCount === totalCount && totalCount > 0) {
-                    // All done: Green gradient
-                    badgeStyle = { background: 'linear-gradient(to left, #3ccb7f, #087443)' };
+                    // 11/11: Brand teal gradient + check icon
+                    badgeStyle = { background: 'linear-gradient(45deg, #087443 0%, #0e9384 100%)' };
                     iconElement = (
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 19 19">
                         <path d="M17.6667 8.57144V9.3381C17.6656 11.1351 17.0838 12.8837 16.0078 14.323C14.9318 15.7623 13.4194 16.8152 11.6961 17.3247C9.97286 17.8342 8.13105 17.773 6.44539 17.1503C4.75974 16.5275 3.32055 15.3765 2.34247 13.869C1.36439 12.3615 0.899827 10.5782 1.01806 8.78503C1.1363 6.99191 1.83101 5.28504 2.99857 3.919C4.16613 2.55295 5.74399 1.60092 7.49683 1.20489C9.24966 0.808862 11.0836 0.990051 12.725 1.72144M17.6667 2.66667L9.33333 11.0083L6.83333 8.50833" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     );
-                  } else if (completedCount >= 6) {
-                    // Good progress: Blue gradient
-                    badgeStyle = { background: 'linear-gradient(to left, #717bbc, #3e4784)' };
+                  } else if (completedCount >= 5) {
+                    // 5–10: yellow-to-blue gradient + alert icon
+                    badgeStyle = { background: 'linear-gradient(164.65deg, rgb(255, 207, 113) 0%, rgb(35, 118, 221) 100%)' };
                     iconElement = (
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 12 11">
                         <path d="M5.88169 4.00207V6.00207M5.88169 8.00207H5.88669M5.18935 1.44793L1.07691 8.55124C0.848807 8.94524 0.734755 9.14223 0.751612 9.30392C0.766315 9.44494 0.8402 9.57309 0.954879 9.65647C1.08636 9.75207 1.31399 9.75207 1.76925 9.75207H9.99414C10.4494 9.75207 10.677 9.75207 10.8085 9.65647C10.9232 9.57309 10.9971 9.44494 11.0118 9.30392C11.0286 9.14223 10.9146 8.94524 10.6865 8.55124L6.57403 1.44793C6.34675 1.05535 6.23311 0.859057 6.08484 0.79313C5.95551 0.735623 5.80787 0.735623 5.67854 0.79313C5.53028 0.859057 5.41664 1.05535 5.18935 1.44793Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     );
                   } else {
-                    // Warning: new orange-red gradient from Figma
-                    badgeStyle = { background: 'linear-gradient(165.68deg, rgb(244, 144, 98) 0%, rgb(253, 55, 31) 100%)' };
+                    // 0–4: orange-red gradient + alert icon
+                    badgeStyle = { background: 'linear-gradient(164.93deg, rgb(244, 144, 98) 0%, rgb(253, 55, 31) 100%)' };
                     iconElement = (
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 12 11">
                         <path d="M5.88169 4.00207V6.00207M5.88169 8.00207H5.88669M5.18935 1.44793L1.07691 8.55124C0.848807 8.94524 0.734755 9.14223 0.751612 9.30392C0.766315 9.44494 0.8402 9.57309 0.954879 9.65647C1.08636 9.75207 1.31399 9.75207 1.76925 9.75207H9.99414C10.4494 9.75207 10.677 9.75207 10.8085 9.65647C10.9232 9.57309 10.9971 9.44494 11.0118 9.30392C11.0286 9.14223 10.9146 8.94524 10.6865 8.55124L6.57403 1.44793C6.34675 1.05535 6.23311 0.859057 6.08484 0.79313C5.95551 0.735623 5.80787 0.735623 5.67854 0.79313C5.53028 0.859057 5.41664 1.05535 5.18935 1.44793Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -2760,432 +2806,100 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
             {/* Legal Info Section */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                  Legal Info
-                </h3>
+                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>Legal Info</h3>
                 <span className="text-xs text-gray-500">~5 minutes to complete</span>
               </div>
-              
               <div className="space-y-3">
-                {/* EIN */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('ein');
-                    setActiveRequirement('ein');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('ein')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'ein' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'ein')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'ein')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">EIN</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        Enter your 9-digit Employer Identification Number
-                      </div>
-                    </div>
-                  </div>
-                </button>
-
-                {/* UEI */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('uei');
-                    setActiveRequirement('uei');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('uei')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'uei' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'uei')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'uei')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">UEI</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        Enter your 12-character Unique Entity Identifier from SAM.gov or{' '}
-                        <a 
-                          href="https://sam.gov" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-teal-600 hover:text-teal-700 underline inline-flex items-center gap-0.5"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          register on SAM.gov to get a UEI
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-
-                {/* Organization Name */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('org-name');
-                    setActiveRequirement('org-name');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('org-name')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'org-name' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'org-name')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'org-name')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Organization Name</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        Complete your organization's legal name
-                      </div>
-                    </div>
-                  </div>
-                </button>
-
-                {/* Organization Address */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('org-address');
-                    setActiveRequirement('org-address');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('org-address')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'org-address' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'org-address')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'org-address')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Organization Address</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        Complete your organization's legal address
-                      </div>
-                    </div>
-                  </div>
-                </button>
-
-                {/* Organization Website */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('org-website');
-                    setActiveRequirement('org-website');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('org-website')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'org-website' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'org-website')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'org-website')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Organization Website</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        Complete your organization's web address
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                {renderRailItem('ein', 'EIN', 'Enter your 9-digit Employer Identification Number', 'Your EIN is validated and ready')}
+                {renderRailItem('uei', 'UEI',
+                  <>Enter your 12-character Unique Entity Identifier from SAM.gov or{' '}
+                    <a href="https://sam.gov" target="_blank" rel="noopener noreferrer"
+                      className="text-teal-600 hover:text-teal-700 underline inline-flex items-center gap-0.5"
+                      onClick={(e) => e.stopPropagation()}>
+                      register on SAM.gov to get a UEI<ExternalLink className="w-3 h-3" />
+                    </a>
+                  </>,
+                  'Your UEI is validated and ready'
+                )}
+                {renderRailItem('org-name', 'Organization Name', "Complete your organization's legal name", 'Your organization name is complete')}
+                {renderRailItem('org-address', 'Organization Address', "Complete your organization's legal address", 'Your address is complete')}
+                {renderRailItem('org-website', 'Organization Website', "Complete your organization's web address", 'Your website is validated and ready')}
               </div>
             </div>
 
             {/* Details Section */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                  Details
-                </h3>
+                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>Details</h3>
                 <span className="text-xs text-gray-500">~10 minutes to complete</span>
               </div>
-              
               <div className="space-y-3">
-                {/* Annual Budget */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('annual-budget');
-                    setActiveRequirement('annual-budget');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('annual-budget')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'annual-budget' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'annual-budget')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'annual-budget')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Annual Budget</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        Complete your annual budget
-                      </div>
-                    </div>
-                  </div>
-                </button>
-
-                {/* Mission Statement */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('mission-statement');
-                    setActiveRequirement('mission-statement');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('mission-statement')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'mission-statement' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'mission-statement')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'mission-statement')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Mission Statement</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        Complete your mission statement
-                      </div>
-                    </div>
-                  </div>
-                </button>
-
-                {/* Vision Statement */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('vision-statement');
-                    setActiveRequirement('vision-statement');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('vision-statement')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'vision-statement' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'vision-statement')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'vision-statement')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Vision Statement</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        Complete vision statement
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                {renderRailItem('annual-budget', 'Annual Budget', 'Complete your annual budget', 'Your annual budget is complete')}
+                {renderRailItem('mission-statement', 'Mission Statement', 'Complete your mission statement', 'Your mission statement is complete')}
+                {renderRailItem('vision-statement', 'Vision Statement', 'Complete vision statement', 'Your vision statement is complete')}
               </div>
             </div>
 
             {/* Focus Areas Section */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                  Focus Areas
-                </h3>
+                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>Focus Areas</h3>
                 <span className="text-xs text-gray-500">~15 minutes to complete</span>
               </div>
-
               <div className="space-y-3">
-                {/* Add 2 or More Focus Areas */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('focus-areas');
-                    setActiveRequirement('focus-areas');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('focus-areas')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'focus-areas' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'focus-areas')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'focus-areas')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Add 2 or More Focus Areas</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        {Math.min(getFocusAreasCount(), 2)} of 2 Completed
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                {renderRailItem(
+                  'focus-areas',
+                  'Add 2 or More Focus Areas',
+                  `${Math.min(getFocusAreasCount(), 2)} of 2 Completed`,
+                  '2 or more focus areas added'
+                )}
               </div>
             </div>
 
             {/* Financial Info Section */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                  Financial Info
-                </h3>
+                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>Financial Info</h3>
                 <span className="text-xs text-gray-500">~15 minutes to complete</span>
               </div>
-              
               <div className="space-y-3">
-                {/* Financial Readiness Questions */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('financial-readiness');
-                    setActiveRequirement('financial-readiness');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('financial-readiness')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'financial-readiness' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'financial-readiness')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'financial-readiness')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Financial Readiness Questions</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        {(() => {
-                          const completedCount = [
-                            financialInfo.orgRegistrationType !== '',
-                            financialInfo.cfr200Compliant === 'yes',
-                            financialInfo.financialSystemTracking === 'yes',
-                            financialInfo.timeEffortReporting === 'yes',
-                            financialInfo.indirectCostAgreement.trim() !== '',
-                            financialInfo.costShareLiquidity === 'yes',
-                          ].filter(Boolean).length;
-                          return `${completedCount} of 6 Completed`;
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                {renderRailItem(
+                  'financial-readiness',
+                  'Financial Readiness Questions',
+                  `${[
+                    financialInfo.orgRegistrationType !== '',
+                    financialInfo.cfr200Compliant === 'yes',
+                    financialInfo.financialSystemTracking === 'yes',
+                    financialInfo.timeEffortReporting === 'yes',
+                    financialInfo.indirectCostAgreement.trim() !== '',
+                    financialInfo.costShareLiquidity === 'yes',
+                  ].filter(Boolean).length} of 6 Completed`,
+                  'All 6 questions completed'
+                )}
               </div>
             </div>
 
             {/* Programs & Policies Section */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                  Programs & Policies
-                </h3>
+                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>Programs & Policies</h3>
                 <span className="text-xs text-gray-500">~20 minutes to complete</span>
               </div>
-              
               <div className="space-y-3">
-                {/* Policies & Compliance Questions */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('policies-compliance');
-                    setActiveRequirement('policies-compliance');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('policies-compliance')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
-                    activeRequirement === 'policies-compliance' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
-                      checklistItems.find(item => item.id === 'policies-compliance')?.completed
-                        ? 'border-teal-600 bg-teal-600'
-                        : 'border-gray-300 bg-white group-hover:border-teal-500'
-                    }`}>
-                      {checklistItems.find(item => item.id === 'policies-compliance')?.completed && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Policies & Compliance Questions</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        {(() => {
-                          const completedCount = [
-                            policiesCompliance.complianceTrackingSoftware === 'yes',
-                            policiesCompliance.federalDataTracking === 'yes',
-                            policiesCompliance.demographicDataCollection === 'yes',
-                            policiesCompliance.internalControlsDocs === 'yes',
-                            policiesCompliance.procurementPolicies === 'yes',
-                            policiesCompliance.timeEffortPolicies === 'yes',
-                            policiesCompliance.conflictOfInterestPolicies === 'yes',
-                          ].filter(Boolean).length;
-                          return `${completedCount} of 7 Completed`;
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                {renderRailItem(
+                  'policies-compliance',
+                  'Policies & Compliance Questions',
+                  `${[
+                    policiesCompliance.complianceTrackingSoftware === 'yes',
+                    policiesCompliance.federalDataTracking === 'yes',
+                    policiesCompliance.demographicDataCollection === 'yes',
+                    policiesCompliance.internalControlsDocs === 'yes',
+                    policiesCompliance.procurementPolicies === 'yes',
+                    policiesCompliance.timeEffortPolicies === 'yes',
+                    policiesCompliance.conflictOfInterestPolicies === 'yes',
+                  ].filter(Boolean).length} of 7 Completed`,
+                  'All 7 questions completed'
+                )}
               </div>
             </div>
 
@@ -3212,22 +2926,22 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
           let label = '';
           
           if (completedCount === totalCount && totalCount > 0) {
-            // All done: Green gradient
-            bgGradient = 'linear-gradient(to left, #3ccb7f, #087443)';
+            // 11/11: Brand teal gradient + check icon
+            bgGradient = 'linear-gradient(112.95deg, #087443 0%, #0e9384 100%)';
             icon = (
               <svg className="w-5 h-5" fill="none" viewBox="0 0 20 20">
                 <path d="M17.6667 8.57144V9.3381C17.6656 11.1351 17.0838 12.8837 16.0078 14.323C14.9318 15.7623 13.4194 16.8152 11.6961 17.3247C9.97286 17.8342 8.13105 17.773 6.44539 17.1503C4.75974 16.5275 3.32055 15.3765 2.34247 13.869C1.36439 12.3615 0.899827 10.5782 1.01806 8.78503C1.1363 6.99191 1.83101 5.28504 2.99857 3.919C4.16613 2.55295 5.74399 1.60092 7.49683 1.20489C9.24966 0.808862 11.0836 0.990051 12.725 1.72144M17.6667 2.66667L9.33333 11.0083L6.83333 8.50833" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             );
             label = 'REQUIRED';
-          } else if (completedCount >= 6) {
-            // Good progress: Blue gradient
-            bgGradient = 'linear-gradient(to left, #717bbc, #3e4784)';
+          } else if (completedCount >= 5) {
+            // 5–10: yellow-to-blue gradient
+            bgGradient = 'linear-gradient(112.95deg, rgb(255, 207, 113) 0%, rgb(35, 118, 221) 100%)';
             icon = <AlertTriangle className="w-5 h-5" />;
             label = 'REQUIRED';
           } else {
-            // Warning: new orange-red gradient from Figma
-            bgGradient = 'linear-gradient(165.68deg, rgb(244, 144, 98) 0%, rgb(253, 55, 31) 100%)';
+            // 0–4: orange-red gradient
+            bgGradient = 'linear-gradient(112.95deg, rgb(244, 144, 98) 0%, rgb(253, 55, 31) 100%)';
             icon = <AlertTriangle className="w-5 h-5" />;
             label = 'REQUIRED';
           }
