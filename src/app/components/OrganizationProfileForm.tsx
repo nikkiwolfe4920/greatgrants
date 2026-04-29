@@ -851,7 +851,24 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
   };
 
   // Check completion status for each checklist item
+  const isValidUrl = (url: string): boolean => {
+    if (!url.trim()) return false;
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
+  const getFocusAreasCount = () => {
+    return Object.keys(selectedFocusAreas).filter(
+      (cat) => selectedFocusAreas[cat] && selectedFocusAreas[cat].length > 0
+    ).length;
+  };
+
   const getChecklistItems = () => {
+    const focusAreasCount = getFocusAreasCount();
     return [
       {
         id: 'org-name',
@@ -874,6 +891,16 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
         completed: validateDUNS(),
       },
       {
+        id: 'org-website',
+        label: 'Organization Website',
+        completed: isValidUrl(legalInfo.website),
+      },
+      {
+        id: 'annual-budget',
+        label: 'Annual Budget',
+        completed: details.annualBudget.trim() !== '',
+      },
+      {
         id: 'mission-statement',
         label: 'Mission Statement',
         completed: details.missionStatement.trim() !== '',
@@ -882,6 +909,12 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
         id: 'vision-statement',
         label: 'Vision Statement',
         completed: details.visionStatement.trim() !== '',
+      },
+      {
+        id: 'focus-areas',
+        label: 'Add 2 or More Focus Areas',
+        completed: focusAreasCount >= 2,
+        count: focusAreasCount,
       },
       {
         id: 'financial-readiness',
@@ -1048,8 +1081,11 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
         'org-name': { tab: 'legal-info', field: 'legalOrgName' },
         'ein': { tab: 'legal-info', field: 'ein' },
         'uei': { tab: 'legal-info', field: 'uei' },
+        'org-website': { tab: 'legal-info', field: 'website' },
+        'annual-budget': { tab: 'details', field: 'annualBudget' },
         'mission-statement': { tab: 'details', field: 'missionStatement' },
         'vision-statement': { tab: 'details', field: 'visionStatement' },
+        'focus-areas': { tab: 'focus-areas', field: '' },
         'financial-readiness': { tab: 'financial-info', field: 'orgRegistrationType' },
         'policies-compliance': { tab: 'policies-compliance', field: 'complianceTrackingSoftware' },
       };
@@ -1058,18 +1094,20 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
       if (navItem) {
         // Navigate to the tab
         setActiveTab(navItem.tab);
-        
-        // Highlight the field
-        setHighlightedField(navItem.field);
-        
-        // Scroll to the field after a brief delay
-        setTimeout(() => {
-          const element = document.querySelector(`[data-field="${navItem.field}"]`);
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }, 100);
-        
+
+        if (navItem.field) {
+          // Highlight the field
+          setHighlightedField(navItem.field);
+
+          // Scroll to the field after a brief delay
+          setTimeout(() => {
+            const element = document.querySelector(`[data-field="${navItem.field}"]`);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 100);
+        }
+
         // Clear highlight after 3 seconds
         setTimeout(() => {
           setHighlightedField(null);
@@ -1382,16 +1420,17 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                     )}
                   </div>
 
-                  <div className="col-span-2 space-y-1.5">
+                  <div className="col-span-2 space-y-1.5" data-field="website">
                     <Label htmlFor="website">
                       Organization Website
                     </Label>
-                    <Input 
+                    <Input
                       id="website"
                       type="url"
                       value={legalInfo.website}
                       onChange={(e) => handleLegalInfoChange('website', e.target.value)}
                       placeholder="https://www.example.org"
+                      className={highlightedField === 'website' ? 'ring-2 ring-teal-600 border-teal-600' : ''}
                     />
                   </div>
 
@@ -1497,16 +1536,17 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                     />
                   </div>
 
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5" data-field="annualBudget">
                     <Label htmlFor="annualBudget">
                       Annual Budget <span className="text-red-500">*</span>
                     </Label>
-                    <Input 
+                    <Input
                       id="annualBudget"
                       type="number"
                       value={details.annualBudget}
                       onChange={(e) => handleDetailsChange('annualBudget', e.target.value)}
                       placeholder="$0.00"
+                      className={highlightedField === 'annualBudget' ? 'ring-2 ring-teal-600 border-teal-600' : ''}
                     />
                   </div>
 
@@ -2664,26 +2704,25 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                  Required Items
+                  Profile Completion
                 </h2>
                 {(() => {
                   const completedCount = checklistItems.filter(item => item.completed).length;
                   const totalCount = checklistItems.length;
-                  
-                  // Determine badge styling based on completion count
+
                   let badgeStyle = {};
                   let iconElement = null;
-                  
-                  if (completedCount >= 0 && completedCount <= 2) {
-                    // Warning: Orange gradient
-                    badgeStyle = { background: 'linear-gradient(to left, #f59e0b, #d97706)' };
+
+                  if (completedCount === totalCount && totalCount > 0) {
+                    // All done: Green gradient
+                    badgeStyle = { background: 'linear-gradient(to left, #3ccb7f, #087443)' };
                     iconElement = (
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 12 11">
-                        <path d="M5.88169 4.00207V6.00207M5.88169 8.00207H5.88669M5.18935 1.44793L1.07691 8.55124C0.848807 8.94524 0.734755 9.14223 0.751612 9.30392C0.766315 9.44494 0.8402 9.57309 0.954879 9.65647C1.08636 9.75207 1.31399 9.75207 1.76925 9.75207H9.99414C10.4494 9.75207 10.677 9.75207 10.8085 9.65647C10.9232 9.57309 10.9971 9.44494 11.0118 9.30392C11.0286 9.14223 10.9146 8.94524 10.6865 8.55124L6.57403 1.44793C6.34675 1.05535 6.23311 0.859057 6.08484 0.79313C5.95551 0.735623 5.80787 0.735623 5.67854 0.79313C5.53028 0.859057 5.41664 1.05535 5.18935 1.44793Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 19 19">
+                        <path d="M17.6667 8.57144V9.3381C17.6656 11.1351 17.0838 12.8837 16.0078 14.323C14.9318 15.7623 13.4194 16.8152 11.6961 17.3247C9.97286 17.8342 8.13105 17.773 6.44539 17.1503C4.75974 16.5275 3.32055 15.3765 2.34247 13.869C1.36439 12.3615 0.899827 10.5782 1.01806 8.78503C1.1363 6.99191 1.83101 5.28504 2.99857 3.919C4.16613 2.55295 5.74399 1.60092 7.49683 1.20489C9.24966 0.808862 11.0836 0.990051 12.725 1.72144M17.6667 2.66667L9.33333 11.0083L6.83333 8.50833" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     );
-                  } else if (completedCount >= 3 && completedCount <= 7) {
-                    // Progress: Blue gradient
+                  } else if (completedCount >= 6) {
+                    // Good progress: Blue gradient
                     badgeStyle = { background: 'linear-gradient(to left, #717bbc, #3e4784)' };
                     iconElement = (
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 12 11">
@@ -2691,17 +2730,17 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                       </svg>
                     );
                   } else {
-                    // Complete: Green gradient
-                    badgeStyle = { background: 'linear-gradient(to left, #3ccb7f, #087443)' };
+                    // Warning: new orange-red gradient from Figma
+                    badgeStyle = { background: 'linear-gradient(165.68deg, rgb(244, 144, 98) 0%, rgb(253, 55, 31) 100%)' };
                     iconElement = (
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 19 19">
-                        <path d="M17.6667 8.57144V9.3381C17.6656 11.1351 17.0838 12.8837 16.0078 14.323C14.9318 15.7623 13.4194 16.8152 11.6961 17.3247C9.97286 17.8342 8.13105 17.773 6.44539 17.1503C4.75974 16.5275 3.32055 15.3765 2.34247 13.869C1.36439 12.3615 0.899827 10.5782 1.01806 8.78503C1.1363 6.99191 1.83101 5.28504 2.99857 3.919C4.16613 2.55295 5.74399 1.60092 7.49683 1.20489C9.24966 0.808862 11.0836 0.990051 12.725 1.72144M17.6667 2.66667L9.33333 11.0083L6.83333 8.50833" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 12 11">
+                        <path d="M5.88169 4.00207V6.00207M5.88169 8.00207H5.88669M5.18935 1.44793L1.07691 8.55124C0.848807 8.94524 0.734755 9.14223 0.751612 9.30392C0.766315 9.44494 0.8402 9.57309 0.954879 9.65647C1.08636 9.75207 1.31399 9.75207 1.76925 9.75207H9.99414C10.4494 9.75207 10.677 9.75207 10.8085 9.65647C10.9232 9.57309 10.9971 9.44494 11.0118 9.30392C11.0286 9.14223 10.9146 8.94524 10.6865 8.55124L6.57403 1.44793C6.34675 1.05535 6.23311 0.859057 6.08484 0.79313C5.95551 0.735623 5.80787 0.735623 5.67854 0.79313C5.53028 0.859057 5.41664 1.05535 5.18935 1.44793Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     );
                   }
-                  
+
                   return (
-                    <div 
+                    <div
                       className="flex items-center gap-1 px-2 py-1 rounded-full"
                       style={badgeStyle}
                     >
@@ -2714,7 +2753,7 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                 })()}
               </div>
               <p className="text-sm text-gray-600">
-                Complete these items to be ready for federal grants
+                Complete these items to improve search results and get better matches.
               </p>
             </div>
 
@@ -2861,6 +2900,37 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                     </div>
                   </div>
                 </button>
+
+                {/* Organization Website */}
+                <button
+                  onClick={() => {
+                    handleRailItemClick('org-website');
+                    setActiveRequirement('org-website');
+                  }}
+                  onMouseEnter={() => setActiveRequirement('org-website')}
+                  onMouseLeave={() => setActiveRequirement(null)}
+                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
+                    activeRequirement === 'org-website' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                      checklistItems.find(item => item.id === 'org-website')?.completed
+                        ? 'border-teal-600 bg-teal-600'
+                        : 'border-gray-300 bg-white group-hover:border-teal-500'
+                    }`}>
+                      {checklistItems.find(item => item.id === 'org-website')?.completed && (
+                        <Check className="w-3 h-3 text-white" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 mb-0.5">Organization Website</div>
+                      <div className="text-xs text-gray-600 leading-relaxed">
+                        Complete your organization's web address
+                      </div>
+                    </div>
+                  </div>
+                </button>
               </div>
             </div>
 
@@ -2874,6 +2944,37 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
               </div>
               
               <div className="space-y-3">
+                {/* Annual Budget */}
+                <button
+                  onClick={() => {
+                    handleRailItemClick('annual-budget');
+                    setActiveRequirement('annual-budget');
+                  }}
+                  onMouseEnter={() => setActiveRequirement('annual-budget')}
+                  onMouseLeave={() => setActiveRequirement(null)}
+                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
+                    activeRequirement === 'annual-budget' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                      checklistItems.find(item => item.id === 'annual-budget')?.completed
+                        ? 'border-teal-600 bg-teal-600'
+                        : 'border-gray-300 bg-white group-hover:border-teal-500'
+                    }`}>
+                      {checklistItems.find(item => item.id === 'annual-budget')?.completed && (
+                        <Check className="w-3 h-3 text-white" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 mb-0.5">Annual Budget</div>
+                      <div className="text-xs text-gray-600 leading-relaxed">
+                        Complete your annual budget
+                      </div>
+                    </div>
+                  </div>
+                </button>
+
                 {/* Mission Statement */}
                 <button
                   onClick={() => {
@@ -2931,6 +3032,49 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                       <div className="text-sm font-medium text-gray-900 mb-0.5">Vision Statement</div>
                       <div className="text-xs text-gray-600 leading-relaxed">
                         Complete vision statement
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Focus Areas Section */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                  Focus Areas
+                </h3>
+                <span className="text-xs text-gray-500">~15 minutes to complete</span>
+              </div>
+
+              <div className="space-y-3">
+                {/* Add 2 or More Focus Areas */}
+                <button
+                  onClick={() => {
+                    handleRailItemClick('focus-areas');
+                    setActiveRequirement('focus-areas');
+                  }}
+                  onMouseEnter={() => setActiveRequirement('focus-areas')}
+                  onMouseLeave={() => setActiveRequirement(null)}
+                  className={`w-full text-left group p-3 border rounded-lg transition-colors ${
+                    activeRequirement === 'focus-areas' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                      checklistItems.find(item => item.id === 'focus-areas')?.completed
+                        ? 'border-teal-600 bg-teal-600'
+                        : 'border-gray-300 bg-white group-hover:border-teal-500'
+                    }`}>
+                      {checklistItems.find(item => item.id === 'focus-areas')?.completed && (
+                        <Check className="w-3 h-3 text-white" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 mb-0.5">Add 2 or More Focus Areas</div>
+                      <div className="text-xs text-gray-600 leading-relaxed">
+                        {Math.min(getFocusAreasCount(), 2)} of 2 Completed
                       </div>
                     </div>
                   </div>
@@ -3067,24 +3211,24 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
           let icon = null;
           let label = '';
           
-          if (completedCount >= 0 && completedCount <= 2) {
-            // Warning: Orange gradient
-            bgGradient = 'linear-gradient(to left, #f59e0b, #d97706)';
-            icon = <AlertTriangle className="w-5 h-5" />;
-            label = 'REQUIRED';
-          } else if (completedCount >= 3 && completedCount <= 7) {
-            // Progress: Blue gradient
-            bgGradient = 'linear-gradient(to left, #717bbc, #3e4784)';
-            icon = <AlertTriangle className="w-5 h-5" />;
-            label = 'REQUIRED';
-          } else {
-            // Complete: Green gradient
+          if (completedCount === totalCount && totalCount > 0) {
+            // All done: Green gradient
             bgGradient = 'linear-gradient(to left, #3ccb7f, #087443)';
             icon = (
               <svg className="w-5 h-5" fill="none" viewBox="0 0 20 20">
                 <path d="M17.6667 8.57144V9.3381C17.6656 11.1351 17.0838 12.8837 16.0078 14.323C14.9318 15.7623 13.4194 16.8152 11.6961 17.3247C9.97286 17.8342 8.13105 17.773 6.44539 17.1503C4.75974 16.5275 3.32055 15.3765 2.34247 13.869C1.36439 12.3615 0.899827 10.5782 1.01806 8.78503C1.1363 6.99191 1.83101 5.28504 2.99857 3.919C4.16613 2.55295 5.74399 1.60092 7.49683 1.20489C9.24966 0.808862 11.0836 0.990051 12.725 1.72144M17.6667 2.66667L9.33333 11.0083L6.83333 8.50833" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             );
+            label = 'REQUIRED';
+          } else if (completedCount >= 6) {
+            // Good progress: Blue gradient
+            bgGradient = 'linear-gradient(to left, #717bbc, #3e4784)';
+            icon = <AlertTriangle className="w-5 h-5" />;
+            label = 'REQUIRED';
+          } else {
+            // Warning: new orange-red gradient from Figma
+            bgGradient = 'linear-gradient(165.68deg, rgb(244, 144, 98) 0%, rgb(253, 55, 31) 100%)';
+            icon = <AlertTriangle className="w-5 h-5" />;
             label = 'REQUIRED';
           }
           
