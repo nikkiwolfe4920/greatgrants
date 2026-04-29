@@ -1316,7 +1316,7 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
 
                   <div className="space-y-1.5" data-field="ein">
                     <Label htmlFor="ein">
-                      EIN (Employer Identification Number) <span className="text-red-500">*</span>
+                      EIN (Employer Identification Number)
                     </Label>
                     <Input 
                       id="ein"
@@ -1334,7 +1334,7 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                           <TooltipTrigger asChild>
                             <div className="flex items-center gap-1 cursor-help">
                               <Label htmlFor="uei">
-                                UEI <span className="text-red-500">*</span>
+                                UEI
                               </Label>
                               <Info className="w-3 h-3 text-teal-600" />
                             </div>
@@ -1345,7 +1345,7 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                         </Tooltip>
                       ) : (
                         <Label htmlFor="uei">
-                          UEI <span className="text-red-500">*</span>
+                          UEI
                         </Label>
                       )}
                       {ueiVerificationStatus === 'verifying' && (
@@ -1422,7 +1422,7 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
 
                   <div className="col-span-2 space-y-1.5" data-field="website">
                     <Label htmlFor="website">
-                      Organization Website
+                      Organization Website <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="website"
