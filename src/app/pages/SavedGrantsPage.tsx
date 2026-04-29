@@ -6,15 +6,8 @@ import {
   Calendar,
   DollarSign,
   MapPin,
-  Users,
   Award,
-  Star,
-  X,
-  Sparkles,
-  TrendingUp,
-  Target,
   Banknote,
-  Lightbulb
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -280,7 +273,7 @@ export function SavedGrantsPage() {
                     e.stopPropagation();
                     handleUnsaveGrant(grant);
                   }}
-                  className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                  className="border-[#96f7e4] bg-[#edfcf2] text-[#107569] hover:bg-[#d5f7ec] hover:border-[#6ef0d4]"
                 >
                   <Bookmark className="w-4 h-4 mr-1.5 fill-current" />
                   Unsave
@@ -342,121 +335,47 @@ export function SavedGrantsPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Saved Grants Tab with Sidebar */}
+        {/* Saved Grants Tab */}
         <TabsContent value="saved" className="mt-0">
-          <div className="flex gap-6">
-            {/* Main Content */}
-            <div className="flex-1 space-y-4 pt-6">
-              {savedGrants.length === 0 ? (
-                <div className="bg-gray-50 rounded-xl border border-gray-200 p-16 flex flex-col items-center justify-center text-center">
-                  <Bookmark className="w-16 h-16 text-gray-300 mb-4" />
-                  <h2 className="text-xl font-bold text-gray-900 mb-2" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    No Saved Grants
-                  </h2>
-                  <p className="text-sm text-gray-600 mb-6" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    Save grants from the search results to access them later
-                  </p>
-                  <Button onClick={() => navigate("/search")} className="bg-teal-600 hover:bg-teal-700 text-white">
-                    Browse Grants
-                  </Button>
-                </div>
-              ) : (
-                savedGrants.map(grant => renderGrantCard(grant, false))
-              )}
-            </div>
-
-            {/* Right Sidebar */}
-            <aside className="w-80 flex-shrink-0">
-              <div className="sticky top-6 pt-6 space-y-4">
-                {/* Recently Viewed */}
-                {recentlyViewed.length > 0 && (
-                  <div className="bg-white rounded-xl p-5 border border-gray-200">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Clock className="w-5 h-5 text-teal-600" />
-                      <h3 className="font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>Recently Viewed</h3>
-                    </div>
-                    <div className="space-y-3">
-                      {recentlyViewed.slice(0, 3).map((grant) => (
-                        <div
-                          key={grant.id}
-                          onClick={() => navigate(`/grant/${grant.id}`)}
-                          className="p-3 border border-gray-200 rounded-lg hover:border-teal-300 hover:bg-teal-50/50 cursor-pointer transition-all group"
-                        >
-                          <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-1.5 group-hover:text-teal-700 transition-colors" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                            {grant.title}
-                          </h4>
-                          <div className="flex items-center justify-between gap-2 text-xs">
-                            <div className="flex items-center gap-1 text-gray-600">
-                              <DollarSign className="w-3 h-3" />
-                              <span className="font-medium">${(grant.maxAmount / 1000).toFixed(0)}K</span>
-                            </div>
-                            {grant.lastViewed && (
-                              <span className="text-gray-500">{formatTimeAgo(grant.lastViewed)}</span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Saved Designs Module */}
-                <div className="bg-white rounded-xl p-5 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Lightbulb className="w-5 h-5 text-teal-600" />
-                    <h3 className="font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Saved Designs: Your Grant Workflow, Remembered
-                    </h3>
-                  </div>
-                  <p className="text-sm text-gray-600 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    Grant discovery and writing is rarely linear—it's iterative, layered, and often interrupted. Saved Designs give you a structured way to pick up exactly where you left off. Whether you're comparing opportunities, refining narratives, or revisiting past work, everything is organized and accessible—so momentum isn't lost, just paused.
-                  </p>
-                </div>
+          <div className="space-y-4 pt-6">
+            {savedGrants.length === 0 ? (
+              <div className="bg-gray-50 rounded-xl border border-gray-200 p-16 flex flex-col items-center justify-center text-center">
+                <Bookmark className="w-16 h-16 text-gray-300 mb-4" />
+                <h2 className="text-xl font-bold text-gray-900 mb-2" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                  No Saved Grants
+                </h2>
+                <p className="text-sm text-gray-600 mb-6" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                  Save grants from the search results to access them later
+                </p>
+                <Button onClick={() => navigate("/search")} className="bg-teal-600 hover:bg-teal-700 text-white">
+                  Browse Grants
+                </Button>
               </div>
-            </aside>
+            ) : (
+              savedGrants.map(grant => renderGrantCard(grant, false))
+            )}
           </div>
         </TabsContent>
 
-        {/* Recently Viewed Tab with Sidebar */}
+        {/* Recently Viewed Tab */}
         <TabsContent value="recent" className="mt-0">
-          <div className="flex gap-6">
-            {/* Main Content */}
-            <div className="flex-1 space-y-4 pt-6">
-              {recentlyViewed.length === 0 ? (
-                <div className="bg-gray-50 rounded-xl border border-gray-200 p-16 flex flex-col items-center justify-center text-center">
-                  <Clock className="w-16 h-16 text-gray-300 mb-4" />
-                  <h2 className="text-xl font-bold text-gray-900 mb-2" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    No Recently Viewed Grants
-                  </h2>
-                  <p className="text-sm text-gray-600 mb-6" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    Grants you view will appear here for quick access
-                  </p>
-                  <Button onClick={() => navigate("/search")} className="bg-teal-600 hover:bg-teal-700 text-white">
-                    Browse Grants
-                  </Button>
-                </div>
-              ) : (
-                recentlyViewed.map(grant => renderGrantCard(grant, true))
-              )}
-            </div>
-
-            {/* Right Sidebar */}
-            <aside className="w-80 flex-shrink-0">
-              <div className="sticky top-6 pt-6">
-                {/* Saved Designs Module */}
-                <div className="bg-white rounded-xl p-5 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Lightbulb className="w-5 h-5 text-teal-600" />
-                    <h3 className="font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Saved Designs: Your Grant Workflow, Remembered
-                    </h3>
-                  </div>
-                  <p className="text-sm text-gray-600 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    Grant discovery and writing is rarely linear—it's iterative, layered, and often interrupted. Saved Designs give you a structured way to pick up exactly where you left off. Whether you're comparing opportunities, refining narratives, or revisiting past work, everything is organized and accessible—so momentum isn't lost, just paused.
-                  </p>
-                </div>
+          <div className="space-y-4 pt-6">
+            {recentlyViewed.length === 0 ? (
+              <div className="bg-gray-50 rounded-xl border border-gray-200 p-16 flex flex-col items-center justify-center text-center">
+                <Clock className="w-16 h-16 text-gray-300 mb-4" />
+                <h2 className="text-xl font-bold text-gray-900 mb-2" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                  No Recently Viewed Grants
+                </h2>
+                <p className="text-sm text-gray-600 mb-6" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                  Grants you view will appear here for quick access
+                </p>
+                <Button onClick={() => navigate("/search")} className="bg-teal-600 hover:bg-teal-700 text-white">
+                  Browse Grants
+                </Button>
               </div>
-            </aside>
+            ) : (
+              recentlyViewed.map(grant => renderGrantCard(grant, true))
+            )}
           </div>
         </TabsContent>
       </Tabs>
