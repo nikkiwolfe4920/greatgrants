@@ -20,7 +20,7 @@ export function DashboardPage() {
             className="text-3xl text-gray-900 mb-4" 
             style={{ fontFamily: 'Lustria, serif', fontWeight: 600 }}
           >
-            Dashboard
+            Dash Board
           </h1>
 
           {/* Description */}
