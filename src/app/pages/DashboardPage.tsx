@@ -36,7 +36,8 @@ export function DashboardPage() {
           <div className="flex items-center justify-center gap-3">
             <Button
               onClick={() => navigate("/applications")}
-              className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8"
+              variant="tertiary"
+              className="font-semibold px-8"
               style={{ fontFamily: 'Cabin, sans-serif' }}
             >
               View Applications
