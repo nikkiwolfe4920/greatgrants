@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Logo } from "@/app/components/Logo";
 import { OrganizationProfileForm } from "@/app/components/OrganizationProfileForm";
 import { ReadinessScoreProvider } from "@/app/contexts/ReadinessScoreContext";
 import { TooltipProvider } from "@/app/components/ui/tooltip";
-import { FileText, Search, Star, Building2, LayoutGrid } from "lucide-react";
+import { FileText, Search, Star, Building2, LayoutGrid, Info, X } from "lucide-react";
 
 function SubscribeOrgSidebar() {
   const navigate = useNavigate();
@@ -68,7 +69,8 @@ function SubscribeOrgSidebar() {
 }
 
 export function SubscribeOrgPage() {
-  const navigate = useNavigate();
+  // Banner dismissal lives in component state — reappears on page refresh
+  const [bannerVisible, setBannerVisible] = useState(true);
 
   return (
     <TooltipProvider>
@@ -76,19 +78,45 @@ export function SubscribeOrgPage() {
         <div className="flex h-screen bg-white overflow-hidden">
           <SubscribeOrgSidebar />
           <div className="flex flex-col flex-1 min-w-0">
-            {/* Top banner — dark teal with white text */}
-            <div className="flex items-center justify-between px-6 py-2.5 bg-teal-600 shrink-0">
-              <p className="text-xs text-white/90" style={{ fontFamily: "Cabin, sans-serif" }}>
-                You have 5 free searches. Your free searches will reset in 30 days, giving you 5 new searches to use.
-              </p>
-              <button
-                onClick={() => navigate("/subscribe/search?upgrade=1")}
-                className="text-xs font-semibold text-white underline underline-offset-2 hover:text-white/80 whitespace-nowrap ml-4 transition-colors"
-                style={{ fontFamily: "Cabin, sans-serif" }}
+            {/* Top banner — blue #0ba5ec per Figma 7207-39694 */}
+            {bannerVisible && (
+              <div
+                className="flex items-center justify-between px-6 py-3 shrink-0 border-b border-black/10"
+                style={{ backgroundColor: "#0ba5ec" }}
               >
-                Upgrade Now
-              </button>
-            </div>
+                <div className="flex items-center gap-3">
+                  {/* White circle with info icon */}
+                  <div
+                    className="flex items-center justify-center w-8 h-8 rounded-full shrink-0"
+                    style={{ backgroundColor: "rgba(255,255,255,0.2)" }}
+                  >
+                    <Info size={16} className="text-white" strokeWidth={2} />
+                  </div>
+                  <div>
+                    <p
+                      className="text-sm font-semibold text-white leading-5"
+                      style={{ fontFamily: "Cabin, sans-serif" }}
+                    >
+                      Great Grants (Free Tier)
+                    </p>
+                    <p
+                      className="text-xs leading-4"
+                      style={{ fontFamily: "Cabin, sans-serif", color: "rgba(255,255,255,0.9)" }}
+                    >
+                      You have 5 free searches. Your free searches will reset in 30 days, giving you 5 new searches to use.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setBannerVisible(false)}
+                  className="ml-4 shrink-0 text-white hover:text-white/70 transition-colors focus:outline-none"
+                  aria-label="Dismiss banner"
+                >
+                  <X size={16} strokeWidth={2} />
+                </button>
+              </div>
+            )}
+
             {/* Main content — hide OrganizationProfileForm's built-in sidebar */}
             <div className="flex-1 overflow-auto subscribe-org-wrapper">
               <style>{`
