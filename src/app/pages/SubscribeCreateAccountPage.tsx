@@ -90,8 +90,8 @@ export function SubscribeCreateAccountPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isFormValid) return;
-    console.log("Create account", formData);
-    navigate("/");
+    localStorage.setItem("gg_subscribe_email", formData.email);
+    navigate("/subscribe/org");
   };
 
   return (
