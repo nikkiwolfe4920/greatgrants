@@ -3,7 +3,7 @@ import { Logo } from "@/app/components/Logo";
 import { OrganizationProfileForm } from "@/app/components/OrganizationProfileForm";
 import { ReadinessScoreProvider } from "@/app/contexts/ReadinessScoreContext";
 import { TooltipProvider } from "@/app/components/ui/tooltip";
-import { FileText, Search, Star, Building2, LayoutGrid, Sparkles } from "lucide-react";
+import { FileText, Search, Star, Building2, LayoutGrid } from "lucide-react";
 
 function SubscribeOrgSidebar() {
   const navigate = useNavigate();
@@ -76,17 +76,14 @@ export function SubscribeOrgPage() {
         <div className="flex h-screen bg-white overflow-hidden">
           <SubscribeOrgSidebar />
           <div className="flex flex-col flex-1 min-w-0">
-            {/* Top banner */}
-            <div className="flex items-center justify-between px-6 py-3 bg-teal-50 border-b border-teal-100 shrink-0">
-              <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-teal-600 shrink-0" />
-                <p className="text-sm text-teal-800" style={{ fontFamily: "Cabin, sans-serif" }}>
-                  You're on the <strong>Free Plan</strong> — 5 grant searches per month, 5 saved grants.
-                </p>
-              </div>
+            {/* Top banner — dark teal with white text */}
+            <div className="flex items-center justify-between px-6 py-2.5 bg-teal-600 shrink-0">
+              <p className="text-xs text-white/90" style={{ fontFamily: "Cabin, sans-serif" }}>
+                You have 5 free searches. Your free searches will reset in 30 days, giving you 5 new searches to use.
+              </p>
               <button
-                onClick={() => navigate("/subscribe/upgrade-modal")}
-                className="text-sm font-semibold text-teal-700 hover:text-teal-800 whitespace-nowrap underline underline-offset-2 transition-colors"
+                onClick={() => navigate("/subscribe/search?upgrade=1")}
+                className="text-xs font-semibold text-white underline underline-offset-2 hover:text-white/80 whitespace-nowrap ml-4 transition-colors"
                 style={{ fontFamily: "Cabin, sans-serif" }}
               >
                 Upgrade Now
