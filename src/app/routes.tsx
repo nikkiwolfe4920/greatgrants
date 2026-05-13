@@ -17,6 +17,8 @@ import { OnboardingPage3 } from "./pages/OnboardingPage3";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { ProjectDetailsPage } from "./pages/ProjectDetailsPage";
 import { MyGrantReadiness } from "./pages/MyGrantReadiness.tsx";
+import { SubscribeEntryPage } from "./pages/SubscribeEntryPage";
+import { SubscribeCreateAccountPage } from "./pages/SubscribeCreateAccountPage";
 import { ReadinessScoreProvider } from "./contexts/ReadinessScoreContext";
 import { TooltipProvider } from "./components/ui/tooltip";
 
@@ -35,6 +37,14 @@ const routes = [
   {
     path: "/signin",
     element: <SignInPage />,
+  },
+  {
+    path: "/subscribe-entry",
+    element: <SubscribeEntryPage />,
+  },
+  {
+    path: "/subscribe/create-account",
+    element: <SubscribeCreateAccountPage />,
   },
   {
     path: "/onboarding",
