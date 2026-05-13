@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Logo } from "@/app/components/Logo";
 import {
@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 
 const SEARCH_LIMIT = 5;
-const STORAGE_KEY = "gg_subscribe_searches_used";
 
 interface Grant {
   id: string;
@@ -129,17 +128,10 @@ export function SubscribeSearchPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Grant[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
-  const [searchesUsed, setSearchesUsed] = useState<number>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? parseInt(stored, 10) : 0;
-  });
+  const [searchesUsed, setSearchesUsed] = useState(0);
 
   const remaining = SEARCH_LIMIT - searchesUsed;
   const isExhausted = searchesUsed >= SEARCH_LIMIT;
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, String(searchesUsed));
-  }, [searchesUsed]);
 
   const handleSearch = () => {
     if (isExhausted) {
