@@ -19,6 +19,11 @@ import { ProjectDetailsPage } from "./pages/ProjectDetailsPage";
 import { MyGrantReadiness } from "./pages/MyGrantReadiness.tsx";
 import { SubscribeEntryPage } from "./pages/SubscribeEntryPage";
 import { SubscribeCreateAccountPage } from "./pages/SubscribeCreateAccountPage";
+import { SubscribeOrgPage } from "./pages/SubscribeOrgPage";
+import { SubscribeSearchPage } from "./pages/SubscribeSearchPage";
+import { SubscribeUpgradeModalPage } from "./pages/SubscribeUpgradeModalPage";
+import { SubscribeStripePage } from "./pages/SubscribeStripePage";
+import { SubscribeAccountPage } from "./pages/SubscribeAccountPage";
 import { ReadinessScoreProvider } from "./contexts/ReadinessScoreContext";
 import { TooltipProvider } from "./components/ui/tooltip";
 
@@ -45,6 +50,26 @@ const routes = [
   {
     path: "/subscribe/create-account",
     element: <SubscribeCreateAccountPage />,
+  },
+  {
+    path: "/subscribe/org",
+    element: <SubscribeOrgPage />,
+  },
+  {
+    path: "/subscribe/search",
+    element: <SubscribeSearchPage />,
+  },
+  {
+    path: "/subscribe/upgrade-modal",
+    element: <SubscribeUpgradeModalPage />,
+  },
+  {
+    path: "/subscribe/stripe",
+    element: <SubscribeStripePage />,
+  },
+  {
+    path: "/subscribe/account",
+    element: <SubscribeAccountPage />,
   },
   {
     path: "/onboarding",
