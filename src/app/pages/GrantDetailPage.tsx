@@ -387,7 +387,7 @@ const [isSaved, setIsSaved] = useState(false);
   }, []);
 
   useEffect(() => {
-    const sectionIds = ['overview', 'assessment-criteria', 'grant-details'];
+    const sectionIds = ['overview', 'who-can-apply', 'eligible-activities', 'assessment-criteria', 'grant-details'];
     const observers: IntersectionObserver[] = [];
     sectionIds.forEach((sectionId) => {
       const el = document.getElementById(sectionId);
@@ -438,12 +438,8 @@ const [isSaved, setIsSaved] = useState(false);
         {isSticky && (
           <motion.div
             initial={{ y: -80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -80, opacity: 0 }}
-            transition={{
-              enter: { duration: 0.32, ease: [0.22, 1, 0.36, 1] },
-              exit: { duration: 0.24, ease: [0.4, 0, 1, 1] }
-            }}
+            animate={{ y: 0, opacity: 1, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] } }}
+            exit={{ y: -80, opacity: 0, transition: { duration: 0.24, ease: [0.4, 0, 1, 1] } }}
             className="fixed top-0 left-0 right-0 z-50 bg-white/97 backdrop-blur-md border-b border-gray-200/80 shadow-[0_1px_12px_rgba(0,0,0,0.07)]"
           >
             <div className="max-w-7xl mx-auto px-6 py-2.5">
@@ -635,7 +631,9 @@ const [isSaved, setIsSaved] = useState(false);
                 <nav className="space-y-0.5">
                   {[
                     { id: 'overview', label: 'Overview' },
-                    { id: 'assessment-criteria', label: 'Assessment Criteria' },
+                    ...(grant.whoCanApply && grant.whoCanApply.length > 0 ? [{ id: 'who-can-apply', label: 'Who Can Apply?' }] : []),
+                    ...(grant.eligibleActivities && grant.eligibleActivities.length > 0 ? [{ id: 'eligible-activities', label: 'Eligible Activities' }] : []),
+                    ...(grant.mainCriteria && grant.mainCriteria.length > 0 ? [{ id: 'assessment-criteria', label: 'Assessment Criteria' }] : []),
                     { id: 'grant-details', label: 'Grant Details' },
                   ].map((section) => (
                     <button
@@ -783,6 +781,76 @@ const [isSaved, setIsSaved] = useState(false);
               </div>
             </section>
 
+
+            {/* Who Can Apply? */}
+            {grant.whoCanApply && grant.whoCanApply.length > 0 && (
+              <section id="who-can-apply" className="scroll-mt-8">
+                <div className="mb-4">
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Lustria, serif' }}>
+                    Who Can Apply?
+                  </h2>
+                  <div className="w-10 h-[3px] bg-teal-500 rounded-full" />
+                </div>
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                  {(() => {
+                    const sepIdx = grant.whoCanApply!.indexOf('---');
+                    const bullets = sepIdx === -1 ? grant.whoCanApply! : grant.whoCanApply!.slice(0, sepIdx);
+                    const paragraphs = sepIdx === -1 ? [] : grant.whoCanApply!.slice(sepIdx + 1);
+                    return (
+                      <>
+                        <p className="text-gray-700 mb-3 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                          Eligible applicants include organizations of every type:
+                        </p>
+                        <ul className="list-disc pl-6 mb-4 space-y-1">
+                          {bullets.map((item, i) => (
+                            <li key={i} className="text-gray-700 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>{item}</li>
+                          ))}
+                        </ul>
+                        {paragraphs.map((para, i) => (
+                          <p key={i} className="text-gray-700 leading-relaxed mb-3 last:mb-0" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                            {para}
+                          </p>
+                        ))}
+                      </>
+                    );
+                  })()}
+                </div>
+              </section>
+            )}
+
+            {/* Eligible Activities */}
+            {grant.eligibleActivities && grant.eligibleActivities.length > 0 && (
+              <section id="eligible-activities" className="scroll-mt-8">
+                <div className="mb-4">
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Lustria, serif' }}>
+                    Eligible Activities
+                  </h2>
+                  <div className="w-10 h-[3px] bg-teal-500 rounded-full" />
+                </div>
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                  {(() => {
+                    const lastItem = grant.eligibleActivities![grant.eligibleActivities!.length - 1];
+                    const isLastFooter = lastItem.toLowerCase().startsWith('please refer');
+                    const bullets = isLastFooter ? grant.eligibleActivities!.slice(0, -1) : grant.eligibleActivities!;
+                    return (
+                      <>
+                        <p className="text-gray-700 mb-3 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                          Eligible projects must address a priority of the Planetary Science Division, which includes:
+                        </p>
+                        <ul className="list-disc pl-6 mb-4 space-y-1">
+                          {bullets.map((item, i) => (
+                            <li key={i} className="text-gray-700 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>{item}</li>
+                          ))}
+                        </ul>
+                        {isLastFooter && (
+                          <p className="text-gray-700 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>{lastItem}</p>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              </section>
+            )}
 
             {/* Assessment Criteria */}
             {grant.mainCriteria && grant.mainCriteria.length > 0 && (
