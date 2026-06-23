@@ -632,7 +632,6 @@ export function GrantSearch() {
   
   // Unified filter states with default filters
   const [advancedFilters, setAdvancedFilters] = useState<Array<{ id: string; label: string; category: string }>>([
-    { id: "category-community", label: "Community", category: "Category" },
     { id: "scope-national", label: "National", category: "Scope" },
     { id: "scope-federal", label: "Federal", category: "Scope" }
   ]);
@@ -1353,13 +1352,13 @@ export function GrantSearch() {
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <h3 className={`font-semibold text-gray-900 leading-snug group-hover:text-teal-700 transition-colors mb-2 ${
-                                viewMode === "list" ? "truncate max-w-xs" : "line-clamp-2"
+                                viewMode === "list" ? "truncate w-full" : "line-clamp-2"
                               }`}>
                                 {grant.title}
                               </h3>
                             </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-sm">
-                              <p>{grant.title}</p>
+                            <TooltipContent side="top" className="max-w-md z-50">
+                              <p className="text-sm leading-relaxed">{grant.title}</p>
                             </TooltipContent>
                           </Tooltip>
                           <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
