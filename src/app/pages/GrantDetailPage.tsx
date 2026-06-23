@@ -377,13 +377,15 @@ const [isSaved, setIsSaved] = useState(false);
   };
 
   useEffect(() => {
+    const scrollContainer = document.querySelector('main');
+    if (!scrollContainer) return;
     const handleScroll = () => {
       if (triggerRef.current) {
         setIsSticky(triggerRef.current.getBoundingClientRect().bottom <= 0);
       }
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    scrollContainer.addEventListener('scroll', handleScroll);
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
@@ -404,10 +406,11 @@ const [isSaved, setIsSaved] = useState(false);
 
   const scrollToSection = (sectionId: string) => {
     const el = document.getElementById(sectionId);
-    if (el) {
+    const scrollContainer = document.querySelector('main');
+    if (el && scrollContainer) {
       const offset = isSticky ? 80 : 24;
-      const top = el.getBoundingClientRect().top + window.scrollY - offset;
-      window.scrollTo({ top, behavior: 'smooth' });
+      const top = el.getBoundingClientRect().top + scrollContainer.scrollTop - offset;
+      scrollContainer.scrollTo({ top, behavior: 'smooth' });
     }
   };
 
