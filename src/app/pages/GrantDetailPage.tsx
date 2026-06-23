@@ -25,7 +25,10 @@ import {
   Target,
   Eye,
   Lock,
-  Bookmark
+  Bookmark,
+  ChevronDown,
+  ChevronUp,
+  X
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -94,7 +97,6 @@ interface Grant {
   eligibleActivities?: string[];
   whoCanApply?: string[];
   mainCriteria?: string[];
-  // Grant Details section fields
   opportunityNumber?: string;
   fundingAgency?: string;
   assistanceListing?: string;
@@ -113,7 +115,6 @@ interface Grant {
   hasNewInfo?: boolean;
 }
 
-// Mock data - same as in GrantSearch
 const mockGrants: Grant[] = [
   {
     id: "nasa-roses",
@@ -330,79 +331,52 @@ export function GrantDetailPage() {
   const [isPublicView, setIsPublicView] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [activeSection, setActiveSection] = useState('overview');
+  const [docsExpanded, setDocsExpanded] = useState(true);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
 
-  // Track grant as recently viewed
   useEffect(() => {
     if (grant) {
       const recentlyViewed = JSON.parse(localStorage.getItem("recentlyViewedGrants") || "[]");
-
-      // Remove if already exists to avoid duplicates
       const filtered = recentlyViewed.filter((g: any) => g.id !== grant.id);
-
-      // Add to the beginning with timestamp
-      const updated = [{ ...grant, lastViewed: Date.now() }, ...filtered].slice(0, 10); // Keep max 10
-
+      const updated = [{ ...grant, lastViewed: Date.now() }, ...filtered].slice(0, 10);
       localStorage.setItem("recentlyViewedGrants", JSON.stringify(updated));
       window.dispatchEvent(new Event("recentlyViewedUpdated"));
     }
   }, [grant]);
 
-  // Check if grant is saved
   useEffect(() => {
     if (grant) {
       const saved = JSON.parse(localStorage.getItem("savedGrants") || "[]");
-      const isGrantSaved = saved.some((g: any) => g.id === grant.id);
-      setIsSaved(isGrantSaved);
+      setIsSaved(saved.some((g: any) => g.id === grant.id));
     }
   }, [grant]);
 
-  // Listen for saved grants updates
   useEffect(() => {
     const handleSavedGrantsUpdate = () => {
       if (grant) {
         const saved = JSON.parse(localStorage.getItem("savedGrants") || "[]");
-        const isGrantSaved = saved.some((g: any) => g.id === grant.id);
-        setIsSaved(isGrantSaved);
+        setIsSaved(saved.some((g: any) => g.id === grant.id));
       }
     };
-
     window.addEventListener("savedGrantsUpdated", handleSavedGrantsUpdate);
-    return () => {
-      window.removeEventListener("savedGrantsUpdated", handleSavedGrantsUpdate);
-    };
+    return () => window.removeEventListener("savedGrantsUpdated", handleSavedGrantsUpdate);
   }, [grant]);
 
-  const handleStartApplication = () => {
-    setShowLoadingModal(true);
-  };
-
-  const handleShareGrant = () => {
-    setShowShareModal(true);
-  };
+  const handleStartApplication = () => setShowLoadingModal(true);
+  const handleShareGrant = () => setShowShareModal(true);
 
   const toggleSaveGrant = () => {
     if (!grant) return;
-
     const saved = JSON.parse(localStorage.getItem("savedGrants") || "[]");
     const recent = JSON.parse(localStorage.getItem("recentlyViewedGrants") || "[]");
     const isGrantSaved = saved.some((g: any) => g.id === grant.id);
-
     if (isGrantSaved) {
-      // Unsave
-      const updated = saved.filter((g: any) => g.id !== grant.id);
-      localStorage.setItem("savedGrants", JSON.stringify(updated));
+      localStorage.setItem("savedGrants", JSON.stringify(saved.filter((g: any) => g.id !== grant.id)));
       setIsSaved(false);
     } else {
-      // Save - get lastViewed from recently viewed if exists
       const recentGrant = recent.find((g: any) => g.id === grant.id);
-      const grantToSave = {
-        ...grant,
-        savedAt: Date.now(),
-        lastViewed: recentGrant?.lastViewed || Date.now()
-      };
-      const updated = [grantToSave, ...saved];
-      localStorage.setItem("savedGrants", JSON.stringify(updated));
+      localStorage.setItem("savedGrants", JSON.stringify([{ ...grant, savedAt: Date.now(), lastViewed: recentGrant?.lastViewed || Date.now() }, ...saved]));
       setIsSaved(true);
     }
     window.dispatchEvent(new Event("savedGrantsUpdated"));
@@ -411,11 +385,9 @@ export function GrantDetailPage() {
   useEffect(() => {
     const handleScroll = () => {
       if (triggerRef.current) {
-        const triggerBottom = triggerRef.current.getBoundingClientRect().bottom;
-        setIsSticky(triggerBottom <= 0);
+        setIsSticky(triggerRef.current.getBoundingClientRect().bottom <= 0);
       }
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -439,7 +411,7 @@ export function GrantDetailPage() {
   const scrollToSection = (sectionId: string) => {
     const el = document.getElementById(sectionId);
     if (el) {
-      const offset = isSticky ? 72 : 24;
+      const offset = isSticky ? 80 : 24;
       const top = el.getBoundingClientRect().top + window.scrollY - offset;
       window.scrollTo({ top, behavior: 'smooth' });
     }
@@ -466,20 +438,7 @@ export function GrantDetailPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 relative">
-      {/* New Info Banner */}
-      {grant.hasNewInfo && (
-        <div className="mb-4 flex items-center gap-3 bg-teal-50 border border-teal-200 rounded-lg px-4 py-3">
-          <div className="w-5 h-5 rounded-full bg-teal-500 flex items-center justify-center flex-shrink-0">
-            <AlertCircle className="w-3 h-3 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <span className="text-sm font-semibold text-teal-800" style={{ fontFamily: 'Cabin, sans-serif' }}>New information available</span>
-            <span className="text-sm text-teal-700 ml-2" style={{ fontFamily: 'Cabin, sans-serif' }}>This grant was updated 2 days ago — Review changes that may affect your application</span>
-          </div>
-        </div>
-      )}
-
+    <div className="min-h-screen bg-gray-100">
       {/* Sticky Header */}
       <AnimatePresence>
         {isSticky && (
@@ -503,18 +462,13 @@ export function GrantDetailPage() {
                     <ArrowLeft className="w-4 h-4" />
                   </Link>
                   <div className="min-w-0 flex-1">
-                    <h2
-                      className="text-sm font-semibold text-gray-900 truncate leading-tight"
-                      style={{ fontFamily: 'Cabin, sans-serif' }}
-                    >
+                    <h2 className="text-sm font-semibold text-gray-900 truncate leading-tight" style={{ fontFamily: 'Cabin, sans-serif' }}>
                       {grant.title}
                     </h2>
                     <div className="flex items-center gap-3 mt-0.5">
                       <Badge className={`text-[10px] px-1.5 py-0 h-4 ${
-                        grant.status === "Open"
-                          ? "bg-green-50 text-green-700 border-green-200"
-                          : grant.status === "Pending"
-                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                        grant.status === "Open" ? "bg-green-50 text-green-700 border-green-200"
+                          : grant.status === "Pending" ? "bg-blue-50 text-blue-700 border-blue-200"
                           : "bg-gray-100 text-gray-600 border-gray-200"
                       }`}>
                         {grant.status}
@@ -525,56 +479,23 @@ export function GrantDetailPage() {
                           Closes {grant.closeDate}
                         </span>
                       )}
-                      {grant.poolAmount && (
-                        <span className="text-[11px] text-gray-500 flex items-center gap-1">
-                          <DollarSign className="w-3 h-3" />
-                          ${(grant.poolAmount / 1000000).toFixed(0)}M pool
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleSaveGrant}
-                    className={`gap-1.5 h-8 text-xs ${
-                      isSaved
-                        ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100"
-                        : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"
-                    }`}
-                  >
+                  <Button variant="outline" size="sm" onClick={toggleSaveGrant}
+                    className={`gap-1.5 h-8 text-xs ${isSaved ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"}`}>
                     <Bookmark className={`w-3.5 h-3.5 ${isSaved ? "fill-current" : ""}`} />
                     {isSaved ? "Saved" : "Save"}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-gray-200 text-gray-700 hover:bg-gray-50 h-8 text-xs"
-                    onClick={handleShareGrant}
-                  >
+                  <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50 h-8 text-xs" onClick={handleShareGrant}>
                     <Share2 className="w-3.5 h-3.5 mr-1.5" />
                     Share
                   </Button>
-                  {isPublicView ? (
-                    <Button
-                      size="sm"
-                      className="bg-teal-600 hover:bg-teal-700 text-white font-semibold h-8 text-xs px-4"
-                    >
-                      Get Started
-                      <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      className="bg-teal-600 hover:bg-teal-700 text-white font-semibold h-8 text-xs px-4"
-                      onClick={handleStartApplication}
-                    >
-                      Start Application
-                      <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-                    </Button>
-                  )}
+                  <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white font-semibold h-8 text-xs px-4" onClick={isPublicView ? undefined : handleStartApplication}>
+                    {isPublicView ? "Get Started" : "Start Application"}
+                    <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -582,848 +503,496 @@ export function GrantDetailPage() {
         )}
       </AnimatePresence>
 
-      {/* Breadcrumb */}
-      <Breadcrumb className="mb-6">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/">
-                <BreadcrumbHome />
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>
-              {grant.title.length > 30 ? grant.title.substring(0, 30) + "..." : grant.title}
-            </BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      {/* Header */}
-      <div className="mb-8" ref={triggerRef}>
-        <div className="flex items-start justify-between gap-6 mb-3">
-          <h1 className="text-[2rem] leading-tight text-gray-900 flex-1" style={{ fontFamily: 'Lustria, serif', fontWeight: 600 }}>
-            {grant.title}
-          </h1>
-          <div className="flex flex-col items-end gap-2 flex-shrink-0 pt-1">
-            <div className="flex items-center gap-2.5">
-              <Button
-                variant="outline"
-                onClick={toggleSaveGrant}
-                className={`gap-1.5 ${
-                  isSaved
-                    ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100"
-                    : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"
-                }`}
-                style={{ fontFamily: 'Cabin, sans-serif' }}
-              >
-                <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
-                {isSaved ? "Saved" : "Save"}
-              </Button>
-              <Button
-                variant="outline"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 font-medium"
-                style={{ fontFamily: 'Cabin, sans-serif' }}
-                onClick={handleShareGrant}
-              >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share
-              </Button>
-              {isPublicView ? (
-                <Button
-                  className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6"
-                  style={{ fontFamily: 'Cabin, sans-serif' }}
-                >
-                  Get Started
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              ) : (
-                <Button
-                  className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6"
-                  style={{ fontFamily: 'Cabin, sans-serif' }}
-                  onClick={handleStartApplication}
-                >
-                  Start Application
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              )}
+      {/* Top Teal Info Banner */}
+      {grant.hasNewInfo && !bannerDismissed && (
+        <div className="flex items-center justify-between px-6 py-3" style={{ backgroundColor: '#4a9fd4' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
+              <AlertCircle className="w-4 h-4 text-white" />
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-gray-200 text-gray-600 hover:bg-gray-50 text-xs h-7 px-3"
-              style={{ fontFamily: 'Cabin, sans-serif' }}
-            >
-              + Add Programs
-            </Button>
+            <div>
+              <p className="text-sm font-semibold text-white leading-5" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                New information available
+              </p>
+              <p className="text-xs text-white/90 leading-4" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                This grant was updated 2 days ago • Review changes that may affect your application
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setBannerDismissed(true)}
+            className="text-white/70 hover:text-white transition-colors flex-shrink-0 p-1"
+            aria-label="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* White Header Area */}
+      <div className="bg-white">
+        <div className="max-w-7xl mx-auto px-6 pt-5 pb-6">
+          {/* Breadcrumb */}
+          <Breadcrumb className="mb-5">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to="/">
+                    <BreadcrumbHome />
+                  </Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>
+                  {grant.title.length > 30 ? grant.title.substring(0, 30) + "..." : grant.title}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+
+          {/* Header */}
+          <div ref={triggerRef}>
+            <div className="flex items-start justify-between gap-6 mb-3">
+              <h1 className="text-[2rem] leading-tight text-gray-900 flex-1" style={{ fontFamily: 'Lustria, serif', fontWeight: 600 }}>
+                {grant.title}
+              </h1>
+              <div className="flex flex-col items-end gap-2 flex-shrink-0 pt-1">
+                <div className="flex items-center gap-2.5">
+                  <Button
+                    variant="outline"
+                    onClick={toggleSaveGrant}
+                    className={`gap-1.5 ${isSaved ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"}`}
+                    style={{ fontFamily: 'Cabin, sans-serif' }}
+                  >
+                    <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
+                    {isSaved ? "Saved" : "Save"}
+                  </Button>
+                  <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 font-medium" style={{ fontFamily: 'Cabin, sans-serif' }} onClick={handleShareGrant}>
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share
+                  </Button>
+                  <Button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6" style={{ fontFamily: 'Cabin, sans-serif' }} onClick={isPublicView ? undefined : handleStartApplication}>
+                    {isPublicView ? "Get Started" : "Start Application"}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+                <Button variant="outline" size="sm" className="border-gray-200 text-gray-600 hover:bg-gray-50 text-xs h-7 px-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                  + Add Programs
+                </Button>
+              </div>
+            </div>
+
+            {grant.fundingAgency && (
+              <p className="text-sm text-gray-500 mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                {grant.fundingAgency}
+              </p>
+            )}
+
+            <div className="flex items-center gap-4 flex-wrap">
+              <Badge className={`text-xs px-2.5 py-1 ${
+                grant.status === "Open" ? "bg-green-50 text-green-700 border-green-200"
+                  : grant.status === "Pending" ? "bg-blue-50 text-blue-700 border-blue-200"
+                  : "bg-gray-100 text-gray-600 border-gray-200"
+              }`}>
+                {grant.status}
+              </Badge>
+              {grant.closeDate && (
+                <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                  <Clock className="w-4 h-4 text-gray-400" />
+                  <span>Closes <span className="font-medium text-gray-800">{grant.closeDate}</span></span>
+                </div>
+              )}
+              {grant.awardCeilingFloor ? (
+                <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                  <DollarSign className="w-4 h-4 text-gray-400" />
+                  <span className="font-medium text-gray-800">{grant.awardCeilingFloor} per award</span>
+                </div>
+              ) : grant.poolAmount ? (
+                <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                  <DollarSign className="w-4 h-4 text-gray-400" />
+                  <span><span className="font-medium text-gray-800">${grant.poolAmount.toLocaleString()}</span> funding pool</span>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
 
-        {/* Agency / org line */}
-        {grant.fundingAgency && (
-          <p className="text-sm text-gray-500 mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
-            {grant.fundingAgency}
-          </p>
-        )}
-
-        {/* Meta row */}
-        <div className="flex items-center gap-4 flex-wrap">
-          <Badge className={`text-xs px-2.5 py-1 ${
-            grant.status === "Open"
-              ? "bg-green-50 text-green-700 border-green-200"
-              : grant.status === "Pending"
-              ? "bg-blue-50 text-blue-700 border-blue-200"
-              : "bg-gray-100 text-gray-600 border-gray-200"
-          }`}>
-            {grant.status}
-          </Badge>
-          {grant.closeDate && (
-            <div className="flex items-center gap-1.5 text-sm text-gray-600">
-              <Clock className="w-4 h-4 text-gray-400" />
-              <span>Closes <span className="font-medium text-gray-800">{grant.closeDate}</span></span>
-            </div>
-          )}
-          {grant.awardCeilingFloor ? (
-            <div className="flex items-center gap-1.5 text-sm text-gray-600">
-              <DollarSign className="w-4 h-4 text-gray-400" />
-              <span className="font-medium text-gray-800">{grant.awardCeilingFloor} per award</span>
-            </div>
-          ) : grant.poolAmount ? (
-            <div className="flex items-center gap-1.5 text-sm text-gray-600">
-              <DollarSign className="w-4 h-4 text-gray-400" />
-              <span><span className="font-medium text-gray-800">${grant.poolAmount.toLocaleString()}</span> funding pool</span>
-            </div>
-          ) : null}
-        </div>
+        {/* HR separator between white header and grey content */}
+        <div className="border-t border-gray-200" />
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Main Content */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Overview */}
-          <section id="overview" className="scroll-mt-24">
-            <div className="mb-5">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Lustria, serif' }}>
-                Overview
-              </h2>
-              <div className="w-10 h-[3px] bg-teal-500 rounded-full" />
-            </div>
-            <div className="text-gray-700 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
-              {grant.image && (
-                <div className="float-right ml-6 mb-4 rounded-xl overflow-hidden border border-gray-200 shadow-md" style={{ width: '240px' }}>
-                  <ImageWithFallback
-                    src={grant.image}
-                    alt={grant.title}
-                    className="w-full object-cover"
-                    style={{ height: '160px' }}
-                  />
+      {/* Main Content — grey background */}
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+          {/* LEFT Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-6 space-y-4">
+
+              {/* On This Page Navigation */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                  On This Page
+                </h3>
+                <nav className="space-y-0.5">
+                  {[
+                    { id: 'overview', label: 'Overview' },
+                    { id: 'assessment-criteria', label: 'Assessment Criteria' },
+                    { id: 'grant-details', label: 'Grant Details' },
+                  ].map((section) => (
+                    <button
+                      key={section.id}
+                      onClick={() => scrollToSection(section.id)}
+                      className={`w-full text-left text-sm py-2 px-3 rounded-lg transition-all duration-150 group flex items-center gap-2 ${
+                        activeSection === section.id
+                          ? 'text-teal-700 font-medium bg-teal-50'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                      style={{ fontFamily: 'Cabin, sans-serif' }}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${
+                        activeSection === section.id ? 'bg-teal-500' : 'bg-gray-300 group-hover:bg-gray-400'
+                      }`} />
+                      {section.label}
+                    </button>
+                  ))}
+                </nav>
+              </div>
+
+              {/* Quick Stats */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                  Quick Stats
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>Location</span>
+                    <span className="text-sm font-medium text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                      {grant.region || grant.location}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>Status</span>
+                    <Badge className={`text-xs px-2 py-0.5 ${
+                      grant.status === "Open" ? "bg-green-50 text-green-700 border-green-200"
+                        : grant.status === "Pending" ? "bg-blue-50 text-blue-700 border-blue-200"
+                        : "bg-gray-100 text-gray-600 border-gray-200"
+                    }`}>
+                      {grant.status}
+                    </Badge>
+                  </div>
+                  {grant.closeDate && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>Closing Date</span>
+                      <span className="text-sm font-medium text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                        {grant.closeDate}
+                      </span>
+                    </div>
+                  )}
+                  {grant.recipients && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>Recipients</span>
+                      <span className="text-sm font-medium text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.recipients}</span>
+                    </div>
+                  )}
+                  {grant.poolAmount && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>Total Pool</span>
+                      <span className="text-sm font-medium text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                        ${(grant.poolAmount / 1000000).toFixed(0)}M
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Documents — collapsible */}
+              {grant.documents && grant.documents.length > 0 && (
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  <button
+                    onClick={() => setDocsExpanded(v => !v)}
+                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-gray-500" />
+                      <span className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                        Documents{' '}
+                        <span className="font-normal text-gray-500">({grant.documents.length})</span>
+                      </span>
+                    </div>
+                    {docsExpanded
+                      ? <ChevronUp className="w-4 h-4 text-gray-400" />
+                      : <ChevronDown className="w-4 h-4 text-gray-400" />
+                    }
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {docsExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="border-t border-gray-100 px-3 py-3 space-y-2">
+                          {grant.documents.map((doc, idx) => (
+                            <div key={idx} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer">
+                              <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#fef2f2' }}>
+                                <FileText className="w-5 h-5 text-red-500" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-semibold text-gray-900 truncate" style={{ fontFamily: 'Cabin, sans-serif' }}>{doc.name}</div>
+                                <div className="text-xs text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>{doc.type} · {doc.size}</div>
+                              </div>
+                              <Download className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
-              {renderOverview(grant.overview || grant.description)}
-              <div className="clear-both" />
             </div>
-          </section>
+          </div>
 
-          {/* Public View: Sign Up CTA */}
-          {isPublicView && (
-            <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-3" style={{ fontFamily: 'Lustria, serif' }}>
-                  Ready to Apply for This Grant?
-                </h3>
-                <p className="text-gray-700 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                  Join Great Grants to unlock AI-powered application assistance, track deadlines, and manage all your grants in one place—completely free.
-                </p>
-              </div>
+          {/* RIGHT Main Content */}
+          <div className="lg:col-span-3 space-y-6">
 
-              {/* Benefits Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div className="flex items-start gap-3">
-                  <Zap className="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-gray-900 text-sm mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      AI-Powered Drafting
-                    </h4>
-                    <p className="text-sm text-gray-600 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Get instant, personalized application content tailored to your organization
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <TrendingUp className="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-gray-900 text-sm mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Progress Tracking
-                    </h4>
-                    <p className="text-sm text-gray-600 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Never miss a deadline with smart notifications and milestone tracking
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Target className="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-gray-900 text-sm mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Smart Matching
-                    </h4>
-                    <p className="text-sm text-gray-600 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Discover grants perfectly aligned with your mission and impact
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Social Proof */}
-              <div className="bg-gray-50 rounded-lg p-6 mb-6 border border-gray-200">
-                <div className="flex items-center justify-around">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-teal-600 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      10,000+
-                    </div>
-                    <p className="text-sm text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Organizations
-                    </p>
-                  </div>
-                  <div className="w-px h-12 bg-gray-300"></div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-teal-600 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      $500M+
-                    </div>
-                    <p className="text-sm text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Secured in Funding
-                    </p>
-                  </div>
-                  <div className="w-px h-12 bg-gray-300"></div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-teal-600 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      45,000+
-                    </div>
-                    <p className="text-sm text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Applications Submitted
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* CTA Buttons */}
-              <div className="flex items-center gap-3">
-                <Button 
-                  className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold"
-                  style={{ fontFamily: 'Cabin, sans-serif' }}
-                >
-                  Create Account
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-                <Button 
-                  variant="outline"
-                  className="bg-white font-semibold border-gray-300"
-                  style={{ fontFamily: 'Cabin, sans-serif' }}
-                >
-                  Sign In
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Assessment Criteria */}
-          {grant.mainCriteria && grant.mainCriteria.length > 0 && (
-            <section id="assessment-criteria" className="scroll-mt-24">
+            {/* Overview */}
+            <section id="overview" className="scroll-mt-24 bg-white rounded-xl border border-gray-200 p-6">
               <div className="mb-5">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Lustria, serif' }}>
-                  Main Assessment Criteria
+                  Overview
                 </h2>
                 <div className="w-10 h-[3px] bg-teal-500 rounded-full" />
               </div>
-              <p className="text-gray-700 mb-5 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                The main assessment criteria include:
-              </p>
-              <ul className="space-y-3 mb-5">
-                {grant.mainCriteria.map((criteria, idx) => (
-                  <li key={idx} className="flex items-start gap-4 p-4 rounded-xl bg-gray-50/80 border border-gray-100 hover:border-teal-100 hover:bg-teal-50/30 transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Target className="w-4 h-4 text-teal-500" />
-                    </div>
-                    <span className="text-gray-700 leading-relaxed text-sm" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {criteria}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <p className="text-sm text-gray-500 italic border-t border-gray-100 pt-4" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                Please refer to the Program Solicitation for the complete list of the assessment criteria.
-              </p>
+              <div className="text-gray-700 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                {grant.image && (
+                  <div className="float-right ml-6 mb-4 rounded-xl overflow-hidden border border-gray-200 shadow-sm" style={{ width: '240px' }}>
+                    <ImageWithFallback
+                      src={grant.image}
+                      alt={grant.title}
+                      className="w-full object-cover"
+                      style={{ height: '160px' }}
+                    />
+                  </div>
+                )}
+                {renderOverview(grant.overview || grant.description)}
+                <div className="clear-both" />
+              </div>
             </section>
-          )}
 
-          {/* Grant Details */}
-          <section id="grant-details" className="scroll-mt-24">
-            <div className="mb-5">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Lustria, serif' }}>
-                Grant Details
-              </h2>
-              <div className="w-10 h-[3px] bg-teal-500 rounded-full" />
-            </div>
-            <div className="grid grid-cols-2 gap-x-10 gap-y-5">
-              {grant.opportunityNumber && (
-                <div>
-                  <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Opportunity Number</div>
-                  <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.opportunityNumber}</div>
-                </div>
-              )}
-              {grant.fundingInstrument && (
-                <div>
-                  <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Funding Instrument</div>
-                  <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.fundingInstrument}</div>
-                </div>
-              )}
-              {grant.fundingAgency && (
-                <div>
-                  <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Funding Agency</div>
-                  <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.fundingAgency}</div>
-                </div>
-              )}
-              {grant.projectPeriod && (
-                <div>
-                  <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Project Period</div>
-                  <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.projectPeriod}</div>
-                </div>
-              )}
-              {grant.assistanceListing && (
-                <div>
-                  <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Assistance Listing (CFDA)</div>
-                  <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.assistanceListing}</div>
-                </div>
-              )}
-              {grant.phaseAtHand && (
-                <div>
-                  <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Phase at Hand</div>
-                  <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.phaseAtHand}</div>
-                </div>
-              )}
-              {grant.awardCeilingFloor && (
-                <div>
-                  <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Award Ceiling / Floor</div>
-                  <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.awardCeilingFloor}</div>
-                </div>
-              )}
-              {grant.eligibleApplicantsText && (
-                <div>
-                  <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Eligible Applicants</div>
-                  <div className="text-sm text-gray-800 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.eligibleApplicantsText}</div>
-                </div>
-              )}
-              {grant.totalFundingPool && (
-                <div>
-                  <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Total Funding Pool</div>
-                  <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.totalFundingPool}</div>
-                </div>
-              )}
-              {grant.closingInfoText && (
-                <div>
-                  <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Closing Info</div>
-                  <div className="text-sm text-gray-800 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.closingInfoText}</div>
-                </div>
-              )}
-              {grant.expectedAwards && (
-                <div>
-                  <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Expected Number of Awards</div>
-                  <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.expectedAwards}</div>
-                </div>
-              )}
-              {grant.matchCostShare && (
-                <div>
-                  <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Match / Cost Share</div>
-                  <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.matchCostShare}</div>
-                </div>
-              )}
-              {grant.keyDeadline && (
-                <div className="col-span-2">
-                  <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Key Deadline</div>
-                  <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.keyDeadline}</div>
-                </div>
-              )}
-            </div>
-
-            {/* Contact */}
-            {grant.contact && (
-              <div className="mt-8 pt-6 border-t border-gray-100">
-                <div className="text-xs text-gray-400 mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>Contact</div>
-                <div className="grid grid-cols-2 gap-x-10 gap-y-3">
-                  <div>
-                    {grant.contact.role && (
-                      <div className="text-sm font-medium text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.contact.role}</div>
-                    )}
-                    {grant.contact.organization && (
-                      <div className="text-sm text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.contact.organization}</div>
-                    )}
-                    {grant.contact.phone && (
-                      <div className="text-sm text-gray-600 mt-2" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.contact.phone}</div>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    {grant.contact.email && (
-                      <div>
-                        <div className="text-xs text-gray-400 mb-0.5" style={{ fontFamily: 'Cabin, sans-serif' }}>Email</div>
-                        <a href={`mailto:${grant.contact.email}`} className="text-sm text-teal-600 hover:underline" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                          {grant.contact.email}
-                        </a>
-                      </div>
-                    )}
-                    {grant.contact.website && (
-                      <div>
-                        <div className="text-xs text-gray-400 mb-0.5" style={{ fontFamily: 'Cabin, sans-serif' }}>Website</div>
-                        <a href={grant.contact.website} target="_blank" rel="noopener noreferrer" className="text-sm text-teal-600 hover:underline flex items-center gap-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                          Visit program website
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </section>
-        </div>
-
-        {/* Right Column - Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-6 space-y-4">
-
-            {/* On This Page Navigation */}
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                On This Page
-              </h3>
-              <nav className="space-y-0.5">
-                {[
-                  { id: 'overview', label: 'Overview' },
-                  { id: 'assessment-criteria', label: 'Assessment Criteria' },
-                  { id: 'grant-details', label: 'Grant Details' },
-                ].map((section) => (
-                  <button
-                    key={section.id}
-                    onClick={() => scrollToSection(section.id)}
-                    className={`w-full text-left text-sm py-2 px-3 rounded-lg transition-all duration-150 group flex items-center gap-2 ${
-                      activeSection === section.id
-                        ? 'text-teal-700 font-medium bg-teal-50'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                    }`}
-                    style={{ fontFamily: 'Cabin, sans-serif' }}
-                  >
-                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors ${
-                      activeSection === section.id ? 'bg-teal-500' : 'bg-gray-300 group-hover:bg-gray-400'
-                    }`} />
-                    {section.label}
-                  </button>
-                ))}
-              </nav>
-            </div>
-
-            {/* Grant Image Placeholder */}
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              {grant.image ? (
-                <ImageWithFallback
-                  src={grant.image}
-                  alt={grant.title}
-                  className="w-full object-cover"
-                  style={{ height: '140px' }}
-                />
-              ) : (
-                <div className="flex items-center justify-center bg-gray-50" style={{ height: '140px' }}>
-                  <div className="flex flex-col items-center gap-2 text-gray-300">
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="4" y="8" width="40" height="32" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
-                      <circle cx="16" cy="20" r="4" stroke="currentColor" strokeWidth="2" fill="none"/>
-                      <path d="M4 36L14 26L20 32L30 22L44 36" stroke="currentColor" strokeWidth="2" fill="none"/>
-                    </svg>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Quick Stats */}
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                Quick Stats
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>Location</span>
-                  <span className="text-sm font-medium text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    {grant.region || grant.location}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>Status</span>
-                  <Badge className={`text-xs px-2 py-0.5 ${
-                    grant.status === "Open"
-                      ? "bg-green-50 text-green-700 border-green-200"
-                      : grant.status === "Pending"
-                      ? "bg-blue-50 text-blue-700 border-blue-200"
-                      : "bg-gray-100 text-gray-600 border-gray-200"
-                  }`}>
-                    {grant.status}
-                  </Badge>
-                </div>
-                {grant.closeDate && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>Closing Date</span>
-                    <span className="text-sm font-medium text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.closeDate}
-                    </span>
-                  </div>
-                )}
-                {grant.recipients && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>Recipients</span>
-                    <span className="text-sm font-medium text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.recipients}</span>
-                  </div>
-                )}
-                {grant.poolAmount && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>Total Pool</span>
-                    <span className="text-sm font-medium text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      ${(grant.poolAmount / 1000000).toFixed(0)}M
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Documents */}
-            {grant.documents && grant.documents.length > 0 && (
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-700" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    Documents ({grant.documents.length})
+            {/* Public View: Sign Up CTA */}
+            {isPublicView && (
+              <div className="bg-white rounded-xl border border-gray-200 p-8">
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3" style={{ fontFamily: 'Lustria, serif' }}>
+                    Ready to Apply for This Grant?
                   </h3>
-                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
+                  <p className="text-gray-700 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                    Join Great Grants to unlock AI-powered application assistance, track deadlines, and manage all your grants in one place—completely free.
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  {grant.documents.map((doc, idx) => (
-                    <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer">
-                      <div className="w-8 h-8 rounded bg-red-50 flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-4 h-4 text-red-500" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                  {[
+                    { icon: <Zap className="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" />, title: "AI-Powered Drafting", desc: "Get instant, personalized application content tailored to your organization" },
+                    { icon: <TrendingUp className="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" />, title: "Progress Tracking", desc: "Never miss a deadline with smart notifications and milestone tracking" },
+                    { icon: <Target className="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" />, title: "Smart Matching", desc: "Discover grants perfectly aligned with your mission and impact" },
+                  ].map(({ icon, title, desc }) => (
+                    <div key={title} className="flex items-start gap-3">
+                      {icon}
+                      <div>
+                        <h4 className="font-semibold text-gray-900 text-sm mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>{title}</h4>
+                        <p className="text-sm text-gray-600 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>{desc}</p>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium text-gray-800 truncate" style={{ fontFamily: 'Cabin, sans-serif' }}>{doc.name}</div>
-                        <div className="text-xs text-gray-400" style={{ fontFamily: 'Cabin, sans-serif' }}>{doc.type} · {doc.size}</div>
-                      </div>
-                      <Download className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                     </div>
                   ))}
                 </div>
+                <div className="flex items-center gap-3">
+                  <Button className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                    Create Account <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                  <Button variant="outline" className="bg-white font-semibold border-gray-300" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                    Sign In
+                  </Button>
+                </div>
               </div>
             )}
 
-            {/* Grant Details Card - REMOVED (now a main content section) */}
-            {false && (
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <div className="space-y-4">
-                {/* Category */}
-                <div className="flex items-start justify-between">
-                  <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    Category
-                  </span>
-                  <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    {grant.category}
-                  </span>
+            {/* Assessment Criteria */}
+            {grant.mainCriteria && grant.mainCriteria.length > 0 && (
+              <section id="assessment-criteria" className="scroll-mt-24 bg-white rounded-xl border border-gray-200 p-6">
+                <div className="mb-5">
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Lustria, serif' }}>
+                    Main Assessment Criteria
+                  </h2>
+                  <div className="w-10 h-[3px] bg-teal-500 rounded-full" />
                 </div>
+                <p className="text-gray-700 mb-5 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                  The main assessment criteria include:
+                </p>
+                <ul className="space-y-3 mb-5">
+                  {grant.mainCriteria.map((criteria, idx) => (
+                    <li
+                      key={idx}
+                      className="flex items-start gap-4 p-4 rounded-lg border border-gray-200 bg-gradient-to-r from-gray-50 to-white"
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: '#cbfbf1' }}>
+                        <Award className="w-4 h-4 text-teal-600" />
+                      </div>
+                      <span className="text-gray-900 leading-relaxed text-base font-medium" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                        {criteria}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-sm text-gray-500 italic border-t border-gray-100 pt-4" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                  Please refer to the Program Solicitation for the complete list of the assessment criteria.
+                </p>
+              </section>
+            )}
 
-                {/* Location */}
-                <div className="flex items-start justify-between">
-                  <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    Location
-                  </span>
-                  <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    {grant.location}
-                  </span>
-                </div>
-
-                {/* Region */}
-                {grant.region && (
-                  <div className="flex items-start justify-between">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Region
-                    </span>
-                    <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.region}
-                    </span>
+            {/* Grant Details */}
+            <section id="grant-details" className="scroll-mt-24 bg-white rounded-xl border border-gray-200 p-6">
+              <div className="mb-5">
+                <h2 className="text-2xl font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Lustria, serif' }}>
+                  Grant Details
+                </h2>
+                <div className="w-10 h-[3px] bg-teal-500 rounded-full" />
+              </div>
+              <div className="grid grid-cols-2 gap-x-10 gap-y-5">
+                {grant.opportunityNumber && (
+                  <div>
+                    <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Opportunity Number</div>
+                    <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.opportunityNumber}</div>
                   </div>
                 )}
-
-                {/* Max Funding */}
-                <div className="flex items-start justify-between">
-                  <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    Max Funding
-                  </span>
-                  <span className="text-sm text-gray-900 text-right font-semibold" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    ${grant.maxAmount.toLocaleString()}
-                  </span>
-                </div>
-
-                {/* Min Funding */}
-                {grant.minAmount && (
-                  <div className="flex items-start justify-between">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Min Funding
-                    </span>
-                    <span className="text-sm text-gray-900 text-right font-semibold" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      ${grant.minAmount.toLocaleString()}
-                    </span>
+                {grant.fundingInstrument && (
+                  <div>
+                    <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Funding Instrument</div>
+                    <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.fundingInstrument}</div>
                   </div>
                 )}
-
-                {/* No. of recipients */}
-                {grant.recipients && (
-                  <div className="flex items-start justify-between">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      No. of recipients
-                    </span>
-                    <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.recipients}
-                    </span>
+                {grant.fundingAgency && (
+                  <div>
+                    <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Funding Agency</div>
+                    <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.fundingAgency}</div>
                   </div>
                 )}
-
-                {/* Status */}
-                <div className="flex items-start justify-between">
-                  <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    Status
-                  </span>
-                  <Badge
-                    className={`text-xs ${
-                      grant.status === "Open"
-                        ? "bg-green-50 text-green-700 border-green-200"
-                        : grant.status === "Pending"
-                        ? "bg-blue-50 text-blue-700 border-blue-200"
-                        : "bg-gray-100 text-gray-600 border-gray-200"
-                    }`}
-                  >
-                    {grant.status === "Open" ? "Opening" : grant.status}
-                  </Badge>
-                </div>
-
-                {/* Opening Date */}
-                {grant.openDate && (
-                  <div className="flex items-start justify-between">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Opening Date
-                    </span>
-                    <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.openDate} <span className="text-gray-500">3 weeks</span>
-                    </span>
+                {grant.projectPeriod && (
+                  <div>
+                    <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Project Period</div>
+                    <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.projectPeriod}</div>
                   </div>
                 )}
-
-                {/* Closing Date */}
-                {grant.closeDate && (
-                  <div className="flex items-start justify-between" id="dates">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Closing Date
-                    </span>
-                    <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.closeDate} <span className="text-gray-500">3 months</span>
-                    </span>
+                {grant.assistanceListing && (
+                  <div>
+                    <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Assistance Listing (CFDA)</div>
+                    <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.assistanceListing}</div>
                   </div>
                 )}
-
-                {/* Closing Info */}
-                {grant.closingInfo && (
-                  <div className="pt-2 border-t border-gray-200">
-                    <span className="text-sm font-medium text-gray-600 block mb-2" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Closing Info
-                    </span>
-                    <p className="text-sm text-gray-700 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.closingInfo}
-                    </p>
+                {grant.phaseAtHand && (
+                  <div>
+                    <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Phase at Hand</div>
+                    <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.phaseAtHand}</div>
                   </div>
                 )}
-
-                {/* Total Funding Pool */}
-                {grant.poolAmount && (
-                  <div className="flex items-start justify-between pt-2 border-t border-gray-200">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Total Funding Pool
-                    </span>
-                    <span className="text-sm text-gray-900 text-right font-semibold" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      ${(grant.poolAmount / 1000000).toFixed(0)}M
-                    </span>
+                {grant.awardCeilingFloor && (
+                  <div>
+                    <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Award Ceiling / Floor</div>
+                    <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.awardCeilingFloor}</div>
                   </div>
                 )}
-
-                {/* Competitive */}
-                {grant.competitive !== undefined && (
-                  <div className="flex items-start justify-between">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Competitive
-                    </span>
-                    <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.competitive ? "Yes" : "No"}
-                    </span>
+                {grant.eligibleApplicantsText && (
+                  <div>
+                    <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Eligible Applicants</div>
+                    <div className="text-sm text-gray-800 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.eligibleApplicantsText}</div>
                   </div>
                 )}
-
-                {/* Gender */}
-                {grant.gender && (
-                  <div className="flex items-start justify-between">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Gender
-                    </span>
-                    <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.gender}
-                    </span>
+                {grant.totalFundingPool && (
+                  <div>
+                    <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Total Funding Pool</div>
+                    <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.totalFundingPool}</div>
                   </div>
                 )}
-
-                {/* Age */}
-                {grant.age && (
-                  <div className="flex items-start justify-between">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Age
-                    </span>
-                    <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.age}
-                    </span>
+                {grant.closingInfoText && (
+                  <div>
+                    <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Closing Info</div>
+                    <div className="text-sm text-gray-800 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.closingInfoText}</div>
                   </div>
                 )}
-
-                {/* Applicable to churches? */}
-                {grant.applicableToChurches !== undefined && (
-                  <div className="flex items-start justify-between">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Applicable to churches?
-                    </span>
-                    <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.applicableToChurches ? "Yes" : "No"}
-                    </span>
+                {grant.expectedAwards && (
+                  <div>
+                    <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Expected Number of Awards</div>
+                    <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.expectedAwards}</div>
                   </div>
                 )}
+                {grant.matchCostShare && (
+                  <div>
+                    <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Match / Cost Share</div>
+                    <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.matchCostShare}</div>
+                  </div>
+                )}
+                {grant.keyDeadline && (
+                  <div className="col-span-2">
+                    <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Key Deadline</div>
+                    <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.keyDeadline}</div>
+                  </div>
+                )}
+              </div>
 
-                {/* Eligible organization type(s) */}
-                {grant.organizationTypes && grant.organizationTypes.length > 0 && (
-                  <div className="pt-2 border-t border-gray-200">
-                    <span className="text-sm font-medium text-gray-600 block mb-2" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Eligible organization type(s)
-                    </span>
-                    <div className="text-sm text-gray-700 leading-relaxed space-y-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.organizationTypes.map((type, idx) => (
-                        <div key={idx}>{type}</div>
-                      ))}
+              {/* Contact */}
+              {grant.contact && (
+                <div className="mt-8 pt-6 border-t border-gray-100">
+                  <div className="text-xs text-gray-400 mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>Contact</div>
+                  <div className="grid grid-cols-2 gap-x-10 gap-y-3">
+                    <div>
+                      {grant.contact.role && (
+                        <div className="text-sm font-medium text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.contact.role}</div>
+                      )}
+                      {grant.contact.organization && (
+                        <div className="text-sm text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.contact.organization}</div>
+                      )}
+                      {grant.contact.phone && (
+                        <div className="text-sm text-gray-600 mt-2" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.contact.phone}</div>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      {grant.contact.email && (
+                        <div>
+                          <div className="text-xs text-gray-400 mb-0.5" style={{ fontFamily: 'Cabin, sans-serif' }}>Email</div>
+                          <a href={`mailto:${grant.contact.email}`} className="text-sm text-teal-600 hover:underline" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                            {grant.contact.email}
+                          </a>
+                        </div>
+                      )}
+                      {grant.contact.website && (
+                        <div>
+                          <div className="text-xs text-gray-400 mb-0.5" style={{ fontFamily: 'Cabin, sans-serif' }}>Website</div>
+                          <a href={grant.contact.website} target="_blank" rel="noopener noreferrer" className="text-sm text-teal-600 hover:underline flex items-center gap-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                            Visit program website
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
-                )}
-
-                {/* Sector/Subsector */}
-                {grant.sectorSubsector && (
-                  <div className="flex items-start justify-between pt-2 border-t border-gray-200">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Sector/Subsector
-                    </span>
-                    <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.sectorSubsector}
-                    </span>
-                  </div>
-                )}
-
-                {/* Community/Services */}
-                {grant.communityServices && (
-                  <div className="flex items-start justify-between">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Community/Services
-                    </span>
-                    <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.communityServices}
-                    </span>
-                  </div>
-                )}
-
-                {/* Health */}
-                {grant.health && (
-                  <div className="flex items-start justify-between">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Health
-                    </span>
-                    <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.health}
-                    </span>
-                  </div>
-                )}
-
-                {/* Multicultural */}
-                {grant.multicultural && (
-                  <div className="flex items-start justify-between">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Multicultural
-                    </span>
-                    <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.multicultural}
-                    </span>
-                  </div>
-                )}
-
-                {/* Activities */}
-                {grant.activities && (
-                  <div className="flex items-start justify-between pt-2 border-t border-gray-200">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Activities
-                    </span>
-                    <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.activities}
-                    </span>
-                  </div>
-                )}
-
-                {/* events.gov Activities */}
-                {grant.eventsGovActivities && (
-                  <div className="flex items-start justify-between">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      events.gov Activities
-                    </span>
-                    <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.eventsGovActivities}
-                    </span>
-                  </div>
-                )}
-
-                {/* Industries */}
-                {grant.industries && (
-                  <div className="flex items-start justify-between">
-                    <span className="text-sm font-medium text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      Industries
-                    </span>
-                    <span className="text-sm text-gray-900 text-right" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      {grant.industries}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-            )}
+                </div>
+              )}
+            </section>
           </div>
         </div>
       </div>
 
-      {/* View Mode Toggle - Developer Tool */}
-      <div className="mt-8 pt-6 border-t border-gray-200">
+      {/* View Mode Toggle — Developer Tool */}
+      <div className="max-w-7xl mx-auto px-6 pb-8">
         <div className="flex items-center justify-center gap-3">
-          <span className="text-sm text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-            Preview Mode:
-          </span>
+          <span className="text-sm text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>Preview Mode:</span>
           <button
             onClick={() => setIsPublicView(false)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              !isPublicView
-                ? 'bg-teal-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${!isPublicView ? 'bg-teal-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`}
             style={{ fontFamily: 'Cabin, sans-serif' }}
           >
             <Lock className="w-4 h-4 inline-block mr-1.5" />
@@ -1431,11 +1000,7 @@ export function GrantDetailPage() {
           </button>
           <button
             onClick={() => setIsPublicView(true)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              isPublicView
-                ? 'bg-teal-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${isPublicView ? 'bg-teal-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`}
             style={{ fontFamily: 'Cabin, sans-serif' }}
           >
             <Eye className="w-4 h-4 inline-block mr-1.5" />
@@ -1444,12 +1009,14 @@ export function GrantDetailPage() {
         </div>
       </div>
 
-      {showLoadingModal && <ApplicationLoadingModal 
-        isOpen={showLoadingModal}
-        grantTitle={grant.title}
-        grantId={grant.id}
-      />}
-      <ShareGrantModal 
+      {showLoadingModal && (
+        <ApplicationLoadingModal
+          isOpen={showLoadingModal}
+          grantTitle={grant.title}
+          grantId={grant.id}
+        />
+      )}
+      <ShareGrantModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         grant={grant}
