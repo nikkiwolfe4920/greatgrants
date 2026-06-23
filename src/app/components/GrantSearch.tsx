@@ -902,7 +902,7 @@ export function GrantSearch() {
   const totalFunding = filteredGrants.reduce((sum, g) => sum + (g.poolAmount || g.maxAmount), 0);
 
   return (
-    <div className="max-w-[1400px] mx-auto p-6">
+    <div className="max-w-[1400px] mx-auto p-6 overflow-x-hidden">
       {/* Breadcrumb */}
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
@@ -1305,7 +1305,7 @@ export function GrantSearch() {
             </div>
           </div>
         ) : (
-          <div className={viewMode === "grid" ? "grid grid-cols-2 gap-4" : "space-y-3"}>
+          <div className={viewMode === "grid" ? "grid grid-cols-2 gap-4" : "space-y-3 max-w-[960px]"}>
             {filteredGrants.map((grant) => {
               const matchInfo = getMatchLabel(grant.relevance);
               const matchBreakdown = getMatchBreakdown(grant.id, grant.relevance);
@@ -1348,7 +1348,7 @@ export function GrantSearch() {
                     {/* Header */}
                     <div className="mb-3">
                       <div className="flex items-start justify-between gap-4 mb-2">
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <h3 className={`font-semibold text-gray-900 leading-snug group-hover:text-teal-700 transition-colors mb-2 ${
@@ -1357,7 +1357,7 @@ export function GrantSearch() {
                                 {grant.title}
                               </h3>
                             </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-md z-50">
+                            <TooltipContent side="top" sideOffset={4} className="max-w-md z-50">
                               <p className="text-sm leading-relaxed">{grant.title}</p>
                             </TooltipContent>
                           </Tooltip>
