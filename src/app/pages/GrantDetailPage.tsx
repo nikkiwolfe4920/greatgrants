@@ -85,6 +85,60 @@ interface Grant {
 // Mock data - same as in GrantSearch
 const mockGrants: Grant[] = [
   {
+    id: "nasa-roses",
+    title: "National Aeronautics and Space Administration (NASA) – Research Opportunities in Space and Earth Sciences (ROSES): Solar System Science",
+    description: "This program aims to provide funding for research, data analysis, data preservation, and tools that support investigations to help ascertain the content, origin, and evolution of the Solar System and the search for life's origin, evolution, distribution, and future in the universe.",
+    status: "Open",
+    maxAmount: 26000000,
+    minAmount: 0,
+    poolAmount: 26000000,
+    location: "US",
+    locationType: "Federal",
+    region: "National",
+    who: "Domestic and foreign organizations of every type",
+    difficulty: "Expert Assistance",
+    relevance: 98.5,
+    category: "Government",
+    openDate: "Jan 1, 2026",
+    closeDate: "Aug 1, 2026",
+    closingInfo: "Proposals may be submitted at any time through 1 August 2026, but will be reviewed a few times a year: Summer (On/before 31 March 2026) and Winter (On/before 1 August 2026).",
+    image: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+    sectors: ["Space Science", "Planetary Science", "Astrobiology"],
+    favoriteCount: 12,
+    recipients: 100,
+    competitive: true,
+    gender: "Any",
+    age: "Any",
+    applicableToChurches: false,
+    organizationTypes: ["Domestic organizations", "Foreign organizations", "Government entities", "Private entities", "For-profit organizations", "Not-for-profit organizations"],
+    sectorSubsector: "Space & Earth Sciences",
+    communityServices: "Research & Development",
+    health: "N/A",
+    multicultural: "Any",
+    activities: "Research, Data Analysis, Data Preservation",
+    eventsGovActivities: "Scientific Research",
+    industries: "Aerospace & Space Exploration",
+    overview: "This program aims to provide funding for research, data analysis, data preservation, and tools that support investigations to help ascertain the content, origin, and evolution of the Solar System and the search for life's origin, evolution, distribution, and future in the universe.\n\nA wide range of award sizes is expected, depending on the nature and scope of the work proposed. Grants available up to:\n\n• Less than $150,000 per year for the small category\n• $150,000 and $250,000 for the medium category\n• More than $250,000 for the large category\n\nIt is anticipated that most funded awards will be of the small to medium size, and only a few awards of the largest size may be funded.\n\nThe maximum duration of an award is four years. However, proposals for one- to two-year pilot studies, to demonstrate or develop a new technique or a new application of an established technique, are encouraged.\n\nA total funding pool of $26 million is available to fund up to 100 awards.\n\nProposals may be submitted at any time through 1 August 2026, but will be reviewed a few times a year:\n\n• Summer: On/before 31 March 2026\n• Winter: On/before 1 August 2026",
+    eligibleActivities: [
+      "Lunar science",
+      "Mars science",
+      "Astrobiology",
+      "Please refer to the Program Solicitation for the complete list of the eligible projects."
+    ],
+    whoCanApply: [
+      "Domestic and foreign organizations of every type — government and private, for-profit and not-for-profit.",
+      "Proposers must be affiliated with an institution at nspires.nasaprs.com/ and, in general, NASA provides funding only to U.S. institutions.",
+      "Organizations outside the U.S. may propose on the basis of a policy of no-exchange-of-funds; consult the NASA Grant and Cooperative Agreement Manual (GCAM) for specific details.",
+      "Some NRAs may be issued jointly with a non-U.S. organization, e.g., those concerning guest observing programs for jointly sponsored space science programs, that will contain additional special guidelines for non-U.S. participants.",
+      "Please refer to the Summary of Solicitation for the complete eligibility requirements."
+    ],
+    mainCriteria: [
+      "The merit of the proposed project, including, but not limited to, the scientific rationale and the expected significance and/or impact of the proposed work (50%).",
+      "Overall technical merit of the proposed work, including, but not limited to, the merit of the management plan and project timeline for carrying out the work and the effectiveness and resilience of the proposed experimental designs, methods, techniques, and approaches for achieving the proposed goals and/or objectives (30%).",
+      "The extent to which the proposal demonstrates alignment with PSD priorities (20%)."
+    ]
+  },
+  {
     id: "1",
     title: "Faith-Based Community Development Grants",
     description: "This program supports faith-based organizations in providing community services, including food banks, homeless shelters, youth mentorship programs, and community health initiatives.",
@@ -185,6 +239,28 @@ const mockGrants: Grant[] = [
   }
 ];
 
+const renderOverview = (text: string) => {
+  if (!text) return null;
+  const paragraphs = text.split('\n\n');
+  return paragraphs.map((para, i) => {
+    const lines = para.split('\n');
+    const hasBullets = lines.some(l => l.startsWith('•'));
+    if (hasBullets) {
+      return (
+        <ul key={i} className="space-y-1.5 mb-4 ml-1">
+          {lines.filter(l => l.startsWith('•')).map((line, j) => (
+            <li key={j} className="flex items-start gap-2.5">
+              <span className="text-teal-600 mt-0.5 flex-shrink-0 font-bold">•</span>
+              <span className="text-gray-700" style={{ fontFamily: 'Cabin, sans-serif' }}>{line.slice(1).trim()}</span>
+            </li>
+          ))}
+        </ul>
+      );
+    }
+    return <p key={i} className="text-gray-700 leading-relaxed mb-4" style={{ fontFamily: 'Cabin, sans-serif' }}>{para}</p>;
+  });
+};
+
 export function GrantDetailPage() {
   const { id } = useParams();
   const grant = mockGrants.find(g => g.id === id);
@@ -193,6 +269,7 @@ export function GrantDetailPage() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [isPublicView, setIsPublicView] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [activeSection, setActiveSection] = useState('overview');
   const triggerRef = useRef<HTMLDivElement>(null);
 
   // Track grant as recently viewed
@@ -275,7 +352,6 @@ export function GrantDetailPage() {
     const handleScroll = () => {
       if (triggerRef.current) {
         const triggerBottom = triggerRef.current.getBoundingClientRect().bottom;
-        // Sticky activates when the horizontal rule (trigger) scrolls past the top
         setIsSticky(triggerBottom <= 0);
       }
     };
@@ -283,6 +359,31 @@ export function GrantDetailPage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    const sectionIds = ['overview', 'eligible-activities', 'who-can-apply', 'main-criteria'];
+    const observers: IntersectionObserver[] = [];
+    sectionIds.forEach((sectionId) => {
+      const el = document.getElementById(sectionId);
+      if (!el) return;
+      const observer = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveSection(sectionId); },
+        { rootMargin: '-10% 0px -70% 0px' }
+      );
+      observer.observe(el);
+      observers.push(observer);
+    });
+    return () => observers.forEach(o => o.disconnect());
+  }, [grant]);
+
+  const scrollToSection = (sectionId: string) => {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      const offset = 80;
+      const top = el.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+  };
 
   if (!grant) {
     return (
@@ -310,11 +411,11 @@ export function GrantDetailPage() {
       <AnimatePresence>
         {isSticky && (
           <motion.div
-            initial={{ y: -100, opacity: 0 }}
+            initial={{ y: -72, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -100, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-            className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm"
+            exit={{ y: -72, opacity: 0 }}
+            transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+            className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm"
           >
             <div className="max-w-7xl mx-auto px-6 py-3">
               <div className="flex items-center justify-between">
@@ -450,40 +551,30 @@ export function GrantDetailPage() {
         </div>
       </div>
 
-      {/* Jump to Navigation */}
-      <div 
-        ref={triggerRef}
-        className="flex items-center gap-6 mb-6 text-sm pb-4 border-b border-gray-200"
-      >
-        <span className="text-gray-500 font-medium">Jump to</span>
-        <a href="#who-can-apply" className="text-teal-600 hover:text-teal-700 font-medium">
-          Who can Apply
-        </a>
-        <a href="#main-criteria" className="text-teal-600 hover:text-teal-700 font-medium">
-          Main Assessment Criteria
-        </a>
-        <a href="#dates" className="text-teal-600 hover:text-teal-700 font-medium">
-          Dates
-        </a>
-        <a href="#downloads" className="text-teal-600 hover:text-teal-700 font-medium">
-          Downloads[?]
-        </a>
-        <a href="#contact" className="text-teal-600 hover:text-teal-700 font-medium">
-          Contact
-        </a>
-      </div>
+      {/* Trigger ref — sticky header activates when this leaves viewport */}
+      <div ref={triggerRef} />
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-8">
           {/* Overview */}
-          <section>
-            <h2 className="text-lg font-semibold text-gray-900 mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
+          <section id="overview" className="scroll-mt-20">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Cabin, sans-serif' }}>
               Overview
             </h2>
-            <div className="text-gray-700 leading-relaxed space-y-4" style={{ fontFamily: 'Cabin, sans-serif' }}>
-              <p>{grant.overview || grant.description}</p>
+            <div className="text-gray-700 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
+              {grant.image && (
+                <div className="float-right ml-6 mb-4 w-52 flex-shrink-0 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                  <ImageWithFallback
+                    src={grant.image}
+                    alt={grant.title}
+                    className="w-full h-36 object-cover"
+                  />
+                </div>
+              )}
+              {renderOverview(grant.overview || grant.description)}
+              <div className="clear-both" />
             </div>
           </section>
 
@@ -592,67 +683,76 @@ export function GrantDetailPage() {
 
           {/* Eligible Activities */}
           {grant.eligibleActivities && grant.eligibleActivities.length > 0 && (
-            <section>
-              <h3 className="text-base font-semibold text-gray-900 mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
+            <section id="eligible-activities" className="scroll-mt-20">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Cabin, sans-serif' }}>
                 Eligible Activities
-              </h3>
+              </h2>
               <p className="text-gray-700 mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                Eligible projects must:
+                Eligible projects must address a priority of the Planetary Science Division, which includes:
               </p>
-              <ul className="space-y-2">
-                {grant.eligibleActivities.map((activity, idx) => (
+              <ul className="space-y-2 mb-4">
+                {grant.eligibleActivities.filter(a => !a.startsWith('Please refer')).map((activity, idx) => (
                   <li key={idx} className="flex items-start gap-3">
-                    <span className="text-[#9810FA] mt-1.5 flex-shrink-0">•</span>
+                    <span className="text-teal-600 mt-1.5 flex-shrink-0 font-bold">•</span>
                     <span className="text-gray-700" style={{ fontFamily: 'Cabin, sans-serif' }}>
                       {activity}
                     </span>
                   </li>
                 ))}
               </ul>
+              {grant.eligibleActivities.filter(a => a.startsWith('Please refer')).map((note, idx) => (
+                <p key={idx} className="text-sm text-gray-500 italic" style={{ fontFamily: 'Cabin, sans-serif' }}>{note}</p>
+              ))}
             </section>
           )}
 
           {/* Who Can Apply */}
           {grant.whoCanApply && grant.whoCanApply.length > 0 && (
-            <section id="who-can-apply">
-              <h2 className="text-lg font-semibold text-gray-900 mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                Who Can Apply ?
+            <section id="who-can-apply" className="scroll-mt-20">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                Who Can Apply?
               </h2>
               <p className="text-gray-700 mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                Eligible applicants include:
+                Eligible applicants include organizations of every type:
               </p>
-              <ul className="space-y-2">
-                {grant.whoCanApply.map((who, idx) => (
+              <ul className="space-y-2 mb-3">
+                {grant.whoCanApply.filter(w => !w.startsWith('Please refer')).map((who, idx) => (
                   <li key={idx} className="flex items-start gap-3">
-                    <span className="text-[#9810FA] mt-1.5 flex-shrink-0">•</span>
+                    <span className="text-teal-600 mt-1.5 flex-shrink-0 font-bold">•</span>
                     <span className="text-gray-700" style={{ fontFamily: 'Cabin, sans-serif' }}>
                       {who}
                     </span>
                   </li>
                 ))}
               </ul>
+              {grant.whoCanApply.filter(w => w.startsWith('Please refer')).map((note, idx) => (
+                <p key={idx} className="text-sm text-gray-500 italic" style={{ fontFamily: 'Cabin, sans-serif' }}>{note}</p>
+              ))}
             </section>
           )}
 
           {/* Main Assessment Criteria */}
           {grant.mainCriteria && grant.mainCriteria.length > 0 && (
-            <section id="main-criteria">
-              <h2 className="text-lg font-semibold text-gray-900 mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
+            <section id="main-criteria" className="scroll-mt-20">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Cabin, sans-serif' }}>
                 Main Assessment Criteria
               </h2>
               <p className="text-gray-700 mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
                 The main assessment criteria include:
               </p>
-              <ul className="space-y-2">
+              <ul className="space-y-3 mb-4">
                 {grant.mainCriteria.map((criteria, idx) => (
                   <li key={idx} className="flex items-start gap-3">
-                    <span className="text-[#9810FA] mt-1.5 flex-shrink-0">•</span>
+                    <span className="text-teal-600 mt-1.5 flex-shrink-0 font-bold">•</span>
                     <span className="text-gray-700" style={{ fontFamily: 'Cabin, sans-serif' }}>
                       {criteria}
                     </span>
                   </li>
                 ))}
               </ul>
+              <p className="text-sm text-gray-500 italic" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                Please refer to the Program Solicitation for the complete list of the assessment criteria.
+              </p>
             </section>
           )}
         </div>
@@ -660,14 +760,79 @@ export function GrantDetailPage() {
         {/* Right Column - Sidebar */}
         <div className="lg:col-span-1">
           <div className="sticky top-6 space-y-4">
-            {/* Grant Image */}
-            {grant.image && (
-              <div className="rounded-xl overflow-hidden border border-gray-200">
-                <ImageWithFallback 
-                  src={grant.image} 
-                  alt={grant.title}
-                  className="w-full h-56 object-cover"
-                />
+
+            {/* On This Page Navigation */}
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                On This Page
+              </h3>
+              <nav className="space-y-0.5">
+                {[
+                  { id: 'overview', label: 'Overview' },
+                  { id: 'eligible-activities', label: 'Eligible Activities' },
+                  { id: 'who-can-apply', label: 'Who Can Apply' },
+                  { id: 'main-criteria', label: 'Main Assessment Criteria' },
+                ].map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => scrollToSection(section.id)}
+                    className={`w-full text-left text-sm py-1.5 px-2.5 rounded-md transition-all duration-150 ${
+                      activeSection === section.id
+                        ? 'text-teal-700 font-medium bg-teal-50 border-l-2 border-teal-500 pl-2'
+                        : 'text-gray-600 hover:text-teal-700 hover:bg-gray-50'
+                    }`}
+                    style={{ fontFamily: 'Cabin, sans-serif' }}
+                  >
+                    {section.label}
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            {/* Quick Stats */}
+            {grant.poolAmount && (
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                  Quick Stats
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <DollarSign className="w-4 h-4 text-teal-600 flex-shrink-0" />
+                    <div>
+                      <div className="text-xs text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>Total Funding Pool</div>
+                      <div className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                        ${(grant.poolAmount / 1000000).toFixed(0)}M
+                      </div>
+                    </div>
+                  </div>
+                  {grant.closeDate && (
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-4 h-4 text-teal-600 flex-shrink-0" />
+                      <div>
+                        <div className="text-xs text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>Closing Date</div>
+                        <div className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.closeDate}</div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3">
+                    <MapPin className="w-4 h-4 text-teal-600 flex-shrink-0" />
+                    <div>
+                      <div className="text-xs text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>Location</div>
+                      <div className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                        {grant.location}{grant.region ? ` · ${grant.region}` : ''}
+                      </div>
+                    </div>
+                  </div>
+                  {grant.recipients && (
+                    <div className="flex items-center gap-3">
+                      <Users className="w-4 h-4 text-teal-600 flex-shrink-0" />
+                      <div>
+                        <div className="text-xs text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>Expected Awards</div>
+                        <div className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>Up to {grant.recipients}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

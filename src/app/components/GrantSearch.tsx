@@ -33,6 +33,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import {
   Popover,
   PopoverContent,
@@ -93,6 +94,25 @@ interface Grant {
 }
 
 const mockGrants: Grant[] = [
+  {
+    id: "nasa-roses",
+    title: "National Aeronautics and Space Administration (NASA) – Research Opportunities in Space and Earth Sciences (ROSES): Solar System Science",
+    description: "This program aims to provide funding for research, data analysis, data preservation, and tools that support investigations to help ascertain the content, origin, and evolution of the Solar System and the search for life's origin, evolution, distribution, and future in the universe.",
+    status: "Open",
+    maxAmount: 26000000,
+    poolAmount: 26000000,
+    location: "US",
+    locationType: "Federal",
+    who: "Domestic and foreign organizations of every type",
+    difficulty: "Expert Assistance",
+    relevance: 98.5,
+    category: "Government",
+    openDate: "Jan 1, 2026",
+    closeDate: "Aug 1, 2026",
+    image: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+    sectors: ["Space Science", "Planetary Science", "Astrobiology"],
+    favoriteCount: 12
+  },
   {
     id: "1",
     title: "Faith-Based Community Development Grants",
@@ -1330,9 +1350,18 @@ export function GrantSearch() {
                     <div className="mb-3">
                       <div className="flex items-start justify-between gap-4 mb-2">
                         <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 leading-snug line-clamp-2 group-hover:text-teal-700 transition-colors mb-2">
-                            {grant.title}
-                          </h3>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <h3 className={`font-semibold text-gray-900 leading-snug group-hover:text-teal-700 transition-colors mb-2 ${
+                                viewMode === "list" ? "truncate max-w-xs" : "line-clamp-2"
+                              }`}>
+                                {grant.title}
+                              </h3>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-sm">
+                              <p>{grant.title}</p>
+                            </TooltipContent>
+                          </Tooltip>
                           <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
                             {grant.description}
                           </p>
