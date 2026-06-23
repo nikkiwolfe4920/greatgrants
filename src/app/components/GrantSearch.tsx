@@ -1348,20 +1348,20 @@ export function GrantSearch() {
                     {/* Header */}
                     <div className="mb-3">
                       <div className="flex items-start justify-between gap-4 mb-2">
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 overflow-hidden">
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <h3 className={`font-semibold text-gray-900 leading-snug group-hover:text-teal-700 transition-colors mb-2 ${
-                                viewMode === "list" ? "truncate w-full" : "line-clamp-2"
+                              <h3 className={`font-semibold text-gray-900 leading-snug group-hover:text-teal-700 transition-colors mb-2 cursor-default ${
+                                viewMode === "list" ? "truncate" : "line-clamp-2"
                               }`}>
                                 {grant.title}
                               </h3>
                             </TooltipTrigger>
-                            <TooltipContent side="top" sideOffset={4} className="max-w-md z-50">
+                            <TooltipContent side="top" sideOffset={6} className="max-w-sm">
                               <p className="text-sm leading-relaxed">{grant.title}</p>
                             </TooltipContent>
                           </Tooltip>
-                          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed overflow-hidden">
                             {grant.description}
                           </p>
                         </div>
