@@ -435,7 +435,7 @@ const [isSaved, setIsSaved] = useState(false);
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen" style={{ backgroundColor: '#F9FAFB' }}>
       {/* Sticky Header */}
       <AnimatePresence>
         {isSticky && (
