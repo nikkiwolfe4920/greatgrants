@@ -19,12 +19,7 @@ import {
   Sparkles,
   Building2,
   ArrowRight,
-  Zap,
-  TrendingUp,
   Shield,
-  Target,
-  Eye,
-  Lock,
   Bookmark,
   ChevronDown,
   ChevronUp,
@@ -328,8 +323,7 @@ export function GrantDetailPage() {
   const [isSticky, setIsSticky] = useState(false);
   const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [isPublicView, setIsPublicView] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+const [isSaved, setIsSaved] = useState(false);
   const [activeSection, setActiveSection] = useState('overview');
   const [docsExpanded, setDocsExpanded] = useState(true);
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -492,8 +486,11 @@ export function GrantDetailPage() {
                     <Share2 className="w-3.5 h-3.5 mr-1.5" />
                     Share
                   </Button>
-                  <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white font-semibold h-8 text-xs px-4" onClick={isPublicView ? undefined : handleStartApplication}>
-                    {isPublicView ? "Get Started" : "Start Application"}
+                  <Button variant="outline" size="sm" className="border-gray-200 text-gray-600 hover:bg-gray-50 h-8 text-xs px-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                    + Add Programs
+                  </Button>
+                  <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white font-semibold h-8 text-xs px-4" onClick={handleStartApplication}>
+                    Start Application
                     <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
                   </Button>
                 </div>
@@ -572,8 +569,8 @@ export function GrantDetailPage() {
                     <Share2 className="w-4 h-4 mr-2" />
                     Share
                   </Button>
-                  <Button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6" style={{ fontFamily: 'Cabin, sans-serif' }} onClick={isPublicView ? undefined : handleStartApplication}>
-                    {isPublicView ? "Get Started" : "Start Application"}
+                  <Button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6" style={{ fontFamily: 'Cabin, sans-serif' }} onClick={handleStartApplication}>
+                    Start Application
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -632,7 +629,7 @@ export function GrantDetailPage() {
 
               {/* On This Page Navigation */}
               <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3" style={{ fontFamily: 'Cabin, sans-serif' }}>
                   On This Page
                 </h3>
                 <nav className="space-y-0.5">
@@ -662,7 +659,7 @@ export function GrantDetailPage() {
 
               {/* Quick Stats */}
               <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                <h3 className="text-sm font-semibold text-gray-900 mb-4" style={{ fontFamily: 'Cabin, sans-serif' }}>
                   Quick Stats
                 </h3>
                 <div className="space-y-3">
@@ -761,13 +758,14 @@ export function GrantDetailPage() {
           <div className="lg:col-span-3 space-y-6">
 
             {/* Overview */}
-            <section id="overview" className="scroll-mt-24 bg-white rounded-xl border border-gray-200 p-6">
-              <div className="mb-5">
+            <section id="overview" className="scroll-mt-8">
+              <div className="mb-4">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Lustria, serif' }}>
                   Overview
                 </h2>
                 <div className="w-10 h-[3px] bg-teal-500 rounded-full" />
               </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
               <div className="text-gray-700 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
                 {grant.image && (
                   <div className="float-right ml-6 mb-4 rounded-xl overflow-hidden border border-gray-200 shadow-sm" style={{ width: '240px' }}>
@@ -782,54 +780,20 @@ export function GrantDetailPage() {
                 {renderOverview(grant.overview || grant.description)}
                 <div className="clear-both" />
               </div>
+              </div>
             </section>
 
-            {/* Public View: Sign Up CTA */}
-            {isPublicView && (
-              <div className="bg-white rounded-xl border border-gray-200 p-8">
-                <div className="mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3" style={{ fontFamily: 'Lustria, serif' }}>
-                    Ready to Apply for This Grant?
-                  </h3>
-                  <p className="text-gray-700 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    Join Great Grants to unlock AI-powered application assistance, track deadlines, and manage all your grants in one place—completely free.
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                  {[
-                    { icon: <Zap className="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" />, title: "AI-Powered Drafting", desc: "Get instant, personalized application content tailored to your organization" },
-                    { icon: <TrendingUp className="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" />, title: "Progress Tracking", desc: "Never miss a deadline with smart notifications and milestone tracking" },
-                    { icon: <Target className="w-6 h-6 text-teal-600 flex-shrink-0 mt-0.5" />, title: "Smart Matching", desc: "Discover grants perfectly aligned with your mission and impact" },
-                  ].map(({ icon, title, desc }) => (
-                    <div key={title} className="flex items-start gap-3">
-                      {icon}
-                      <div>
-                        <h4 className="font-semibold text-gray-900 text-sm mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>{title}</h4>
-                        <p className="text-sm text-gray-600 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>{desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex items-center gap-3">
-                  <Button className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    Create Account <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                  <Button variant="outline" className="bg-white font-semibold border-gray-300" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    Sign In
-                  </Button>
-                </div>
-              </div>
-            )}
 
             {/* Assessment Criteria */}
             {grant.mainCriteria && grant.mainCriteria.length > 0 && (
-              <section id="assessment-criteria" className="scroll-mt-24 bg-white rounded-xl border border-gray-200 p-6">
-                <div className="mb-5">
+              <section id="assessment-criteria" className="scroll-mt-8">
+                <div className="mb-4">
                   <h2 className="text-2xl font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Lustria, serif' }}>
                     Main Assessment Criteria
                   </h2>
                   <div className="w-10 h-[3px] bg-teal-500 rounded-full" />
                 </div>
+                <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <p className="text-gray-700 mb-5 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
                   The main assessment criteria include:
                 </p>
@@ -851,17 +815,19 @@ export function GrantDetailPage() {
                 <p className="text-sm text-gray-500 italic border-t border-gray-100 pt-4" style={{ fontFamily: 'Cabin, sans-serif' }}>
                   Please refer to the Program Solicitation for the complete list of the assessment criteria.
                 </p>
+                </div>
               </section>
             )}
 
             {/* Grant Details */}
-            <section id="grant-details" className="scroll-mt-24 bg-white rounded-xl border border-gray-200 p-6">
-              <div className="mb-5">
+            <section id="grant-details" className="scroll-mt-8">
+              <div className="mb-4">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Lustria, serif' }}>
                   Grant Details
                 </h2>
                 <div className="w-10 h-[3px] bg-teal-500 rounded-full" />
               </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
               <div className="grid grid-cols-2 gap-x-10 gap-y-5">
                 {grant.opportunityNumber && (
                   <div>
@@ -877,7 +843,7 @@ export function GrantDetailPage() {
                 )}
                 {grant.fundingAgency && (
                   <div>
-                    <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Funding Agency</div>
+                    <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>Department Name</div>
                     <div className="text-sm text-gray-800" style={{ fontFamily: 'Cabin, sans-serif' }}>{grant.fundingAgency}</div>
                   </div>
                 )}
@@ -981,31 +947,9 @@ export function GrantDetailPage() {
                   </div>
                 </div>
               )}
+              </div>
             </section>
           </div>
-        </div>
-      </div>
-
-      {/* View Mode Toggle — Developer Tool */}
-      <div className="max-w-7xl mx-auto px-6 pb-8">
-        <div className="flex items-center justify-center gap-3">
-          <span className="text-sm text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>Preview Mode:</span>
-          <button
-            onClick={() => setIsPublicView(false)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${!isPublicView ? 'bg-teal-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`}
-            style={{ fontFamily: 'Cabin, sans-serif' }}
-          >
-            <Lock className="w-4 h-4 inline-block mr-1.5" />
-            Authenticated View
-          </button>
-          <button
-            onClick={() => setIsPublicView(true)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${isPublicView ? 'bg-teal-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`}
-            style={{ fontFamily: 'Cabin, sans-serif' }}
-          >
-            <Eye className="w-4 h-4 inline-block mr-1.5" />
-            Public View
-          </button>
         </div>
       </div>
 
