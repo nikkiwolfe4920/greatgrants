@@ -286,7 +286,23 @@ export function SharedSidebar() {
             <div className="border-t border-gray-100" />
           </li>
 
-          {/* 4. All Applications — collapsible with count badge + caret */}
+          {/* Grant Search */}
+          <li>
+            <button
+              onClick={() => navigate("/search")}
+              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
+                isActive("/search") || isGrantDetailPage
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+              style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isActive("/search") || isGrantDetailPage ? 600 : 400, fontSize: '14px' }}
+            >
+              <Search className="w-4 h-4 shrink-0" />
+              <span className="flex-1 truncate">Grant Search</span>
+            </button>
+          </li>
+
+          {/* All Applications — collapsible with count badge + caret */}
           <li>
             <div
               className={`flex items-center gap-2 px-3 py-2 w-full rounded-md transition-colors ${
@@ -380,21 +396,6 @@ export function SharedSidebar() {
             )}
           </li>
 
-          {/* Grant Search — below All Applications */}
-          <li>
-            <button
-              onClick={() => navigate("/search")}
-              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
-                isActive("/search") || isGrantDetailPage
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-              style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isActive("/search") || isGrantDetailPage ? 600 : 400, fontSize: '14px' }}
-            >
-              <Search className="w-4 h-4 shrink-0" />
-              <span className="flex-1 truncate">Grant Search</span>
-            </button>
-          </li>
         </ul>
 
         <div className="mt-auto pt-3 pb-1" />
