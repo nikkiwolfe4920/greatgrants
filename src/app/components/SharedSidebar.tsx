@@ -90,6 +90,7 @@ export function SharedSidebar() {
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [isLoadingOrganization, setIsLoadingOrganization] = useState(false);
   const [publishedProjectsCount, setPublishedProjectsCount] = useState(0);
+  const [savedGrantsCount, setSavedGrantsCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
 
@@ -122,6 +123,16 @@ export function SharedSidebar() {
     updateProjectCount();
     window.addEventListener("projectsUpdated", updateProjectCount);
     return () => window.removeEventListener("projectsUpdated", updateProjectCount);
+  }, []);
+
+  useEffect(() => {
+    const updateSavedGrantsCount = () => {
+      const saved = JSON.parse(localStorage.getItem("savedGrants") || "[]");
+      setSavedGrantsCount(Array.isArray(saved) ? saved.length : 0);
+    };
+    updateSavedGrantsCount();
+    window.addEventListener("savedGrantsUpdated", updateSavedGrantsCount);
+    return () => window.removeEventListener("savedGrantsUpdated", updateSavedGrantsCount);
   }, []);
 
   const handleOrganizationSwitch = (orgName: string) => {
@@ -267,6 +278,11 @@ export function SharedSidebar() {
             </li>
           )}
 
+          {/* Divider */}
+          <li className="py-1.5">
+            <div className="border-t border-gray-100" />
+          </li>
+
           {/* 3. Saved Grants */}
           <li>
             <button
@@ -278,12 +294,12 @@ export function SharedSidebar() {
             >
               <Bookmark className="w-4 h-4 shrink-0" />
               <span className="flex-1 truncate">Saved Grants</span>
+              {savedGrantsCount > 0 && (
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0">
+                  {savedGrantsCount}
+                </span>
+              )}
             </button>
-          </li>
-
-          {/* Divider */}
-          <li className="py-1.5">
-            <div className="border-t border-gray-100" />
           </li>
 
           {/* Grant Search */}
