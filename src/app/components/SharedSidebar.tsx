@@ -24,7 +24,8 @@ import {
   Sparkles,
   Info,
   AlertCircle,
-  Bookmark
+  Bookmark,
+  Clock,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -411,8 +412,44 @@ export function SharedSidebar() {
         </div>
       </nav>
 
+      {/* Credits Usage Widget */}
+      <div className="px-4 pb-3">
+        <div className="bg-[#fffefa] rounded-lg p-3 w-full">
+          {/* Header: icon + count */}
+          <div className="flex items-center gap-1.5 mb-2">
+            <FileText className="w-3.5 h-3.5 text-[#101828] shrink-0" />
+            <span className="text-[12px] font-semibold text-[#101828] leading-4" style={{ fontFamily: 'Cabin, sans-serif' }}>
+              3 Applications Generated
+            </span>
+          </div>
+
+          {/* Progress bar */}
+          <div className="w-full h-1.5 rounded-full bg-[#fef7c3] mb-2">
+            <div className="h-1.5 rounded-full bg-[#ca8504]" style={{ width: '31%' }} />
+          </div>
+
+          {/* Remaining credits */}
+          <p className="text-[12px] font-semibold text-[#181d27] leading-4 mb-2" style={{ fontFamily: 'Cabin, sans-serif' }}>
+            0 remaining credits
+          </p>
+
+          {/* Divider + footer row */}
+          <div className="border-t border-[#feee95] pt-2 flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3 text-[#4a5565] shrink-0" />
+              <span className="text-[12px] text-[#4a5565] leading-4" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                Resets May 31st
+              </span>
+            </div>
+            <button className="text-[12px] font-semibold text-[#00786f] leading-4 hover:underline" style={{ fontFamily: 'Cabin, sans-serif' }}>
+              Manage Plan
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* User Profile */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="px-4 pb-4 border-t border-gray-200 pt-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-3 w-full hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors">
