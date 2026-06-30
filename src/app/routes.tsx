@@ -73,6 +73,10 @@ const routes = [
     element: <SubscribeAccountPage />,
   },
   {
+    path: "/design-system",
+    element: <DesignSystemPage />,
+  },
+  {
     path: "/onboarding",
     element: <OnboardingPage />,
   },
@@ -136,10 +140,6 @@ const routes = [
       {
         path: "my-grant-readiness",
         element: <MyGrantReadiness />,
-      },
-      {
-        path: "design-system",
-        element: <DesignSystemPage />,
       },
       {
         path: "*",
