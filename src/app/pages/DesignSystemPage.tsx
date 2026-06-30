@@ -33,6 +33,74 @@ import {
   AlertTriangle,
   Copy,
   Check,
+  // Navigation & UI Controls
+  ChevronRight,
+  ChevronLeft,
+  ChevronDown,
+  ChevronUp,
+  ArrowLeft,
+  ArrowRight,
+  Home,
+  MoreVertical,
+  MoreHorizontal,
+  X,
+  Plus,
+  // Status & Feedback
+  Circle,
+  // File & Document
+  FileText,
+  FileSpreadsheet,
+  Upload,
+  File,
+  Image,
+  // User & Organization
+  User,
+  UserCircle2,
+  UserPlus,
+  UserMinus,
+  Building2,
+  Users,
+  // Actions & Settings
+  Settings,
+  Trash2,
+  Lock,
+  Mail,
+  Bell,
+  Camera,
+  Globe,
+  Shield,
+  Bookmark,
+  Edit2,
+  Archive,
+  // Grants & Financial
+  Calendar,
+  Clock,
+  DollarSign,
+  MapPin,
+  Target,
+  Briefcase,
+  Search,
+  Star,
+  // Content Editing
+  Type,
+  Bold,
+  Italic,
+  Underline,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  List,
+  ListOrdered,
+  Link,
+  MessageSquare,
+  Send,
+  Undo2,
+  // UI Elements
+  FolderOpen,
+  FileCheck,
+  Sparkles,
+  LogOut,
+  Zap,
 } from "lucide-react";
 
 // ─── Data ───────────────────────────────────────────────────────────────────
@@ -189,6 +257,119 @@ const navItems = [
   { id: "tabs", label: "Tabs" },
   { id: "selects", label: "Selects" },
   { id: "progress", label: "Progress" },
+  { id: "iconography", label: "Iconography" },
+];
+
+// ─── Iconography Data ────────────────────────────────────────────────────────
+
+const iconGroups = [
+  {
+    category: "Navigation & UI Controls",
+    description: "Used for directional navigation, menus, and layout controls.",
+    icons: [
+      { name: "ChevronRight", component: ChevronRight, usage: "Next, expand, breadcrumb" },
+      { name: "ChevronLeft", component: ChevronLeft, usage: "Back, collapse" },
+      { name: "ChevronDown", component: ChevronDown, usage: "Dropdown trigger, accordion" },
+      { name: "ChevronUp", component: ChevronUp, usage: "Collapse, scroll up" },
+      { name: "ArrowLeft", component: ArrowLeft, usage: "Page back navigation" },
+      { name: "ArrowRight", component: ArrowRight, usage: "Page forward, continue" },
+      { name: "Home", component: Home, usage: "Home / dashboard link" },
+      { name: "MoreVertical", component: MoreVertical, usage: "Overflow / kebab menu" },
+      { name: "MoreHorizontal", component: MoreHorizontal, usage: "Overflow / ellipsis menu" },
+      { name: "X", component: X, usage: "Close, dismiss, remove tag" },
+      { name: "Plus", component: Plus, usage: "Add, create new item" },
+    ],
+  },
+  {
+    category: "Status & Feedback",
+    description: "Communicate success, errors, warnings, and neutral information.",
+    icons: [
+      { name: "CheckCircle2", component: CheckCircle2, usage: "Success, completed state" },
+      { name: "Check", component: Check, usage: "Checkbox selected, confirmed" },
+      { name: "AlertCircle", component: AlertCircle, usage: "Error, critical alert" },
+      { name: "AlertTriangle", component: AlertTriangle, usage: "Warning, caution" },
+      { name: "Info", component: Info, usage: "Informational tooltip or alert" },
+      { name: "Circle", component: Circle, usage: "Radio button, step indicator" },
+    ],
+  },
+  {
+    category: "File & Document",
+    description: "Represent documents, uploads, and file types.",
+    icons: [
+      { name: "FileText", component: FileText, usage: "Text documents, applications" },
+      { name: "FileSpreadsheet", component: FileSpreadsheet, usage: "Spreadsheet / CSV uploads" },
+      { name: "FileCheck", component: FileCheck, usage: "Reviewed / approved document" },
+      { name: "File", component: File, usage: "Generic file attachment" },
+      { name: "Image", component: Image, usage: "Image upload, logo" },
+      { name: "Upload", component: Upload, usage: "File upload action" },
+      { name: "FolderOpen", component: FolderOpen, usage: "Open folder / project" },
+      { name: "Archive", component: Archive, usage: "Archive application or record" },
+    ],
+  },
+  {
+    category: "User & Organization",
+    description: "Represent people, teams, and organizations.",
+    icons: [
+      { name: "User", component: User, usage: "Individual user profile" },
+      { name: "UserCircle2", component: UserCircle2, usage: "Avatar placeholder" },
+      { name: "UserPlus", component: UserPlus, usage: "Invite / add member" },
+      { name: "UserMinus", component: UserMinus, usage: "Remove member" },
+      { name: "Users", component: Users, usage: "Team, member list" },
+      { name: "Building2", component: Building2, usage: "Organization, company" },
+    ],
+  },
+  {
+    category: "Actions & Settings",
+    description: "Common actions and account management controls.",
+    icons: [
+      { name: "Settings", component: Settings, usage: "Account / app settings" },
+      { name: "Trash2", component: Trash2, usage: "Delete, remove" },
+      { name: "Edit2", component: Edit2, usage: "Edit in place" },
+      { name: "Bookmark", component: Bookmark, usage: "Save / bookmark a grant" },
+      { name: "Lock", component: Lock, usage: "Locked / secure state" },
+      { name: "Shield", component: Shield, usage: "Security, permissions" },
+      { name: "Mail", component: Mail, usage: "Email address, contact" },
+      { name: "Bell", component: Bell, usage: "Notifications" },
+      { name: "Camera", component: Camera, usage: "Photo / avatar upload" },
+      { name: "Globe", component: Globe, usage: "Website URL, public scope" },
+      { name: "LogOut", component: LogOut, usage: "Sign out action" },
+    ],
+  },
+  {
+    category: "Grants & Financial",
+    description: "Domain-specific icons for grants, funding, and applications.",
+    icons: [
+      { name: "DollarSign", component: DollarSign, usage: "Funding amount, financial" },
+      { name: "Calendar", component: Calendar, usage: "Deadline, application date" },
+      { name: "Clock", component: Clock, usage: "Time remaining, duration" },
+      { name: "MapPin", component: MapPin, usage: "Location, geographic eligibility" },
+      { name: "Target", component: Target, usage: "Goals, focus area" },
+      { name: "Briefcase", component: Briefcase, usage: "Business, grant purpose" },
+      { name: "Search", component: Search, usage: "Grant search" },
+      { name: "Star", component: Star, usage: "Featured grant, rating" },
+      { name: "Zap", component: Zap, usage: "AI-assisted, fast-track" },
+      { name: "Sparkles", component: Sparkles, usage: "AI generation, magic action" },
+    ],
+  },
+  {
+    category: "Rich Text & Content Editing",
+    description: "Icons used within the application editor and document tools.",
+    icons: [
+      { name: "Type", component: Type, usage: "Text type / heading" },
+      { name: "Bold", component: Bold, usage: "Bold text formatting" },
+      { name: "Italic", component: Italic, usage: "Italic text formatting" },
+      { name: "Underline", component: Underline, usage: "Underline text" },
+      { name: "AlignLeft", component: AlignLeft, usage: "Left-align text" },
+      { name: "AlignCenter", component: AlignCenter, usage: "Center-align text" },
+      { name: "AlignRight", component: AlignRight, usage: "Right-align text" },
+      { name: "List", component: List, usage: "Unordered list" },
+      { name: "ListOrdered", component: ListOrdered, usage: "Ordered list" },
+      { name: "Link", component: Link, usage: "Insert hyperlink" },
+      { name: "MessageSquare", component: MessageSquare, usage: "Comment, discussion" },
+      { name: "Send", component: Send, usage: "Submit, send application" },
+      { name: "Undo2", component: Undo2, usage: "Undo action" },
+    ],
+  },
 ];
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -1705,6 +1886,127 @@ import { Label } from "@/app/components/ui/label";
 // Warning → [&>div]:bg-orange-500
 // Error   → [&>div]:bg-red-500`}
           />
+        </section>
+
+        {/* ── Iconography ─────────────────────────────────────── */}
+        <section id="iconography" className="scroll-mt-8">
+          <SectionHeader
+            title="Iconography"
+            description="All icons come from Lucide React — a single, consistent open-source icon set. Icons are rendered at 16px (sm), 20px (default), or 24px (lg) and inherit the current text color."
+          />
+
+          {/* Library callout */}
+          <div className="flex items-start gap-3 p-4 rounded-xl border border-teal-200 bg-teal-50 mb-8">
+            <Info size={18} className="text-teal-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-teal-800 mb-0.5">Library: <code className="font-mono font-normal">lucide-react</code></p>
+              <p className="text-sm text-teal-700">
+                Import icons individually from <code className="font-mono text-xs bg-teal-100 px-1 py-0.5 rounded">lucide-react</code>.
+                All icons are SVG-based and scale cleanly via the <code className="font-mono text-xs bg-teal-100 px-1 py-0.5 rounded">size</code> prop.
+                Default size is <strong>20px</strong>; use <strong>16px</strong> for inline / compact UI and <strong>24px</strong> for empty states.
+              </p>
+            </div>
+          </div>
+
+          {/* Size & color usage */}
+          <PreviewBox>
+            <div className="flex flex-col gap-6">
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Size scale</p>
+                <div className="flex items-end gap-8">
+                  {[
+                    { size: 16, label: "16px — sm\nInline, compact UI" },
+                    { size: 20, label: "20px — default\nButtons, labels" },
+                    { size: 24, label: "24px — lg\nEmpty states, nav" },
+                  ].map(({ size, label }) => (
+                    <div key={size} className="flex flex-col items-center gap-2">
+                      <Search size={size} className="text-gray-700" />
+                      <span className="text-xs text-gray-500 text-center whitespace-pre-line">{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <Separator className="bg-gray-200" />
+              <div>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Color usage</p>
+                <div className="flex items-center gap-8 flex-wrap">
+                  {[
+                    { color: "text-gray-500", label: "gray-500\nDefault / secondary", bg: "" },
+                    { color: "text-gray-700", label: "gray-700\nPrimary / emphasis", bg: "" },
+                    { color: "text-teal-600", label: "teal-600\nBrand action", bg: "" },
+                    { color: "text-green-600", label: "green-600\nSuccess", bg: "" },
+                    { color: "text-red-600", label: "red-600\nError / destructive", bg: "" },
+                    { color: "text-orange-500", label: "orange-500\nWarning", bg: "" },
+                  ].map(({ color, label }) => (
+                    <div key={color} className="flex flex-col items-center gap-2">
+                      <Bookmark size={20} className={color} />
+                      <span className="text-xs text-gray-500 text-center whitespace-pre-line">{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </PreviewBox>
+
+          <CodeSnippet
+            code={`import { Search, Bookmark } from "lucide-react";
+
+// Default (20px, inherits text color)
+<Search />
+
+// Sized
+<Search size={16} />   // compact / inline
+<Search size={20} />   // default
+<Search size={24} />   // empty states, nav
+
+// Colored (via Tailwind text color)
+<Bookmark className="text-teal-600" />
+<Bookmark className="text-gray-500" />
+<Bookmark className="text-red-600" />`}
+          />
+
+          {/* Icon groups */}
+          <div className="mt-10 space-y-10">
+            {iconGroups.map((group) => (
+              <div key={group.category}>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">{group.category}</h3>
+                <p className="text-sm text-gray-500 mb-4">{group.description}</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  {group.icons.map(({ name, component: Icon, usage }) => (
+                    <div
+                      key={name}
+                      className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 bg-white hover:border-teal-300 hover:bg-teal-50 transition-colors group"
+                    >
+                      <Icon size={24} className="text-gray-700 group-hover:text-teal-600 transition-colors" />
+                      <code className="text-xs font-mono text-gray-800 text-center leading-tight">{name}</code>
+                      <span className="text-xs text-gray-400 text-center leading-tight">{usage}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8">
+            <CodeSnippet
+              code={`// Import pattern — only import what you use
+import {
+  CheckCircle2,   // success states
+  AlertCircle,    // error states
+  AlertTriangle,  // warnings
+  Info,           // informational
+  DollarSign,     // funding amounts
+  Calendar,       // deadlines
+  Search,         // grant search
+  Bookmark,       // save grant
+  FileText,       // documents / applications
+  Building2,      // organization
+  ChevronRight,   // navigation / expand
+  X,              // close / dismiss
+  Plus,           // add / create
+} from "lucide-react";`}
+            />
+          </div>
         </section>
 
         {/* Bottom padding */}
