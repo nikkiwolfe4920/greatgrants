@@ -534,6 +534,25 @@ The design tokens are mapped to Tailwind CSS utility classes in `/src/styles/the
 </div>
 ```
 
+#### Checkbox (Form Controls)
+```jsx
+<Checkbox /> {/* uses the Checkbox component from @/components/ui/checkbox */}
+```
+
+**Anatomy**
+| Part | Token / Class | Value |
+|------|---------------|-------|
+| Size | `size-4` | 16 × 16 px |
+| Border radius | `rounded-[4px]` | 4 px |
+| Unchecked background | `bg-input-background` | `--bg-primary` (white) |
+| Checked background | `data-[state=checked]:bg-primary` | `--gray-900` |
+| Checked border | `data-[state=checked]:border-primary` | `--gray-900` |
+| **Check icon color** | `text-white` on the indicator | **Always white** |
+| Check icon size | `size-3.5` | 14 px |
+
+**Standard: check icon must always be white.**
+The `CheckboxPrimitive.Indicator` carries an explicit `text-white` class so the Lucide `CheckIcon` renders with a white stroke regardless of surrounding context or dark-mode settings. Do **not** use `text-current` or rely on color cascade — always set `text-white` directly on the indicator.
+
 ---
 
 ## Migration Guide
