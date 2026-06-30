@@ -17,6 +17,7 @@ import { OnboardingPage3 } from "./pages/OnboardingPage3";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { ProjectDetailsPage } from "./pages/ProjectDetailsPage";
 import { MyGrantReadiness } from "./pages/MyGrantReadiness.tsx";
+import { DesignSystemPage } from "./pages/DesignSystemPage";
 import { SubscribeEntryPage } from "./pages/SubscribeEntryPage";
 import { SubscribeCreateAccountPage } from "./pages/SubscribeCreateAccountPage";
 import { SubscribeOrgPage } from "./pages/SubscribeOrgPage";
@@ -135,6 +136,10 @@ const routes = [
       {
         path: "my-grant-readiness",
         element: <MyGrantReadiness />,
+      },
+      {
+        path: "design-system",
+        element: <DesignSystemPage />,
       },
       {
         path: "*",
