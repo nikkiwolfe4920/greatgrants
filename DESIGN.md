@@ -10,6 +10,7 @@ Complete design system documentation for the Great Grants application, aligned w
 - [Spacing](#spacing)
 - [Border Radius](#border-radius)
 - [Shadows](#shadows)
+- [Iconography](#iconography)
 - [Implementation Guide](#implementation-guide)
 - [Migration Guide](#migration-guide)
 - [Design Principles](#design-principles)
@@ -276,6 +277,149 @@ Spacing follows an 8px base grid with additional granular values:
 | `shadow-lg` | 3-layer: (0,2) blur 2 spread -1 + (0,4) blur 6 spread -2 + (0,12) blur 16 spread -4 | Modals, major surfaces |
 | `shadow-xl` | 2-layer: (0,8) blur 8 spread -4 + (0,20) blur 24 spread -4 | Floating panels |
 | `shadow-2xl` | `0px 24px 48px -12px rgba(16, 24, 40, 0.18)` | Maximum elevation |
+
+---
+
+## Iconography
+
+### Library
+
+**Lucide React** is the single icon library used across Great Grants. No other icon libraries (heroicons, react-icons, etc.) are used.
+
+```
+Package: lucide-react
+```
+
+Import icons individually — never import the whole library:
+
+```tsx
+import { Search, Bookmark, DollarSign } from "lucide-react";
+```
+
+### Size Scale
+
+| Size | Usage |
+|------|-------|
+| `16px` (`size={16}`) | Inline / compact UI, inside badges or tight labels |
+| `20px` (default) | Buttons, form labels, list items — standard size |
+| `24px` (`size={24}`) | Empty states, primary navigation items |
+
+### Color Usage
+
+Icons inherit the current text color via CSS. Use Tailwind text utilities:
+
+| Color token | Hex | Usage |
+|-------------|-----|-------|
+| `text-gray-500` | `#717680` | Default / secondary icons |
+| `text-gray-700` | `#414651` | Primary / emphasis icons |
+| `text-teal-600` | `#0e9384` | Brand action icons |
+| `text-green-600` | `#079455` | Success state icons |
+| `text-red-600` | `#d92d20` | Error / destructive icons |
+| `text-orange-500` | `#f97316` | Warning icons |
+
+### Icon Inventory
+
+#### Navigation & UI Controls
+| Icon | Usage |
+|------|-------|
+| `ChevronRight` | Next, expand, breadcrumb arrow |
+| `ChevronLeft` | Back, collapse |
+| `ChevronDown` | Dropdown trigger, accordion |
+| `ChevronUp` | Collapse, scroll up indicator |
+| `ArrowLeft` | Page back navigation |
+| `ArrowRight` | Page forward, continue CTA |
+| `Home` | Home / dashboard link |
+| `MoreVertical` | Overflow / kebab menu |
+| `MoreHorizontal` | Overflow / ellipsis menu |
+| `X` | Close, dismiss, remove tag |
+| `Plus` | Add, create new item |
+
+#### Status & Feedback
+| Icon | Usage |
+|------|-------|
+| `CheckCircle2` | Success, completed state |
+| `Check` | Checkbox selected, confirmed |
+| `AlertCircle` | Error, critical alert |
+| `AlertTriangle` | Warning, caution |
+| `Info` | Informational tooltip or alert |
+| `Circle` | Radio button, step indicator |
+
+#### File & Document
+| Icon | Usage |
+|------|-------|
+| `FileText` | Text documents, applications |
+| `FileSpreadsheet` | Spreadsheet / CSV uploads |
+| `FileCheck` | Reviewed / approved document |
+| `File` | Generic file attachment |
+| `Image` | Image upload, logo |
+| `Upload` | File upload action |
+| `FolderOpen` | Open folder / project |
+| `Archive` | Archive application or record |
+
+#### User & Organization
+| Icon | Usage |
+|------|-------|
+| `User` | Individual user profile |
+| `UserCircle2` | Avatar placeholder |
+| `UserPlus` | Invite / add member |
+| `UserMinus` | Remove member |
+| `Users` | Team, member list |
+| `Building2` | Organization, company |
+
+#### Actions & Settings
+| Icon | Usage |
+|------|-------|
+| `Settings` | Account / app settings |
+| `Trash2` | Delete, remove |
+| `Edit2` | Edit in place |
+| `Bookmark` | Save / bookmark a grant |
+| `Lock` | Locked / secure state |
+| `Shield` | Security, permissions |
+| `Mail` | Email address, contact |
+| `Bell` | Notifications |
+| `Camera` | Photo / avatar upload |
+| `Globe` | Website URL, public scope |
+| `LogOut` | Sign out action |
+
+#### Grants & Financial
+| Icon | Usage |
+|------|-------|
+| `DollarSign` | Funding amount, financial |
+| `Calendar` | Deadline, application date |
+| `Clock` | Time remaining, duration |
+| `MapPin` | Location, geographic eligibility |
+| `Target` | Goals, focus area |
+| `Briefcase` | Business, grant purpose |
+| `Search` | Grant search |
+| `Star` | Featured grant, rating |
+| `Zap` | AI-assisted, fast-track |
+| `Sparkles` | AI generation, magic action |
+
+#### Rich Text & Content Editing
+| Icon | Usage |
+|------|-------|
+| `Type` | Text type / heading |
+| `Bold` | Bold text formatting |
+| `Italic` | Italic text formatting |
+| `Underline` | Underline text |
+| `AlignLeft` | Left-align text |
+| `AlignCenter` | Center-align text |
+| `AlignRight` | Right-align text |
+| `List` | Unordered list |
+| `ListOrdered` | Ordered list |
+| `Link` | Insert hyperlink |
+| `MessageSquare` | Comment, discussion |
+| `Send` | Submit, send application |
+| `Undo2` | Undo action |
+
+### Standards
+
+1. **One library only** — Always use Lucide React. Do not add heroicons, react-icons, or any other icon library.
+2. **Named imports** — Always import icons by name; never use a wildcard import.
+3. **Size via prop** — Use the `size` prop (`size={20}`) rather than CSS `width`/`height` overrides.
+4. **Color via className** — Use Tailwind `text-*` classes to color icons; avoid inline `color` styles.
+5. **No decorative `alt` or `aria-label`** — Icons paired with visible text need no extra label. Standalone icons (buttons with no text) must include `aria-label` on the wrapping element.
+6. **Icon + label spacing** — Pair icons with text using `gap-1.5` (`6px`) or `gap-2` (`8px`) inside a flex container.
 
 ---
 
