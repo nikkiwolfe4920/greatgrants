@@ -11,6 +11,11 @@ Complete design system documentation for the Great Grants application, aligned w
 - [Border Radius](#border-radius)
 - [Shadows](#shadows)
 - [Iconography](#iconography)
+- [Components](#components)
+  - [Tabs](#tabs)
+  - [Avatars](#avatars)
+  - [Right Nav](#right-nav)
+  - [Search](#search)
 - [Implementation Guide](#implementation-guide)
 - [Migration Guide](#migration-guide)
 - [Design Principles](#design-principles)
@@ -420,6 +425,218 @@ Icons inherit the current text color via CSS. Use Tailwind text utilities:
 4. **Color via className** — Use Tailwind `text-*` classes to color icons; avoid inline `color` styles.
 5. **No decorative `alt` or `aria-label`** — Icons paired with visible text need no extra label. Standalone icons (buttons with no text) must include `aria-label` on the wrapping element.
 6. **Icon + label spacing** — Pair icons with text using `gap-1.5` (`6px`) or `gap-2` (`8px`) inside a flex container.
+
+---
+
+## Components
+
+### Tabs
+
+Tabs use a **white background, border-bottom underline** style. There is no grey pill/capsule variant.
+
+```tsx
+<TabsList className="bg-white border-b border-gray-200 p-0 h-auto w-full justify-start rounded-none inline-flex">
+  <TabsTrigger
+    className="rounded-none border-0 border-b-[2px] border-transparent
+               data-[state=active]:border-b-teal-600 data-[state=active]:text-teal-600
+               data-[state=active]:bg-transparent data-[state=active]:shadow-none
+               px-4 py-2.5 bg-transparent text-gray-600 hover:text-gray-900 shadow-none"
+    value="tab1"
+  >
+    Tab Label
+  </TabsTrigger>
+</TabsList>
+```
+
+| Property | Value |
+|----------|-------|
+| `TabsList` background | `bg-white` |
+| Bottom edge | `border-b border-gray-200` |
+| Active indicator | `border-b-[2px] border-b-teal-600` |
+| Active text | `text-teal-600` |
+| Inactive text | `text-gray-600` |
+| Padding | `px-4 py-2.5` |
+| Rounding | `rounded-none` (no pill rounding) |
+
+---
+
+### Avatars
+
+Only one color variant is used across the app — a **gray** avatar.
+
+```tsx
+<Avatar>
+  <AvatarFallback className="bg-gray-200 text-gray-700 font-semibold">
+    AB
+  </AvatarFallback>
+</Avatar>
+```
+
+| Property | Value |
+|----------|-------|
+| Background | `bg-gray-200` |
+| Text color | `text-gray-700` |
+| Font weight | `font-semibold` |
+
+**Do not use teal, colored, or white-text avatar variants.** The gray variant is the only sanctioned style.
+
+#### Size scale
+| Size class | Dimensions |
+|------------|------------|
+| `h-6 w-6` | 24 px — inline / compact |
+| `h-8 w-8` | 32 px — table rows, list items |
+| `h-10 w-10` | 40 px — default |
+| `h-12 w-12` | 48 px — cards, profile headers |
+| `h-16 w-16` | 64 px — profile pages |
+
+---
+
+### Right Nav
+
+A **320 px collapsible right rail** used on detail/editor pages (e.g. Organization Profile) to surface progress checklists and quick-jump navigation.
+
+#### Anatomy
+
+| Property | Value |
+|----------|-------|
+| Width | 320 px — fixed |
+| Background | `bg-[#F9FAFB]` (`gray-50`) |
+| Left border | `border-l border-gray-200` |
+| Collapse button | Absolute at `-left-4`, white circle, `border border-gray-200 shadow-sm` |
+| Animation | `AnimatePresence` — `width: 0 → 320`, `opacity: 0 → 1` (duration 200 ms) |
+
+#### Checklist Item States
+
+| State | Border | Background | Icon |
+|-------|--------|------------|------|
+| Completed | `border-[#aaf0c4]` | `bg-[#edfcf2]` | `CheckCircle2` teal-600 |
+| Active / hover | `border-teal-600` | `bg-white` | `Circle` teal-600 |
+| Default | `border-gray-200` | `bg-white` hover: `border-teal-400` | `Circle` gray-300 |
+
+```tsx
+<AnimatePresence>
+  {showRightRail && (
+    <motion.aside
+      initial={{ width: 0, opacity: 0 }}
+      animate={{ width: 320, opacity: 1 }}
+      exit={{ width: 0, opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="relative shrink-0 bg-[#F9FAFB] border-l border-gray-200 overflow-hidden"
+    >
+      {/* Collapse button */}
+      <button
+        onClick={() => setShowRightRail(false)}
+        className="absolute -left-4 top-6 z-10 flex h-8 w-8 items-center justify-center
+                   rounded-full border border-gray-200 bg-white shadow-sm"
+      >
+        <ChevronRight size={14} className="text-gray-500" />
+      </button>
+
+      {/* Checklist item */}
+      <button
+        onClick={() => handleRailItemClick(item)}
+        className={`flex items-center gap-3 p-3 rounded-lg border text-left w-full
+          ${item.completed
+            ? "border-[#aaf0c4] bg-[#edfcf2]"
+            : item.active
+              ? "border-teal-600 bg-white"
+              : "border-gray-200 bg-white hover:border-teal-400"}`}
+      >
+        {item.completed
+          ? <CheckCircle2 size={16} className="text-teal-600 shrink-0" />
+          : <Circle size={16} className="text-gray-300 shrink-0" />}
+        <span className="text-sm font-medium text-gray-800">{item.label}</span>
+      </button>
+    </motion.aside>
+  )}
+</AnimatePresence>
+```
+
+#### Interaction Rules
+
+- Clicking a checklist item switches the active tab and scrolls to the associated field using `data-field="fieldName"` attribute targeting.
+- The collapse button is positioned outside the rail (`-left-4`) so it remains reachable when the rail is fully open.
+- Rail visibility is toggled via a toolbar button; reopening restores prior scroll position.
+- Progress badge color scales with completion count: low → gray, mid → amber, high → teal/green.
+
+---
+
+### Search
+
+The search surface combines a structured **grant-search bar** with an **AI-powered natural-language mode**. A sticky right rail provides contextual insights alongside results.
+
+#### Search Bar
+
+```tsx
+<div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+  <div className="flex items-center">
+    {/* Programs selector */}
+    <button className="flex items-center gap-1.5 px-3 py-2.5 border-r border-gray-200 text-sm text-gray-600">
+      <FolderOpen size={15} className="text-teal-600" />
+      All Programs
+      <ChevronDown size={14} className="text-gray-400" />
+    </button>
+
+    {/* Text input */}
+    <div className="flex-1 flex items-center gap-2 px-3">
+      {/* Search icon turns teal-600 when a query is active */}
+      <Search size={16} className={query ? "text-teal-600" : "text-gray-400"} />
+      <input className="flex-1 text-sm outline-none bg-transparent" placeholder="Search grants…" />
+      {/* AI indicator — always purple #9810FA, inline style required */}
+      <Sparkles size={16} style={{ color: "#9810FA" }} />
+    </div>
+  </div>
+</div>
+```
+
+| Part | Class / Value |
+|------|--------------|
+| Wrapper | `rounded-xl border border-gray-200 bg-white shadow-sm` |
+| Programs selector | `border-r border-gray-200`, `FolderOpen` icon `text-teal-600` |
+| Search icon (idle) | `text-gray-400` |
+| Search icon (active) | `text-teal-600` |
+| AI Sparkles icon | `color: #9810FA` (always purple — no Tailwind class, use inline style) |
+| Active wrapper bg | `bg-teal-50/30` when a query string is present |
+
+#### AI Search Mode
+
+When the user types a query the wrapper background shifts to `bg-teal-50/30` and example-prompt chips appear below the input:
+
+```tsx
+{query && (
+  <div className="flex flex-wrap gap-2 px-4 pb-3 pt-1">
+    <span className="text-xs text-gray-500">Try:</span>
+    {examples.map(ex => (
+      <button key={ex}
+        className="text-xs px-2.5 py-1 rounded-full border border-[#9810FA] text-[#9810FA] hover:bg-purple-50">
+        {ex}
+      </button>
+    ))}
+  </div>
+)}
+```
+
+Example chip style: `border border-[#9810FA] text-[#9810FA]` — purple border and text.
+
+#### Filter Pills
+
+```tsx
+<span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-gray-200 bg-gray-50 text-gray-700">
+  {label} <X size={12} className="cursor-pointer text-gray-400 hover:text-gray-600" />
+</span>
+```
+
+#### Search Right Rail
+
+The search page uses a **sticky, always-visible** 320 px right rail (no collapse). Cards inside the rail:
+
+| Card | Content |
+|------|---------|
+| Search Insights | Stats grid: Total Funding, Avg Grant Size, Open Now |
+| Pro Tips | Bullet-list tips for refining the search |
+| Recently Viewed | Conditional — only shown when history data exists |
+
+All cards: `bg-white rounded-xl p-5 border border-gray-200`.
 
 ---
 

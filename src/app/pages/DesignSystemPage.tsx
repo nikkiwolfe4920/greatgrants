@@ -257,6 +257,8 @@ const navItems = [
   { id: "tabs", label: "Tabs" },
   { id: "selects", label: "Selects" },
   { id: "progress", label: "Progress" },
+  { id: "right-nav", label: "Right Nav" },
+  { id: "search", label: "Search" },
   { id: "iconography", label: "Iconography" },
 ];
 
@@ -1439,7 +1441,7 @@ import { CheckCircle2, AlertCircle, AlertTriangle, Info } from "lucide-react";
         <section id="avatars" className="mb-20 scroll-mt-8">
           <SectionHeader
             title="Avatars"
-            description="User and organization identity. radius-full. Teal-600 fallback for initials."
+            description="User and organization identity. radius-full. Gray-200 background with gray-700 text for initials fallback."
           />
           <div className="flex flex-wrap gap-2 mb-4">
             <ShadcnChip name="Avatar" />
@@ -1462,7 +1464,7 @@ import { CheckCircle2, AlertCircle, AlertTriangle, Info } from "lucide-react";
                     <div key={a.label} className="flex flex-col items-center gap-1.5">
                       <Avatar className={a.size}>
                         <AvatarFallback
-                          className={`bg-teal-600 text-white font-semibold ${a.text}`}
+                          className={`bg-gray-200 text-gray-700 font-semibold ${a.text}`}
                           style={{ fontFamily: "Cabin, sans-serif" }}
                         >
                           GG
@@ -1474,25 +1476,17 @@ import { CheckCircle2, AlertCircle, AlertTriangle, Info } from "lucide-react";
                 </div>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Variants</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Variant</p>
                 <div className="flex flex-wrap gap-3 items-center">
-                  {[
-                    { bg: "bg-teal-600", text: "text-white", initials: "JD" },
-                    { bg: "bg-teal-50", text: "text-teal-700", initials: "NK" },
-                    { bg: "bg-gray-200", text: "text-gray-700", initials: "AB" },
-                    { bg: "bg-green-100", text: "text-green-700", initials: "MK" },
-                    { bg: "bg-blue-100", text: "text-blue-700", initials: "RS" },
-                    { bg: "bg-purple-100", text: "text-purple-700", initials: "TL" },
-                  ].map((a) => (
-                    <Avatar key={a.initials} className="h-10 w-10">
-                      <AvatarFallback
-                        className={`${a.bg} ${a.text} text-sm font-semibold`}
-                        style={{ fontFamily: "Cabin, sans-serif" }}
-                      >
-                        {a.initials}
-                      </AvatarFallback>
-                    </Avatar>
-                  ))}
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback
+                      className="bg-gray-200 text-gray-700 text-sm font-semibold"
+                      style={{ fontFamily: "Cabin, sans-serif" }}
+                    >
+                      AB
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-gray-500">bg-gray-200 · text-gray-700 — the only supported variant</span>
                 </div>
               </div>
             </div>
@@ -1501,17 +1495,17 @@ import { CheckCircle2, AlertCircle, AlertTriangle, Info } from "lucide-react";
           <CodeSnippet
             code={`import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/ui/avatar";
 
-// With image
+// With image — falls back to gray initials
 <Avatar className="h-10 w-10">
   <AvatarImage src="/user.jpg" alt="Jane Doe" />
-  <AvatarFallback className="bg-teal-600 text-white font-semibold text-sm">
+  <AvatarFallback className="bg-gray-200 text-gray-700 font-semibold text-sm">
     JD
   </AvatarFallback>
 </Avatar>
 
-// Initials only (teal default)
+// Initials only (gray variant)
 <Avatar className="h-10 w-10">
-  <AvatarFallback className="bg-teal-600 text-white font-semibold text-sm">
+  <AvatarFallback className="bg-gray-200 text-gray-700 font-semibold text-sm">
     GG
   </AvatarFallback>
 </Avatar>`}
@@ -1651,7 +1645,7 @@ import { Label } from "@/app/components/ui/label";
         <section id="tabs" className="mb-20 scroll-mt-8">
           <SectionHeader
             title="Tabs"
-            description="Section navigation. Active tab uses teal-700 text with white bg and shadow lift."
+            description="Section navigation. Tab list background is white with a bottom border. Active tab shows a teal-600 underline with teal-600 text. Inactive tabs are gray-600."
           />
           <div className="flex flex-wrap gap-2 mb-4">
             <ShadcnChip name="Tabs" />
@@ -1662,12 +1656,12 @@ import { Label } from "@/app/components/ui/label";
 
           <PreviewBox>
             <Tabs defaultValue="overview">
-              <TabsList className="bg-gray-100 border border-gray-200 p-1">
+              <TabsList className="bg-white border-b border-gray-200 p-0 h-auto w-full justify-start rounded-none inline-flex">
                 {["Overview", "Requirements", "Budget", "Timeline"].map((tab) => (
                   <TabsTrigger
                     key={tab}
                     value={tab.toLowerCase()}
-                    className="data-[state=active]:bg-white data-[state=active]:text-teal-700 data-[state=active]:shadow-sm text-gray-600"
+                    className="rounded-none border-0 border-b-[2px] border-transparent data-[state=active]:border-b-teal-600 data-[state=active]:text-teal-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 bg-transparent text-gray-600 hover:text-gray-900 shadow-none"
                     style={{ fontFamily: "Cabin, sans-serif" }}
                   >
                     {tab}
@@ -1703,11 +1697,12 @@ import { Label } from "@/app/components/ui/label";
           <CodeSnippet
             code={`import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/app/components/ui/tabs";
 
+// Default: white background with bottom-border underline style
 <Tabs defaultValue="overview">
-  <TabsList className="bg-gray-100 border border-gray-200 p-1">
+  <TabsList className="bg-white border-b border-gray-200 p-0 h-auto w-full justify-start rounded-none inline-flex">
     <TabsTrigger
       value="overview"
-      className="data-[state=active]:bg-white data-[state=active]:text-teal-700 data-[state=active]:shadow-sm text-gray-600"
+      className="rounded-none border-0 border-b-[2px] border-transparent data-[state=active]:border-b-teal-600 data-[state=active]:text-teal-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 bg-transparent text-gray-600 hover:text-gray-900 shadow-none"
     >
       Overview
     </TabsTrigger>
@@ -1886,6 +1881,258 @@ import { Label } from "@/app/components/ui/label";
 // Warning → [&>div]:bg-orange-500
 // Error   → [&>div]:bg-red-500`}
           />
+        </section>
+
+        {/* ── Right Nav ────────────────────────────────────────── */}
+        <section id="right-nav" className="mb-20 scroll-mt-8">
+          <SectionHeader
+            title="Right Nav"
+            description="A 320px collapsible right rail that provides contextual guidance, progress checklists, and quick-jump navigation. Used on detail/editor pages (e.g. Organization Profile) to surface actionable items without leaving the page."
+          />
+
+          {/* Anatomy callout */}
+          <div className="flex items-start gap-3 p-4 rounded-xl border border-teal-200 bg-teal-50 mb-8">
+            <Info size={18} className="text-teal-600 mt-0.5 shrink-0" />
+            <div className="text-sm text-teal-700 space-y-1">
+              <p className="font-semibold text-teal-800">Anatomy</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                <li>320 px wide — fixed, not resizable</li>
+                <li>Background: <code className="font-mono text-xs bg-teal-100 px-1 py-0.5 rounded">bg-gray-50 (#F9FAFB)</code></li>
+                <li>Left edge: <code className="font-mono text-xs bg-teal-100 px-1 py-0.5 rounded">border-l border-gray-200</code></li>
+                <li>Floating collapse button: absolute at <code className="font-mono text-xs bg-teal-100 px-1 py-0.5 rounded">-left-4</code>, white circle with border, <code className="font-mono text-xs bg-teal-100 px-1 py-0.5 rounded">ChevronRight / ChevronLeft</code> icon</li>
+                <li>Animates open/close via <code className="font-mono text-xs bg-teal-100 px-1 py-0.5 rounded">AnimatePresence</code> — width 0 → 320, opacity 0 → 1</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Checklist item states */}
+          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Checklist Item States</h3>
+          <PreviewBox className="mb-6">
+            <div className="flex flex-col gap-2 w-72">
+              {/* Completed */}
+              <button className="w-full flex items-center gap-3 p-3 rounded-lg border border-[#aaf0c4] bg-[#edfcf2] text-left">
+                <CheckCircle2 size={16} className="text-teal-600 shrink-0" />
+                <span className="text-sm font-medium text-gray-800">Organization Name</span>
+                <span className="ml-auto text-xs text-teal-600 font-medium">Done</span>
+              </button>
+              {/* Active */}
+              <button className="w-full flex items-center gap-3 p-3 rounded-lg border border-teal-600 bg-white text-left">
+                <Circle size={16} className="text-teal-600 shrink-0" />
+                <span className="text-sm font-medium text-gray-800">Mission Statement</span>
+                <span className="ml-auto text-xs text-teal-600 font-medium">Active</span>
+              </button>
+              {/* Default */}
+              <button className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 bg-white text-left hover:border-teal-400">
+                <Circle size={16} className="text-gray-300 shrink-0" />
+                <span className="text-sm font-medium text-gray-500">Contact Information</span>
+              </button>
+            </div>
+          </PreviewBox>
+
+          <CodeSnippet
+            language="tsx"
+            code={`{/* Right rail wrapper — animated open/close */}
+<AnimatePresence>
+  {showRightRail && (
+    <motion.aside
+      initial={{ width: 0, opacity: 0 }}
+      animate={{ width: 320, opacity: 1 }}
+      exit={{ width: 0, opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="relative shrink-0 bg-[#F9FAFB] border-l border-gray-200 overflow-hidden"
+    >
+      {/* Collapse toggle */}
+      <button
+        onClick={() => setShowRightRail(false)}
+        className="absolute -left-4 top-6 z-10 flex h-8 w-8 items-center justify-center
+                   rounded-full border border-gray-200 bg-white shadow-sm"
+      >
+        <ChevronRight size={14} className="text-gray-500" />
+      </button>
+
+      {/* Checklist item */}
+      {/* State: completed  → border-[#aaf0c4] bg-[#edfcf2]  + CheckCircle2 teal */}
+      {/* State: active     → border-teal-600 bg-white */}
+      {/* State: default    → border-gray-200 bg-white hover:border-teal-400 */}
+      <button
+        onClick={() => handleRailItemClick(item)}
+        className={\`flex items-center gap-3 p-3 rounded-lg border text-left w-full
+          \${item.completed
+            ? "border-[#aaf0c4] bg-[#edfcf2]"
+            : item.active
+              ? "border-teal-600 bg-white"
+              : "border-gray-200 bg-white hover:border-teal-400"}\`}
+      >
+        {item.completed
+          ? <CheckCircle2 size={16} className="text-teal-600 shrink-0" />
+          : <Circle size={16} className="text-gray-300 shrink-0" />}
+        <span className="text-sm font-medium text-gray-800">{item.label}</span>
+      </button>
+    </motion.aside>
+  )}
+</AnimatePresence>`}
+          />
+
+          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mt-8 mb-3">Interaction Rules</h3>
+          <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside mb-6">
+            <li>Clicking a checklist item navigates to the relevant tab and scrolls to the associated field using a <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">data-field="fieldName"</code> attribute.</li>
+            <li>The collapse button sits outside the rail at <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">-left-4</code> so it remains clickable when the rail is open.</li>
+            <li>Rail visibility is toggled via a toolbar button or top-right icon; re-opening restores the last scroll position.</li>
+            <li>Progress badge color scales with completion: low → gray, mid → amber, high → teal/green.</li>
+          </ul>
+        </section>
+
+        {/* ── Search ────────────────────────────────────────────── */}
+        <section id="search" className="mb-20 scroll-mt-8">
+          <SectionHeader
+            title="Search"
+            description="The search surface combines a structured grant-search bar with an AI-powered natural-language mode. A sticky right rail provides contextual insights alongside results."
+          />
+
+          {/* Search bar anatomy */}
+          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Search Bar</h3>
+          <PreviewBox className="mb-6">
+            <div className="w-full max-w-2xl rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+              <div className="flex items-center gap-0">
+                {/* Programs selector */}
+                <button className="flex items-center gap-1.5 px-3 py-2.5 border-r border-gray-200 text-sm text-gray-600 whitespace-nowrap hover:bg-gray-50">
+                  <FolderOpen size={15} className="text-teal-600" />
+                  <span>All Programs</span>
+                  <ChevronDown size={14} className="text-gray-400" />
+                </button>
+                {/* Search input */}
+                <div className="flex-1 flex items-center gap-2 px-3">
+                  <Search size={16} className="text-gray-400 shrink-0" />
+                  <input
+                    readOnly
+                    placeholder="Search grants…"
+                    className="flex-1 text-sm outline-none bg-transparent text-gray-500 py-2.5"
+                  />
+                  <Sparkles size={16} style={{ color: "#9810FA" }} className="shrink-0" />
+                </div>
+              </div>
+            </div>
+          </PreviewBox>
+
+          {/* AI search active state */}
+          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">AI Search Active State</h3>
+          <PreviewBox className="mb-6">
+            <div className="w-full max-w-2xl rounded-xl border border-gray-200 bg-teal-50/30 shadow-sm overflow-hidden">
+              <div className="flex items-center gap-0">
+                <button className="flex items-center gap-1.5 px-3 py-2.5 border-r border-gray-200 text-sm text-gray-600 whitespace-nowrap">
+                  <FolderOpen size={15} className="text-teal-600" />
+                  <span>All Programs</span>
+                  <ChevronDown size={14} className="text-gray-400" />
+                </button>
+                <div className="flex-1 flex items-center gap-2 px-3">
+                  <Search size={16} className="text-teal-600 shrink-0" />
+                  <span className="flex-1 text-sm text-gray-800 py-2.5">environmental grants for small nonprofits</span>
+                  <Sparkles size={16} style={{ color: "#9810FA" }} className="shrink-0" />
+                </div>
+              </div>
+              {/* AI examples */}
+              <div className="flex flex-wrap gap-2 px-4 pb-3 pt-1">
+                <span className="text-xs text-gray-500 mr-1">Try:</span>
+                {["Youth arts funding", "Housing grants under $50k"].map(ex => (
+                  <button key={ex} className="text-xs px-2.5 py-1 rounded-full border border-[#9810FA] text-[#9810FA] hover:bg-purple-50">
+                    {ex}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </PreviewBox>
+
+          {/* Filter pills */}
+          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Filter Pills</h3>
+          <PreviewBox className="mb-6">
+            <div className="flex flex-wrap gap-2">
+              {["Status: Open", "Amount: $10k–$50k", "Deadline: This Month"].map(f => (
+                <span key={f} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-gray-200 bg-gray-50 text-gray-700">
+                  {f}
+                  <X size={12} className="text-gray-400 cursor-pointer hover:text-gray-600" />
+                </span>
+              ))}
+            </div>
+          </PreviewBox>
+
+          <CodeSnippet
+            language="tsx"
+            code={`{/* Search bar — default */}
+<div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+  <div className="flex items-center">
+    {/* Programs selector */}
+    <button className="flex items-center gap-1.5 px-3 py-2.5 border-r border-gray-200 text-sm text-gray-600">
+      <FolderOpen size={15} className="text-teal-600" />
+      All Programs
+      <ChevronDown size={14} className="text-gray-400" />
+    </button>
+
+    {/* Text input */}
+    <div className="flex-1 flex items-center gap-2 px-3">
+      {/* Search icon turns teal-600 when query is active */}
+      <Search size={16} className={query ? "text-teal-600" : "text-gray-400"} />
+      <input className="flex-1 text-sm outline-none bg-transparent" placeholder="Search grants…" />
+      {/* AI indicator — always purple #9810FA */}
+      <Sparkles size={16} style={{ color: "#9810FA" }} />
+    </div>
+  </div>
+
+  {/* AI mode: wrapper shifts to bg-teal-50/30, show example prompts */}
+  {query && (
+    <div className="flex flex-wrap gap-2 px-4 pb-3 pt-1">
+      <span className="text-xs text-gray-500">Try:</span>
+      {examples.map(ex => (
+        <button key={ex}
+          className="text-xs px-2.5 py-1 rounded-full border border-[#9810FA] text-[#9810FA]">
+          {ex}
+        </button>
+      ))}
+    </div>
+  )}
+</div>
+
+{/* Filter pills */}
+<div className="flex flex-wrap gap-2 mt-3">
+  {activeFilters.map(f => (
+    <span key={f} className="flex items-center gap-1.5 text-xs px-3 py-1.5
+                              rounded-full border border-gray-200 bg-gray-50 text-gray-700">
+      {f} <X size={12} className="cursor-pointer" />
+    </span>
+  ))}
+</div>`}
+          />
+
+          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mt-8 mb-3">Search Right Rail</h3>
+          <PreviewBox className="mb-6">
+            <div className="w-72 flex flex-col gap-3">
+              {/* Insights card */}
+              <div className="bg-white rounded-xl p-5 border border-gray-200">
+                <p className="text-sm font-semibold text-gray-800 mb-3">Search Insights</p>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  {[{ label: "Total Funding", val: "$2.4M" }, { label: "Avg Grant", val: "$18k" }, { label: "Open Now", val: "34" }].map(s => (
+                    <div key={s.label}>
+                      <p className="text-base font-bold text-teal-700">{s.val}</p>
+                      <p className="text-xs text-gray-500">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Tips card */}
+              <div className="bg-white rounded-xl p-5 border border-gray-200">
+                <p className="text-sm font-semibold text-gray-800 mb-2">Pro Tips</p>
+                <ul className="text-xs text-gray-600 space-y-1 list-disc list-inside">
+                  <li>Narrow by deadline to surface urgent opportunities</li>
+                  <li>Use AI search for natural-language queries</li>
+                </ul>
+              </div>
+            </div>
+          </PreviewBox>
+
+          <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside">
+            <li>Search right rail cards use <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">bg-white rounded-xl p-5 border border-gray-200</code>.</li>
+            <li>Cards: Search Insights (stats grid), Pro Tips (bullet list), Recently Viewed (conditional on history).</li>
+            <li>Rail is sticky, 320 px, no collapse control — always visible alongside results.</li>
+          </ul>
         </section>
 
         {/* ── Iconography ─────────────────────────────────────── */}
