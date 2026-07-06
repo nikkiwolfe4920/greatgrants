@@ -101,7 +101,24 @@ import {
   Sparkles,
   LogOut,
   Zap,
+  // Navigation & Search patterns
+  Banknote,
+  Loader2,
+  SearchX,
+  LayoutGrid,
+  ArrowUpDown,
+  TrendingUp,
+  Menu,
 } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  BreadcrumbHome,
+} from "../components/ui/breadcrumb";
 
 // ─── Data ───────────────────────────────────────────────────────────────────
 
@@ -258,6 +275,10 @@ const navItems = [
   { id: "selects", label: "Selects" },
   { id: "progress", label: "Progress" },
   { id: "iconography", label: "Iconography" },
+  { id: "left-nav", label: "Global Navigation" },
+  { id: "breadcrumbs", label: "Breadcrumbs" },
+  { id: "right-rail", label: "Right Rail" },
+  { id: "search", label: "Search" },
 ];
 
 // ─── Iconography Data ────────────────────────────────────────────────────────
@@ -1662,7 +1683,7 @@ import { Label } from "@/app/components/ui/label";
 
           <PreviewBox>
             <Tabs defaultValue="overview">
-              <TabsList className="bg-gray-100 border border-gray-200 p-1">
+              <TabsList className="bg-white border border-gray-200 p-1">
                 {["Overview", "Requirements", "Budget", "Timeline"].map((tab) => (
                   <TabsTrigger
                     key={tab}
@@ -1704,7 +1725,7 @@ import { Label } from "@/app/components/ui/label";
             code={`import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/app/components/ui/tabs";
 
 <Tabs defaultValue="overview">
-  <TabsList className="bg-gray-100 border border-gray-200 p-1">
+  <TabsList className="bg-white border border-gray-200 p-1">
     <TabsTrigger
       value="overview"
       className="data-[state=active]:bg-white data-[state=active]:text-teal-700 data-[state=active]:shadow-sm text-gray-600"
@@ -2006,6 +2027,551 @@ import {
   Plus,           // add / create
 } from "lucide-react";`}
             />
+          </div>
+        </section>
+
+        {/* ══ GLOBAL NAVIGATION ══ */}
+        <section id="left-nav" className="mb-20 scroll-mt-8">
+          <SectionHeader
+            title="Global Navigation"
+            description="Persistent left sidebar rendered once by AppLayout and shared by every authenticated route. Never re-implement a page-local sidebar — wrap the route in AppLayout instead."
+          />
+          <div className="flex flex-wrap gap-2 mb-4">
+            <ShadcnChip name="AppLayout" />
+            <ShadcnChip name="SharedSidebar" />
+          </div>
+
+          <PreviewBox>
+            <div className="w-64 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm mx-auto">
+              {/* Logo */}
+              <div className="px-4 py-3 border-b border-gray-200">
+                <div className="h-6 w-28 bg-gray-200 rounded" />
+              </div>
+
+              {/* Nav */}
+              <nav className="p-3 space-y-0.5">
+                <button className="flex items-center gap-2 px-3 py-2 w-full text-left rounded-md bg-gray-100 text-gray-900 text-sm font-semibold">
+                  <Building2 className="w-4 h-4 shrink-0" />
+                  <span className="flex-1 truncate">Organization Profile</span>
+                </button>
+                <button className="flex items-center gap-2 px-3 py-2 w-full text-left rounded-md text-gray-700 hover:bg-gray-100 text-sm">
+                  <FolderOpen className="w-4 h-4 shrink-0" />
+                  <span className="flex-1 truncate">My Programs</span>
+                </button>
+
+                <div className="py-1.5">
+                  <div className="border-t border-gray-100" />
+                </div>
+
+                <button className="flex items-center gap-2 px-3 py-2 w-full text-left rounded-md text-gray-700 hover:bg-gray-100 text-sm">
+                  <Bookmark className="w-4 h-4 shrink-0" />
+                  <span className="flex-1 truncate">Saved Grants</span>
+                </button>
+                <button className="flex items-center gap-2 px-3 py-2 w-full text-left rounded-md text-gray-700 hover:bg-gray-100 text-sm">
+                  <Search className="w-4 h-4 shrink-0" />
+                  <span className="flex-1 truncate">Grant Search</span>
+                </button>
+                <div className="flex items-center gap-2 px-3 py-2 w-full rounded-md text-gray-700 hover:bg-gray-100">
+                  <FileText className="w-4 h-4 shrink-0" />
+                  <span className="flex-1 text-sm truncate">All Applications</span>
+                  <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0">2</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                </div>
+              </nav>
+
+              {/* Credits widget */}
+              <div className="px-3 pb-3">
+                <div className="bg-[#fffefa] rounded-lg p-3">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <FileText className="w-3.5 h-3.5 text-[#101828] shrink-0" />
+                    <span className="text-[12px] font-semibold text-[#101828]">3 Applications Generated</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-[#fef7c3] mb-2">
+                    <div className="h-1.5 rounded-full bg-[#ca8504]" style={{ width: "31%" }} />
+                  </div>
+                  <p className="text-[12px] font-semibold text-gray-900">0 remaining credits</p>
+                </div>
+              </div>
+
+              {/* User profile */}
+              <div className="px-3 pb-4 pt-3 border-t border-gray-200 flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-[#E9EAEB] flex items-center justify-center shrink-0">
+                  <span className="text-[#181D27] text-xs font-semibold">OR</span>
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="text-sm font-medium text-gray-900 truncate">Olivia Rhye</div>
+                  <div className="text-xs text-gray-500 truncate">Great Grants Foundation</div>
+                </div>
+                <Plus className="w-4 h-4 text-gray-400 shrink-0" />
+              </div>
+            </div>
+          </PreviewBox>
+
+          <CodeSnippet
+            code={`import { Outlet } from "react-router";
+import { SharedSidebar } from "@/app/components/SharedSidebar";
+
+// Wire it once, app-wide — never per-page
+export function AppLayout() {
+  return (
+    <div className="flex h-screen bg-white">
+      <SharedSidebar />
+      <main className="flex-1 overflow-y-auto bg-white lg:pl-0 pl-12">
+        <Outlet />
+      </main>
+    </div>
+  );
+}`}
+          />
+
+          <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Standards</h3>
+            <ul className="space-y-2.5 text-sm text-gray-600 leading-relaxed">
+              <li><strong className="text-gray-900">Single source of truth</strong> — <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">SharedSidebar</code> is the only left navigation. Route pages through <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">AppLayout</code> + <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">&lt;Outlet /&gt;</code>; never render a second <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">&lt;aside&gt;</code> inside a page.</li>
+              <li><strong className="text-gray-900">Width</strong> — <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">lg:w-60</code> (240px) at desktop, <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">xl:w-64</code> (256px) at wide desktop. Below <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">lg</code>, it collapses to a hamburger (<Menu size={12} className="inline -mt-0.5" />) + slide-in drawer with a scrim.</li>
+              <li><strong className="text-gray-900">Layout order</strong> — Logo → primary nav list → auto spacer → credits usage widget → user profile / org switcher, each section divided by <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">border-t border-gray-200</code>.</li>
+              <li><strong className="text-gray-900">Active state</strong> — <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">bg-gray-100 text-gray-900</code> with semibold weight. Inactive: <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">text-gray-700 hover:bg-gray-100</code>. Never use the teal brand color for the row background — teal is reserved for the active-indicator accents (dots, underlines) seen elsewhere in the app.</li>
+              <li><strong className="text-gray-900">Icons</strong> — every nav item leads with a 16px (<code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">w-4 h-4</code>) Lucide icon, <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">shrink-0</code>.</li>
+              <li><strong className="text-gray-900">Typography</strong> — Cabin, 14px; font-weight 600 when active, 400 otherwise.</li>
+              <li><strong className="text-gray-900">Counts &amp; badges</strong> — pill counters use <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">bg-gray-100 text-gray-600 text-xs font-semibold rounded-full px-2 py-0.5</code>. Never color count badges by status inside the nav.</li>
+              <li><strong className="text-gray-900">Collapsible groups</strong> — nested lists (e.g. All Applications → application → section) toggle with <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">ChevronRight</code> / <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">ChevronDown</code> and indent <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">ml-3</code>, then <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">ml-5</code> per depth level.</li>
+              <li><strong className="text-gray-900">Org switcher</strong> — lives behind the user profile row (avatar <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">w-8 h-8 rounded-full bg-[#E9EAEB]</code>) as a <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">DropdownMenu</code>, not a separate nav item.</li>
+            </ul>
+          </div>
+        </section>
+
+        {/* ══ BREADCRUMBS ══ */}
+        <section id="breadcrumbs" className="mb-20 scroll-mt-8">
+          <SectionHeader
+            title="Breadcrumbs"
+            description="Ancestor trail rendered above the H1 page header. Home icon first, ChevronRight separators, current page in brand teal and non-interactive."
+          />
+          <div className="flex flex-wrap gap-2 mb-4">
+            <ShadcnChip name="Breadcrumb" />
+            <ShadcnChip name="BreadcrumbList" />
+            <ShadcnChip name="BreadcrumbItem" />
+            <ShadcnChip name="BreadcrumbLink" />
+            <ShadcnChip name="BreadcrumbSeparator" />
+            <ShadcnChip name="BreadcrumbPage" />
+          </div>
+
+          <PreviewBox>
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="#">
+                    <BreadcrumbHome />
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="#">Settings</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Organization</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </PreviewBox>
+
+          <CodeSnippet
+            code={`import { Link } from "react-router";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  BreadcrumbHome,
+} from "@/app/components/ui/breadcrumb";
+
+<Breadcrumb className="mb-6">
+  <BreadcrumbList>
+    <BreadcrumbItem>
+      <BreadcrumbLink asChild>
+        <Link to="/"><BreadcrumbHome /></Link>
+      </BreadcrumbLink>
+    </BreadcrumbItem>
+    <BreadcrumbSeparator />
+    <BreadcrumbItem>
+      <BreadcrumbLink asChild>
+        <Link to="/settings">Settings</Link>
+      </BreadcrumbLink>
+    </BreadcrumbItem>
+    <BreadcrumbSeparator />
+    <BreadcrumbItem>
+      <BreadcrumbPage>Organization</BreadcrumbPage>
+    </BreadcrumbItem>
+  </BreadcrumbList>
+</Breadcrumb>`}
+          />
+
+          <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Standards</h3>
+            <ul className="space-y-2.5 text-sm text-gray-600 leading-relaxed">
+              <li><strong className="text-gray-900">Placement</strong> — always directly above the page's H1, with <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">mb-6</code> spacing. Never nested inside a card or tab panel.</li>
+              <li><strong className="text-gray-900">First crumb</strong> — always <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">&lt;BreadcrumbHome /&gt;</code> (Home icon, <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">text-[#A4A7AE]</code>) linking to <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">/</code>. No text label on the home crumb.</li>
+              <li><strong className="text-gray-900">Separator</strong> — default <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">ChevronRight</code>, <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">text-[#A4A7AE]</code>, stroke width 1.33. Don't override unless truncating with an ellipsis.</li>
+              <li><strong className="text-gray-900">Linked crumbs</strong> — <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">text-[#717680]</code>, hover <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">text-[#414651]</code>, Cabin semibold 14px/20px.</li>
+              <li><strong className="text-gray-900">Current page</strong> — <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">BreadcrumbPage</code>, not a link: <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">text-[#107569]</code> (brand dark teal), <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">aria-current="page"</code>.</li>
+              <li><strong className="text-gray-900">Routing</strong> — use <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">BreadcrumbLink asChild</code> wrapping a react-router <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">Link</code> for SPA navigation, not a raw <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">&lt;a href&gt;</code>.</li>
+            </ul>
+          </div>
+        </section>
+
+        {/* ══ RIGHT RAIL ══ */}
+        <section id="right-rail" className="mb-20 scroll-mt-8">
+          <SectionHeader
+            title="Right Rail (Workflow Helper Panel)"
+            description="A contextual, collapsible panel docked to the right edge of the content area. Default open; collapses into a slim floating tab so the workflow guidance is never more than one click away."
+          />
+          <div className="flex flex-wrap gap-2 mb-4">
+            <ShadcnChip name="motion/react — AnimatePresence" />
+          </div>
+
+          <PreviewBox>
+            <div className="flex items-start gap-6 flex-wrap justify-center">
+              {/* Expanded state */}
+              <div className="w-72 bg-[#F9FAFB] border border-gray-200 rounded-xl overflow-hidden relative">
+                <div className="absolute top-3 -left-3 w-7 h-7 bg-white rounded-full border-2 border-gray-200 shadow-md flex items-center justify-center">
+                  <X className="w-3.5 h-3.5 text-gray-600" />
+                </div>
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-semibold text-gray-900">Profile Completion</h4>
+                    <span className="flex items-center gap-1 px-2 py-1 rounded-full text-white text-[10px] font-semibold" style={{ background: "linear-gradient(164.65deg, rgb(255, 207, 113) 0%, rgb(35, 118, 221) 100%)" }}>
+                      8/12 Done
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-4">Complete these items to improve search results and get better matches.</p>
+
+                  <p className="text-xs font-semibold text-gray-900 mb-2">Legal Info</p>
+                  <div className="space-y-2">
+                    <div className="p-2.5 border rounded-[10px] border-[#aaf0c4] bg-[#edfcf2] flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
+                      <div>
+                        <div className="text-xs font-medium text-gray-900">EIN</div>
+                        <div className="text-[11px] text-gray-600">Your EIN is validated and ready</div>
+                      </div>
+                    </div>
+                    <div className="p-2.5 border rounded-[10px] border-gray-200 bg-white flex items-start gap-2.5">
+                      <div className="w-4 h-4 rounded-full border-2 border-gray-300 bg-white shrink-0 mt-0.5" />
+                      <div>
+                        <div className="text-xs font-medium text-gray-900">UEI</div>
+                        <div className="text-[11px] text-gray-600">Enter your 12-character Unique Entity Identifier</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Collapsed state */}
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-xs text-gray-500">Collapsed</span>
+                <button
+                  className="text-white px-2.5 py-3 rounded-l-xl shadow-lg"
+                  style={{ background: "linear-gradient(112.95deg, rgb(255, 207, 113) 0%, rgb(35, 118, 221) 100%)" }}
+                >
+                  <div className="flex flex-col items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4" />
+                    <div className="text-[10px] font-semibold tracking-wider" style={{ writingMode: "vertical-rl" }}>REQUIRED</div>
+                    <div className="bg-white/20 rounded px-1.5 py-1 text-[10px] font-bold text-center leading-tight">
+                      8/12
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </PreviewBox>
+
+          <CodeSnippet
+            code={`<AnimatePresence mode="wait">
+  {showRightRail && (
+    <motion.aside
+      initial={{ width: 0, opacity: 0 }}
+      animate={{ width: 320, opacity: 1 }}
+      exit={{ width: 0, opacity: 0 }}
+      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+      className="bg-[#F9FAFB] border-l border-gray-200 overflow-hidden flex-shrink-0 relative"
+    >
+      {/* Collapse button, absolute -left-4, straddles the rail edge */}
+      {/* Grouped checklist items — see below for row anatomy */}
+    </motion.aside>
+  )}
+</AnimatePresence>
+
+{/* Floating re-open tab — only rendered while the rail is collapsed */}
+{!showRightRail && (
+  <motion.button
+    className="fixed right-0 top-1/3 z-20 text-white px-3 py-4 rounded-l-xl shadow-xl"
+    style={{ background: bgGradient }}
+  >
+    …
+  </motion.button>
+)}`}
+          />
+
+          <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Standards</h3>
+            <ul className="space-y-2.5 text-sm text-gray-600 leading-relaxed">
+              <li><strong className="text-gray-900">Sizing &amp; motion</strong> — expanded width <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">320px</code>, animated with <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">framer-motion</code> (<code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">width</code> + <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">opacity</code>, <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">duration: 0.3</code>, ease <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">[0.4, 0, 0.2, 1]</code>).</li>
+              <li><strong className="text-gray-900">Surface</strong> — background <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">#F9FAFB</code> (gray-50), <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">border-l border-gray-200</code>. Content sits on white cards inside, never directly on the gray surface.</li>
+              <li><strong className="text-gray-900">Collapse control</strong> — circular button, <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">w-8 h-8 bg-white rounded-full border-2 border-gray-200 shadow-lg</code>, straddling the rail's top-left edge (<code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">absolute top-6 -left-4</code>). Hover state should use the teal brand tokens (<code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">hover:border-teal-500 hover:bg-teal-50</code>), not one-off colors.</li>
+              <li><strong className="text-gray-900">Collapsed tab</strong> — a <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">fixed right-0 top-1/3</code> vertical tab, <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">rounded-l-xl</code>, colored by progress/urgency, re-opens the rail on click. The rail is never fully hidden without an obvious way back in.</li>
+              <li><strong className="text-gray-900">Reflow, don't overlap</strong> — main content is <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">w-full</code> when the rail is open and constrains to <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">max-w-5xl mx-auto</code> when collapsed. The rail must never float on top of content.</li>
+              <li><strong className="text-gray-900">Anatomy</strong> — header (title + progress badge + one-line supporting copy) → grouped sections (heading + time estimate) → rows (leading completion indicator, title, helper text) that jump to and highlight the related field in the main content on click.</li>
+              <li><strong className="text-gray-900">Use for</strong> — contextual checklists, guidance, and AI-assistant style helpers tied to the current page's workflow. Default to open on first visit.</li>
+              <li><strong className="text-gray-900">Recommended</strong> — this pattern currently lives inline in <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">OrganizationProfileForm.tsx</code>. New usages should extract a shared <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">WorkflowRail</code> component rather than copy-pasting the implementation.</li>
+            </ul>
+          </div>
+        </section>
+
+        {/* ══ SEARCH ══ */}
+        <section id="search" className="scroll-mt-8">
+          <SectionHeader
+            title="Search"
+            description="Conversational, AI-assisted grant search: a single natural-language input, relevance-scored result cards, and flat gray filter controls."
+          />
+
+          {/* Search Input */}
+          <h3 className="text-base font-semibold text-gray-900 mb-1">Search Input</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            A single connected white toolbar — program-context picker on the left, natural-language input on the right.
+          </p>
+          <PreviewBox>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden max-w-xl mx-auto">
+              <div className="relative flex items-center">
+                <div className="flex-shrink-0 border-r border-gray-200 h-[52px] flex items-center pl-4 pr-3 min-w-[140px]">
+                  <FolderOpen className="w-4 h-4 text-teal-600 mr-2 shrink-0" />
+                  <span className="text-sm text-gray-700">All Programs</span>
+                </div>
+                <div className="flex-1 relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <Search className="w-5 h-5 text-gray-400" />
+                    <Sparkles className="w-4 h-4" style={{ color: "#9810FA" }} />
+                  </div>
+                  <input
+                    type="text"
+                    readOnly
+                    placeholder="Tell us about your project that needs funding"
+                    className="w-full pl-20 pr-4 py-3.5 text-sm focus:outline-none bg-white"
+                  />
+                </div>
+              </div>
+            </div>
+          </PreviewBox>
+          <CodeSnippet
+            code={`<div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <div className="relative flex items-center">
+    {/* Program context picker */}
+    <div className="flex-shrink-0 border-r border-gray-200">…</div>
+
+    <div className="flex-1 relative">
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+        <Search className={\`w-5 h-5 \${query ? "text-teal-600" : "text-gray-400"}\`} />
+        <Sparkles className="w-4 h-4" style={{ color: "#9810FA" }} />
+      </div>
+      <input
+        placeholder="Tell us about your project that needs funding"
+        className={\`w-full pl-20 pr-12 py-3.5 text-base focus:outline-none \${query ? "bg-teal-50/30" : "bg-white"}\`}
+      />
+    </div>
+  </div>
+</div>`}
+          />
+
+          {/* AI Search accent */}
+          <h3 className="text-base font-semibold text-gray-900 mb-1 mt-10">AI Search Rules</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Purple is reserved exclusively for AI-assisted search affordances — it appears nowhere else in the product.
+          </p>
+          <PreviewBox>
+            <div className="flex flex-col gap-4 items-center">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full border" style={{ borderColor: "#9810FA" }}>
+                <Sparkles className="w-4 h-4" style={{ color: "#9810FA" }} />
+                <span className="text-sm font-medium" style={{ color: "#9810FA" }}>AI-powered search</span>
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center">
+                <span className="text-xs text-gray-500 self-center">Try:</span>
+                {["faith-based community development grants", "mission trip funding under $50k"].map((ex) => (
+                  <button
+                    key={ex}
+                    className="px-2.5 py-1 bg-white rounded-md text-xs font-medium hover:bg-purple-50 border transition-all hover:shadow-sm"
+                    style={{ color: "#9810FA", borderColor: "#9810FA" }}
+                  >
+                    {ex}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </PreviewBox>
+          <div className="rounded-xl border border-gray-200 bg-white p-6 mb-4">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Standards</h4>
+            <ul className="space-y-2.5 text-sm text-gray-600 leading-relaxed">
+              <li><strong className="text-gray-900">AI accent color</strong> — <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">#9810FA</code>. This is the single exception to the brand/gray/semantic palette. Use it only to mark generative or AI-matched functionality (the <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">Sparkles</code> icon, example-query chips, future AI summary banners).</li>
+              <li><strong className="text-gray-900">Never mix with brand teal</strong> for the same affordance — teal communicates "primary action / matched relevance," purple communicates "AI-generated." Keeping them distinct preserves the signal.</li>
+              <li><strong className="text-gray-900">Icon</strong> — always <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">Sparkles</code> (Lucide) at <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">16px</code>, paired directly beside the <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">Search</code> icon inside the input, not as a standalone badge.</li>
+              <li><strong className="text-gray-900">Copy tone</strong> — placeholders and example chips are conversational, natural-language prompts ("Tell us about your project that needs funding"), not keyword hints.</li>
+              <li><strong className="text-gray-900">Hover</strong> — chip hover background falls back to Tailwind's <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">purple-50</code> even though the border/text use the exact hex.</li>
+            </ul>
+          </div>
+
+          {/* Result Cards */}
+          <h3 className="text-base font-semibold text-gray-900 mb-1 mt-10">Result Cards</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Flat white cards with a relevance badge, metadata row, category tags, and a save action. No shadow at rest — lift on hover only.
+          </p>
+          <PreviewBox>
+            <div className="max-w-xl mx-auto bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all overflow-hidden">
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <h4 className="font-semibold text-gray-900 leading-snug">Community Development Block Grant Program</h4>
+                  <Badge className="text-xs font-semibold shrink-0 bg-teal-600 text-white border-teal-600">
+                    <Target className="w-3 h-3 mr-1" />
+                    Excellent Match
+                  </Badge>
+                </div>
+                <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed mb-3">
+                  Supports community and economic development activities for low- and moderate-income communities.
+                </p>
+                <div className="flex items-center gap-4 mb-3 text-sm">
+                  <div className="flex items-center gap-1.5 text-gray-600">
+                    <Banknote className="w-4 h-4" />
+                    <span className="font-semibold text-gray-900">$500,000</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-gray-600">
+                    <Globe className="w-4 h-4" />
+                    <span className="text-gray-700">National</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-gray-600">
+                    <Calendar className="w-4 h-4" />
+                    <span className="text-gray-700">Dec 15, 2026</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-1.5">
+                    <Badge className="text-xs bg-green-50 text-green-700 border-green-200">Open</Badge>
+                    <Badge className="text-xs bg-teal-50 text-teal-700 border-teal-200">Community Development</Badge>
+                  </div>
+                  <Button variant="outline" size="sm" className="gap-1.5 border-gray-200 hover:border-teal-200 hover:bg-teal-50">
+                    <Bookmark className="w-3.5 h-3.5" />
+                    Save
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </PreviewBox>
+          <div className="rounded-xl border border-gray-200 bg-white p-6 mb-4">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Match badge tiers</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+              <Badge className="text-xs font-semibold bg-teal-600 text-white border-teal-600 justify-center">Excellent ≥85</Badge>
+              <Badge className="text-xs font-semibold bg-teal-500 text-white border-teal-500 justify-center">Great ≥70</Badge>
+              <Badge className="text-xs font-semibold bg-blue-500 text-white border-blue-500 justify-center">Good ≥55</Badge>
+              <Badge className="text-xs font-semibold bg-gray-500 text-white border-gray-500 justify-center">Fair &lt;55</Badge>
+            </div>
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Standards</h4>
+            <ul className="space-y-2.5 text-sm text-gray-600 leading-relaxed">
+              <li><strong className="text-gray-900">Card</strong> — <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">bg-white border border-gray-200 rounded-xl</code>, no shadow at rest, <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">hover:shadow-md</code> only. Whole card is a click target to the detail page.</li>
+              <li><strong className="text-gray-900">Relevance badge</strong> — always <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">Target</code> icon + label, colored by score tier (teal-600 / teal-500 / blue-500 / gray-500 — see above). Never purple; purple is reserved for AI search affordances, not match scoring.</li>
+              <li><strong className="text-gray-900">Metadata row</strong> — <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">Banknote</code> (amount), <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">Globe</code> (location), <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">Calendar</code> (deadline) — 16px icons, <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">gap-4</code> between fields, <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">gap-1.5</code> icon-to-text.</li>
+              <li><strong className="text-gray-900">Tag badges</strong> — status (green=Open, blue=Pending, gray=Closed), category (teal), difficulty (purple-50/700/200 — a categorical tag color, distinct from the <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">#9810FA</code> AI hex).</li>
+              <li><strong className="text-gray-900">Save action</strong> — outline button, <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">Bookmark</code> icon; saved state fills the icon and tints the button teal.</li>
+            </ul>
+          </div>
+
+          {/* List & Controls */}
+          <h3 className="text-base font-semibold text-gray-900 mb-1 mt-10">List &amp; Controls</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            View toggle, sort menu, and flat gray filter pills sit in one control row above the results.
+          </p>
+          <PreviewBox>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <h4 className="text-base font-semibold text-gray-900">24 <span className="text-gray-500 font-normal">grants</span></h4>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <ArrowUpDown className="w-3.5 h-3.5" />
+                    Relevance
+                  </Button>
+                  <div className="flex items-center bg-white border border-gray-200 rounded-lg p-0.5">
+                    <button className="p-1.5 rounded bg-gray-100 text-gray-900">
+                      <List className="w-4 h-4" />
+                    </button>
+                    <button className="p-1.5 rounded text-gray-500">
+                      <LayoutGrid className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Badge className="gap-1.5 pr-1 py-1.5 text-sm bg-gray-50 text-gray-700 border-gray-200">
+                  Category: Community Development
+                  <X className="w-3 h-3" />
+                </Badge>
+                <Badge className="gap-1.5 pr-1 py-1.5 text-sm bg-gray-50 text-gray-700 border-gray-200">
+                  Status: Open
+                  <X className="w-3 h-3" />
+                </Badge>
+                <Button variant="outline" size="sm" className="gap-2 border-gray-300 text-gray-700 font-semibold">
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Filters
+                </Button>
+              </div>
+            </div>
+          </PreviewBox>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div className="rounded-xl border border-gray-200 bg-white p-5 flex flex-col items-center gap-3 text-center">
+              <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+              <p className="text-sm text-gray-600 font-medium">Searching for grants...</p>
+              <span className="text-xs text-gray-400">Loading state</span>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white p-5 flex flex-col items-center gap-3 text-center">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+                <SearchX className="w-7 h-7 text-gray-400" />
+              </div>
+              <p className="text-sm text-gray-900 font-semibold">No Grants Found</p>
+              <span className="text-xs text-gray-400">Empty state</span>
+            </div>
+          </div>
+
+          <CodeSnippet
+            code={`// Sort trigger
+<Button variant="outline" size="sm" className="gap-2">
+  <ArrowUpDown className="w-3.5 h-3.5" />
+  Relevance
+</Button>
+
+// View toggle — segmented control
+<div className="flex items-center bg-white border border-gray-200 rounded-lg p-0.5">
+  <button className={\`p-1.5 rounded \${viewMode === "list" ? "bg-gray-100 text-gray-900" : "text-gray-500"}\`}>
+    <List className="w-4 h-4" />
+  </button>
+  <button className={\`p-1.5 rounded \${viewMode === "grid" ? "bg-gray-100 text-gray-900" : "text-gray-500"}\`}>
+    <LayoutGrid className="w-4 h-4" />
+  </button>
+</div>
+
+// Filter pill — always flat gray, regardless of the filter's category
+<Badge className="gap-1.5 pr-1 py-1.5 text-sm bg-gray-50 text-gray-700 border-gray-200">
+  Category: Community Development
+  <button className="hover:bg-black/10 rounded-full p-0.5"><X className="w-3 h-3" /></button>
+</Badge>`}
+          />
+
+          <div className="mt-2 rounded-xl border border-gray-200 bg-white p-6">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Standards</h3>
+            <ul className="space-y-2.5 text-sm text-gray-600 leading-relaxed">
+              <li><strong className="text-gray-900">Result count</strong> — <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">text-lg font-semibold</code> count + <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">font-normal text-gray-500</code> label (e.g. "24 grants"), left-aligned in the control row.</li>
+              <li><strong className="text-gray-900">View toggle</strong> — segmented pill, <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">bg-white border border-gray-200 rounded-lg p-0.5</code>; active segment <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">bg-gray-100 text-gray-900</code>. Icons: <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">List</code>, <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">LayoutGrid</code>.</li>
+              <li><strong className="text-gray-900">Filter pills</strong> — always flat <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">bg-gray-50 text-gray-700 border-gray-200</code>, regardless of what the filter category is. Do not color-code filter pills by category — that's reserved for result-card tags.</li>
+              <li><strong className="text-gray-900">Add Filters</strong> — outline button opens a popover; the popover's top-level menu uses a teal gradient header (<code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">from-teal-600 to-teal-500</code>), drilled-down levels use a lighter gradient (<code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">from-teal-50 to-white</code>) with a back chevron.</li>
+              <li><strong className="text-gray-900">Loading</strong> — centered <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">Loader2</code> spinner (teal, <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">animate-spin</code>) with supporting copy. No skeletons in this flow.</li>
+              <li><strong className="text-gray-900">Empty state</strong> — <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">SearchX</code> icon in a soft gray gradient circle, Lustria heading, Cabin body copy, with actions to clear search/filters.</li>
+              <li><strong className="text-gray-900">Grid vs. list</strong> — list view caps width at <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">max-w-[960px]</code>; grid view is a fixed <code className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">grid-cols-2</code>.</li>
+            </ul>
           </div>
         </section>
 

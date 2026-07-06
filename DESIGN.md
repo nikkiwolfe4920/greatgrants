@@ -11,6 +11,11 @@ Complete design system documentation for the Great Grants application, aligned w
 - [Border Radius](#border-radius)
 - [Shadows](#shadows)
 - [Iconography](#iconography)
+- [Tabs](#tabs)
+- [Global Navigation (Left Sidebar)](#global-navigation-left-sidebar)
+- [Breadcrumbs](#breadcrumbs)
+- [Right Rail (Workflow Helper Panel)](#right-rail-workflow-helper-panel)
+- [Search](#search)
 - [Implementation Guide](#implementation-guide)
 - [Migration Guide](#migration-guide)
 - [Design Principles](#design-principles)
@@ -423,6 +428,253 @@ Icons inherit the current text color via CSS. Use Tailwind text utilities:
 
 ---
 
+## Tabs
+
+Section navigation using ShadCN/Radix `Tabs`. Two accepted styles, chosen by context:
+
+### Underline style (default — `src/app/components/ui/tabs.tsx`)
+The base `TabsList` has **no background** (transparent) with a `border-b border-gray-200` running the full width. The active `TabsTrigger` gets a 2px teal underline (`data-[state=active]:after:bg-teal-600`) and `text-teal-700`; inactive triggers are `text-gray-500`.
+
+```tsx
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/app/components/ui/tabs";
+
+<Tabs defaultValue="overview">
+  <TabsList>
+    <TabsTrigger value="overview">Overview</TabsTrigger>
+    <TabsTrigger value="requirements">Requirements</TabsTrigger>
+  </TabsList>
+  <TabsContent value="overview">…</TabsContent>
+</Tabs>
+```
+
+### Pill style (grouped toolbar tabs — e.g. Grant Detail page)
+A **white** (`bg-white`), bordered (`border border-gray-200`) container with `p-1` padding. The active tab is a lifted white pill: `data-[state=active]:bg-white data-[state=active]:text-teal-700 data-[state=active]:shadow-sm`.
+
+```tsx
+<Tabs defaultValue="overview">
+  <TabsList className="bg-white border border-gray-200 p-1">
+    <TabsTrigger
+      value="overview"
+      className="data-[state=active]:bg-white data-[state=active]:text-teal-700 data-[state=active]:shadow-sm text-gray-600"
+    >
+      Overview
+    </TabsTrigger>
+  </TabsList>
+  <TabsContent value="overview">…</TabsContent>
+</Tabs>
+```
+
+**Standard: the tab-group container background must always be white (`bg-white`), never light gray (`bg-gray-100` / `bg-gray-50`).** The active-tab distinction comes from the lifted `shadow-sm` (pill style) or the teal underline (underline style) — not from contrasting the active tab against a gray tray. A gray container flattens that contrast and reads as disabled.
+
+---
+
+## Global Navigation (Left Sidebar)
+
+The app has exactly **one** left navigation — `SharedSidebar` (`src/app/components/SharedSidebar.tsx`) — rendered once by `AppLayout` (`src/app/components/AppLayout.tsx`) and shared by every authenticated route via `<Outlet />`. Pages must never render a second, page-local `<aside>` sidebar.
+
+```tsx
+import { Outlet } from "react-router";
+import { SharedSidebar } from "@/app/components/SharedSidebar";
+
+export function AppLayout() {
+  return (
+    <div className="flex h-screen bg-white">
+      <SharedSidebar />
+      <main className="flex-1 overflow-y-auto bg-white lg:pl-0 pl-12">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+```
+
+### Standards
+- **Single source of truth** — `SharedSidebar` is the only left nav. Route pages through `AppLayout`, never duplicate an `<aside>` inside a page component.
+- **Width** — `lg:w-60` (240px) at desktop, `xl:w-64` (256px) at wide desktop, `shrink-0 h-screen sticky top-0`.
+- **Responsive collapse** — below the `lg` breakpoint, the fixed sidebar is replaced by a hamburger button (`fixed top-3 left-3`, `Menu` icon) that opens a slide-in drawer (`fixed inset-y-0 left-0 w-64`, `translate-x-0`/`-translate-x-full` transition) with a backdrop scrim (`bg-gray-900/40 backdrop-blur-[1px]`). The drawer closes on route change and on outside click.
+- **Layout order (top → bottom)** — Logo → primary nav list → auto-margin spacer → credits usage widget → user profile / org switcher. Each section is separated by `border-t border-gray-200`.
+- **Active state** — `bg-gray-100 text-gray-900` with `font-semibold`. Inactive: `text-gray-700 hover:bg-gray-100`. Never use the teal brand color as a row background in the nav — teal is reserved for small accent indicators (active dots, underlines), not full-row fills.
+- **Icons** — every nav item leads with a 16px (`w-4 h-4`) Lucide icon, `shrink-0`.
+- **Typography** — Cabin, 14px; `font-weight: 600` when active, `400` otherwise.
+- **Counts & badges** — pill counters use `bg-gray-100 text-gray-600 text-xs font-semibold rounded-full px-2 py-0.5`. Don't color-code count badges by status inside the nav; save color coding for the "required items remaining" `AlertCircle` badge pattern.
+- **Collapsible nested groups** — e.g. All Applications → application → section — toggle with `ChevronRight`/`ChevronDown` and indent `ml-3`, then `ml-5` per depth level.
+- **Org switcher** — lives behind the user profile row at the bottom (avatar `w-8 h-8 rounded-full bg-[#E9EAEB]`) as a `DropdownMenu`, not a separate top-level nav item.
+- **Credits usage widget** — a distinct warm card (`bg-[#fffefa] rounded-lg p-3`) sitting directly above the user profile, showing generated-applications progress with a `bg-[#fef7c3]` track / `bg-[#ca8504]` fill bar. This widget is unique to the sidebar footer — don't reuse its palette elsewhere.
+
+---
+
+## Breadcrumbs
+
+Ancestor trail rendered directly above the page's H1, using `src/app/components/ui/breadcrumb.tsx`. See it live on the Organization Profile page.
+
+```tsx
+import { Link } from "react-router";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  BreadcrumbHome,
+} from "@/app/components/ui/breadcrumb";
+
+<Breadcrumb className="mb-6">
+  <BreadcrumbList>
+    <BreadcrumbItem>
+      <BreadcrumbLink asChild>
+        <Link to="/"><BreadcrumbHome /></Link>
+      </BreadcrumbLink>
+    </BreadcrumbItem>
+    <BreadcrumbSeparator />
+    <BreadcrumbItem>
+      <BreadcrumbLink asChild>
+        <Link to="/settings">Settings</Link>
+      </BreadcrumbLink>
+    </BreadcrumbItem>
+    <BreadcrumbSeparator />
+    <BreadcrumbItem>
+      <BreadcrumbPage>Organization</BreadcrumbPage>
+    </BreadcrumbItem>
+  </BreadcrumbList>
+</Breadcrumb>
+```
+
+### Standards
+- **Placement** — always directly above the H1 page header, `mb-6` spacing. Never nested inside a card, tab panel, or table.
+- **First crumb** — always `<BreadcrumbHome />` (Home icon, `text-[#A4A7AE]`) linking to `/`. No text label on the home crumb.
+- **Separator** — default `ChevronRight`, `text-[#A4A7AE]`, stroke width `1.33`. Only override when truncating a long trail with an ellipsis (`BreadcrumbEllipsis`).
+- **Linked crumbs** — `text-[#717680]`, hover `text-[#414651]`, Cabin semibold, 14px/20px line height.
+- **Current page** — `BreadcrumbPage`, not a link: `text-[#107569]` (brand dark teal), `aria-current="page"`, `aria-disabled="true"`.
+- **Routing** — wrap a react-router `Link` with `BreadcrumbLink asChild` for SPA navigation. Don't use a raw `<a href>`.
+
+---
+
+## Right Rail (Workflow Helper Panel)
+
+A contextual, collapsible panel docked to the right edge of the main content area — used today for the "Profile Completion" checklist on the Organization Profile page (`src/app/components/OrganizationProfileForm.tsx`, `showRightRail` state). This is the standard pattern for any future contextual helper (guidance checklists, AI assistants, etc.) that should stay attached to the current page's workflow.
+
+```tsx
+<AnimatePresence mode="wait">
+  {showRightRail && (
+    <motion.aside
+      initial={{ width: 0, opacity: 0 }}
+      animate={{ width: 320, opacity: 1 }}
+      exit={{ width: 0, opacity: 0 }}
+      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+      className="bg-[#F9FAFB] border-l border-gray-200 overflow-hidden flex-shrink-0 relative"
+    >
+      {/* Collapse button — absolute top-6 -left-4, straddles the rail edge */}
+      {/* Header: title + progress badge + one-line supporting copy */}
+      {/* Grouped sections: heading + time estimate, each with row items */}
+    </motion.aside>
+  )}
+</AnimatePresence>
+
+{/* Floating re-open tab — rendered only while the rail is collapsed */}
+{!showRightRail && (
+  <motion.button
+    className="fixed right-0 top-1/3 z-20 text-white px-3 py-4 rounded-l-xl shadow-xl"
+    style={{ background: bgGradient }}
+  >
+    {/* icon, vertical label, completion count */}
+  </motion.button>
+)}
+```
+
+### Standards
+- **Sizing & motion** — expanded width `320px`, animated with `framer-motion` (`motion/react`) on `width` + `opacity`, `duration: 0.3`, ease `[0.4, 0, 0.2, 1]`.
+- **Surface** — background `#F9FAFB` (gray-50), `border-l border-gray-200`. Content sits on white cards/rows inside — never directly on the gray surface.
+- **Collapse control** — circular button, `w-8 h-8 bg-white rounded-full border-2 border-gray-200 shadow-lg`, positioned straddling the rail's top-left edge (`absolute top-6 -left-4`). Use teal brand tokens for hover (`hover:border-teal-500 hover:bg-teal-50`) rather than one-off colors.
+- **Collapsed state** — a `fixed right-0 top-1/3` vertical tab, `rounded-l-xl`, colored by progress/urgency (gradient), with a vertical text label and completion count. The rail is never fully hidden without an obvious, always-visible way back in.
+- **Reflow, don't overlap** — the main content area is `w-full` when the rail is open and constrains to `max-w-5xl mx-auto` when collapsed. The rail must never float on top of content.
+- **Anatomy** — header (title + progress badge + one-line supporting copy) → grouped sections (section heading + "~X minutes to complete" hint) → rows (leading completion indicator — filled teal `CheckCircle2` when done, empty outlined circle otherwise — title, helper text). Rows are clickable and jump to / highlight the related field in the main content.
+- **Progress badge** — a pill with a gradient background communicating state: green gradient when 100% complete, amber/blue gradient at moderate progress, orange/red gradient at low progress.
+- **Default state** — open on first load for any page using this pattern.
+- **Recommended next step** — this pattern currently lives inline inside `OrganizationProfileForm.tsx`. New usages (e.g. an AI assistant rail) should extract a shared `WorkflowRail` component instead of copy-pasting the implementation.
+
+---
+
+## Search
+
+Grant Search (`src/app/components/GrantSearch.tsx`) is conversational and AI-assisted: a single natural-language input, relevance-scored result cards, and flat gray filter controls.
+
+### Search Input
+A single connected white toolbar: a program-context picker on the left, the text input on the right, inside one bordered card.
+
+```tsx
+<div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <div className="relative flex items-center">
+    {/* Program context picker */}
+    <div className="flex-shrink-0 border-r border-gray-200">…</div>
+
+    <div className="flex-1 relative">
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+        <Search className={`w-5 h-5 ${query ? "text-teal-600" : "text-gray-400"}`} />
+        <Sparkles className="w-4 h-4" style={{ color: "#9810FA" }} />
+      </div>
+      <input
+        placeholder="Tell us about your project that needs funding"
+        className={`w-full pl-20 pr-12 py-3.5 text-base focus:outline-none ${query ? "bg-teal-50/30" : "bg-white"}`}
+      />
+    </div>
+  </div>
+</div>
+```
+- Container: `bg-white rounded-xl shadow-sm border border-gray-200`. The input itself has no visible border — it relies on the parent card, with `focus:outline-none` (no native focus ring).
+- Padding `pl-20` makes room for the stacked `Search` + `Sparkles` icons; `pr-12` clears space for the clear (`X`) button.
+- State change: non-empty query → `bg-teal-50/30` tint + `text-teal-600` search icon; empty → `bg-white` + `text-gray-400`.
+- Placeholder copy is conversational/AI-prompt style ("Tell us about your project that needs funding"), not a keyword hint.
+
+### AI Search Rules
+- **AI accent color: `#9810FA`.** This is the **single exception** to the brand/gray/semantic palette — an exact hex, not a Tailwind `purple-*` token for the border/text. Reserve it exclusively for AI-assisted or generative search affordances: the `Sparkles` icon and the natural-language example-query chips.
+- **Never mix with brand teal for the same affordance.** Teal communicates "primary action / matched relevance"; purple communicates "AI-generated / AI-powered." Keeping them distinct preserves the signal to users.
+- **Icon** — always `Sparkles` (Lucide), 16px, glued directly beside the `Search` icon inside the input. Not rendered as a standalone badge.
+- **Example chips** — "Try:" chips pre-fill the input with natural-language example queries: `text-[#9810FA] border-[#9810FA]`, hover background falls back to Tailwind's `purple-50`.
+- **Don't confuse with the Difficulty tag** on result cards, which also uses purple but via the ordinary Tailwind token (`bg-purple-50 text-purple-700 border-purple-200`) — that's a categorical tag color, unrelated to the AI accent hex.
+
+### Result Cards
+Flat white cards, no shadow at rest, lift on hover only.
+
+```tsx
+<div className="bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all overflow-hidden cursor-pointer">
+  <div className="p-5">
+    {/* Title + relevance Badge */}
+    {/* Description, line-clamp-2 */}
+    {/* Metadata row: Banknote (amount) · Globe (location) · Calendar (deadline) */}
+    {/* Status / category / difficulty tag Badges + Save button */}
+  </div>
+</div>
+```
+
+**Relevance ("match") badge tiers** — always the `Target` icon + label, never purple (purple is reserved for AI search, not match scoring):
+
+| Relevance | Label | Classes |
+|---|---|---|
+| ≥ 85 | Excellent Match | `bg-teal-600 text-white border-teal-600` |
+| ≥ 70 | Great Match | `bg-teal-500 text-white border-teal-500` |
+| ≥ 55 | Good Match | `bg-blue-500 text-white border-blue-500` |
+| < 55 | Fair Match | `bg-gray-500 text-white border-gray-500` |
+
+- **Card** — `bg-white border border-gray-200 rounded-xl`, no shadow at rest, `hover:shadow-md` only. The whole card is a click target to the grant detail page.
+- **Metadata row** — `Banknote` (amount), `Globe` (location), `Calendar` (deadline); 16px icons, `gap-4` between fields, `gap-1.5` icon-to-text.
+- **Tag badges** — status (`green-50/700/200` Open, `blue-50/700/200` Pending, `gray-100/600/200` Closed), category (`teal-50/700/200`), difficulty (`purple-50/700/200`).
+- **Save action** — outline `Button` with `Bookmark` icon; saved state fills the icon (`fill-current`) and tints the button teal (`border-teal-200 bg-teal-50 text-teal-700`).
+- **Match breakdown gauges** (list view) — thin `h-1 bg-gray-100 rounded-full` tracks filled with `bg-gradient-to-r from-teal-500 to-teal-600`, animated via `transition-all duration-500` on inline `width`.
+
+### List & Controls
+- **Result count** — `text-lg font-semibold` count + `font-normal text-gray-500` label (e.g. "24 grants").
+- **View toggle** — segmented pill control, `bg-white border border-gray-200 rounded-lg p-0.5`; active segment `bg-gray-100 text-gray-900`, inactive `text-gray-500`. Icons: `List`, `LayoutGrid`.
+- **Sort control** — `DropdownMenu` triggered by an outline `Button` with `ArrowUpDown`; each menu item pairs an icon with its label (`TrendingUp` Relevance, `Banknote` Funding Amount, `Calendar` Deadline, `Clock` Recently Added).
+- **Filter pills** — always flat `bg-gray-50 text-gray-700 border-gray-200`, regardless of the underlying filter category. Don't color-code filter pills by category — save color-coding for result-card tags.
+- **Add Filters** — outline button opens a popover (`w-96`, `shadow-xl border border-gray-200`). Root-level menu header uses a teal gradient (`from-teal-600 to-teal-500`, white text); drilled-down levels use a lighter gradient (`from-teal-50 to-white`) with a back chevron.
+- **Grid vs. list layout** — list view caps content width at `max-w-[960px]` (`space-y-3`); grid view is a fixed `grid grid-cols-2 gap-4` (not responsive-breakpointed).
+- **Loading state** — centered `Loader2` spinner (teal, `animate-spin`) with supporting copy ("Searching for grants..."). No skeleton loaders in this flow.
+- **Empty state** — `SearchX` icon inside an `80×80` soft gray gradient circle (`bg-gradient-to-br from-gray-50 to-gray-100`), Lustria heading ("No Grants Found"), Cabin body copy, with actions to clear search/filters.
+- **No pagination or infinite scroll** — results render in full; introduce pagination only if result volumes grow enough to require it.
+
+---
+
 ## Implementation Guide
 
 ### Using CSS Variables
@@ -649,7 +901,7 @@ Use semantic tokens for better maintainability:
 ## Design Principles
 
 ### 1. White Backgrounds
-All modals, dropdowns, select menus, and popovers use solid white backgrounds (`#ffffff`) with no transparency for clarity and accessibility.
+All modals, dropdowns, select menus, popovers, and tab-group containers use solid white backgrounds (`#ffffff`) with no transparency for clarity and accessibility. Never substitute a light gray tray (`bg-gray-50` / `bg-gray-100`) for the white container — active-state contrast should come from shadow/underline/color, not from a gray backdrop.
 
 ### 2. Teal Brand Color
 Primary brand color is teal (`#0e9384`) used consistently for:
@@ -657,6 +909,8 @@ Primary brand color is teal (`#0e9384`) used consistently for:
 - Active navigation states
 - Links and interactive elements
 - Brand accents and highlights
+
+**Exception — AI accent purple (`#9810FA`):** reserved exclusively for AI-assisted/generative search affordances (see [Search](#search)). It never substitutes for teal and is not used for anything unrelated to AI.
 
 ### 3. Typography Hierarchy
 - **Cabin** for all body text and UI elements
@@ -707,9 +961,14 @@ src/
 - **Figma Design System**: Imported components and design tokens
 - **Design Tokens**: `/src/styles/design-tokens.css`
 - **Theme Configuration**: `/src/styles/theme.css`
+- **Design System Page**: `/design-system` (`src/app/pages/DesignSystemPage.tsx`) — live, interactive reference for every pattern in this document
+- **Global Navigation**: `src/app/components/SharedSidebar.tsx`, `src/app/components/AppLayout.tsx`
+- **Breadcrumbs**: `src/app/components/ui/breadcrumb.tsx`
+- **Right Rail**: `src/app/components/OrganizationProfileForm.tsx` (`showRightRail`)
+- **Search**: `src/app/components/GrantSearch.tsx`
 
 ---
 
-**Last Updated**: April 8, 2026
-**Version**: 2.0
+**Last Updated**: July 6, 2026
+**Version**: 2.1
 **Based on**: Untitled UI Design System
