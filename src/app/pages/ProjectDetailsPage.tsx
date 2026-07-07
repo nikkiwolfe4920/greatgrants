@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FolderOpen, Plus, MapPin, Users, Upload, X, FileText, Edit2, Trash2, ChevronDown, ChevronUp, AlertCircle, FileCheck, Archive, Clock, Send, ArrowRight, DollarSign, Target, Briefcase, Shield, UserCircle2, Check } from "lucide-react";
+import { FolderOpen, Plus, MapPin, Users, Upload, X, FileText, Edit2, Trash2, ChevronDown, ChevronUp, AlertCircle, FileCheck, Clock, DollarSign, UserCircle2, Check, Info, Globe } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -34,21 +34,35 @@ import {
   BreadcrumbHome,
 } from "../components/ui/breadcrumb";
 
-interface DocumentationItem {
+interface DocumentationFile {
   id: string;
-  title: string;
-  type: "Past Documentation" | "Future Planning Materials";
-  category: string; // "Impact & Results", "Financial History", "Organizational Docs", "Compliance" for Past; "Program Plan", "Budget & Funding", "Impact Goals", "Execution Plan" for Future
-  description: string;
-  fileName?: string;
+  fileName: string;
+  fileSize: string;
+  uploadedAt: number;
 }
 
-interface Location {
+interface GeoLocation {
+  id: string;
+  country: string;
+  state: string;
+  name: string;
+}
+
+interface Partnership {
   id: string;
   name: string;
-  type: "City" | "State" | "Region" | "Country";
-  country: string;
-  notes?: string;
+}
+
+interface UrlEntry {
+  id: string;
+  value: string;
+}
+
+interface PrimaryContact {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
 }
 
 interface PopulationCategory {
@@ -61,8 +75,12 @@ interface Project {
   id: string;
   title: string;
   summary: string;
-  documentation: DocumentationItem[];
-  locations: Location[];
+  documentFiles: DocumentationFile[];
+  geoLocations: GeoLocation[];
+  programDurationMonths: number | null;
+  partnerships: Partnership[];
+  primaryContact: PrimaryContact | null;
+  urls: UrlEntry[];
   selectedPopulations: PopulationCategory[];
   allPopulations: PopulationCategory[];
   estimatedServed: string;
@@ -91,6 +109,17 @@ const predefinedPopulations: PopulationCategory[] = [
   { id: "indigenous", name: "Indigenous Communities" },
 ];
 
+const usStates: string[] = [
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+  "Delaware", "District of Columbia", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois",
+  "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts",
+  "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada",
+  "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota",
+  "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
+  "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington",
+  "West Virginia", "Wisconsin", "Wyoming",
+];
+
 // Helper to format timestamps
 const formatTimestamp = (timestamp: number): string => {
   const now = Date.now();
@@ -104,9 +133,48 @@ const formatTimestamp = (timestamp: number): string => {
   if (minutes < 60) return `${minutes}m ago`;
   if (hours < 24) return `${hours}h ago`;
   if (days < 7) return `${days}d ago`;
-  
+
   return new Date(timestamp).toLocaleDateString();
 };
+
+const formatFileSize = (bytes: number): string => {
+  const mb = bytes / (1024 * 1024);
+  return `${mb.toFixed(1)} MB`;
+};
+
+const isValidUrlValue = (value: string): boolean => {
+  if (!value.trim()) return false;
+  const pattern = /^(https?:\/\/)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+([/?#]\S*)?$/;
+  return pattern.test(value.trim());
+};
+
+// Small confirm/add button shared by the Geographic Focus, Program Duration,
+// Partnerships, Primary Point of Contact, and Add URL sections.
+function ConfirmButton({
+  enabled,
+  onClick,
+  title,
+}: {
+  enabled: boolean;
+  onClick: () => void;
+  title?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!enabled}
+      title={title}
+      className={`flex items-center justify-center w-9 h-9 rounded-md border transition-colors flex-shrink-0 ${
+        enabled
+          ? "bg-teal-600 border-teal-600 text-white hover:bg-teal-700"
+          : "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed"
+      }`}
+    >
+      <Check className="w-4 h-4" />
+    </button>
+  );
+}
 
 export function ProjectDetailsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -119,8 +187,12 @@ export function ProjectDetailsPage() {
   const [currentProject, setCurrentProject] = useState<Partial<Project>>({
     title: "",
     summary: "",
-    documentation: [],
-    locations: [],
+    documentFiles: [],
+    geoLocations: [],
+    programDurationMonths: null,
+    partnerships: [],
+    primaryContact: null,
+    urls: [],
     selectedPopulations: [],
     allPopulations: predefinedPopulations,
     estimatedServed: "",
@@ -129,31 +201,17 @@ export function ProjectDetailsPage() {
   });
 
   // Modal states
-  const [showDocumentationModal, setShowDocumentationModal] = useState(false);
-  const [documentationType, setDocumentationType] = useState<"Past Documentation" | "Future Planning Materials">("Past Documentation");
-  const [showLocationModal, setShowLocationModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
 
-  // Editing states for items within project
-  const [editingDocId, setEditingDocId] = useState<string | null>(null);
-  const [editingLocationId, setEditingLocationId] = useState<string | null>(null);
-
-  // Form states
-  const [docForm, setDocForm] = useState({
-    title: "",
-    description: "",
-    category: "",
-    fileName: "",
-  });
-
-  const [locationForm, setLocationForm] = useState({
-    name: "",
-    type: "City" as "City" | "State" | "Region" | "Country",
-    country: "USA",
-    notes: "",
-  });
+  // Form states for the inline "add" rows
+  const [geoForm, setGeoForm] = useState({ country: "USA", state: "", name: "" });
+  const [durationInput, setDurationInput] = useState("");
+  const [partnershipInput, setPartnershipInput] = useState("");
+  const [contactForm, setContactForm] = useState({ firstName: "", lastName: "", email: "", phone: "" });
+  const [urlInput, setUrlInput] = useState("");
+  const [urlTouched, setUrlTouched] = useState(false);
 
   const [customCategory, setCustomCategory] = useState("");
 
@@ -214,27 +272,62 @@ export function ProjectDetailsPage() {
     }
   };
 
+  const emptyProject: Partial<Project> = {
+    title: "",
+    summary: "",
+    documentFiles: [],
+    geoLocations: [],
+    programDurationMonths: null,
+    partnerships: [],
+    primaryContact: null,
+    urls: [],
+    selectedPopulations: [],
+    allPopulations: predefinedPopulations,
+    estimatedServed: "",
+    status: "published",
+    selectedApplications: [],
+  };
+
   const handleStartNewProject = () => {
     setIsCreatingProject(true);
     setEditingProjectId(null);
-    setCurrentProject({
-      title: "",
-      summary: "",
-      documentation: [],
-      locations: [],
-      selectedPopulations: [],
-      allPopulations: predefinedPopulations,
-      estimatedServed: "",
-      status: "published",
-      selectedApplications: [],
-    });
+    setCurrentProject({ ...emptyProject });
+    resetInlineForms();
   };
 
   const handleEditProject = (project: Project) => {
     setEditingProjectId(project.id);
     setIsCreatingProject(true);
     setCurrentProject({ ...project });
+    resetInlineForms();
   };
+
+  const resetInlineForms = () => {
+    setGeoForm({ country: "USA", state: "", name: "" });
+    setDurationInput("");
+    setPartnershipInput("");
+    setContactForm({ firstName: "", lastName: "", email: "", phone: "" });
+    setUrlInput("");
+    setUrlTouched(false);
+  };
+
+  const buildProjectRecord = (now: number): Project => ({
+    id: now.toString(),
+    title: currentProject.title!,
+    summary: currentProject.summary!,
+    documentFiles: currentProject.documentFiles || [],
+    geoLocations: currentProject.geoLocations || [],
+    programDurationMonths: currentProject.programDurationMonths ?? null,
+    partnerships: currentProject.partnerships || [],
+    primaryContact: currentProject.primaryContact ?? null,
+    urls: currentProject.urls || [],
+    selectedPopulations: currentProject.selectedPopulations || [],
+    allPopulations: currentProject.allPopulations || predefinedPopulations,
+    estimatedServed: currentProject.estimatedServed || "",
+    status: "published",
+    lastUpdatedAt: now,
+    createdAt: now,
+  });
 
   const handleSaveDraft = () => {
     if (!currentProject.title || !currentProject.summary) {
@@ -243,32 +336,18 @@ export function ProjectDetailsPage() {
     }
 
     const now = Date.now();
-    
+
     if (editingProjectId) {
       // Update existing project
-      setProjects(projects.map(p => 
-        p.id === editingProjectId 
+      setProjects(projects.map(p =>
+        p.id === editingProjectId
           ? { ...p, ...currentProject, lastUpdatedAt: now } as Project
           : p
       ));
     } else {
-      // Create new draft
-      const newProject: Project = {
-        id: now.toString(),
-        title: currentProject.title!,
-        summary: currentProject.summary!,
-        documentation: currentProject.documentation || [],
-        locations: currentProject.locations || [],
-        selectedPopulations: currentProject.selectedPopulations || [],
-        allPopulations: currentProject.allPopulations || predefinedPopulations,
-        estimatedServed: currentProject.estimatedServed || "",
-        status: "published",
-        lastUpdatedAt: now,
-        createdAt: now,
-      };
-      setProjects([...projects, newProject]);
+      setProjects([...projects, buildProjectRecord(now)]);
     }
-    
+
     // Close the creation form and show the draft in the list
     setIsCreatingProject(false);
     setEditingProjectId(null);
@@ -281,39 +360,24 @@ export function ProjectDetailsPage() {
     }
 
     const now = Date.now();
-    
+
     if (editingProjectId) {
       // Publish existing project
-      setProjects(projects.map(p => 
-        p.id === editingProjectId 
-          ? { 
-              ...p, 
-              ...currentProject, 
+      setProjects(projects.map(p =>
+        p.id === editingProjectId
+          ? {
+              ...p,
+              ...currentProject,
               status: "published" as const,
               publishedAt: p.status === "published" ? p.publishedAt : now,
-              lastUpdatedAt: now 
+              lastUpdatedAt: now
             } as Project
           : p
       ));
     } else {
-      // Create and publish new project
-      const newProject: Project = {
-        id: now.toString(),
-        title: currentProject.title!,
-        summary: currentProject.summary!,
-        documentation: currentProject.documentation || [],
-        locations: currentProject.locations || [],
-        selectedPopulations: currentProject.selectedPopulations || [],
-        allPopulations: currentProject.allPopulations || predefinedPopulations,
-        estimatedServed: currentProject.estimatedServed || "",
-        status: "published",
-        publishedAt: now,
-        lastUpdatedAt: now,
-        createdAt: now,
-      };
-      setProjects([...projects, newProject]);
+      setProjects([...projects, { ...buildProjectRecord(now), publishedAt: now }]);
     }
-    
+
     setIsCreatingProject(false);
     setEditingProjectId(null);
   };
@@ -321,17 +385,8 @@ export function ProjectDetailsPage() {
   const handleCancelEdit = () => {
     setIsCreatingProject(false);
     setEditingProjectId(null);
-    setCurrentProject({
-      title: "",
-      summary: "",
-      documentation: [],
-      locations: [],
-      selectedPopulations: [],
-      allPopulations: predefinedPopulations,
-      estimatedServed: "",
-      status: "published",
-      selectedApplications: [],
-    });
+    setCurrentProject({ ...emptyProject });
+    resetInlineForms();
   };
 
   const handleDeleteProject = (projectId: string) => {
@@ -347,107 +402,121 @@ export function ProjectDetailsPage() {
     }
   };
 
-  // Documentation handlers
-  const handleEditDoc = (doc: DocumentationItem) => {
-    setEditingDocId(doc.id);
-    setDocForm({
-      title: doc.title,
-      description: doc.description,
-      category: doc.category,
-      fileName: doc.fileName || "",
-    });
-    setDocumentationType(doc.type);
-    setShowDocumentationModal(true);
-  };
-
-  const handleAddDocumentation = () => {
-    if (docForm.title && docForm.description) {
-      const now = Date.now();
-      if (editingDocId) {
-        setCurrentProject({
-          ...currentProject,
-          documentation: currentProject.documentation?.map(d =>
-            d.id === editingDocId ? { ...d, ...docForm, type: documentationType } : d
-          ),
-        });
-        setEditingDocId(null);
-      } else {
-        setCurrentProject({
-          ...currentProject,
-          documentation: [
-            ...(currentProject.documentation || []),
-            { id: now.toString(), ...docForm, type: documentationType },
-          ],
-        });
-      }
-      setDocForm({ title: "", description: "", category: "", fileName: "" });
-      setShowDocumentationModal(false);
-    }
-  };
-
-  const handleAddAndContinue = () => {
-    if (docForm.title && docForm.description) {
-      const now = Date.now();
-      setCurrentProject({
-        ...currentProject,
-        documentation: [
-          ...(currentProject.documentation || []),
-          { id: now.toString(), ...docForm, type: documentationType },
-        ],
-      });
-      setDocForm({ title: "", description: "", category: "", fileName: "" });
-      // Keep modal open
-    }
-  };
-
-  const handleRemoveDoc = (docId: string) => {
+  // Add Documentation handlers
+  const handleFileSelect = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const now = Date.now();
+    const newFiles: DocumentationFile[] = Array.from(files).map((file, index) => ({
+      id: `${now}-${index}`,
+      fileName: file.name,
+      fileSize: formatFileSize(file.size),
+      uploadedAt: now,
+    }));
     setCurrentProject({
       ...currentProject,
-      documentation: currentProject.documentation?.filter(d => d.id !== docId),
+      documentFiles: [...(currentProject.documentFiles || []), ...newFiles],
     });
   };
 
-  // Location handlers
-  const handleEditLocation = (location: Location) => {
-    setEditingLocationId(location.id);
-    setLocationForm({
-      name: location.name,
-      type: location.type,
-      country: location.country,
-      notes: location.notes || "",
-    });
-    setShowLocationModal(true);
+  const handleDocInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileSelect(event.target.files);
+    event.target.value = "";
   };
 
-  const handleAddLocation = () => {
-    if (locationForm.name) {
-      const now = Date.now();
-      if (editingLocationId) {
-        setCurrentProject({
-          ...currentProject,
-          locations: currentProject.locations?.map(l =>
-            l.id === editingLocationId ? { ...l, ...locationForm } : l
-          ),
-        });
-        setEditingLocationId(null);
-      } else {
-        setCurrentProject({
-          ...currentProject,
-          locations: [
-            ...(currentProject.locations || []),
-            { id: now.toString(), ...locationForm },
-          ],
-        });
-      }
-      setLocationForm({ name: "", type: "City", country: "USA", notes: "" });
-      setShowLocationModal(false);
-    }
+  const handleDocDrop = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    handleFileSelect(event.dataTransfer.files);
   };
 
-  const handleRemoveLocation = (locationId: string) => {
+  const handleRemoveDocFile = (id: string) => {
     setCurrentProject({
       ...currentProject,
-      locations: currentProject.locations?.filter(l => l.id !== locationId),
+      documentFiles: currentProject.documentFiles?.filter(f => f.id !== id),
+    });
+  };
+
+  // Geographic Focus handlers
+  const handleAddGeoLocation = () => {
+    if (!geoForm.state || !geoForm.name.trim()) return;
+    const now = Date.now();
+    setCurrentProject({
+      ...currentProject,
+      geoLocations: [...(currentProject.geoLocations || []), { id: now.toString(), ...geoForm }],
+    });
+    setGeoForm({ country: "USA", state: "", name: "" });
+  };
+
+  const handleRemoveGeoLocation = (id: string) => {
+    setCurrentProject({
+      ...currentProject,
+      geoLocations: currentProject.geoLocations?.filter(l => l.id !== id),
+    });
+  };
+
+  // Program Duration handlers
+  const handleConfirmDuration = () => {
+    const value = parseInt(durationInput, 10);
+    if (!value || value <= 0) return;
+    setCurrentProject({ ...currentProject, programDurationMonths: value });
+    setDurationInput("");
+  };
+
+  const handleRemoveDuration = () => {
+    setCurrentProject({ ...currentProject, programDurationMonths: null });
+  };
+
+  // Partnerships handlers
+  const handleAddPartnership = () => {
+    if (!partnershipInput.trim()) return;
+    const now = Date.now();
+    setCurrentProject({
+      ...currentProject,
+      partnerships: [...(currentProject.partnerships || []), { id: now.toString(), name: partnershipInput.trim() }],
+    });
+    setPartnershipInput("");
+  };
+
+  const handleRemovePartnership = (id: string) => {
+    setCurrentProject({
+      ...currentProject,
+      partnerships: currentProject.partnerships?.filter(p => p.id !== id),
+    });
+  };
+
+  // Primary Point of Contact handlers
+  const isContactFormValid = Boolean(
+    contactForm.firstName.trim() &&
+    contactForm.lastName.trim() &&
+    /\S+@\S+\.\S+/.test(contactForm.email.trim()) &&
+    contactForm.phone.trim().length >= 7
+  );
+
+  const handleConfirmContact = () => {
+    if (!isContactFormValid) return;
+    setCurrentProject({ ...currentProject, primaryContact: { ...contactForm } });
+    setContactForm({ firstName: "", lastName: "", email: "", phone: "" });
+  };
+
+  const handleRemoveContact = () => {
+    setCurrentProject({ ...currentProject, primaryContact: null });
+  };
+
+  // Add URL handlers
+  const handleAddUrl = () => {
+    if (!isValidUrlValue(urlInput)) return;
+    const now = Date.now();
+    setCurrentProject({
+      ...currentProject,
+      urls: [...(currentProject.urls || []), { id: now.toString(), value: urlInput.trim() }],
+    });
+    setUrlInput("");
+    setUrlTouched(false);
+  };
+
+  const handleRemoveUrl = (id: string) => {
+    setCurrentProject({
+      ...currentProject,
+      urls: currentProject.urls?.filter(u => u.id !== id),
     });
   };
 
@@ -467,13 +536,6 @@ export function ProjectDetailsPage() {
     }
   };
 
-  const handleRemovePopulation = (id: string) => {
-    setCurrentProject({
-      ...currentProject,
-      selectedPopulations: currentProject.selectedPopulations?.filter(p => p.id !== id),
-    });
-  };
-
   const handleAddCustomCategory = () => {
     if (customCategory.trim()) {
       const newCategory = {
@@ -491,15 +553,8 @@ export function ProjectDetailsPage() {
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setDocForm({ ...docForm, fileName: file.name });
-    }
-  };
-
   const publishedProjects = projects.filter(p => p.status === "published").sort((a, b) => (b.publishedAt || 0) - (a.publishedAt || 0));
-  const draftProjects = projects.filter(p => p.status === "draft");
+  const draftProjects: Project[] = [];
 
   // Check if required fields are filled
   const isPublishDisabled = !currentProject.title?.trim() || !currentProject.summary?.trim();
@@ -563,13 +618,13 @@ export function ProjectDetailsPage() {
                 <Button variant="outline" onClick={handleCancelEdit}>
                   Cancel
                 </Button>
-                
+
                 {/* Add Applications Feature */}
                 {applications.length > 0 ? (
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="gap-1.5 border-teal-200 hover:border-teal-300 hover:bg-teal-50"
                       >
                         <FileText className="w-4 h-4 text-teal-600" />
@@ -591,7 +646,7 @@ export function ProjectDetailsPage() {
                             Applying programs to your application makes the application process that much more seamless.
                           </p>
                         </div>
-                        
+
                         <div className="border-t border-gray-200 pt-3">
                           <p className="text-xs font-medium text-gray-700 mb-3 uppercase tracking-wide" style={{ fontFamily: 'Cabin, sans-serif' }}>
                             Select Applications
@@ -599,7 +654,7 @@ export function ProjectDetailsPage() {
                           <div className="space-y-2 max-h-64 overflow-y-auto">
                             {applications.map((app) => {
                               const isSelected = currentProject.selectedApplications?.includes(app.id) || false;
-                              
+
                               return (
                                 <div
                                   key={app.id}
@@ -624,7 +679,7 @@ export function ProjectDetailsPage() {
                             })}
                           </div>
                         </div>
-                        
+
                         {currentProject.selectedApplications && currentProject.selectedApplications.length > 0 && (
                           <div className="border-t border-gray-200 pt-3">
                             <p className="text-xs text-teal-700 bg-teal-50 rounded-lg p-2 border border-teal-200" style={{ fontFamily: 'Cabin, sans-serif' }}>
@@ -636,9 +691,9 @@ export function ProjectDetailsPage() {
                     </PopoverContent>
                   </Popover>
                 ) : null}
-                
-                <Button 
-                  onClick={handlePublishProject} 
+
+                <Button
+                  onClick={handlePublishProject}
                   disabled={isPublishDisabled}
                   className="bg-teal-600 hover:bg-teal-700 text-white gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-teal-600"
                 >
@@ -661,221 +716,233 @@ export function ProjectDetailsPage() {
                   className="text-lg"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Program Summary <span className="text-red-500">*</span>
-                </label>
-                <Textarea
-                  placeholder="Provide a brief overview of your program, its goals, and impact..."
-                  value={currentProject.summary || ""}
-                  onChange={(e) => setCurrentProject({ ...currentProject, summary: e.target.value })}
-                  rows={4}
-                  className="text-base"
+            </div>
+
+            {/* Add Documentation Section */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+              <div className="flex items-center gap-3 mb-5">
+                <FileText className="w-5 h-5 text-teal-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                    Add Documentation
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">Upload or describe past program documents</p>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="flex items-start gap-2 mb-2">
+                  <Info className="w-5 h-5 text-blue-700 flex-shrink-0 mt-0.5" />
+                  <h4 className="text-sm font-semibold text-blue-900">Recommended Documentation</h4>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 pl-7 text-xs text-blue-800">
+                  <p>• <span className="font-bold">Grant Proposals</span> - Contains mission, goals, locations, & populations served</p>
+                  <p>• <span className="font-bold">Strategic Plans</span> - Outlines mission, vision, & program objectives</p>
+                  <p>• <span className="font-bold">Annual Reports</span> - Includes impact data, program descriptions, & service areas</p>
+                  <p>• <span className="font-bold">IRS Form 990</span> - Contains organizational mission & program descriptions</p>
+                  <p>• <span className="font-bold">Program Descriptions/Brochures</span> - Detailed overview of services & target populations</p>
+                  <p>• <span className="font-bold">Program Fact Sheets</span> - Summarizes key program details & impact</p>
+                </div>
+              </div>
+
+              <label
+                className="border-2 border-dashed border-gray-300 rounded-lg py-10 text-center hover:border-teal-400 transition-colors cursor-pointer block mb-4"
+                onDrop={handleDocDrop}
+                onDragOver={(e) => e.preventDefault()}
+              >
+                <Upload className="w-6 h-6 text-teal-600 mx-auto mb-2" />
+                <p className="text-sm text-teal-600 font-medium">Click to upload or drag and drop</p>
+                <p className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX up to 10MB</p>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  multiple
+                  className="hidden"
+                  onChange={handleDocInputChange}
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  This summary helps AI understand your program for grant writing and matching.
-                </p>
-              </div>
-            </div>
+              </label>
 
-            {/* Documentation & Materials Section */}
-            {/* Past Documentation Section */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-teal-600" />
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-                      Past Documentation
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">Upload or describe past program documents</p>
-                  </div>
-                </div>
-                <Button 
-                  onClick={() => {
-                    setDocumentationType("Past Documentation");
-                    setShowDocumentationModal(true);
-                  }} 
-                  variant="outline" 
-                  className="gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Past Documentation
-                </Button>
-              </div>
-
-              {currentProject.documentation && currentProject.documentation.filter(doc => doc.type === "Past Documentation").length > 0 ? (
+              {currentProject.documentFiles && currentProject.documentFiles.length > 0 && (
                 <div className="space-y-2">
-                  {currentProject.documentation.filter(doc => doc.type === "Past Documentation").map((doc) => (
-                    <div key={doc.id} className="p-3 bg-white border border-gray-200 rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-medium text-gray-900 text-sm">{doc.title}</h4>
-                            {doc.category && (
-                              <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
-                                {doc.category}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-600 mt-1">{doc.description}</p>
-                          {doc.fileName && (
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className="text-xs text-gray-500">📎 {doc.fileName}</span>
-                            </div>
-                          )}
+                  {currentProject.documentFiles.map((file) => (
+                    <div key={file.id} className="flex items-center justify-between p-3.5 bg-white border border-gray-200 rounded-[10px]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-[10px] bg-red-50 flex items-center justify-center flex-shrink-0">
+                          <FileText className="w-5 h-5 text-red-500" />
                         </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => handleEditDoc(doc)}
-                            className="text-gray-400 hover:text-teal-600 transition-colors p-1"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleRemoveDoc(doc.id)}
-                            className="text-gray-400 hover:text-red-600 transition-colors p-1"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{file.fileName}</p>
+                          <p className="text-xs text-gray-500">{file.fileSize} • Uploaded {new Date(file.uploadedAt).toLocaleDateString()}</p>
                         </div>
                       </div>
+                      <button onClick={() => handleRemoveDocFile(file.id)} className="text-red-500 hover:text-red-600 transition-colors p-1">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <p className="text-sm text-gray-500 text-center py-4">No past documentation added yet</p>
               )}
             </div>
 
-            {/* Future Planning Materials Section */}
+            {/* Program Description */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Program Summary <span className="text-red-500">*</span>
+              </label>
+              <Textarea
+                placeholder="Provide a brief overview of your program, its goals, and impact..."
+                value={currentProject.summary || ""}
+                onChange={(e) => setCurrentProject({ ...currentProject, summary: e.target.value })}
+                rows={4}
+                className="text-base"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                This summary helps AI understand your program for grant writing and matching.
+              </p>
+            </div>
+
+            {/* Geographic Focus Section */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-teal-600" />
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-                      Future Planning Materials
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">Upload or describe future planning documents</p>
-                  </div>
+              <div className="flex items-center gap-3 mb-4">
+                <MapPin className="w-5 h-5 text-teal-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                    Geographic Focus <span className="text-red-500">*</span>
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">Add at least one location where your program operates</p>
                 </div>
-                <Button 
-                  onClick={() => {
-                    setDocumentationType("Future Planning Materials");
-                    setShowDocumentationModal(true);
-                  }} 
-                  variant="outline" 
-                  className="gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Future Planning Materials
-                </Button>
               </div>
 
-              {currentProject.documentation && currentProject.documentation.filter(doc => doc.type === "Future Planning Materials").length > 0 ? (
-                <div className="space-y-2">
-                  {currentProject.documentation.filter(doc => doc.type === "Future Planning Materials").map((doc) => (
-                    <div key={doc.id} className="p-3 bg-white border border-gray-200 rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-medium text-gray-900 text-sm">{doc.title}</h4>
-                            {doc.category && (
-                              <span className="px-2 py-0.5 bg-teal-50 text-teal-700 text-xs font-medium rounded-full">
-                                {doc.category}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-600 mt-1">{doc.description}</p>
-                          {doc.fileName && (
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className="text-xs text-gray-500">📎 {doc.fileName}</span>
-                            </div>
-                          )}
+              {currentProject.geoLocations && currentProject.geoLocations.length > 0 && (
+                <div className="space-y-2 mb-4">
+                  {currentProject.geoLocations.map((loc) => (
+                    <div key={loc.id} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                      <div className="grid grid-cols-3 gap-6 flex-1">
+                        <div>
+                          <p className="text-xs text-gray-500">Location Name</p>
+                          <p className="text-sm font-medium text-gray-900 mt-1">{loc.name}</p>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => handleEditDoc(doc)}
-                            className="text-gray-400 hover:text-teal-600 transition-colors p-1"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleRemoveDoc(doc.id)}
-                            className="text-gray-400 hover:text-red-600 transition-colors p-1"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
+                        <div>
+                          <p className="text-xs text-gray-500">Country</p>
+                          <p className="text-sm font-medium text-gray-900 mt-1">{loc.country}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">State</p>
+                          <p className="text-sm font-medium text-gray-900 mt-1">{loc.state}</p>
                         </div>
                       </div>
+                      <button onClick={() => handleRemoveGeoLocation(loc.id)} className="text-gray-400 hover:text-red-600 transition-colors p-1 ml-3 flex-shrink-0">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   ))}
                 </div>
+              )}
+
+              <div className="flex items-end gap-3 p-4 border border-gray-200 rounded-lg">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Country <span className="text-red-500">*</span>
+                  </label>
+                  <Select value={geoForm.country} onValueChange={(value) => setGeoForm({ ...geoForm, country: value })}>
+                    <SelectTrigger className="border border-gray-300">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USA">USA</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    State <span className="text-red-500">*</span>
+                  </label>
+                  <Select value={geoForm.state} onValueChange={(value) => setGeoForm({ ...geoForm, state: value })}>
+                    <SelectTrigger className="border border-gray-300">
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-64">
+                      {usStates.map((state) => (
+                        <SelectItem key={state} value={state}>{state}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Location Name <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    placeholder="e.g., Austin, Texas"
+                    value={geoForm.name}
+                    onChange={(e) => setGeoForm({ ...geoForm, name: e.target.value })}
+                  />
+                </div>
+                <ConfirmButton
+                  enabled={!!geoForm.state && !!geoForm.name.trim()}
+                  onClick={handleAddGeoLocation}
+                  title="Add location"
+                />
+              </div>
+            </div>
+
+            {/* Program Duration Section */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Clock className="w-5 h-5 text-teal-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                    Program Duration <span className="text-red-500">*</span>
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">Add the program duration in months.</p>
+                </div>
+              </div>
+
+              {currentProject.programDurationMonths ? (
+                <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                  <p className="text-sm font-medium text-gray-900">{currentProject.programDurationMonths} Months</p>
+                  <button onClick={handleRemoveDuration} className="text-gray-400 hover:text-red-600 transition-colors p-1">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               ) : (
-                <p className="text-sm text-gray-500 text-center py-4">No future planning materials added yet</p>
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder="#"
+                    value={durationInput}
+                    onChange={(e) => setDurationInput(e.target.value)}
+                    className="max-w-[100px]"
+                  />
+                  <span className="text-lg text-gray-900">Months</span>
+                  <ConfirmButton
+                    enabled={!!parseInt(durationInput, 10) && parseInt(durationInput, 10) > 0}
+                    onClick={handleConfirmDuration}
+                    title="Confirm duration"
+                  />
+                </div>
               )}
             </div>
 
-            {/* Locations Section */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-teal-600" />
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-                      Locations
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">Where does your program operate?</p>
-                  </div>
-                </div>
-                <Button onClick={() => setShowLocationModal(true)} variant="outline" className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Add Location
-                </Button>
+            {/* Estimated Total Budget */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Estimated Total Budget <span className="text-red-500">*</span>
+              </label>
+              <div className="relative max-w-xs">
+                <DollarSign className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Input
+                  placeholder="e.g., $150,000"
+                  value={currentProject.estimatedServed || ""}
+                  onChange={(e) => setCurrentProject({ ...currentProject, estimatedServed: e.target.value })}
+                  className="pl-9"
+                />
               </div>
-
-              {currentProject.locations && currentProject.locations.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2">
-                  {currentProject.locations.map((location) => (
-                    <div key={location.id} className="p-3 bg-white border border-gray-200 rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 text-sm">{location.name}</h4>
-                          <div className="flex items-center gap-2 text-xs text-gray-600 mt-1">
-                            <span className="px-1.5 py-0.5 bg-gray-100 rounded">{location.type}</span>
-                            <span>•</span>
-                            <span>{location.country}</span>
-                          </div>
-                          {location.notes && (
-                            <p className="text-xs text-gray-600 mt-2 italic">{location.notes}</p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => handleEditLocation(location)}
-                            className="text-gray-400 hover:text-teal-600 transition-colors p-1"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleRemoveLocation(location.id)}
-                            className="text-gray-400 hover:text-red-600 transition-colors p-1"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 text-center py-4">No locations added yet</p>
-              )}
             </div>
 
             {/* People Served Section */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
               <div className="flex items-center gap-3 mb-4">
                 <Users className="w-5 h-5 text-teal-600" />
                 <div>
@@ -938,6 +1005,202 @@ export function ProjectDetailsPage() {
                 />
               </div>
             </div>
+
+            {/* Partnerships Section */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Users className="w-5 h-5 text-teal-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                    Partnership(s)
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">Add at least one partner for initiatives.</p>
+                </div>
+              </div>
+
+              {currentProject.partnerships && currentProject.partnerships.length > 0 && (
+                <div className="space-y-2 mb-4">
+                  {currentProject.partnerships.map((partner) => (
+                    <div key={partner.id} className="flex items-center justify-between p-3.5 bg-gray-50 border border-gray-200 rounded-lg">
+                      <p className="text-sm font-medium text-gray-900">{partner.name}</p>
+                      <button onClick={() => handleRemovePartnership(partner.id)} className="text-gray-400 hover:text-red-600 transition-colors p-1">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center gap-3">
+                <Input
+                  placeholder="Enter Partner"
+                  value={partnershipInput}
+                  onChange={(e) => setPartnershipInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddPartnership();
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <ConfirmButton
+                  enabled={!!partnershipInput.trim()}
+                  onClick={handleAddPartnership}
+                  title="Add partner"
+                />
+              </div>
+            </div>
+
+            {/* Primary Point of Contact Section */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <UserCircle2 className="w-5 h-5 text-teal-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                    Primary Point of Contact <span className="text-red-500">*</span>
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">Add primary point of contact for initiatives.</p>
+                </div>
+              </div>
+
+              {currentProject.primaryContact ? (
+                <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="grid grid-cols-3 gap-6 flex-1">
+                    <div>
+                      <p className="text-xs text-gray-500">Name</p>
+                      <p className="text-sm font-medium text-gray-900 mt-1">
+                        {currentProject.primaryContact.firstName} {currentProject.primaryContact.lastName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Email Address</p>
+                      <p className="text-sm font-medium text-gray-900 mt-1">{currentProject.primaryContact.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Phone Number</p>
+                      <p className="text-sm font-medium text-gray-900 mt-1">{currentProject.primaryContact.phone}</p>
+                    </div>
+                  </div>
+                  <button onClick={handleRemoveContact} className="text-gray-400 hover:text-red-600 transition-colors p-1 ml-3 flex-shrink-0">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-4 gap-3 items-start">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        First Name <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        placeholder="Enter First Name"
+                        value={contactForm.firstName}
+                        onChange={(e) => setContactForm({ ...contactForm, firstName: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Last Name <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        placeholder="Enter Last Name"
+                        value={contactForm.lastName}
+                        onChange={(e) => setContactForm({ ...contactForm, lastName: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email Address <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        placeholder="e.g., email@email.com"
+                        value={contactForm.email}
+                        onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Phone Number <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          placeholder="e.g., (+1) 123-456-8901"
+                          value={contactForm.phone}
+                          onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                        />
+                        <ConfirmButton
+                          enabled={isContactFormValid}
+                          onClick={handleConfirmContact}
+                          title="Add contact"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-3">Only one primary contact can be added.</p>
+                </>
+              )}
+            </div>
+
+            {/* Add URL Section */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Globe className="w-5 h-5 text-teal-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                    Add URL
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">Insert a webpage address that describes your initiatives</p>
+                </div>
+              </div>
+
+              {currentProject.urls && currentProject.urls.length > 0 && (
+                <div className="space-y-2 mb-4">
+                  {currentProject.urls.map((url) => (
+                    <div key={url.id} className="flex items-center justify-between p-3.5 bg-gray-50 border border-gray-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Globe className="w-4 h-4 text-gray-500" />
+                        <p className="text-sm font-medium text-gray-900">{url.value}</p>
+                      </div>
+                      <button onClick={() => handleRemoveUrl(url.id)} className="text-gray-400 hover:text-red-600 transition-colors p-1">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center gap-3">
+                <div
+                  className={`flex-1 flex items-center gap-2 px-3.5 py-2.5 rounded-md border transition-colors ${
+                    urlTouched && isValidUrlValue(urlInput)
+                      ? "border-teal-500 bg-teal-50"
+                      : "border-gray-300 bg-white"
+                  }`}
+                >
+                  <Globe className={`w-5 h-5 ${urlTouched && isValidUrlValue(urlInput) ? "text-teal-600" : "text-gray-400"}`} />
+                  <input
+                    type="text"
+                    placeholder="Enter URL"
+                    value={urlInput}
+                    onChange={(e) => setUrlInput(e.target.value)}
+                    onBlur={() => setUrlTouched(true)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddUrl();
+                      }
+                    }}
+                    className="flex-1 outline-none text-sm bg-transparent text-gray-900 placeholder:text-gray-400"
+                  />
+                </div>
+                <ConfirmButton
+                  enabled={isValidUrlValue(urlInput)}
+                  onClick={handleAddUrl}
+                  title="Add URL"
+                />
+              </div>
+            </div>
           </div>
         )}
 
@@ -963,16 +1226,16 @@ export function ProjectDetailsPage() {
                         <span>Published {formatTimestamp(project.publishedAt!)}</span>
                         <span>•</span>
                         <span>Last updated {formatTimestamp(project.lastUpdatedAt)}</span>
-                        {project.documentation.length > 0 && (
+                        {project.documentFiles.length > 0 && (
                           <>
                             <span>•</span>
-                            <span>{project.documentation.length} document{project.documentation.length !== 1 ? 's' : ''}</span>
+                            <span>{project.documentFiles.length} document{project.documentFiles.length !== 1 ? 's' : ''}</span>
                           </>
                         )}
-                        {project.locations.length > 0 && (
+                        {project.geoLocations.length > 0 && (
                           <>
                             <span>•</span>
-                            <span>{project.locations.length} location{project.locations.length !== 1 ? 's' : ''}</span>
+                            <span>{project.geoLocations.length} location{project.geoLocations.length !== 1 ? 's' : ''}</span>
                           </>
                         )}
                         {project.selectedPopulations.length > 0 && (
@@ -1028,7 +1291,7 @@ export function ProjectDetailsPage() {
                             </p>
                           </div>
                         </div>
-                        
+
                         <div className="space-y-2">
                           {/* Archive */}
                           <div className="flex items-center gap-2 text-sm">
@@ -1036,7 +1299,7 @@ export function ProjectDetailsPage() {
                             <span className="text-gray-500">-</span>
                             <span className="font-medium text-gray-900">Community Impact Initiative 2021</span>
                           </div>
-                          
+
                           {/* In Progress */}
                           <div className="flex items-center gap-2 text-sm">
                             <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">In Progress</span>
@@ -1048,7 +1311,7 @@ export function ProjectDetailsPage() {
                             <span className="text-gray-500">-</span>
                             <span className="font-medium text-gray-900">Food Security Enhancement Program</span>
                           </div>
-                          
+
                           {/* Submitted */}
                           <div className="flex items-center gap-2 text-sm">
                             <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">Submitted</span>
@@ -1058,51 +1321,36 @@ export function ProjectDetailsPage() {
                         </div>
                       </div>
 
-                      {project.documentation.length > 0 && (
+                      {project.documentFiles.length > 0 && (
                         <div>
-                          <h4 className="text-sm font-semibold text-gray-900 mb-2">Documentation & Materials</h4>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">Documentation</h4>
                           <div className="space-y-2">
-                            {project.documentation.map(doc => (
-                              <div key={doc.id} className="p-3 bg-gray-50 rounded-lg text-sm">
-                                <div className="flex items-center gap-2">
-                                  <div className="font-medium text-gray-900">{doc.title}</div>
-                                  {doc.category && (
-                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                      doc.type === "Past Documentation" 
-                                        ? "bg-blue-50 text-blue-700" 
-                                        : "bg-teal-50 text-teal-700"
-                                    }`}>
-                                      {doc.category}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-gray-600 mt-1">{doc.description}</div>
-                                <div className="flex items-center gap-2 mt-2">
-                                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                    doc.type === "Past Documentation" 
-                                      ? "bg-blue-100 text-blue-800" 
-                                      : "bg-teal-100 text-teal-800"
-                                  }`}>
-                                    {doc.type}
-                                  </span>
-                                  {doc.fileName && <span className="text-xs text-gray-500">📎 {doc.fileName}</span>}
-                                </div>
+                            {project.documentFiles.map(file => (
+                              <div key={file.id} className="p-3 bg-gray-50 rounded-lg text-sm">
+                                <div className="font-medium text-gray-900">{file.fileName}</div>
+                                <div className="text-gray-600 mt-1">{file.fileSize} • Uploaded {new Date(file.uploadedAt).toLocaleDateString()}</div>
                               </div>
                             ))}
                           </div>
                         </div>
                       )}
-                      {project.locations.length > 0 && (
+                      {project.geoLocations.length > 0 && (
                         <div>
-                          <h4 className="text-sm font-semibold text-gray-900 mb-2">Locations</h4>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">Geographic Focus</h4>
                           <div className="flex flex-wrap gap-2">
-                            {project.locations.map(loc => (
+                            {project.geoLocations.map(loc => (
                               <div key={loc.id} className="px-3 py-1.5 bg-gray-50 rounded-lg text-sm">
                                 <span className="font-medium text-gray-900">{loc.name}</span>
-                                <span className="text-gray-500 ml-2">({loc.type})</span>
+                                <span className="text-gray-500 ml-2">({loc.state}, {loc.country})</span>
                               </div>
                             ))}
                           </div>
+                        </div>
+                      )}
+                      {project.programDurationMonths && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">Program Duration</h4>
+                          <p className="text-sm text-gray-600">{project.programDurationMonths} Months</p>
                         </div>
                       )}
                       {project.selectedPopulations.length > 0 && (
@@ -1122,55 +1370,40 @@ export function ProjectDetailsPage() {
                           )}
                         </div>
                       )}
+                      {project.partnerships.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">Partnership(s)</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {project.partnerships.map(partner => (
+                              <div key={partner.id} className="px-3 py-1.5 bg-gray-50 rounded-lg text-sm font-medium text-gray-900">
+                                {partner.name}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {project.primaryContact && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">Primary Point of Contact</h4>
+                          <p className="text-sm text-gray-600">
+                            {project.primaryContact.firstName} {project.primaryContact.lastName} • {project.primaryContact.email} • {project.primaryContact.phone}
+                          </p>
+                        </div>
+                      )}
+                      {project.urls.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">URLs</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {project.urls.map(url => (
+                              <div key={url.id} className="px-3 py-1.5 bg-gray-50 rounded-lg text-sm text-gray-900">
+                                {url.value}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Draft Projects */}
-        {!isCreatingProject && draftProjects.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4" style={{ fontFamily: "Cabin, sans-serif" }}>
-              Drafts ({draftProjects.length})
-            </h2>
-            <div className="space-y-3">
-              {draftProjects.map((project) => (
-                <div key={project.id} className="bg-gray-50 border border-gray-200 rounded-xl p-5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{project.title}</h3>
-                        <span className="px-2.5 py-0.5 bg-gray-200 text-gray-600 text-xs font-medium rounded-full">
-                          Draft
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">{project.summary}</p>
-                      <span className="text-xs text-gray-500">Last updated {formatTimestamp(project.lastUpdatedAt)}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        onClick={() => handleEditProject(project)}
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                        Continue Editing
-                      </Button>
-                      <Button
-                        onClick={() => handleDeleteProject(project.id)}
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 text-red-600 hover:bg-red-50 hover:border-red-300"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
                 </div>
               ))}
             </div>
@@ -1194,210 +1427,6 @@ export function ProjectDetailsPage() {
           </div>
         )}
       </div>
-
-      {/* Add Documentation Modal */}
-      <Dialog open={showDocumentationModal} onOpenChange={() => {
-        setShowDocumentationModal(false);
-        setEditingDocId(null);
-        setDocForm({ title: "", description: "", category: "", fileName: "" });
-      }}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>
-              {editingDocId 
-                ? `Edit ${documentationType}` 
-                : `Add ${documentationType}`}
-            </DialogTitle>
-            <DialogDescription>
-              {documentationType === "Past Documentation" 
-                ? "Upload documents that demonstrate your track record and past success (e.g., Impact Reports, Case Studies, Grant Proposals, Financial Reports, Org Overview, Board List, 501(c)(3) Certificate, IRS Forms)"
-                : "Upload documents that share your goals and upcoming plans (e.g., Project Plans, Logic Models, Proposed Budget, Funding Strategy, Outcome KPIs, Needs Assessments, Partnerships, Staffing Plans)"}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Title <span className="text-red-500">*</span>
-              </label>
-              <Input
-                placeholder="e.g., 2024 Annual Report"
-                value={docForm.title}
-                onChange={(e) => setDocForm({ ...docForm, title: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description <span className="text-red-500">*</span>
-              </label>
-              <Textarea
-                placeholder="Brief summary of the document..."
-                value={docForm.description}
-                onChange={(e) => setDocForm({ ...docForm, description: e.target.value })}
-                rows={4}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-              <Select
-                value={docForm.category}
-                onValueChange={(value: string) => setDocForm({ ...docForm, category: value })}
-              >
-                <SelectTrigger className="border border-gray-300">
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {documentationType === "Past Documentation" && (
-                    <>
-                      <SelectItem value="Impact & Results">Impact & Results</SelectItem>
-                      <SelectItem value="Financial History">Financial History</SelectItem>
-                      <SelectItem value="Organizational Docs">Organizational Docs</SelectItem>
-                      <SelectItem value="Compliance">Compliance</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </>
-                  )}
-                  {documentationType === "Future Planning Materials" && (
-                    <>
-                      <SelectItem value="Program Plan">Program Plan</SelectItem>
-                      <SelectItem value="Budget & Funding">Budget & Funding</SelectItem>
-                      <SelectItem value="Impact Goals">Impact Goals</SelectItem>
-                      <SelectItem value="Execution Plan">Execution Plan</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">File Upload (Optional)</label>
-              <label className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-teal-400 transition-colors cursor-pointer block">
-                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                {docForm.fileName ? (
-                  <>
-                    <p className="text-sm text-teal-600 font-medium">✓ {docForm.fileName}</p>
-                    <p className="text-xs text-gray-500 mt-1">Click to change file</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm text-teal-600 font-medium">Click to upload or drag and drop</p>
-                    <p className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX up to 10MB</p>
-                  </>
-                )}
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
-              </label>
-            </div>
-          </div>
-          <div className="flex justify-between items-center mt-6">
-            <Button variant="outline" onClick={() => {
-              setShowDocumentationModal(false);
-              setEditingDocId(null);
-              setDocForm({ title: "", description: "", category: "", fileName: "" });
-            }}>
-              Cancel
-            </Button>
-            <div className="flex gap-3">
-              {!editingDocId && (
-                <Button 
-                  onClick={handleAddAndContinue} 
-                  variant="outline"
-                  className="border-teal-600 text-teal-600 hover:bg-teal-50"
-                  disabled={!docForm.title.trim() || !docForm.description.trim()}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add & Add Another
-                </Button>
-              )}
-              <Button 
-                onClick={handleAddDocumentation} 
-                className="bg-teal-600 hover:bg-teal-700 text-white"
-                disabled={!docForm.title.trim() || !docForm.description.trim()}
-              >
-                {editingDocId ? "Save Changes" : `Add ${documentationType}`}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Location Modal */}
-      <Dialog open={showLocationModal} onOpenChange={() => {
-        setShowLocationModal(false);
-        setEditingLocationId(null);
-        setLocationForm({ name: "", type: "City", country: "USA", notes: "" });
-      }}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>{editingLocationId ? "Edit Location" : "Add Location"}</DialogTitle>
-            <DialogDescription>Define a geographic region where your program operates.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Location Name</label>
-              <Input
-                placeholder="e.g., Austin, Texas, Pacific Northwest"
-                value={locationForm.name}
-                onChange={(e) => setLocationForm({ ...locationForm, name: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Location Type</label>
-              <Select
-                value={locationForm.type}
-                onValueChange={(value: "City" | "State" | "Region" | "Country") =>
-                  setLocationForm({ ...locationForm, type: value })
-                }
-              >
-                <SelectTrigger className="border border-gray-300">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="City">City</SelectItem>
-                  <SelectItem value="State">State</SelectItem>
-                  <SelectItem value="Region">Region</SelectItem>
-                  <SelectItem value="Country">Country</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-              <Input
-                placeholder="USA"
-                value={locationForm.country}
-                onChange={(e) => setLocationForm({ ...locationForm, country: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Notes (Optional)</label>
-              <Textarea
-                placeholder="Additional context about this location..."
-                value={locationForm.notes}
-                onChange={(e) => setLocationForm({ ...locationForm, notes: e.target.value })}
-                rows={3}
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 mt-6">
-            <Button variant="outline" onClick={() => {
-              setShowLocationModal(false);
-              setEditingLocationId(null);
-              setLocationForm({ name: "", type: "City", country: "USA", notes: "" });
-            }}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleAddLocation} 
-              className="bg-teal-600 hover:bg-teal-700 text-white"
-              disabled={!locationForm.name.trim()}
-            >
-              {editingLocationId ? "Save Changes" : "Add Location"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Add Custom Category Modal */}
       <Dialog open={showCategoryModal} onOpenChange={setShowCategoryModal}>
@@ -1461,8 +1490,8 @@ export function ProjectDetailsPage() {
             <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
               Cancel
             </Button>
-            <Button 
-              onClick={confirmDeleteProject} 
+            <Button
+              onClick={confirmDeleteProject}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
               Remove Program
