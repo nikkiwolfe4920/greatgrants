@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { FolderOpen, Plus, MapPin, Users, Upload, X, FileText, Edit2, Trash2, ChevronDown, ChevronUp, AlertCircle, FileCheck, Clock, DollarSign, UserCircle2, Check, Info, Globe } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "../components/ui/button";
-import { Badge } from "../components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -10,11 +9,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "../components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../components/ui/popover";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import {
@@ -89,13 +83,6 @@ interface Project {
   lastUpdatedAt: number;
   createdAt: number;
   selectedApplications?: string[];
-}
-
-interface Application {
-  id: string;
-  title: string;
-  status: string;
-  applicationStatus: "active" | "submitted" | "archived";
 }
 
 const predefinedPopulations: PopulationCategory[] = [
@@ -181,7 +168,6 @@ export function ProjectDetailsPage() {
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
-  const [applications, setApplications] = useState<Application[]>([]);
 
   // Current project being edited
   const [currentProject, setCurrentProject] = useState<Partial<Project>>({
@@ -222,55 +208,6 @@ export function ProjectDetailsPage() {
     localStorage.setItem("projects", JSON.stringify(projects));
     window.dispatchEvent(new Event("projectsUpdated"));
   }, [projects]);
-
-  // Load active and submitted applications (mock data that matches ApplicationsPage)
-  useEffect(() => {
-    // In a real app, this would come from a shared state or API
-    // For now, we'll use mock data that represents active applications
-    const mockApps: Application[] = [
-      {
-        id: "1",
-        title: "Administration for Community Living (ACL) - Assistive Technology Alternative Financing Program",
-        status: "In Progress",
-        applicationStatus: "active"
-      },
-      {
-        id: "2",
-        title: "FY26 National Network Cooperative Agreement to the National Railroad Passenger Corporation",
-        status: "In Progress",
-        applicationStatus: "active"
-      },
-      {
-        id: "3",
-        title: "Community Development Block Grant - Disaster Recovery",
-        status: "Submitted",
-        applicationStatus: "submitted"
-      },
-      {
-        id: "4",
-        title: "Environmental Protection Agency - Environmental Justice Grant",
-        status: "Submitted",
-        applicationStatus: "submitted"
-      }
-    ];
-    setApplications(mockApps.filter(app => app.applicationStatus === "active" || app.applicationStatus === "submitted"));
-  }, []);
-
-  // Toggle application selection
-  const toggleApplicationSelection = (applicationId: string) => {
-    const selected = currentProject.selectedApplications || [];
-    if (selected.includes(applicationId)) {
-      setCurrentProject({
-        ...currentProject,
-        selectedApplications: selected.filter(id => id !== applicationId)
-      });
-    } else {
-      setCurrentProject({
-        ...currentProject,
-        selectedApplications: [...selected, applicationId]
-      });
-    }
-  };
 
   const emptyProject: Partial<Project> = {
     title: "",
@@ -619,79 +556,6 @@ export function ProjectDetailsPage() {
                   Cancel
                 </Button>
 
-                {/* Add Applications Feature */}
-                {applications.length > 0 ? (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="gap-1.5 border-teal-200 hover:border-teal-300 hover:bg-teal-50"
-                      >
-                        <FileText className="w-4 h-4 text-teal-600" />
-                        <span className="text-gray-700">Add Applications</span>
-                        {currentProject.selectedApplications && currentProject.selectedApplications.length > 0 && (
-                          <Badge className="ml-1 bg-teal-600 hover:bg-teal-700 text-white text-xs px-1.5">
-                            {currentProject.selectedApplications.length}
-                          </Badge>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[420px]" align="end">
-                      <div className="space-y-4">
-                        <div>
-                          <h4 className="font-semibold text-gray-900 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                            Add Applications to Program
-                          </h4>
-                          <p className="text-xs text-gray-600 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                            Applying programs to your application makes the application process that much more seamless.
-                          </p>
-                        </div>
-
-                        <div className="border-t border-gray-200 pt-3">
-                          <p className="text-xs font-medium text-gray-700 mb-3 uppercase tracking-wide" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                            Select Applications
-                          </p>
-                          <div className="space-y-2 max-h-64 overflow-y-auto">
-                            {applications.map((app) => {
-                              const isSelected = currentProject.selectedApplications?.includes(app.id) || false;
-
-                              return (
-                                <div
-                                  key={app.id}
-                                  onClick={() => toggleApplicationSelection(app.id)}
-                                  className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-teal-300 hover:bg-teal-50/50 cursor-pointer transition-all group"
-                                >
-                                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${isSelected ? 'bg-teal-600 border-teal-600' : 'border-gray-300 group-hover:border-teal-400'}`}>
-                                    {isSelected && <Check className="w-3 h-3 text-white" />}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-gray-900 text-sm mb-1 line-clamp-2 leading-snug" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                                      {app.title}
-                                    </p>
-                                    <div className="flex items-center gap-2 text-xs text-gray-600">
-                                      <span className={`px-1.5 py-0.5 rounded ${app.applicationStatus === 'active' ? 'bg-teal-50 text-teal-700' : 'bg-green-50 text-green-700'}`}>
-                                        {app.status}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {currentProject.selectedApplications && currentProject.selectedApplications.length > 0 && (
-                          <div className="border-t border-gray-200 pt-3">
-                            <p className="text-xs text-teal-700 bg-teal-50 rounded-lg p-2 border border-teal-200" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                              ✓ {currentProject.selectedApplications.length} {currentProject.selectedApplications.length === 1 ? 'application' : 'applications'} selected
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                ) : null}
-
                 <Button
                   onClick={handlePublishProject}
                   disabled={isPublishDisabled}
@@ -750,7 +614,9 @@ export function ProjectDetailsPage() {
                 onDrop={handleDocDrop}
                 onDragOver={(e) => e.preventDefault()}
               >
-                <Upload className="w-6 h-6 text-teal-600 mx-auto mb-2" />
+                <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center mx-auto mb-2">
+                  <Upload className="w-[18px] h-[18px] text-teal-600" />
+                </div>
                 <p className="text-sm text-teal-600 font-medium">Click to upload or drag and drop</p>
                 <p className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX up to 10MB</p>
                 <input
@@ -785,10 +651,16 @@ export function ProjectDetailsPage() {
             </div>
 
             {/* Program Description */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Program Summary <span className="text-red-500">*</span>
-              </label>
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+              <div className="flex items-center gap-3 mb-5">
+                <FileText className="w-5 h-5 text-teal-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                    Add Program Description <span className="text-red-500">*</span>
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">Add a brief summary of your program.</p>
+                </div>
+              </div>
               <Textarea
                 placeholder="Provide a brief overview of your program, its goals, and impact..."
                 value={currentProject.summary || ""}
@@ -831,7 +703,7 @@ export function ProjectDetailsPage() {
                           <p className="text-sm font-medium text-gray-900 mt-1">{loc.state}</p>
                         </div>
                       </div>
-                      <button onClick={() => handleRemoveGeoLocation(loc.id)} className="text-gray-400 hover:text-red-600 transition-colors p-1 ml-3 flex-shrink-0">
+                      <button onClick={() => handleRemoveGeoLocation(loc.id)} className="text-red-500 hover:text-red-600 transition-colors p-1 ml-3 flex-shrink-0">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -901,7 +773,7 @@ export function ProjectDetailsPage() {
               {currentProject.programDurationMonths ? (
                 <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
                   <p className="text-sm font-medium text-gray-900">{currentProject.programDurationMonths} Months</p>
-                  <button onClick={handleRemoveDuration} className="text-gray-400 hover:text-red-600 transition-colors p-1">
+                  <button onClick={handleRemoveDuration} className="text-red-500 hover:text-red-600 transition-colors p-1">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -1023,7 +895,7 @@ export function ProjectDetailsPage() {
                   {currentProject.partnerships.map((partner) => (
                     <div key={partner.id} className="flex items-center justify-between p-3.5 bg-gray-50 border border-gray-200 rounded-lg">
                       <p className="text-sm font-medium text-gray-900">{partner.name}</p>
-                      <button onClick={() => handleRemovePartnership(partner.id)} className="text-gray-400 hover:text-red-600 transition-colors p-1">
+                      <button onClick={() => handleRemovePartnership(partner.id)} className="text-red-500 hover:text-red-600 transition-colors p-1">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -1082,7 +954,7 @@ export function ProjectDetailsPage() {
                       <p className="text-sm font-medium text-gray-900 mt-1">{currentProject.primaryContact.phone}</p>
                     </div>
                   </div>
-                  <button onClick={handleRemoveContact} className="text-gray-400 hover:text-red-600 transition-colors p-1 ml-3 flex-shrink-0">
+                  <button onClick={handleRemoveContact} className="text-red-500 hover:text-red-600 transition-colors p-1 ml-3 flex-shrink-0">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -1162,7 +1034,7 @@ export function ProjectDetailsPage() {
                         <Globe className="w-4 h-4 text-gray-500" />
                         <p className="text-sm font-medium text-gray-900">{url.value}</p>
                       </div>
-                      <button onClick={() => handleRemoveUrl(url.id)} className="text-gray-400 hover:text-red-600 transition-colors p-1">
+                      <button onClick={() => handleRemoveUrl(url.id)} className="text-red-500 hover:text-red-600 transition-colors p-1">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
