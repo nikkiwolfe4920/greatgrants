@@ -627,12 +627,12 @@ export function ProjectDetailsPage() {
               </div>
 
               <label
-                className="border-2 border-dashed border-gray-300 rounded-lg py-10 text-center hover:border-teal-400 transition-colors cursor-pointer block mb-4"
+                className="border-2 border-dashed border-gray-300 rounded-lg py-4 text-center hover:border-teal-400 transition-colors cursor-pointer block mb-4"
                 onDrop={handleDocDrop}
                 onDragOver={(e) => e.preventDefault()}
               >
-                <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center mx-auto mb-2">
-                  <Upload className="w-[18px] h-[18px] text-teal-600" />
+                <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center mx-auto mb-1.5">
+                  <Upload className="w-4 h-4 text-teal-600" />
                 </div>
                 <p className="text-sm text-teal-600 font-medium">Click to upload or drag and drop</p>
                 <p className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX up to 10MB</p>
