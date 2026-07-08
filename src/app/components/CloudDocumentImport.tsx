@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   Search,
-  X,
   Check,
   AlertTriangle,
   CheckCircle2,
@@ -112,7 +111,6 @@ export function CloudDocumentImport({ onImport }: CloudDocumentImportProps) {
   const [query, setQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isImporting, setIsImporting] = useState(false);
-  const [lastImport, setLastImport] = useState<{ provider: CloudProvider; files: ImportedCloudFile[] } | null>(null);
 
   // Simulate the redirect hop to the provider's real sign-in surface before
   // showing the (mocked) consent screen.
@@ -190,10 +188,14 @@ export function CloudDocumentImport({ onImport }: CloudDocumentImportProps) {
         source: provider,
       }));
       setIsImporting(false);
-      setLastImport({ provider, files });
       onImport(files);
     }, 700);
   };
+
+  const visibleProviders = (["microsoft", "google"] as CloudProvider[]).filter((provider) => {
+    const other: CloudProvider = provider === "microsoft" ? "google" : "microsoft";
+    return connections[other].status !== "connected";
+  });
 
   return (
     <div className="mt-4">
@@ -203,8 +205,8 @@ export function CloudDocumentImport({ onImport }: CloudDocumentImportProps) {
         <div className="h-px flex-1 bg-gray-200" />
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-3">
-        {(["microsoft", "google"] as CloudProvider[]).map((provider) => (
+      <div className={visibleProviders.length > 1 ? "grid sm:grid-cols-2 gap-3" : "grid gap-3"}>
+        {visibleProviders.map((provider) => (
           <CloudProviderRow
             key={provider}
             provider={provider}
@@ -220,45 +222,6 @@ export function CloudDocumentImport({ onImport }: CloudDocumentImportProps) {
         <div className="mt-4 flex items-center gap-2.5 p-3.5 bg-gray-50 border border-gray-200 rounded-lg">
           <Loader2 className="w-4 h-4 text-teal-600 animate-spin" />
           <p className="text-sm text-gray-700">Importing files…</p>
-        </div>
-      )}
-
-      {lastImport && !isImporting && (
-        <div className="mt-4 bg-teal-50 border border-teal-200 rounded-lg p-4">
-          <div className="flex items-start justify-between gap-3 mb-3">
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="w-5 h-5 text-teal-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-semibold text-gray-900">
-                  {lastImport.files.length} file{lastImport.files.length !== 1 ? "s" : ""} imported from{" "}
-                  {PROVIDER_SERVICE_LABEL[lastImport.provider]}
-                </p>
-                <p className="text-xs text-gray-600 mt-0.5">
-                  Each file was added below as its own program document.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setLastImport(null)}
-              className="text-gray-400 hover:text-gray-600 p-1 flex-shrink-0"
-              aria-label="Dismiss import summary"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {lastImport.files.map((f) => (
-              <div key={f.id} className="flex items-center gap-2.5 p-2.5 bg-white border border-teal-100 rounded-lg">
-                <div className="w-7 h-7 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0">
-                  <ProviderBadgeIcon provider={lastImport.provider} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-gray-900 truncate">{f.fileName}</p>
-                  <p className="text-[11px] text-gray-500">{f.fileSize}</p>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
