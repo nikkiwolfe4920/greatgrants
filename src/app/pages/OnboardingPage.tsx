@@ -9,25 +9,42 @@ import {
   Loader2,
   AlertTriangle,
   Upload,
-  X,
+  Trash2,
   FileText,
   Lightbulb,
   HelpCircle
 } from "lucide-react";
+import { CloudDocumentImport, ProviderBadgeIcon, type ImportedCloudFile } from "@/app/components/CloudDocumentImport";
+
+interface DocumentationFile {
+  id: string;
+  fileName: string;
+  fileSize: string;
+  uploadedAt: number;
+  source: "local" | "microsoft" | "google";
+}
 
 interface OnboardingData {
-  ein: string;
   uei: string;
   website: string;
-  previousApplications: File[];
+  previousApplications: DocumentationFile[];
 }
+
+const isValidUrl = (url: string): boolean => {
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
 
 export function OnboardingPage() {
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<OnboardingData>({
-    ein: "",
     uei: "",
     website: "",
     previousApplications: []
@@ -37,6 +54,9 @@ export function OnboardingPage() {
   const [ueiVerificationStatus, setUeiVerificationStatus] = useState<'idle' | 'verifying' | 'verified' | 'failed'>('idle');
   const [verifiedUEI, setVerifiedUEI] = useState<string>('');
   const verificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Website verification state
+  const [websiteVerificationStatus, setWebsiteVerificationStatus] = useState<'idle' | 'verified' | 'failed'>('idle');
 
   // Cleanup verification timeout on unmount
   useEffect(() => {
@@ -82,37 +102,92 @@ export function OnboardingPage() {
         setVerifiedUEI('');
       }
     }
-  };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      const newFiles = Array.from(files).filter(file => {
-        const sizeInMB = file.size / (1024 * 1024);
-        return sizeInMB <= 10 && ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(file.type);
-      });
-
-      setFormData(prev => ({
-        ...prev,
-        previousApplications: [...prev.previousApplications, ...newFiles]
-      }));
+    // Handle website validation as the user types
+    if (field === 'website') {
+      setWebsiteVerificationStatus(isValidUrl(value) ? 'verified' : 'idle');
     }
   };
 
-  const handleRemoveFile = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      previousApplications: prev.previousApplications.filter((_, i) => i !== index)
-    }));
+  const handleUeiBlur = () => {
+    const value = formData.uei.trim();
+    if (!value) {
+      setUeiVerificationStatus('idle');
+      return;
+    }
+    if (ueiVerificationStatus === 'verifying' || ueiVerificationStatus === 'verified') {
+      return;
+    }
+    setUeiVerificationStatus('failed');
+    setVerifiedUEI('');
   };
 
-  const handleBrowseFiles = () => {
-    fileInputRef.current?.click();
+  const handleWebsiteBlur = () => {
+    const value = formData.website.trim();
+    if (!value) {
+      setWebsiteVerificationStatus('idle');
+      return;
+    }
+    setWebsiteVerificationStatus(isValidUrl(value) ? 'verified' : 'failed');
   };
 
   const formatFileSize = (bytes: number) => {
     const mb = bytes / (1024 * 1024);
     return `${mb.toFixed(1)} MB`;
+  };
+
+  const handleFileSelect = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const now = Date.now();
+    const newFiles: DocumentationFile[] = Array.from(files)
+      .filter(file => {
+        const sizeInMB = file.size / (1024 * 1024);
+        return sizeInMB <= 10 && ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(file.type);
+      })
+      .map((file, index) => ({
+        id: `${now}-${index}`,
+        fileName: file.name,
+        fileSize: formatFileSize(file.size),
+        uploadedAt: now,
+        source: "local" as const,
+      }));
+
+    setFormData(prev => ({
+      ...prev,
+      previousApplications: [...prev.previousApplications, ...newFiles]
+    }));
+  };
+
+  const handleCloudImport = (files: ImportedCloudFile[]) => {
+    const newFiles: DocumentationFile[] = files.map(file => ({
+      id: file.id,
+      fileName: file.fileName,
+      fileSize: file.fileSize,
+      uploadedAt: file.uploadedAt,
+      source: file.source,
+    }));
+
+    setFormData(prev => ({
+      ...prev,
+      previousApplications: [...prev.previousApplications, ...newFiles]
+    }));
+  };
+
+  const handleDocInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileSelect(e.target.files);
+    e.target.value = "";
+  };
+
+  const handleDocDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    handleFileSelect(e.dataTransfer.files);
+  };
+
+  const handleRemoveFile = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      previousApplications: prev.previousApplications.filter(file => file.id !== id)
+    }));
   };
 
   const isFormValid = () => {
@@ -125,9 +200,6 @@ export function OnboardingPage() {
     localStorage.setItem('onboardingComplete', 'true');
 
     // Only store fields that have values
-    if (formData.ein) {
-      localStorage.setItem('organizationEIN', formData.ein);
-    }
     if (formData.uei) {
       localStorage.setItem('organizationUEI', formData.uei);
     }
@@ -235,23 +307,6 @@ export function OnboardingPage() {
             </h2>
 
             <div className="space-y-6">
-              {/* EIN Field */}
-              <div className="space-y-1.5">
-                <Label htmlFor="ein">
-                  Employer Identification Number (EIN)
-                </Label>
-                <Input
-                  id="ein"
-                  value={formData.ein}
-                  onChange={(e) => handleInputChange('ein', e.target.value)}
-                  placeholder="XX-XXXXXXX"
-                  className="focus-visible:ring-2 focus-visible:ring-teal-500"
-                />
-                <p className="text-xs text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                  Your organization's federal tax identification number
-                </p>
-              </div>
-
               {/* UEI Field */}
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
@@ -297,6 +352,7 @@ export function OnboardingPage() {
                   id="uei"
                   value={formData.uei}
                   onChange={(e) => handleInputChange('uei', e.target.value)}
+                  onBlur={handleUeiBlur}
                   placeholder="Enter 12-digit UEI"
                   maxLength={12}
                   className={`focus-visible:ring-2 focus-visible:ring-teal-500 ${
@@ -346,15 +402,34 @@ export function OnboardingPage() {
 
               {/* Website Field */}
               <div className="space-y-1.5">
-                <Label htmlFor="website">
-                  Organization Website
-                </Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="website">
+                    Organization Website
+                  </Label>
+                  {websiteVerificationStatus === 'verified' && (
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3 h-3 text-teal-600" />
+                      <span className="text-xs text-teal-600 font-medium">Verified</span>
+                    </div>
+                  )}
+                  {websiteVerificationStatus === 'failed' && (
+                    <div className="flex items-center gap-1.5">
+                      <AlertTriangle className="w-3 h-3 text-red-600" />
+                      <span className="text-xs text-red-600 font-medium">Invalid URL</span>
+                    </div>
+                  )}
+                </div>
                 <Input
                   id="website"
+                  type="url"
                   value={formData.website}
                   onChange={(e) => handleInputChange('website', e.target.value)}
+                  onBlur={handleWebsiteBlur}
                   placeholder="https://www.yourorganization.org"
-                  className="focus-visible:ring-2 focus-visible:ring-teal-500"
+                  className={`focus-visible:ring-2 focus-visible:ring-teal-500 ${
+                    websiteVerificationStatus === 'verified' ? 'border-teal-500 bg-teal-50' :
+                    websiteVerificationStatus === 'failed' ? 'border-red-500 bg-red-50' : ''
+                  }`}
                 />
                 <p className="text-xs text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>
                   Your organization's official website URL
@@ -371,63 +446,65 @@ export function OnboardingPage() {
                 </p>
 
                 {/* Upload Area */}
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-teal-400 transition-colors">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                      <Upload className="w-6 h-6 text-gray-400" />
-                    </div>
-                    <div>
-                      <button
-                        type="button"
-                        onClick={handleBrowseFiles}
-                        className="text-sm font-medium text-teal-600 hover:text-teal-700"
-                        style={{ fontFamily: 'Cabin, sans-serif' }}
-                      >
-                        Click to upload
-                      </button>
-                      <span className="text-sm text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                        {' '}or drag and drop
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                      PDF, DOC, DOCX up to 10MB each
-                    </p>
+                <label
+                  className="border-2 border-dashed border-gray-300 rounded-lg py-4 text-center hover:border-teal-400 transition-colors cursor-pointer block"
+                  onDrop={handleDocDrop}
+                  onDragOver={(e) => e.preventDefault()}
+                >
+                  <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center mx-auto mb-1.5">
+                    <Upload className="w-4 h-4 text-teal-600" />
                   </div>
+                  <p className="text-sm text-teal-600 font-medium" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                    Click to upload or drag and drop
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                    PDF, DOC, DOCX up to 10MB each
+                  </p>
                   <input
-                    ref={fileInputRef}
                     type="file"
                     multiple
                     accept=".pdf,.doc,.docx"
-                    onChange={handleFileSelect}
+                    onChange={handleDocInputChange}
                     className="hidden"
                   />
-                </div>
+                </label>
+
+                <CloudDocumentImport onImport={handleCloudImport} />
 
                 {/* Uploaded Files List */}
                 {formData.previousApplications.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {formData.previousApplications.map((file, index) => (
+                  <div className="mt-4 space-y-2">
+                    {formData.previousApplications.map((file) => (
                       <div
-                        key={index}
-                        className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg"
+                        key={file.id}
+                        className="flex items-center justify-between p-3.5 bg-white border border-gray-200 rounded-[10px]"
                       >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <FileText className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-gray-900 truncate" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                              {file.name}
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="relative w-10 h-10 rounded-[10px] bg-red-50 flex items-center justify-center flex-shrink-0">
+                            <FileText className="w-5 h-5 text-red-500" />
+                            {(file.source === "microsoft" || file.source === "google") && (
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white border border-gray-200 flex items-center justify-center">
+                                <ProviderBadgeIcon provider={file.source} className="w-2.5 h-2.5" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                              {file.fileName}
                             </p>
                             <p className="text-xs text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                              {formatFileSize(file.size)}
+                              {file.fileSize} • Uploaded {new Date(file.uploadedAt).toLocaleDateString()}
+                              {file.source === "microsoft" && " • Imported from Microsoft"}
+                              {file.source === "google" && " • Imported from Google Drive"}
                             </p>
                           </div>
                         </div>
                         <button
                           type="button"
-                          onClick={() => handleRemoveFile(index)}
-                          className="p-1 hover:bg-gray-200 rounded transition-colors"
+                          onClick={() => handleRemoveFile(file.id)}
+                          className="text-red-500 hover:text-red-600 transition-colors p-1 flex-shrink-0"
                         >
-                          <X className="w-4 h-4 text-gray-500" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     ))}
