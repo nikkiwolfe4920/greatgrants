@@ -16,6 +16,7 @@ Complete design system documentation for the Great Grants application, aligned w
 - [Breadcrumbs](#breadcrumbs)
 - [Right Rail (Workflow Helper Panel)](#right-rail-workflow-helper-panel)
 - [Search](#search)
+- [Cloud Document Import (Program Creation)](#cloud-document-import-program-creation)
 - [Implementation Guide](#implementation-guide)
 - [Migration Guide](#migration-guide)
 - [Design Principles](#design-principles)
@@ -672,6 +673,88 @@ Flat white cards, no shadow at rest, lift on hover only.
 - **Loading state** — centered `Loader2` spinner (teal, `animate-spin`) with supporting copy ("Searching for grants..."). No skeleton loaders in this flow.
 - **Empty state** — `SearchX` icon inside an `80×80` soft gray gradient circle (`bg-gradient-to-br from-gray-50 to-gray-100`), Lustria heading ("No Grants Found"), Cabin body copy, with actions to clear search/filters.
 - **No pagination or infinite scroll** — results render in full; introduce pagination only if result volumes grow enough to require it.
+
+---
+
+## Cloud Document Import (Program Creation)
+
+Reference implementation: `src/app/components/CloudDocumentImport.tsx` (state machine + UI), `src/app/components/BrandIcons.tsx` (provider marks), wired into the **Add Documentation** card in `src/app/pages/ProjectDetailsPage.tsx` (Create/Edit Program form).
+
+### Placement
+
+Cloud import is a secondary path on the *same* "Add Documentation" card as local upload — not a separate step, tab, or modal-first flow. This follows the standard "drag-and-drop, or connect a cloud account" pattern used by Notion, Slack, and Asana: the primary drop zone stays the fastest path for a single local file, while a labeled divider offers the cloud alternative for anyone whose files already live in OneDrive/SharePoint or Google Drive.
+
+```
+┌ Add Documentation ──────────────────────────────┐
+│ [ Drag-and-drop / click-to-upload dropzone ]     │
+│                                                   │
+│ ─────────────── OR IMPORT FROM THE CLOUD ─────── │
+│ [ Connect Microsoft ]      [ Connect Google ]    │
+│                                                   │
+│ (uploaded + imported documents list)             │
+└───────────────────────────────────────────────────┘
+```
+
+- **Divider label**: `text-xs font-medium text-gray-500 uppercase tracking-wide`, flanked by `h-px bg-gray-200` rules — the same visual grammar as an "or" divider on a sign-in form. Never place the cloud connect rows above the dropzone; local upload is the default/fastest path.
+- **Two provider rows, side by side** (`grid sm:grid-cols-2 gap-3`), not a single combined "Connect cloud storage" button — the user must know at a glance which provider they're linking, since consent screens differ.
+- Every file added to the program — local or cloud — lands in the **same unified document list** below, so the user never has to check two places to see what's attached. Cloud-sourced cards get a small provider badge (16px `MicrosoftIcon`/`GoogleIcon` in a white circle) overlaid on the file-type icon, plus a trailing `• Imported from {Provider}` caption; local files show neither.
+
+### Cloud Auth / Connect Flow
+
+Each provider row is a self-contained state machine with four states. Only one provider's auth modal is open at a time.
+
+| State | Row appearance | Trigger |
+|---|---|---|
+| **Disconnected** | Outline row, provider mark + "Connect Microsoft / Google", chevron | Default |
+| **Connecting / Consent** | Row unchanged; a modal opens over the form | Click "Connect …" |
+| **Connected** | Teal-tinted row (`bg-teal-50 border-teal-200`), green check + "Connected", account email, primary **Browse files** button, secondary **Disconnect** text link | Consent → Allow |
+| **Error** | Red-tinted row (`bg-red-50 border-red-200`), triangle icon + "Connection failed" + reason, **Try again** outline button | Consent → Cancel/Deny |
+
+**Modal sequence (per provider), all inside one `Dialog`:**
+
+1. **Requesting** — brief transitional state simulating the redirect to the provider's real sign-in surface: centered spinner in the provider's brand color, "Redirecting to Microsoft/Google…". Keeps the *app's* UI out of the way while the user's attention is expected to shift to provider chrome — mirrors real OAuth redirects.
+2. **Consent** — mocked provider consent screen, styled to be *recognizable as the provider's own surface* (not a Great Grants-styled dialog), so users trust it the same way they trust a real Microsoft/Google popup:
+   - Provider logo + wordmark in the modal's own header strip (not the app header).
+   - Requesting-app identity block ("Great Grants wants to access your account") with the app's mark, distinct from the account being connected.
+   - Account tile (avatar initials, name, email) — this is *whose* account is being linked, shown before any permission is granted.
+   - A short, plain-language scope list (2–3 items max, `ShieldCheck` icon bullets) — not a legal permissions dump.
+   - Primary action uses the **provider's** brand color, not app teal: Microsoft `#0067b8`, Google `#1a73e8`. This is the one place in the product where a non-brand primary button color is correct — it must look like it belongs to the provider, not to Great Grants.
+   - Buttons: `Cancel` (outline) / `Allow` (brand-colored fill).
+3. **Success** — teal check circle, "You're connected", confirms *what* was granted access ("can now access files you select from {service}"). Offers `Close` and a primary `Browse files` button that jumps straight into the file picker — collapses connect → browse into one continuous flow instead of forcing a second click on the row.
+4. **Error** — only reachable by cancelling/denying consent (this is a prototype; there's no real failure mode to trigger). Red triangle, explicit cause ("The sign-in request was cancelled before access was granted"), `Cancel` / `Try again`. Never leave the user at a dead end — `Try again` always re-opens the same flow.
+
+**Accessibility**: every stage of the auth modal renders a `DialogTitle` (visually hidden via `sr-only` on the transitional "Requesting" stage) and a `DialogDescription`, even where the visible copy already conveys the state — Radix's dialog a11y contract requires both regardless of whether the state is transitional.
+
+### Cloud File Browser — Search & Select
+
+One shared modal shell (`CloudFileBrowserBody`) renders either OneDrive Picker v8-style chrome or Google Picker-style chrome depending on `provider`, so the two feel native to their source without maintaining two unrelated components:
+
+- **Left rail (Microsoft)**: static location nav — OneDrive, SharePoint sites, Shared, Recent — matching OneDrive File Picker v8's left-hand navigation.
+- **Left rail (Google)**: Recent, My Drive, Shared with me, Starred — matching the Google Picker's tab structure, rendered as a vertical rail for layout consistency with the Microsoft variant.
+- **Search** sits above the list either way: `Input` with a leading `Search` icon, placeholder `Search {service label}`, filters the list on every keystroke (no separate "search" submit step — cloud pickers are expected to filter live).
+- **Row anatomy**: `Checkbox` + file-type icon (color-coded: blue doc, green sheet, red pdf, purple image — same palette as local document cards) + name + `location • last modified` metadata + size/type on the right. The entire row is one label/click target, not just the checkbox.
+- **Multi-select**: no explicit "select all" — this is a deliberate scope decision for the prototype; each row toggles independently. Footer shows a live `N file(s) selected` count and disables the primary button at 0.
+- **Empty state**: centered `FolderOpen` icon in a soft gray circle, "No files found", and — only when the emptiness came from a search — the literal query echoed back (`We couldn't find any files matching "{query}"`) plus a `Clear search` button. If the location itself is empty (no query typed), the copy drops the quoted-query line instead of showing a misleading "no matches."
+- **Footer actions**: `Cancel` (outline, left of primary) / primary `Select (N)` — label always shows the live count once ≥1 file is selected, so the user can confirm what they're about to import without scrolling back up.
+
+### Batch Import Result
+
+Per the FRD decision, **each imported file becomes its own Program document record** — batch cloud import must never collapse multiple selected files into one combined attachment. The UI makes that explicit rather than relying on the user to infer it from the list below:
+
+1. Closing the picker with a selection triggers a brief **importing** state: a single inline row (`Loader2` spin + "Importing files…") in the same slot the result will occupy — no full-screen block, the rest of the form stays interactive.
+2. On completion, a dismissible **result summary** renders directly under the connect rows (`bg-teal-50 border-teal-200`):
+   - Header line states the count and source explicitly: *"3 files imported from Google Drive"* + *"Each file was added below as its own program document."* — the second line is load-bearing copy; it's the one place the multi-record decision is stated in the user's own words.
+   - Below the header, **one small card per imported file** (`grid sm:grid-cols-2 gap-2`) — provider badge, file name, size/type — never a single "3 files" chip. Seeing N distinct cards *is* the confirmation that N distinct records were created.
+   - Dismissible via an `X` in the top-right corner; dismissing the summary does not remove the files — they persist in the unified document list below regardless.
+3. The same records simultaneously append to the persistent document list (see Placement above) so the result summary reads as a *receipt*, not the system of record.
+
+### Do / Don't
+
+- **Do** keep local upload as the visually primary action; cloud connect is secondary, discovered via the "or" divider.
+- **Do** use the provider's own brand color only on the consent modal's primary button — everywhere else in this flow (row buttons, browser picker, import result) stays on brand teal.
+- **Don't** merge multiple cloud-selected files into a single "import batch" document — the FRD requires one record per file, and the batch-result UI must visually prove that happened.
+- **Don't** let a failed/denied connection silently reset the row to "Disconnected" — show the Error state with a reason and a `Try again` path.
+- **Don't** invent a generic "Connect cloud storage" button that hides which provider is being linked; Microsoft and Google have different consent copy, scopes, and account pickers, and the UI should reflect that distinction up front.
 
 ---
 

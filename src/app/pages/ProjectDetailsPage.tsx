@@ -27,12 +27,14 @@ import {
   BreadcrumbSeparator,
   BreadcrumbHome,
 } from "../components/ui/breadcrumb";
+import { CloudDocumentImport, ProviderBadgeIcon, type ImportedCloudFile } from "../components/CloudDocumentImport";
 
 interface DocumentationFile {
   id: string;
   fileName: string;
   fileSize: string;
   uploadedAt: number;
+  source?: "local" | "microsoft" | "google";
 }
 
 interface GeoLocation {
@@ -348,11 +350,26 @@ export function ProjectDetailsPage() {
       fileName: file.name,
       fileSize: formatFileSize(file.size),
       uploadedAt: now,
+      source: "local",
     }));
     setCurrentProject({
       ...currentProject,
       documentFiles: [...(currentProject.documentFiles || []), ...newFiles],
     });
+  };
+
+  const handleCloudImport = (files: ImportedCloudFile[]) => {
+    const newFiles: DocumentationFile[] = files.map((file) => ({
+      id: file.id,
+      fileName: file.fileName,
+      fileSize: file.fileSize,
+      uploadedAt: file.uploadedAt,
+      source: file.source,
+    }));
+    setCurrentProject((prev) => ({
+      ...prev,
+      documentFiles: [...(prev.documentFiles || []), ...newFiles],
+    }));
   };
 
   const handleDocInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -628,17 +645,28 @@ export function ProjectDetailsPage() {
                 />
               </label>
 
+              <CloudDocumentImport onImport={handleCloudImport} />
+
               {currentProject.documentFiles && currentProject.documentFiles.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-2 mt-4">
                   {currentProject.documentFiles.map((file) => (
                     <div key={file.id} className="flex items-center justify-between p-3.5 bg-white border border-gray-200 rounded-[10px]">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-[10px] bg-red-50 flex items-center justify-center flex-shrink-0">
+                        <div className="relative w-10 h-10 rounded-[10px] bg-red-50 flex items-center justify-center flex-shrink-0">
                           <FileText className="w-5 h-5 text-red-500" />
+                          {(file.source === "microsoft" || file.source === "google") && (
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white border border-gray-200 flex items-center justify-center">
+                              <ProviderBadgeIcon provider={file.source} className="w-2.5 h-2.5" />
+                            </div>
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900">{file.fileName}</p>
-                          <p className="text-xs text-gray-500">{file.fileSize} • Uploaded {new Date(file.uploadedAt).toLocaleDateString()}</p>
+                          <p className="text-xs text-gray-500">
+                            {file.fileSize} • Uploaded {new Date(file.uploadedAt).toLocaleDateString()}
+                            {file.source === "microsoft" && " • Imported from Microsoft"}
+                            {file.source === "google" && " • Imported from Google Drive"}
+                          </p>
                         </div>
                       </div>
                       <button onClick={() => handleRemoveDocFile(file.id)} className="text-red-500 hover:text-red-600 transition-colors p-1">
