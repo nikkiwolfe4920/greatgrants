@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router";
 import {
   Search,
@@ -71,6 +71,7 @@ import {
 } from "./ui/breadcrumb";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Switch } from "./ui/switch";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 
 interface Grant {
@@ -626,7 +627,9 @@ export function GrantSearch() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedProject, setSelectedProject] = useState<string>("all-projects");
-  const [publishedProjects, setPublishedProjects] = useState<Array<{ id: string; title: string }>>([]);
+  const [publishedProjects, setPublishedProjects] = useState<Array<{ id: string; title: string; isNationalProgram?: boolean }>>([]);
+  const [nationalProgramActive, setNationalProgramActive] = useState(false);
+  const lastAutoAppliedProjectRef = useRef<string | null>(null);
   const [savedGrants, setSavedGrants] = useState<string[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<Grant[]>([]);
   
@@ -657,7 +660,7 @@ export function GrantSearch() {
           const allProjects = JSON.parse(projectsData);
           const published = allProjects
             .filter((p: any) => p.status === "published")
-            .map((p: any) => ({ id: p.id, title: p.title }));
+            .map((p: any) => ({ id: p.id, title: p.title, isNationalProgram: p.isNationalProgram === true }));
           setPublishedProjects(published);
         }
       } catch (error) {
@@ -695,6 +698,16 @@ export function GrantSearch() {
       window.removeEventListener("recentlyViewedUpdated", handleRecentlyViewedUpdate);
     };
   }, []);
+
+  // Auto-select the National Program toggle whenever the selected program changes.
+  // Keyed on the project switch itself (not on publishedProjects reloading) so a
+  // user's manual toggle-off survives unrelated data refreshes.
+  useEffect(() => {
+    if (lastAutoAppliedProjectRef.current === selectedProject) return;
+    lastAutoAppliedProjectRef.current = selectedProject;
+    const project = publishedProjects.find(p => p.id === selectedProject);
+    setNationalProgramActive(!!project?.isNationalProgram);
+  }, [selectedProject, publishedProjects]);
 
   // Loading state when filters or search changes
   useEffect(() => {
@@ -861,7 +874,13 @@ export function GrantSearch() {
           return false;
         }
       }
-      
+
+      // National Program toggle: restrict to nationwide opportunities (Federal and National
+      // scope grants are open to organizations anywhere in the country; State/Other are not).
+      if (nationalProgramActive && grant.locationType !== "National" && grant.locationType !== "Federal") {
+        return false;
+      }
+
       // Search query
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -1039,6 +1058,27 @@ export function GrantSearch() {
 
 
         </div>
+
+        {/* National Program Toggle — auto-enabled when the selected program is a National Program */}
+        {selectedProject !== "all-projects" && publishedProjects.find(p => p.id === selectedProject)?.isNationalProgram && (
+          <div className="flex items-center justify-between gap-3 mt-3 px-4 py-3 bg-teal-50 border border-teal-200 rounded-lg">
+            <div className="flex items-start gap-2.5">
+              <Globe className="w-4 h-4 text-teal-700 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-teal-900">Searching National Programs</p>
+                <p className="text-xs text-teal-700 mt-0.5">
+                  This program is set up as a National Program, so results default to nationwide opportunities. Turn off to include state and local results too.
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={nationalProgramActive}
+              onCheckedChange={setNationalProgramActive}
+              aria-label="Toggle National Program search scope"
+              className="flex-shrink-0"
+            />
+          </div>
+        )}
       </div>
 
       {/* Results Section with Right Rail */}

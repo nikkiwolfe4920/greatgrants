@@ -11,6 +11,7 @@ import {
 } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
+import { Switch } from "../components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -73,6 +74,7 @@ interface Project {
   summary: string;
   documentFiles: DocumentationFile[];
   geoLocations: GeoLocation[];
+  isNationalProgram: boolean;
   programDurationMonths: number | null;
   partnerships: Partnership[];
   primaryContact: PrimaryContact | null;
@@ -177,6 +179,7 @@ export function ProjectDetailsPage() {
     summary: "",
     documentFiles: [],
     geoLocations: [],
+    isNationalProgram: false,
     programDurationMonths: null,
     partnerships: [],
     primaryContact: null,
@@ -216,6 +219,7 @@ export function ProjectDetailsPage() {
     summary: "",
     documentFiles: [],
     geoLocations: [],
+    isNationalProgram: false,
     programDurationMonths: null,
     partnerships: [],
     primaryContact: null,
@@ -256,6 +260,7 @@ export function ProjectDetailsPage() {
     summary: currentProject.summary!,
     documentFiles: currentProject.documentFiles || [],
     geoLocations: currentProject.geoLocations || [],
+    isNationalProgram: currentProject.isNationalProgram ?? false,
     programDurationMonths: currentProject.programDurationMonths ?? null,
     partnerships: currentProject.partnerships || [],
     primaryContact: currentProject.primaryContact ?? null,
@@ -711,6 +716,23 @@ export function ProjectDetailsPage() {
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">Add at least one location where your program operates</p>
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 p-4 bg-gray-50 border border-gray-200 rounded-lg mb-4">
+                <div>
+                  <label htmlFor="national-program-toggle" className="font-medium text-gray-900 cursor-pointer">
+                    National Program
+                  </label>
+                  <p className="text-sm text-gray-600 mt-0.5">
+                    Selecting this option will default your searches to national options. Specific cities and regions of focus can still be entered below.
+                  </p>
+                </div>
+                <Switch
+                  id="national-program-toggle"
+                  checked={!!currentProject.isNationalProgram}
+                  onCheckedChange={(checked) => setCurrentProject({ ...currentProject, isNationalProgram: checked })}
+                  className="flex-shrink-0"
+                />
               </div>
 
               {currentProject.geoLocations && currentProject.geoLocations.length > 0 && (
