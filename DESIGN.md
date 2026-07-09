@@ -16,6 +16,7 @@ Complete design system documentation for the Great Grants application, aligned w
 - [Breadcrumbs](#breadcrumbs)
 - [Right Rail (Workflow Helper Panel)](#right-rail-workflow-helper-panel)
 - [Search](#search)
+- [Toggle Settings Row](#toggle-settings-row)
 - [Cloud Document Import (Program Creation)](#cloud-document-import-program-creation)
 - [Implementation Guide](#implementation-guide)
 - [Migration Guide](#migration-guide)
@@ -674,6 +675,50 @@ Flat white cards, no shadow at rest, lift on hover only.
 - **Empty state** — `SearchX` icon inside an `80×80` soft gray gradient circle (`bg-gradient-to-br from-gray-50 to-gray-100`), Lustria heading ("No Grants Found"), Cabin body copy, with actions to clear search/filters.
 - **No pagination or infinite scroll** — results render in full; introduce pagination only if result volumes grow enough to require it.
 
+### National Program Toggle
+
+When a program is marked "National Program" (see the Geographic Focus toggle in program creation, below) and that program is selected in the Programs dropdown, Grant Search surfaces a dismissible teal callout between the search bar and the filter pills row:
+
+```tsx
+<div className="flex items-center justify-between gap-3 mt-3 px-4 py-3 bg-teal-50 border border-teal-200 rounded-lg">
+  <div className="flex items-start gap-2.5">
+    <Globe className="w-4 h-4 text-teal-700 mt-0.5 flex-shrink-0" />
+    <div>
+      <p className="text-sm font-medium text-teal-900">Searching National Programs</p>
+      <p className="text-xs text-teal-700 mt-0.5">…Turn off to include state and local results too.</p>
+    </div>
+  </div>
+  <Switch checked={nationalProgramActive} onCheckedChange={setNationalProgramActive} />
+</div>
+```
+
+- **Auto-enabled, not auto-locked** — the `Switch` defaults on whenever the selected program has `isNationalProgram: true`, but the user can flip it off to broaden results back to state/local grants without leaving the page. Re-selecting the program (or switching away and back) resets it to on.
+- **Teal, not gray** — unlike the flat gray filter pills below it, this callout uses the brand teal tint (`bg-teal-50 border-teal-200`) because it reflects a program-level setting, not an ad-hoc filter the user added.
+- **`Globe` icon** — signals "nationwide," consistent with its use elsewhere for public/national scope.
+
+---
+
+## Toggle Settings Row
+
+The standard pattern for a single boolean setting inside a card — used for the "National Program" toggle in the Geographic Focus section (`src/app/pages/ProjectDetailsPage.tsx`) and for privacy toggles in `AccountSettings.tsx`:
+
+```tsx
+<div className="flex items-center justify-between gap-4 p-4 bg-gray-50 border border-gray-200 rounded-lg mb-4">
+  <div>
+    <label htmlFor="my-toggle" className="font-medium text-gray-900 cursor-pointer">
+      Setting Name
+    </label>
+    <p className="text-sm text-gray-600 mt-0.5">One or two sentences explaining the effect of turning this on.</p>
+  </div>
+  <Switch id="my-toggle" checked={value} onCheckedChange={setValue} className="flex-shrink-0" />
+</div>
+```
+
+- **Layout** — `flex items-center justify-between`: label + description on the left, `Switch` pinned right (`flex-shrink-0` so long descriptions never squeeze it).
+- **Surface** — `bg-gray-50 border border-gray-200 rounded-lg p-4`, matching the neutral card-within-a-card treatment used for list rows elsewhere on the page (e.g. the added-location rows in the same Geographic Focus card).
+- **Copy** — a bold `font-medium text-gray-900` label, then a `text-sm text-gray-600` sentence stating the concrete effect of the toggle (not just restating the label).
+- **Placement** — directly under the section header, above any list/input rows the toggle affects, so its consequence ("locations can still be entered below") is read before the fields it describes.
+
 ---
 
 ## Cloud Document Import (Program Creation)
@@ -1052,6 +1097,6 @@ src/
 
 ---
 
-**Last Updated**: July 6, 2026
-**Version**: 2.1
+**Last Updated**: July 9, 2026
+**Version**: 2.2
 **Based on**: Untitled UI Design System
