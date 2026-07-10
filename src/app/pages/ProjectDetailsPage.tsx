@@ -1404,9 +1404,47 @@ export function ProjectDetailsPage() {
               <FolderOpen className="w-10 h-10 text-teal-600" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No programs yet</h3>
-            <p className="text-sm text-gray-600 max-w-md">
+            <p className="text-sm text-gray-600 max-w-md mb-8">
               Programs enhances AI grant writing and improve grant matching.
             </p>
+            <div className="w-full max-w-[398px] text-left space-y-5">
+              <button
+                type="button"
+                onClick={() => setShowCreateFromDocumentModal(true)}
+                className="flex items-start gap-3 w-full p-[18px] rounded-lg border-2 border-gray-200 hover:border-teal-400 hover:bg-teal-50/30 transition-colors text-left"
+              >
+                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                  <Upload className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-semibold text-gray-900">Create Program from Document</span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-[#f3e8ff] text-[#8200db]">
+                      Fast Track
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1 whitespace-normal">
+                    Let AI auto-fill program details from documents like:{" "}
+                    <span className="italic">
+                      Program Descriptions/Brochures, Past Grant Proposals, Strategic Plans, Annual Reports, IRS Form 990
+                    </span>
+                  </p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={handleStartNewProject}
+                className="flex items-start gap-3 w-full p-[18px] rounded-lg border-2 border-gray-200 hover:border-teal-400 hover:bg-teal-50/30 transition-colors text-left"
+              >
+                <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-5 h-5 text-teal-600" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-sm font-semibold text-gray-900">Create Program Manually</span>
+                  <p className="text-xs text-gray-600 mt-1">Fill out the program details step-by-step in a guided form</p>
+                </div>
+              </button>
+            </div>
           </div>
         )}
       </div>

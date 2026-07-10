@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import {
   Search,
   Check,
@@ -213,7 +214,6 @@ export function CloudDocumentImport({ onImport }: CloudDocumentImportProps) {
             connection={connections[provider]}
             onConnect={() => openAuth(provider)}
             onBrowse={() => openBrowser(provider)}
-            onDisconnect={() => setConnections((prev) => ({ ...prev, [provider]: { status: "disconnected" } }))}
           />
         ))}
       </div>
@@ -268,13 +268,11 @@ function CloudProviderRow({
   connection,
   onConnect,
   onBrowse,
-  onDisconnect,
 }: {
   provider: CloudProvider;
   connection: ConnectionState;
   onConnect: () => void;
   onBrowse: () => void;
-  onDisconnect: () => void;
 }) {
   const label = provider === "microsoft" ? "Microsoft OneDrive / SharePoint" : "Google Drive";
 
@@ -290,20 +288,18 @@ function CloudProviderRow({
               <CheckCircle2 className="w-3.5 h-3.5 text-teal-600 flex-shrink-0" />
               <p className="text-xs font-semibold text-teal-800">Connected</p>
             </div>
-            <p className="text-xs text-gray-600 truncate">{connection.email}</p>
+            <p className="text-xs text-gray-600">
+              You are connected to {connection.email}. Manage your MS and Google in{" "}
+              <Link to="/settings" className="text-teal-700 hover:underline">
+                Account Settings
+              </Link>
+              .
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <Button size="sm" onClick={onBrowse} className="bg-teal-600 hover:bg-teal-700 text-white">
-            Browse files
-          </Button>
-          <button
-            onClick={onDisconnect}
-            className="text-xs text-gray-500 hover:text-gray-700 underline underline-offset-2 px-1.5"
-          >
-            Disconnect
-          </button>
-        </div>
+        <Button size="sm" onClick={onBrowse} className="bg-teal-600 hover:bg-teal-700 text-white flex-shrink-0">
+          Browse files
+        </Button>
       </div>
     );
   }
