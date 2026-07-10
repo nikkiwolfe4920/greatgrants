@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/app/components/ui/radio-group";
+import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
 import { Logo } from "@/app/components/Logo";
 import {
   CheckCircle2,
@@ -12,7 +13,8 @@ import {
   Trash2,
   FileText,
   Lightbulb,
-  HelpCircle
+  HelpCircle,
+  Info
 } from "lucide-react";
 import { CloudDocumentImport, ProviderBadgeIcon, type ImportedCloudFile } from "@/app/components/CloudDocumentImport";
 
@@ -28,9 +30,12 @@ interface OnboardingData {
   uei: string;
   website: string;
   previousApplications: DocumentationFile[];
+  form990s: DocumentationFile[];
 }
 
-type OnboardingMethod = "uei" | "website" | "upload";
+type OnboardingMethod = "uei" | "website" | "upload" | "990";
+
+type UploadField = "previousApplications" | "form990s";
 
 const isValidUrl = (url: string): boolean => {
   const trimmed = url.trim();
@@ -43,13 +48,85 @@ const isValidUrl = (url: string): boolean => {
   }
 };
 
+// How much of the organization profile each method auto-fills, plus the perks
+// worth surfacing so users can weigh their options before picking one.
+const AUTO_FILL_INFO: Record<OnboardingMethod, { percent: number; perks: string[] }> = {
+  uei: {
+    percent: 95,
+    perks: [
+      "Instant profile completion",
+      "Pre-filled applications",
+      "Accurate grant matching",
+      "Little manual entry",
+    ],
+  },
+  website: {
+    percent: 30,
+    perks: ["Most setup required", "Standard accuracy"],
+  },
+  upload: {
+    percent: 50,
+    perks: ["Org details auto-filled", "Moderate automation"],
+  },
+  "990": {
+    percent: 50,
+    perks: ["Org details auto-filled", "Moderate automation"],
+  },
+};
+
+function AutoFillMeter({ method }: { method: OnboardingMethod }) {
+  const { percent, perks } = AUTO_FILL_INFO[method];
+  const tone = percent >= 80 ? "high" : percent >= 45 ? "medium" : "low";
+  const barColor = tone === "high" ? "bg-teal-600" : tone === "medium" ? "bg-teal-400" : "bg-gray-400";
+  const textColor = tone === "high" ? "text-teal-700" : tone === "medium" ? "text-teal-600" : "text-gray-500";
+
+  return (
+    <div className="mt-2 flex items-center gap-2">
+      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full ${barColor}`} style={{ width: `${percent}%` }} />
+      </div>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            className={`flex items-center gap-1 text-xs font-semibold ${textColor} hover:underline flex-shrink-0`}
+            style={{ fontFamily: 'Cabin, sans-serif' }}
+          >
+            {percent}% Auto-Fill
+            <Info className="w-3 h-3" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-64 p-3"
+          align="start"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p className="text-xs font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Cabin, sans-serif' }}>
+            Perks
+          </p>
+          <ul className="space-y-1.5">
+            {perks.map((perk) => (
+              <li key={perk} className="flex items-start gap-1.5 text-xs text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                <CheckCircle2 className="w-3.5 h-3.5 text-teal-500 flex-shrink-0 mt-0.5" />
+                {perk}
+              </li>
+            ))}
+          </ul>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
 export function OnboardingPage() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState<OnboardingData>({
     uei: "",
     website: "",
-    previousApplications: []
+    previousApplications: [],
+    form990s: []
   });
 
   // Only one verification method may be used at a time
@@ -138,7 +215,8 @@ export function OnboardingPage() {
     setFormData({
       uei: "",
       website: "",
-      previousApplications: []
+      previousApplications: [],
+      form990s: []
     });
     setUeiVerificationStatus('idle');
     setVerifiedUEI('');
@@ -160,7 +238,7 @@ export function OnboardingPage() {
     return `${mb.toFixed(1)} MB`;
   };
 
-  const handleFileSelect = (files: FileList | null) => {
+  const handleFileSelect = (field: UploadField, files: FileList | null) => {
     if (!files || files.length === 0) return;
     const now = Date.now();
     const newFiles: DocumentationFile[] = Array.from(files)
@@ -178,11 +256,11 @@ export function OnboardingPage() {
 
     setFormData(prev => ({
       ...prev,
-      previousApplications: [...prev.previousApplications, ...newFiles]
+      [field]: [...prev[field], ...newFiles]
     }));
   };
 
-  const handleCloudImport = (files: ImportedCloudFile[]) => {
+  const handleCloudImport = (field: UploadField, files: ImportedCloudFile[]) => {
     const newFiles: DocumentationFile[] = files.map(file => ({
       id: file.id,
       fileName: file.fileName,
@@ -193,24 +271,24 @@ export function OnboardingPage() {
 
     setFormData(prev => ({
       ...prev,
-      previousApplications: [...prev.previousApplications, ...newFiles]
+      [field]: [...prev[field], ...newFiles]
     }));
   };
 
-  const handleDocInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFileSelect(e.target.files);
+  const handleDocInputChange = (field: UploadField, e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileSelect(field, e.target.files);
     e.target.value = "";
   };
 
-  const handleDocDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDocDrop = (field: UploadField, e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
-    handleFileSelect(e.dataTransfer.files);
+    handleFileSelect(field, e.dataTransfer.files);
   };
 
-  const handleRemoveFile = (id: string) => {
+  const handleRemoveFile = (field: UploadField, id: string) => {
     setFormData(prev => ({
       ...prev,
-      previousApplications: prev.previousApplications.filter(file => file.id !== id)
+      [field]: prev[field].filter(file => file.id !== id)
     }));
   };
 
@@ -218,6 +296,7 @@ export function OnboardingPage() {
     if (activeMethod === 'uei') return ueiVerificationStatus === 'verified';
     if (activeMethod === 'website') return websiteVerificationStatus === 'verified';
     if (activeMethod === 'upload') return formData.previousApplications.length > 0;
+    if (activeMethod === '990') return formData.form990s.length > 0;
     return false;
   };
 
@@ -381,6 +460,7 @@ export function OnboardingPage() {
                       <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: 'Cabin, sans-serif' }}>
                         Required for federal grant applications (formerly DUNS number)
                       </p>
+                      <AutoFillMeter method="uei" />
                     </div>
                   </label>
 
@@ -467,6 +547,7 @@ export function OnboardingPage() {
                       <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: 'Cabin, sans-serif' }}>
                         Your organization's official website URL
                       </p>
+                      <AutoFillMeter method="website" />
                     </div>
                   </label>
 
@@ -504,6 +585,7 @@ export function OnboardingPage() {
                       <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: 'Cabin, sans-serif' }}>
                         Upload past applications so our AI can learn your writing style and improve suggestions
                       </p>
+                      <AutoFillMeter method="upload" />
                     </div>
                   </label>
 
@@ -512,7 +594,7 @@ export function OnboardingPage() {
                       {/* Upload Area */}
                       <label
                         className="border-2 border-dashed border-gray-300 rounded-lg py-4 text-center hover:border-teal-400 transition-colors cursor-pointer block"
-                        onDrop={handleDocDrop}
+                        onDrop={(e) => handleDocDrop('previousApplications', e)}
                         onDragOver={(e) => e.preventDefault()}
                       >
                         <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center mx-auto mb-1.5">
@@ -528,12 +610,12 @@ export function OnboardingPage() {
                           type="file"
                           multiple
                           accept=".pdf,.doc,.docx"
-                          onChange={handleDocInputChange}
+                          onChange={(e) => handleDocInputChange('previousApplications', e)}
                           className="hidden"
                         />
                       </label>
 
-                      <CloudDocumentImport onImport={handleCloudImport} />
+                      <CloudDocumentImport onImport={(files) => handleCloudImport('previousApplications', files)} />
 
                       {/* Uploaded Files List */}
                       {formData.previousApplications.length > 0 && (
@@ -565,7 +647,7 @@ export function OnboardingPage() {
                               </div>
                               <button
                                 type="button"
-                                onClick={() => handleRemoveFile(file.id)}
+                                onClick={() => handleRemoveFile('previousApplications', file.id)}
                                 className="text-red-500 hover:text-red-600 transition-colors p-1 flex-shrink-0"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -595,6 +677,121 @@ export function OnboardingPage() {
                             </p>
                             <p className="text-xs text-gray-700 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
                               Uploading previous grant applications helps our AI learn your organization's voice and priorities, resulting in better grant recommendations and writing assistance.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 990 Option */}
+                <div
+                  className={`rounded-lg border transition-colors ${
+                    activeMethod === '990' ? 'border-teal-500 bg-teal-50/30' : 'border-gray-200'
+                  }`}
+                >
+                  <label htmlFor="method-990" className="flex items-start gap-3 p-4 cursor-pointer">
+                    <RadioGroupItem value="990" id="method-990" className="mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                        Upload a 990
+                      </span>
+                      <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                        Upload your IRS Form 990 so we can pull your financials, mission, and programs directly into your profile
+                      </p>
+                      <AutoFillMeter method="990" />
+                    </div>
+                  </label>
+
+                  {activeMethod === '990' && (
+                    <div className="px-4 pb-4 pl-[46px] space-y-1.5">
+                      {/* Upload Area */}
+                      <label
+                        className="border-2 border-dashed border-gray-300 rounded-lg py-4 text-center hover:border-teal-400 transition-colors cursor-pointer block"
+                        onDrop={(e) => handleDocDrop('form990s', e)}
+                        onDragOver={(e) => e.preventDefault()}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center mx-auto mb-1.5">
+                          <Upload className="w-4 h-4 text-teal-600" />
+                        </div>
+                        <p className="text-sm text-teal-600 font-medium" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                          Click to upload or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                          PDF, DOC, DOCX up to 10MB each
+                        </p>
+                        <input
+                          type="file"
+                          multiple
+                          accept=".pdf,.doc,.docx"
+                          onChange={(e) => handleDocInputChange('form990s', e)}
+                          className="hidden"
+                        />
+                      </label>
+
+                      <CloudDocumentImport onImport={(files) => handleCloudImport('form990s', files)} />
+
+                      {/* Uploaded Files List */}
+                      {formData.form990s.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          {formData.form990s.map((file) => (
+                            <div
+                              key={file.id}
+                              className="flex items-center justify-between p-3.5 bg-white border border-gray-200 rounded-[10px]"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="relative w-10 h-10 rounded-[10px] bg-red-50 flex items-center justify-center flex-shrink-0">
+                                  <FileText className="w-5 h-5 text-red-500" />
+                                  {(file.source === "microsoft" || file.source === "google") && (
+                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-white border border-gray-200 flex items-center justify-center">
+                                      <ProviderBadgeIcon provider={file.source} className="w-2.5 h-2.5" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                                    {file.fileName}
+                                  </p>
+                                  <p className="text-xs text-gray-500" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                                    {file.fileSize} • Uploaded {new Date(file.uploadedAt).toLocaleDateString()}
+                                    {file.source === "microsoft" && " • Imported from Microsoft"}
+                                    {file.source === "google" && " • Imported from Google Drive"}
+                                  </p>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveFile('form990s', file.id)}
+                                className="text-red-500 hover:text-red-600 transition-colors p-1 flex-shrink-0"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Security Notice */}
+                      <div className="flex items-start gap-2 mt-3 p-3 bg-gray-50 rounded-lg">
+                        <svg className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-xs text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                          Your documents are encrypted and secure. We analyze them to provide better AI assistance but never share them with third parties.
+                        </p>
+                      </div>
+
+                      {/* Pro Tip */}
+                      <div className="mt-3 p-4 bg-gradient-to-br from-teal-50 to-blue-50 border border-teal-200 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <Lightbulb className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                              Pro Tip
+                            </p>
+                            <p className="text-xs text-gray-700 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                              Your 990 already contains verified financials and program details — uploading it lets us auto-fill those fields instead of you re-typing them.
                             </p>
                           </div>
                         </div>
