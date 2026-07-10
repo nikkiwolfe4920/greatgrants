@@ -28,7 +28,14 @@ import {
   BreadcrumbSeparator,
   BreadcrumbHome,
 } from "../components/ui/breadcrumb";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu";
 import { CloudDocumentImport, ProviderBadgeIcon, type ImportedCloudFile } from "../components/CloudDocumentImport";
+import { CreateProgramFromDocumentModal, type FastTrackDocumentFile } from "../components/CreateProgramFromDocumentModal";
 
 interface DocumentationFile {
   id: string;
@@ -195,6 +202,7 @@ export function ProjectDetailsPage() {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const [showCreateFromDocumentModal, setShowCreateFromDocumentModal] = useState(false);
 
   // Form states for the inline "add" rows
   const [geoForm, setGeoForm] = useState({ country: "USA", state: "", name: "" });
@@ -236,6 +244,14 @@ export function ProjectDetailsPage() {
     setEditingProjectId(null);
     setCurrentProject({ ...emptyProject });
     resetInlineForms();
+  };
+
+  const handleCreateProgramFromDocument = (files: FastTrackDocumentFile[]) => {
+    setIsCreatingProject(true);
+    setEditingProjectId(null);
+    setCurrentProject({ ...emptyProject, documentFiles: files });
+    resetInlineForms();
+    setShowCreateFromDocumentModal(false);
   };
 
   const handleEditProject = (project: Project) => {
@@ -551,10 +567,59 @@ export function ProjectDetailsPage() {
               </p>
             </div>
             {!isCreatingProject && (
-              <Button onClick={handleStartNewProject} className="bg-teal-600 hover:bg-teal-700 text-white gap-2">
-                <Plus className="w-4 h-4" />
-                Create New Program
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="bg-teal-600 hover:bg-teal-700 text-white gap-2">
+                    <Plus className="w-4 h-4" />
+                    Create New Program
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[398px] p-3 rounded-lg">
+                  <div className="px-1 pb-3">
+                    <p className="text-sm font-semibold text-gray-900">Create New Program</p>
+                    <p className="text-xs text-gray-600 mt-0.5">Choose how you'd like to create your program profile</p>
+                  </div>
+                  <DropdownMenuItem
+                    onSelect={() => setShowCreateFromDocumentModal(true)}
+                    className="flex-col items-start gap-0 p-[18px] rounded-lg border-2 border-gray-200 hover:border-teal-400 hover:bg-teal-50/30 focus:bg-teal-50/30 focus:border-teal-400 cursor-pointer mb-2"
+                  >
+                    <div className="flex items-start gap-3 w-full">
+                      <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                        <Upload className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold text-gray-900">Create Program from Document</span>
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-[#f3e8ff] text-[#8200db]">
+                            Fast Track
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 mt-1 whitespace-normal">
+                          Let AI auto-fill program details from documents like:{" "}
+                          <span className="italic">
+                            Program Descriptions/Brochures, Past Grant Proposals, Strategic Plans, Annual Reports, IRS Form 990
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={handleStartNewProject}
+                    className="flex-col items-start gap-0 p-[18px] rounded-lg border-2 border-gray-200 hover:border-teal-400 hover:bg-teal-50/30 focus:bg-teal-50/30 focus:border-teal-400 cursor-pointer"
+                  >
+                    <div className="flex items-start gap-3 w-full">
+                      <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5 text-teal-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-sm font-semibold text-gray-900">Create Program Manually</span>
+                        <p className="text-xs text-gray-600 mt-1">Fill out the program details step-by-step in a guided form</p>
+                      </div>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>
@@ -1339,13 +1404,9 @@ export function ProjectDetailsPage() {
               <FolderOpen className="w-10 h-10 text-teal-600" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No programs yet</h3>
-            <p className="text-sm text-gray-600 max-w-md mb-6">
-              Create your first program to build a comprehensive profile that enhances AI grant writing and improves grant matching.
+            <p className="text-sm text-gray-600 max-w-md">
+              Programs enhances AI grant writing and improve grant matching.
             </p>
-            <Button onClick={handleStartNewProject} variant="outline" className="gap-2">
-              <Plus className="w-4 h-4" />
-              Create Your First Program
-            </Button>
           </div>
         )}
       </div>
@@ -1421,6 +1482,13 @@ export function ProjectDetailsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Create Program from Document Modal */}
+      <CreateProgramFromDocumentModal
+        open={showCreateFromDocumentModal}
+        onOpenChange={setShowCreateFromDocumentModal}
+        onProcessDocument={handleCreateProgramFromDocument}
+      />
     </div>
   );
 }
