@@ -21,8 +21,10 @@ import {
   Calendar,
   Download,
   Building2,
-  Check
+  Check,
+  Cloud
 } from "lucide-react";
+import { GoogleIcon, MicrosoftIcon } from "@/app/components/BrandIcons";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
@@ -275,6 +277,12 @@ export function AccountSettingsComprehensive({ onBack, onAccountDeleted }: Accou
   // 2FA state
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
 
+  // Cloud integration connections (only one can be connected at a time)
+  const [cloudConnections, setCloudConnections] = useState({
+    google: false,
+    microsoft: true,
+  });
+
   // Notification preferences
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
@@ -438,6 +446,11 @@ export function AccountSettingsComprehensive({ onBack, onAccountDeleted }: Accou
     showSuccess("Session ended", "The device has been logged out.");
   };
 
+  const handleCloudConnectionToggle = (provider: "google" | "microsoft", connected: boolean) => {
+    // Only one cloud service can be connected at a time.
+    setCloudConnections({ google: false, microsoft: false, [provider]: connected });
+  };
+
   const handleVerifyEmail = () => {
     setVerifyEmailDialog(false);
     showSuccess("Verification email sent", "Please check your inbox.");
@@ -553,11 +566,23 @@ export function AccountSettingsComprehensive({ onBack, onAccountDeleted }: Accou
               >
                 Security
               </TabsTrigger>
-              <TabsTrigger 
-                value="notifications"
+              <TabsTrigger
+                value="integrations"
                 className="rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:text-teal-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 bg-transparent text-gray-600 hover:text-gray-900 shadow-none"
               >
-                Notifications
+                Integrations
+              </TabsTrigger>
+              <TabsTrigger
+                value="emails"
+                className="rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:text-teal-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 bg-transparent text-gray-600 hover:text-gray-900 shadow-none"
+              >
+                Emails
+              </TabsTrigger>
+              <TabsTrigger
+                value="subscription"
+                className="rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:text-teal-600 data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 bg-transparent text-gray-600 hover:text-gray-900 shadow-none"
+              >
+                Subscription
               </TabsTrigger>
             </TabsList>
 
@@ -801,8 +826,55 @@ export function AccountSettingsComprehensive({ onBack, onAccountDeleted }: Accou
               </div>
             </TabsContent>
 
-            {/* Notifications Tab */}
-            <TabsContent value="notifications" className="space-y-6">
+            {/* Integrations Tab */}
+            <TabsContent value="integrations" className="space-y-6">
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Cloud className="w-5 h-5 text-teal-600" />
+                  <h2 className="text-base font-semibold text-gray-900">Cloud Connections</h2>
+                </div>
+                <p className="text-sm text-gray-600 mb-6">
+                  Manage the cloud services connected to Great Grants. Please note that end users can only connect one cloud service at a time. If a new service is connected, it should replace the existing connection or require the user to disconnect the current service before connecting another.
+                </p>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-3 p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0">
+                        <GoogleIcon className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">Connect Google</p>
+                        <p className="text-xs text-gray-500 truncate">Google Drive</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={cloudConnections.google}
+                      onCheckedChange={(checked) => handleCloudConnectionToggle('google', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-md bg-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0">
+                        <MicrosoftIcon className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">Connect Microsoft</p>
+                        <p className="text-xs text-gray-500 truncate">Microsoft OneDrive / SharePoint</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={cloudConnections.microsoft}
+                      onCheckedChange={(checked) => handleCloudConnectionToggle('microsoft', checked)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Emails Tab */}
+            <TabsContent value="emails" className="space-y-6">
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <div className="flex items-center gap-2 mb-2">
                   <Bell className="w-5 h-5 text-teal-600" />
@@ -810,17 +882,22 @@ export function AccountSettingsComprehensive({ onBack, onAccountDeleted }: Accou
                 </div>
                 <p className="text-sm text-gray-600 mb-6">
                   Get automatic email notifications about grants matching your criteria. To configure a new alert,{" "}
-                  <button 
+                  <button
                     className="text-teal-600 hover:text-teal-700 font-medium underline"
                     onClick={() => navigate('/search')}
                   >
                     start a new search
                   </button>.
                 </p>
-                
+
                 {/* Load and Display Saved Alerts */}
                 <GrantAlertsManager />
               </div>
+            </TabsContent>
+
+            {/* Subscription Tab */}
+            <TabsContent value="subscription" className="space-y-6">
+              <div className="bg-white rounded-lg border border-gray-200 p-6" />
             </TabsContent>
           </Tabs>
         </div>
