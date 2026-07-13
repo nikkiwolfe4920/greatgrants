@@ -783,19 +783,32 @@ export function ProjectDetailsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between gap-4 p-4 bg-gray-50 border border-gray-200 rounded-lg mb-4">
+              <div
+                role="switch"
+                aria-checked={!!currentProject.isNationalProgram}
+                tabIndex={0}
+                onClick={() => setCurrentProject({ ...currentProject, isNationalProgram: !currentProject.isNationalProgram })}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setCurrentProject({ ...currentProject, isNationalProgram: !currentProject.isNationalProgram });
+                  }
+                }}
+                className="flex items-center justify-between gap-4 p-4 bg-white border border-gray-200 rounded-lg mb-4 cursor-pointer"
+              >
                 <div>
-                  <label htmlFor="national-program-toggle" className="font-medium text-gray-900 cursor-pointer">
-                    National Program
-                  </label>
+                  <span className="font-medium text-gray-900">
+                    Select for: National Focus
+                  </span>
                   <p className="text-sm text-gray-600 mt-0.5">
-                    Selecting this option will default your searches to national options. Specific cities and regions of focus can still be entered below.
+                    This option will default your searches to national options. Specific cities and regions of focus can still be entered below.
                   </p>
                 </div>
                 <Switch
                   id="national-program-toggle"
                   checked={!!currentProject.isNationalProgram}
                   onCheckedChange={(checked) => setCurrentProject({ ...currentProject, isNationalProgram: checked })}
+                  onClick={(e) => e.stopPropagation()}
                   className="flex-shrink-0"
                 />
               </div>
