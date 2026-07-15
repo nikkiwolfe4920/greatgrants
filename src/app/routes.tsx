@@ -18,6 +18,7 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import { ProjectDetailsPage } from "./pages/ProjectDetailsPage";
 import { MyGrantReadiness } from "./pages/MyGrantReadiness.tsx";
 import { DesignSystemPage } from "./pages/DesignSystemPage";
+import { SuperAdminIAPage } from "./pages/SuperAdminIAPage";
 import { SubscribeEntryPage } from "./pages/SubscribeEntryPage";
 import { SubscribeCreateAccountPage } from "./pages/SubscribeCreateAccountPage";
 import { SubscribeOrgPage } from "./pages/SubscribeOrgPage";
@@ -75,6 +76,10 @@ const routes = [
   {
     path: "/design-system",
     element: <DesignSystemPage />,
+  },
+  {
+    path: "/super-admin",
+    element: <SuperAdminIAPage />,
   },
   {
     path: "/onboarding",
