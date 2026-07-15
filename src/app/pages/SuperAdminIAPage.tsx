@@ -19,6 +19,12 @@ import {
   Lock,
   HelpCircle,
   ListChecks,
+  X,
+  Check,
+  AlertTriangle,
+  Circle,
+  CircleDot,
+  Bell,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────────────────
@@ -154,12 +160,139 @@ function DownConnector({ label }: { label?: string }) {
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   Low-fi wireframe sketch primitives — grayscale boxes/lines/chips
+   standing in for real UI, used only in the Wireframes section
+───────────────────────────────────────────────────────────────── */
+function WFBar({ w = "100%" }: { w?: string }) {
+  return <div className="h-2 rounded-full bg-gray-200" style={{ width: w }} />;
+}
+
+function WFAvatar({ size = "size-6" }: { size?: string }) {
+  return <div className={`${size} rounded-full bg-gray-200 border border-gray-300 shrink-0`} />;
+}
+
+function WFButtonSketch({
+  label,
+  tone = "default",
+}: {
+  label: string;
+  tone?: "default" | "primary" | "danger";
+}) {
+  const tones: Record<string, string> = {
+    default: "border-gray-300 text-gray-500",
+    primary: "border-teal-400 text-teal-700 bg-teal-50",
+    danger: "border-red-300 text-red-600 bg-red-50",
+  };
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded-md border px-2.5 py-1 text-[10px] font-semibold whitespace-nowrap ${tones[tone]}`}
+    >
+      {label}
+    </span>
+  );
+}
+
+function WFInputSketch({
+  placeholder,
+  icon: Icon,
+}: {
+  placeholder: string;
+  icon?: React.ElementType;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-[10.5px] text-gray-400">
+      {Icon && <Icon className="size-3 text-gray-400 shrink-0" />}
+      {placeholder}
+    </div>
+  );
+}
+
+function WFRow({ children }: { children: React.ReactNode }) {
+  return <div className="flex items-center gap-2 border-b border-gray-100 py-1.5 last:border-b-0">{children}</div>;
+}
+
+function WFFrame({
+  title,
+  chip,
+  dashed = false,
+  children,
+}: {
+  title: string;
+  chip?: string;
+  dashed?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={`rounded-lg bg-white overflow-hidden border ${
+        dashed ? "border-dashed border-gray-300" : "border-gray-200"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2 border-b border-gray-200 bg-gray-50 px-3 py-1.5">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="size-1.5 rounded-full bg-gray-300 shrink-0" />
+          <span className="size-1.5 rounded-full bg-gray-300 shrink-0" />
+          <span className="size-1.5 rounded-full bg-gray-300 shrink-0" />
+          <span className="text-[10.5px] font-semibold text-gray-500 ml-1 truncate">{title}</span>
+        </div>
+        {chip && (
+          <span className="text-[9px] font-bold uppercase tracking-wide text-gray-400 border border-gray-300 rounded px-1.5 py-0.5 shrink-0">
+            {chip}
+          </span>
+        )}
+      </div>
+      <div className="p-3 space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function WireframeItem({
+  title,
+  priority,
+  note,
+  children,
+}: {
+  title: string;
+  priority: "P0" | "P1";
+  note?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 p-4">
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <Badge
+            variant="outline"
+            className={
+              priority === "P0"
+                ? "text-teal-700 border-teal-300 bg-teal-50 shrink-0"
+                : "text-amber-700 border-amber-300 bg-amber-50 shrink-0"
+            }
+          >
+            {priority}
+          </Badge>
+          <h3 className="text-[13px] font-bold text-gray-900 leading-tight">{title}</h3>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{children}</div>
+      {note && (
+        <div className="flex items-start gap-1.5 rounded-md bg-amber-50 border border-amber-200 px-2 py-1.5 text-[11.5px] text-amber-800 mt-3">
+          <HelpCircle className="size-3.5 shrink-0 mt-0.5" />
+          <span>{note}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const CONTENTS = [
   { id: "overview", label: "Overview" },
   { id: "flow", label: "IA Flow" },
   { id: "cross-cutting", label: "Cross-Cutting Rules" },
   { id: "open-questions", label: "Open Questions" },
   { id: "backlog", label: "Wireframe Backlog" },
+  { id: "wireframes", label: "Wireframes" },
 ];
 
 export function SuperAdminIAPage() {
@@ -617,6 +750,362 @@ export function SuperAdminIAPage() {
                 ))}
               </ul>
             </div>
+          </div>
+        </section>
+
+        {/* ── Wireframes ── */}
+        <section id="wireframes" className="scroll-mt-8 mb-20">
+          <h2 className="text-[20px] font-bold text-gray-900 mb-1">Wireframes</h2>
+          <p className="text-[13px] text-gray-500 mb-6 max-w-2xl">
+            Low-fidelity sketches for every screen and state in the backlog above — structure and
+            content only, not a final visual design.
+          </p>
+
+          <p className="text-[12px] font-bold text-teal-700 uppercase tracking-wide mb-3">
+            P0 — needed to reach Dev-Ready
+          </p>
+          <div className="flex flex-col gap-5 mb-10">
+            <WireframeItem title="Global Search (empty, results, no-results)" priority="P0">
+              <WFFrame title="Empty state">
+                <WFInputSketch icon={Search} placeholder="Search by org name or email" />
+                <p className="text-[10.5px] text-gray-400 italic">
+                  Start typing to search organizations or users…
+                </p>
+              </WFFrame>
+              <WFFrame title="Results">
+                <WFInputSketch icon={Search} placeholder="acme" />
+                {["Acme Nonprofit", "Acme Housing Coalition", "Acme Youth Services"].map((n) => (
+                  <WFRow key={n}>
+                    <WFAvatar />
+                    <div className="flex-1 space-y-1">
+                      <WFBar w="55%" />
+                      <WFBar w="30%" />
+                    </div>
+                  </WFRow>
+                ))}
+              </WFFrame>
+              <WFFrame title="No results">
+                <WFInputSketch icon={Search} placeholder="zzzcorp" />
+                <p className="text-[10.5px] text-gray-400 italic">
+                  No matches for "zzzcorp"
+                </p>
+                <WFButtonSketch label="Clear search" />
+              </WFFrame>
+            </WireframeItem>
+
+            <WireframeItem title="Organization Drill-down — Overview tab" priority="P0">
+              <WFFrame title="Org Drill-down / Overview" chip="Overview">
+                <WFRow>
+                  <WFAvatar size="size-8" />
+                  <div className="flex-1 space-y-1">
+                    <WFBar w="45%" />
+                    <WFBar w="25%" />
+                  </div>
+                </WFRow>
+                <div className="flex gap-1.5 text-[10px] font-semibold">
+                  <span className="text-teal-700 border-b-2 border-teal-600 pb-1">Overview</span>
+                  <span className="text-gray-400 pb-1">Usage Report</span>
+                  <span className="text-gray-400 pb-1">Members</span>
+                  <span className="text-gray-400 pb-1">Activity</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  {["Program", "Org Profile", "Application"].map((s) => (
+                    <div key={s} className="rounded-md border border-gray-200 p-2 space-y-1">
+                      <WFBar w="70%" />
+                      <div className="h-4 w-4 rounded bg-gray-100 border border-gray-200" />
+                    </div>
+                  ))}
+                </div>
+                <WFBar w="40%" />
+              </WFFrame>
+            </WireframeItem>
+
+            <WireframeItem title="Organization Drill-down — Usage Report tab" priority="P0">
+              <WFFrame title="Org Drill-down / Usage Report" chip="Usage Report">
+                <div className="flex gap-1.5 text-[10px] font-semibold">
+                  <span className="text-gray-400 pb-1">Overview</span>
+                  <span className="text-teal-700 border-b-2 border-teal-600 pb-1">Usage Report</span>
+                  <span className="text-gray-400 pb-1">Members</span>
+                  <span className="text-gray-400 pb-1">Activity</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  {[
+                    "Profile completion %",
+                    "≥1 Program exists",
+                    "# grant searches",
+                    "# drafted applications",
+                    "# exports",
+                    "# un-exported drafts",
+                  ].map((s) => (
+                    <div key={s} className="rounded-md border border-gray-200 p-2 space-y-1.5">
+                      <WFBar w="80%" />
+                      <div className="h-3 w-8 rounded bg-gray-100 border border-gray-200" />
+                    </div>
+                  ))}
+                </div>
+              </WFFrame>
+            </WireframeItem>
+
+            <WireframeItem title="Organization Drill-down — Members list" priority="P0">
+              <WFFrame title="Org Drill-down / Members" chip="Members">
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-1.5 text-[10px] font-semibold">
+                    <span className="text-gray-400 pb-1">Overview</span>
+                    <span className="text-gray-400 pb-1">Usage Report</span>
+                    <span className="text-teal-700 border-b-2 border-teal-600 pb-1">Members</span>
+                    <span className="text-gray-400 pb-1">Activity</span>
+                  </div>
+                  <WFButtonSketch label="+ Add user" tone="primary" />
+                </div>
+                {[1, 2, 3].map((i) => (
+                  <WFRow key={i}>
+                    <WFAvatar />
+                    <div className="flex-1 space-y-1">
+                      <WFBar w="50%" />
+                      <WFBar w="65%" />
+                    </div>
+                    <span className="text-[9.5px] font-semibold uppercase text-gray-400 border border-gray-300 rounded px-1.5 py-0.5 shrink-0">
+                      Admin
+                    </span>
+                    <span className="text-[10px] text-gray-400 shrink-0">View →</span>
+                  </WFRow>
+                ))}
+              </WFFrame>
+            </WireframeItem>
+
+            <WireframeItem title="User Drill-down — Profile & memberships" priority="P0">
+              <WFFrame title="User Drill-down / Profile" chip="Profile">
+                <WFRow>
+                  <WFAvatar size="size-8" />
+                  <div className="flex-1 space-y-1">
+                    <WFBar w="40%" />
+                    <WFBar w="55%" />
+                  </div>
+                </WFRow>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide pt-1">
+                  Org memberships
+                </p>
+                {["Acme Nonprofit", "Bright Futures Fund"].map((org) => (
+                  <WFRow key={org}>
+                    <div className="size-5 rounded bg-gray-100 border border-gray-200 shrink-0" />
+                    <div className="flex-1">
+                      <WFBar w="45%" />
+                    </div>
+                    <span className="text-[9.5px] font-semibold uppercase text-gray-400 border border-gray-300 rounded px-1.5 py-0.5 shrink-0">
+                      Consultant
+                    </span>
+                    <span className="text-[10px] text-gray-400 shrink-0">View →</span>
+                  </WFRow>
+                ))}
+              </WFFrame>
+            </WireframeItem>
+
+            <WireframeItem title="Activity / Audit Log (org + user variants)" priority="P0">
+              <WFFrame title="Org Activity Log" chip="Activity">
+                {[1, 2, 3].map((i) => (
+                  <WFRow key={i}>
+                    <div className="w-14 shrink-0">
+                      <WFBar w="90%" />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <WFBar w="70%" />
+                    </div>
+                  </WFRow>
+                ))}
+              </WFFrame>
+              <WFFrame title="User Activity Log" chip="Activity">
+                {[1, 2, 3].map((i) => (
+                  <WFRow key={i}>
+                    <div className="w-14 shrink-0">
+                      <WFBar w="90%" />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <WFBar w="60%" />
+                    </div>
+                  </WFRow>
+                ))}
+              </WFFrame>
+            </WireframeItem>
+
+            <WireframeItem title="Reset Password — trigger + confirmation" priority="P0">
+              <WFFrame title="Trigger (from Org/User Drill-down)">
+                <WFRow>
+                  <div className="flex-1 space-y-1">
+                    <WFBar w="50%" />
+                  </div>
+                  <WFButtonSketch label="Reset password" tone="primary" />
+                </WFRow>
+              </WFFrame>
+              <WFFrame title="Confirmation" dashed>
+                <div className="flex items-center gap-2">
+                  <Check className="size-4 text-teal-600" />
+                  <WFBar w="70%" />
+                </div>
+                <p className="text-[10.5px] text-gray-400 italic">
+                  Password reset email sent to the user's address.
+                </p>
+                <WFButtonSketch label="Done" />
+              </WFFrame>
+            </WireframeItem>
+
+            <WireframeItem title="Reset Search Count — trigger + confirmation" priority="P0">
+              <WFFrame title="Trigger (from Org Drill-down)">
+                <WFRow>
+                  <div className="flex-1 space-y-1">
+                    <WFBar w="35%" />
+                    <span className="text-[10px] text-gray-400">12 / 25 searches used</span>
+                  </div>
+                  <WFButtonSketch label="Reset count" tone="primary" />
+                </WFRow>
+              </WFFrame>
+              <WFFrame title="Confirmation" dashed>
+                <div className="flex items-center gap-2">
+                  <Check className="size-4 text-teal-600" />
+                  <span className="text-[10.5px] text-gray-500">Search count reset to 0 / 25</span>
+                </div>
+                <WFButtonSketch label="Done" />
+              </WFFrame>
+            </WireframeItem>
+
+            <WireframeItem
+              title="Add User to Org — modal (role picker: Admin / Consultant)"
+              priority="P0"
+            >
+              <WFFrame title="Add user to org" dashed>
+                <div className="flex items-center justify-between">
+                  <WFBar w="35%" />
+                  <X className="size-3.5 text-gray-400" />
+                </div>
+                <WFInputSketch placeholder="user@example.com" />
+                <div className="flex gap-2 pt-1">
+                  <div className="flex-1 rounded-md border border-teal-400 bg-teal-50 p-2 flex items-center gap-1.5">
+                    <CircleDot className="size-3.5 text-teal-600 shrink-0" />
+                    <span className="text-[10.5px] font-semibold text-teal-700">Admin</span>
+                  </div>
+                  <div className="flex-1 rounded-md border border-gray-300 p-2 flex items-center gap-1.5">
+                    <Circle className="size-3.5 text-gray-400 shrink-0" />
+                    <span className="text-[10.5px] font-semibold text-gray-500">Consultant</span>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-1">
+                  <WFButtonSketch label="Cancel" />
+                  <WFButtonSketch label="Add user" tone="primary" />
+                </div>
+              </WFFrame>
+            </WireframeItem>
+
+            <WireframeItem title="Permission-denied state for Support Admin" priority="P0">
+              <WFFrame title="Blocked action" dashed>
+                <div className="flex flex-col items-center text-center gap-2 py-3">
+                  <Lock className="size-5 text-gray-400" />
+                  <p className="text-[10.5px] text-gray-500 max-w-[220px]">
+                    You don't have permission to perform this action. Contact a Super Admin.
+                  </p>
+                  <span className="inline-flex items-center justify-center rounded-md border border-gray-200 text-gray-300 px-2.5 py-1 text-[10px] font-semibold">
+                    Reset password
+                  </span>
+                </div>
+              </WFFrame>
+            </WireframeItem>
+          </div>
+
+          <p className="text-[12px] font-bold text-amber-700 uppercase tracking-wide mb-3">
+            P1 — blocked on open questions
+          </p>
+          <div className="flex flex-col gap-5">
+            <WireframeItem
+              title="Disable User — trigger + confirmation"
+              priority="P1"
+              note="Pending data-model decision — status field vs. permission-level revoke."
+            >
+              <WFFrame title="Trigger (from User Drill-down)">
+                <WFRow>
+                  <div className="flex-1">
+                    <WFBar w="45%" />
+                  </div>
+                  <WFButtonSketch label="Disable user" tone="danger" />
+                </WFRow>
+              </WFFrame>
+              <WFFrame title="Confirmation" dashed>
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="size-4 text-red-500" />
+                  <span className="text-[10.5px] text-gray-600">
+                    Disable this user's access? History is preserved.
+                  </span>
+                </div>
+                <div className="flex justify-end gap-2 pt-1">
+                  <WFButtonSketch label="Cancel" />
+                  <WFButtonSketch label="Disable" tone="danger" />
+                </div>
+              </WFFrame>
+            </WireframeItem>
+
+            <WireframeItem
+              title="Combine Organizations — full merge flow"
+              priority="P1"
+              note="Mechanics pending Spike — merge behavior for Stripe billing & conflicts undefined."
+            >
+              <WFFrame title="Combine organizations" dashed>
+                <div className="grid grid-cols-3 gap-2">
+                  {["1. Select target org", "2. Review conflicts", "3. Confirm merge"].map((s) => (
+                    <div key={s} className="rounded-md border border-gray-200 p-2 space-y-1.5">
+                      <span className="text-[9.5px] font-bold text-gray-400">{s}</span>
+                      <WFBar w="80%" />
+                      <WFBar w="60%" />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-end gap-2 pt-1">
+                  <WFButtonSketch label="Back" />
+                  <WFButtonSketch label="Merge organizations" tone="danger" />
+                </div>
+              </WFFrame>
+            </WireframeItem>
+
+            <WireframeItem
+              title="Delete Organization — typed confirmation + deletion-record receipt"
+              priority="P1"
+            >
+              <WFFrame title="Delete organization" dashed>
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="size-4 text-red-500" />
+                  <span className="text-[10.5px] text-gray-600">
+                    This permanently deletes all org data. Type DELETE to confirm.
+                  </span>
+                </div>
+                <WFInputSketch placeholder="Type DELETE" />
+                <div className="flex justify-end gap-2 pt-1">
+                  <WFButtonSketch label="Cancel" />
+                  <WFButtonSketch label="Delete organization" tone="danger" />
+                </div>
+              </WFFrame>
+              <WFFrame title="Deletion record (receipt)">
+                <div className="space-y-1.5">
+                  <WFBar w="60%" />
+                  <WFBar w="45%" />
+                  <WFBar w="70%" />
+                </div>
+                <p className="text-[10px] text-gray-400 italic">
+                  Immutable — hash, timestamp, acting admin
+                </p>
+              </WFFrame>
+            </WireframeItem>
+
+            <WireframeItem
+              title="Customer-facing notification banner"
+              priority="P1"
+              note="Pending decision on whether to build this at all."
+            >
+              <WFFrame title="In-app banner (main app)" dashed>
+                <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-2.5 py-2">
+                  <Bell className="size-3.5 text-gray-400 shrink-0" />
+                  <span className="flex-1 text-[10.5px] text-gray-500">
+                    An admin action was taken on your organization's account.
+                  </span>
+                  <X className="size-3.5 text-gray-400 shrink-0" />
+                </div>
+              </WFFrame>
+            </WireframeItem>
           </div>
         </section>
       </main>
