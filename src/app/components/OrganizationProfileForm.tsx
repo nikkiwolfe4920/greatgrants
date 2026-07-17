@@ -671,10 +671,6 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
     setIsAutoSaving(true);
     // Simulate API call
     setTimeout(() => {
-      // Persisted separately so Grant Search can tell, without a Program, whether
-      // website fallback context exists (see TP-1220 fallback-context nudge).
-      localStorage.setItem("organizationWebsite", legalInfo.website);
-      window.dispatchEvent(new Event("organizationProfileUpdated"));
       setLastSaved(new Date());
       setIsAutoSaving(false);
       setHasUnsavedChanges(false);
@@ -689,7 +685,15 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
   const handleLegalInfoChange = (field: string, value: string) => {
     setLegalInfo(prev => ({ ...prev, [field]: value }));
     setHasUnsavedChanges(true);
-    
+
+    // Written immediately (not gated behind the ~2.5s autosave debounce) so
+    // Grant Search's website-fallback check reflects the field as soon as the
+    // user types it, rather than only after autosave completes uninterrupted.
+    if (field === 'website') {
+      localStorage.setItem('organizationWebsite', value);
+      window.dispatchEvent(new Event('organizationProfileUpdated'));
+    }
+
     // Handle UEI verification
     if (field === 'uei') {
       // Clear any existing verification timeout
