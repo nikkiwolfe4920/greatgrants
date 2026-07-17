@@ -28,7 +28,9 @@ import {
   Bell,
   CheckCircle2,
   Bookmark,
-  DollarSign
+  DollarSign,
+  Info,
+  AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
@@ -632,6 +634,8 @@ export function GrantSearch() {
   const lastAutoAppliedProjectRef = useRef<string | null>(null);
   const [savedGrants, setSavedGrants] = useState<string[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<Grant[]>([]);
+  const [hasWebsite, setHasWebsite] = useState(false);
+  const [nudgeDismissed, setNudgeDismissed] = useState(false);
   
   // Unified filter states with default filters
   const [advancedFilters, setAdvancedFilters] = useState<Array<{ id: string; label: string; category: string }>>([
@@ -679,25 +683,53 @@ export function GrantSearch() {
       setRecentlyViewed(recent.slice(0, 3)); // Only show top 3
     };
 
+    // Website fallback context: the Organization Profile page persists the
+    // "Organization Website" field to this same key so this page can tell
+    // whether a fallback context exists without a Program.
+    const loadWebsite = () => {
+      const website = localStorage.getItem("organizationWebsite") || "";
+      setHasWebsite(website.trim().length > 0);
+    };
+
+    const loadNudgeDismissed = () => {
+      setNudgeDismissed(localStorage.getItem("fallbackNudgeDismissed") === "true");
+    };
+
     loadPublishedProjects();
     loadSavedGrants();
     loadRecentlyViewed();
+    loadWebsite();
+    loadNudgeDismissed();
 
     // Listen for project and saved grants updates
     const handleProjectsUpdate = () => loadPublishedProjects();
     const handleSavedGrantsUpdate = () => loadSavedGrants();
     const handleRecentlyViewedUpdate = () => loadRecentlyViewed();
+    const handleOrgProfileUpdate = () => loadWebsite();
 
     window.addEventListener("projectsUpdated", handleProjectsUpdate);
     window.addEventListener("savedGrantsUpdated", handleSavedGrantsUpdate);
     window.addEventListener("recentlyViewedUpdated", handleRecentlyViewedUpdate);
+    window.addEventListener("organizationProfileUpdated", handleOrgProfileUpdate);
 
     return () => {
       window.removeEventListener("projectsUpdated", handleProjectsUpdate);
       window.removeEventListener("savedGrantsUpdated", handleSavedGrantsUpdate);
       window.removeEventListener("recentlyViewedUpdated", handleRecentlyViewedUpdate);
+      window.removeEventListener("organizationProfileUpdated", handleOrgProfileUpdate);
     };
   }, []);
+
+  // A Program supersedes website fallback entirely. Clearing the dismissal here
+  // (rather than only gating the render on hasPrograms) means that if the
+  // user's only Program is later deleted, the nudge is free to resurface for
+  // that new zero-Program period instead of staying suppressed forever.
+  useEffect(() => {
+    if (publishedProjects.length > 0) {
+      localStorage.removeItem("fallbackNudgeDismissed");
+      setNudgeDismissed(false);
+    }
+  }, [publishedProjects.length]);
 
   // Auto-select the National Program toggle whenever the selected program changes.
   // Keyed on the project switch itself (not on publishedProjects reloading) so a
@@ -742,6 +774,11 @@ export function GrantSearch() {
     const wordMatch = Math.min(100, Math.max(50, relevance + variance2));
     
     return { projectFit, wordMatch };
+  };
+
+  const handleDismissNudge = () => {
+    localStorage.setItem("fallbackNudgeDismissed", "true");
+    setNudgeDismissed(true);
   };
 
   const toggleFavorite = (grantId: string) => {
@@ -920,6 +957,11 @@ export function GrantSearch() {
   const activeFilterCount = advancedFilters.length;
   const totalFunding = filteredGrants.reduce((sum, g) => sum + (g.poolAmount || g.maxAmount), 0);
 
+  // TP-1220: website fallback context nudge + missing-context state
+  const hasPrograms = publishedProjects.length > 0;
+  const showFallbackNudge = !hasPrograms && hasWebsite && !nudgeDismissed;
+  const showMissingContext = !hasPrograms && !hasWebsite;
+
   return (
     <div className="max-w-[1400px] mx-auto p-6 overflow-x-hidden">
       {/* Breadcrumb */}
@@ -1079,12 +1121,91 @@ export function GrantSearch() {
             />
           </div>
         )}
+
+        {/* Fallback-Context Nudge — results are driven by website context because
+            the org has no Program yet. Suppressed the moment a Program exists. */}
+        {showFallbackNudge && (
+          <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-3 p-4 sm:px-4 sm:py-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <button
+              onClick={handleDismissNudge}
+              aria-label="Dismiss"
+              className="absolute top-3 right-3 sm:hidden p-1.5 hover:bg-blue-100 rounded-full transition-colors"
+            >
+              <X className="w-3.5 h-3.5 text-blue-700" />
+            </button>
+            <div className="flex items-start gap-2.5 pr-6 sm:pr-0" role="status" aria-live="polite">
+              <Info className="w-4 h-4 text-blue-700 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-blue-900">
+                  Results are based on your organization's website
+                </p>
+                <p className="text-xs text-blue-700 mt-0.5">
+                  You haven't created a Program yet, so we're using your website to understand your work. Create a Program for more accurate, relevant matches.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Button
+                size="sm"
+                className="gap-1.5 bg-teal-600 hover:bg-teal-700 text-white w-full sm:w-auto"
+                onClick={() => navigate("/project-details")}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Create Program
+              </Button>
+              <button
+                onClick={handleDismissNudge}
+                aria-label="Dismiss"
+                className="hidden sm:inline-flex p-1.5 hover:bg-blue-100 rounded-full transition-colors"
+              >
+                <X className="w-3.5 h-3.5 text-blue-700" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Results Section with Right Rail */}
       <div className="flex gap-6">
         {/* Main Results */}
         <div className="flex-1">
+          {showMissingContext ? (
+            <div
+              className="flex items-center justify-center py-20"
+              role="alert"
+              aria-live="assertive"
+            >
+              <div className="max-w-lg text-center">
+                <div className="mb-6 inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-amber-50 to-amber-100">
+                  <AlertTriangle className="w-10 h-10 text-amber-600" />
+                </div>
+                <h3 className="text-2xl font-semibold text-gray-900 mb-3" style={{ fontFamily: 'Lustria, serif' }}>
+                  We need a bit more information
+                </h3>
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  Search needs either an organization website or a Program to know what kind of funding to look for. Your organization doesn't currently have either on file, so we can't generate results yet.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <Button
+                    onClick={() => navigate("/project-details")}
+                    className="gap-2 bg-teal-600 hover:bg-teal-700 text-white w-full sm:w-auto"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Create a Program
+                  </Button>
+                  <Button
+                    onClick={() => navigate("/organization", { state: { highlightField: "org-website" } })}
+                    variant="outline"
+                    className="gap-2 w-full sm:w-auto"
+                  >
+                    <Globe className="w-4 h-4" />
+                    Add Your Website
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+          <>
           {/* Advanced Filters & Results Header */}
           <div className="mb-3">
             {/* Advanced Filter Pills & Add Filters Button */}
@@ -1516,7 +1637,9 @@ export function GrantSearch() {
             })}
           </div>
         )}
-      </div>
+          </>
+          )}
+        </div>
 
       {/* Right Rail */}
       <aside className="w-80 flex-shrink-0">

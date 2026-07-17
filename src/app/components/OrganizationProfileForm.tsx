@@ -243,7 +243,7 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
     dbaName: "",
     ein: "",
     uei: "",
-    website: "",
+    website: localStorage.getItem("organizationWebsite") || "",
     streetAddress: "",
     city: "",
     state: "",
@@ -671,6 +671,10 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
     setIsAutoSaving(true);
     // Simulate API call
     setTimeout(() => {
+      // Persisted separately so Grant Search can tell, without a Program, whether
+      // website fallback context exists (see TP-1220 fallback-context nudge).
+      localStorage.setItem("organizationWebsite", legalInfo.website);
+      window.dispatchEvent(new Event("organizationProfileUpdated"));
       setLastSaved(new Date());
       setIsAutoSaving(false);
       setHasUnsavedChanges(false);
@@ -1147,6 +1151,16 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
       }
     }
   };
+
+  // Deep-link support: entry points outside this page (e.g. the Grant Search
+  // missing-context state) can navigate here with state.highlightField to land
+  // on the right tab with the field highlighted, reusing the rail-click path.
+  useEffect(() => {
+    const incoming = (location.state as { highlightField?: string } | null)?.highlightField;
+    if (incoming) {
+      handleRailItemClick(incoming);
+    }
+  }, []);
 
   const checklistItems = getChecklistItems();
 
