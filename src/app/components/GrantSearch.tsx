@@ -711,12 +711,17 @@ export function GrantSearch() {
     window.addEventListener("savedGrantsUpdated", handleSavedGrantsUpdate);
     window.addEventListener("recentlyViewedUpdated", handleRecentlyViewedUpdate);
     window.addEventListener("organizationProfileUpdated", handleOrgProfileUpdate);
+    // Native "storage" only fires in OTHER tabs/windows, not the one that made
+    // the change — needed alongside the custom event above to cover a user
+    // editing the website in a separate tab from an already-open Grant Search.
+    window.addEventListener("storage", handleOrgProfileUpdate);
 
     return () => {
       window.removeEventListener("projectsUpdated", handleProjectsUpdate);
       window.removeEventListener("savedGrantsUpdated", handleSavedGrantsUpdate);
       window.removeEventListener("recentlyViewedUpdated", handleRecentlyViewedUpdate);
       window.removeEventListener("organizationProfileUpdated", handleOrgProfileUpdate);
+      window.removeEventListener("storage", handleOrgProfileUpdate);
     };
   }, []);
 
