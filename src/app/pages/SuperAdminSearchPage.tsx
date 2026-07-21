@@ -13,6 +13,7 @@ import {
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
+import { Logo } from "../components/Logo";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -80,31 +81,16 @@ export function SuperAdminSearchPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-white">
-      {/* Top bar */}
-      <header className="flex items-center justify-between gap-4 border-b border-gray-200 px-4 py-3 shrink-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="size-7 rounded-md bg-teal-600 shrink-0" />
-          <span className="text-sm font-bold text-gray-900 truncate">
-            Great Grants Admin Portal
-          </span>
+    <div className="flex h-screen bg-white">
+      {/* Left nav — mirrors SharedSidebar's shell: logo up top, neutral
+          active-state treatment, user/sign-out anchored at the bottom */}
+      <aside className="flex flex-col w-60 shrink-0 border-r border-gray-200 h-full">
+        <div className="flex items-center px-4 py-3 border-b border-gray-200 shrink-0">
+          <Logo />
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <button
-            type="button"
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-            aria-label="Settings"
-          >
-            <Settings className="size-4" />
-          </button>
-          <div className="size-8 rounded-full bg-gray-200 border border-gray-300" />
-        </div>
-      </header>
 
-      <div className="flex flex-1 min-h-0">
-        {/* Left nav */}
-        <nav className="w-52 shrink-0 border-r border-gray-100 py-3 flex flex-col">
-          <ul className="flex flex-col gap-0.5 flex-1">
+        <nav className="flex-1 overflow-y-auto p-3">
+          <ul className="space-y-0.5">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const active = item.path === location.pathname;
@@ -112,7 +98,8 @@ export function SuperAdminSearchPage() {
                 return (
                   <li key={item.label}>
                     <div
-                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-400 cursor-default"
+                      className="flex items-center gap-2 px-3 py-2 rounded-md text-gray-400 cursor-default"
+                      style={{ fontFamily: "Cabin, sans-serif", fontSize: "14px" }}
                       title="Coming soon"
                     >
                       <Icon className="size-4 shrink-0" />
@@ -125,32 +112,52 @@ export function SuperAdminSearchPage() {
                 <li key={item.label}>
                   <Link
                     to={item.path}
-                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-r-md border-r-2 transition-colors ${
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
                       active
-                        ? "bg-teal-50 border-teal-600 text-teal-800"
-                        : "border-transparent text-gray-600 hover:bg-gray-50"
+                        ? "bg-gray-100 text-gray-900"
+                        : "text-gray-700 hover:bg-gray-100"
                     }`}
+                    style={{ fontFamily: "Cabin, sans-serif", fontWeight: active ? 600 : 400, fontSize: "14px" }}
                   >
                     <Icon className="size-4 shrink-0" />
-                    <span className="truncate">{item.label}</span>
+                    <span className="flex-1 truncate">{item.label}</span>
                   </Link>
                 </li>
               );
             })}
           </ul>
-          <div className="px-3 pt-2">
-            <button
-              type="button"
-              className="flex items-center gap-2 px-0 py-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <LogOut className="size-4 shrink-0" />
-              Sign out
-            </button>
-          </div>
         </nav>
 
-        {/* Main content */}
-        <main className="flex-1 min-w-0 overflow-y-auto px-6 py-4">
+        <div className="px-3 pb-4 pt-3 border-t border-gray-200 shrink-0">
+          <div className="flex items-center gap-2.5 px-2 py-2">
+            <div className="size-8 rounded-full bg-[#E9EAEB] flex items-center justify-center shrink-0">
+              <span className="text-[#181D27] text-xs font-semibold">SA</span>
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <div className="text-sm font-medium text-gray-900 truncate">Super Admin</div>
+              <div className="text-xs text-gray-500 truncate">Admin Portal</div>
+            </div>
+            <button
+              type="button"
+              className="text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+              aria-label="Settings"
+            >
+              <Settings className="size-4" />
+            </button>
+          </div>
+          <button
+            type="button"
+            className="flex items-center gap-2 px-2 py-2 w-full text-left rounded-md text-gray-600 hover:bg-gray-100 transition-colors"
+            style={{ fontFamily: "Cabin, sans-serif", fontSize: "14px" }}
+          >
+            <LogOut className="size-4 shrink-0" />
+            Sign out
+          </button>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <main className="flex-1 min-w-0 overflow-y-auto px-6 py-4">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -227,29 +234,41 @@ export function SuperAdminSearchPage() {
                 <div className="flex gap-2 pt-4">
                   <Button
                     type="button"
-                    variant={typeFilter === "all" ? "default" : "outline"}
+                    variant="outline"
                     size="sm"
                     onClick={() => setTypeFilter("all")}
-                    className={typeFilter === "all" ? "bg-teal-600 hover:bg-teal-700" : ""}
+                    className={
+                      typeFilter === "all"
+                        ? "bg-teal-600 hover:bg-teal-700 text-white border-teal-600"
+                        : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+                    }
                   >
                     All ({matches.length})
                   </Button>
                   <Button
                     type="button"
-                    variant={typeFilter === "org" ? "default" : "outline"}
+                    variant="outline"
                     size="sm"
                     onClick={() => setTypeFilter("org")}
-                    className={typeFilter === "org" ? "bg-teal-600 hover:bg-teal-700" : ""}
+                    className={
+                      typeFilter === "org"
+                        ? "bg-teal-600 hover:bg-teal-700 text-white border-teal-600"
+                        : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+                    }
                   >
                     <Building2 className="size-3.5" />
                     Organizations ({orgCount})
                   </Button>
                   <Button
                     type="button"
-                    variant={typeFilter === "user" ? "default" : "outline"}
+                    variant="outline"
                     size="sm"
                     onClick={() => setTypeFilter("user")}
-                    className={typeFilter === "user" ? "bg-teal-600 hover:bg-teal-700" : ""}
+                    className={
+                      typeFilter === "user"
+                        ? "bg-teal-600 hover:bg-teal-700 text-white border-teal-600"
+                        : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+                    }
                   >
                     <UserCircle2 className="size-3.5" />
                     Users ({userCount})
@@ -282,7 +301,6 @@ export function SuperAdminSearchPage() {
             )}
           </div>
         </main>
-      </div>
     </div>
   );
 }
