@@ -57,7 +57,7 @@ const filterCategories: FilterOption[] = [
 ];
 
 export function CopyPage() {
-  const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(false);
+  const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(true);
   const [filterNavigationStack, setFilterNavigationStack] = useState<FilterOption[]>([]);
   const [appliedFilters, setAppliedFilters] = useState<{ id: string; label: string; category: string }[]>([]);
 
