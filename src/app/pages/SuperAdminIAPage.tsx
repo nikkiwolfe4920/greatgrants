@@ -308,6 +308,57 @@ function WFCompletionRing({ pct, label }: { pct: number; label: string }) {
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   WFMeterRow / WFMeterSection — scannable list of named items each
+   with its own % complete + detail link (Programs, Applications).
+   Fill color carries severity so the list scans at a glance.
+───────────────────────────────────────────────────────────────── */
+function WFMeterRow({ name, pct }: { name: string; pct: number }) {
+  const tone = pct >= 80 ? "good" : pct >= 50 ? "warn" : "risk";
+  const styles: Record<string, { fill: string; track: string; text: string }> = {
+    good: { fill: "bg-teal-600", track: "bg-teal-100", text: "text-teal-700" },
+    warn: { fill: "bg-amber-500", track: "bg-amber-100", text: "text-amber-700" },
+    risk: { fill: "bg-red-500", track: "bg-red-100", text: "text-red-700" },
+  };
+  const s = styles[tone];
+
+  return (
+    <div className="flex items-center gap-2 py-1.5">
+      <div className="flex-1 min-w-0">
+        <p className="text-[10.5px] font-semibold text-gray-700 truncate mb-1">{name}</p>
+        <div className={`h-1.5 rounded-full overflow-hidden ${s.track}`}>
+          <div className={`h-full rounded-full ${s.fill}`} style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+      <span className={`text-[10.5px] font-bold tabular-nums w-9 text-right shrink-0 ${s.text}`}>
+        {pct}%
+      </span>
+      <ChevronRight className="size-3.5 text-gray-300 shrink-0" />
+    </div>
+  );
+}
+
+function WFMeterSection({
+  title,
+  items,
+}: {
+  title: string;
+  items: { name: string; pct: number }[];
+}) {
+  return (
+    <div className="rounded-lg border border-gray-100 p-2.5">
+      <p className="text-[9.5px] font-bold text-gray-400 uppercase tracking-wide">
+        {title} ({items.length})
+      </p>
+      <div className="divide-y divide-gray-50">
+        {items.map((item) => (
+          <WFMeterRow key={item.name} name={item.name} pct={item.pct} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function WFToast({
   tone = "success",
   text,
@@ -1160,11 +1211,29 @@ export function SuperAdminIAPage() {
                   <span className="text-gray-400 pb-1.5">Activity</span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-1">
-                  <WFCompletionRing pct={100} label="Program" />
+                <div className="rounded-lg border border-gray-100 p-2.5 flex items-center justify-between gap-2 mt-1">
                   <WFCompletionRing pct={80} label="Org Profile" />
-                  <WFCompletionRing pct={45} label="Application" />
+                  <span className="text-[10px] text-teal-700 font-semibold flex items-center gap-0.5 shrink-0">
+                    View profile <ChevronRight className="size-3" />
+                  </span>
                 </div>
+
+                <WFMeterSection
+                  title="Programs"
+                  items={[
+                    { name: "Youth Mentorship Initiative", pct: 100 },
+                    { name: "Community Health Outreach", pct: 65 },
+                    { name: "Housing Stability Fund", pct: 30 },
+                  ]}
+                />
+
+                <WFMeterSection
+                  title="Applications"
+                  items={[
+                    { name: "City Community Development Grant", pct: 90 },
+                    { name: "Kresge Foundation FY25 Renewal", pct: 45 },
+                  ]}
+                />
 
                 <div className="rounded-lg border border-gray-100 p-2.5">
                   <div className="flex items-center justify-between mb-1.5">
