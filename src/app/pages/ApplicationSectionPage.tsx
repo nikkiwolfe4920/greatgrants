@@ -4,6 +4,7 @@ import { ChevronLeft, Upload, X, FileText, FileSpreadsheet, AlertCircle, Info, T
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { DocumentsSectionV2 } from "../components/DocumentsSectionV2";
+import { AICoachingModule } from "../components/AICoachingModule";
 import {
   Dialog,
   DialogContent,
@@ -642,6 +643,9 @@ In a world older and more complete than ours they move finished and complete, gi
                   </button>
                 </div> */}
               </div>
+
+              {/* AI Coaching Suggestions */}
+              <AICoachingModule applicationId={applicationId || '1'} sectionId={sectionId || 's1'} />
 
               {/* Last Edited Info - HIDDEN */}
               {/* <div className="flex items-center gap-2 mb-6">
