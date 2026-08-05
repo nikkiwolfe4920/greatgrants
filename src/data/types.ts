@@ -213,6 +213,11 @@ export interface GrantAlert {
   searchQuery?: string;
   filters: GrantFilter[];
   programs: string[];
+  // Links this alert to a specific Program record (see the `Project` type in
+  // ProjectDetailsPage.tsx). Set when the alert was created/enabled from a
+  // program's own page rather than from a free-text search, so it survives
+  // program renames — `programs` above stores display titles only.
+  programId?: string;
   alertsSent: number;
   createdAt: string;
   lastSent?: string;
