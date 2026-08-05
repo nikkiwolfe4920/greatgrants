@@ -249,6 +249,16 @@ export function AccountSettingsComprehensive({ onBack, onAccountDeleted }: Accou
   const [disable2FADialog, setDisable2FADialog] = useState(false);
   const [verifyEmailDialog, setVerifyEmailDialog] = useState(false);
 
+  // Deep-link support (e.g. /settings?tab=emails) so other flows — like the
+  // program-page weekly alert toggle — can send users straight to where
+  // their alerts are managed.
+  useEffect(() => {
+    const requestedTab = new URLSearchParams(location.search).get('tab');
+    if (requestedTab && ['profile', 'security', 'integrations', 'emails', 'subscription'].includes(requestedTab)) {
+      setActiveTab(requestedTab);
+    }
+  }, [location.search]);
+
   // Profile state
   const [profile, setProfile] = useState({
     firstName: "Olivia",
@@ -881,7 +891,15 @@ export function AccountSettingsComprehensive({ onBack, onAccountDeleted }: Accou
                   <h2 className="text-base font-semibold text-gray-900">Grant Opportunity Alerts</h2>
                 </div>
                 <p className="text-sm text-gray-600 mb-6">
-                  Get automatic email notifications about grants matching your criteria. To configure a new alert,{" "}
+                  Get automatic email notifications about grants matching your criteria. Turn on a weekly
+                  alert for any of your programs from{" "}
+                  <button
+                    className="text-teal-600 hover:text-teal-700 font-medium underline"
+                    onClick={() => navigate('/project-details')}
+                  >
+                    My Programs
+                  </button>
+                  , or{" "}
                   <button
                     className="text-teal-600 hover:text-teal-700 font-medium underline"
                     onClick={() => navigate('/search')}

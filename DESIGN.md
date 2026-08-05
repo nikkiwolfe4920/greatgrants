@@ -17,6 +17,7 @@ Complete design system documentation for the Great Grants application, aligned w
 - [Right Rail (Workflow Helper Panel)](#right-rail-workflow-helper-panel)
 - [Search](#search)
 - [Toggle Settings Row](#toggle-settings-row)
+- [Program Weekly Alert](#program-weekly-alert)
 - [Cloud Document Import (Program Creation)](#cloud-document-import-program-creation)
 - [Implementation Guide](#implementation-guide)
 - [Migration Guide](#migration-guide)
@@ -718,6 +719,86 @@ The standard pattern for a single boolean setting inside a card — used for the
 - **Surface** — `bg-gray-50 border border-gray-200 rounded-lg p-4`, matching the neutral card-within-a-card treatment used for list rows elsewhere on the page (e.g. the added-location rows in the same Geographic Focus card).
 - **Copy** — a bold `font-medium text-gray-900` label, then a `text-sm text-gray-600` sentence stating the concrete effect of the toggle (not just restating the label).
 - **Placement** — directly under the section header, above any list/input rows the toggle affects, so its consequence ("locations can still be entered below") is read before the fields it describes.
+
+---
+
+## Program Weekly Alert
+
+Grant alerts were previously reachable only from the free-text search prompt bar ("Save as Alert" in Grant Search — see `GrantSearch.tsx`), which left no path to set an alert from a Program itself. Every published program card in `src/app/pages/ProjectDetailsPage.tsx` now carries its own weekly-alert toggle, and a fresh program defaults it on immediately after publishing.
+
+### Persistent entry point (program card)
+
+Uses the [Toggle Settings Row](#toggle-settings-row) pattern, placed as its own row below the title/meta/actions block so it's visible without expanding "View Details":
+
+```tsx
+<div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+  <div className="min-w-0">
+    <label htmlFor={`alert-toggle-${project.id}`} className="font-medium text-gray-900 cursor-pointer flex items-center gap-2">
+      <Bell className="w-4 h-4 text-teal-600 flex-shrink-0" />
+      Weekly grant alert
+    </label>
+    <p className="text-sm text-gray-600 mt-0.5">
+      Weekly email when new grants match this program. Manage anytime in <Link to="/settings?tab=emails">Settings</Link>.
+    </p>
+  </div>
+  <Switch id={`alert-toggle-${project.id}`} checked={isProgramAlertEnabled(project.id)} onCheckedChange={(checked) => handleToggleProgramAlert(project, checked)} className="flex-shrink-0" />
+</div>
+```
+
+- **`Bell` in the label**, not just the description — this is the one place a Toggle Settings Row pairs an icon with its label, since it's the visual anchor that ties the row to the alert feature at a glance (badges, the post-creation modal, and Grant Search's "Save as Alert" button all reuse the same `Bell`).
+- **No search text required** — the copy explicitly says so nowhere in this row (it's implied by living on the Program page, not the search page), but the post-creation modal states it outright for a first-time user.
+- **State feedback at the card level** — when the toggle is on, a `Weekly Alerts On` pill (`bg-blue-50 text-blue-700`, `Bell` icon at `w-3 h-3`) appears next to the `Published` pill in the card header, so the on-state is scannable across a long program list without opening every card.
+- **Management path** — the `Settings` link in the description always points at `/settings?tab=emails`, deep-linking straight to the Notifications-equivalent "Emails" tab where `GrantAlertsManager` lists every alert (search-created or program-created) side by side. Never let this control be a dead end.
+
+### Post-creation prompt (default ON)
+
+Publishing a *new* program (not editing an existing one) auto-creates its alert with `enabled: true` and opens a confirmation `Dialog` — the alert is already on by the time the user sees this, so the modal is a confirmation-with-an-out, not a yes/no ask:
+
+```tsx
+<Dialog open={showAlertPrompt} onOpenChange={setShowAlertPrompt}>
+  <DialogContent className="sm:max-w-[480px]">
+    <DialogHeader>
+      <div className="w-11 h-11 rounded-full bg-teal-50 flex items-center justify-center mb-1">
+        <Bell className="w-5 h-5 text-teal-600" />
+      </div>
+      <DialogTitle style={{ fontFamily: "Lustria, serif" }}>Program published — stay in the loop</DialogTitle>
+      <DialogDescription>
+        We've turned on a weekly grant alert for "{alertPromptProject?.title}" so you'll get an email the moment
+        new matching grants appear. No search text required.
+      </DialogDescription>
+    </DialogHeader>
+    {/* same Toggle Settings Row Switch as the card, defaulted checked */}
+    <DialogFooter>
+      <Button className="bg-teal-600 hover:bg-teal-700 text-white w-full sm:w-auto">Got it</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+```
+
+- **Lustria title, like other alert dialogs** — Grant Search's "Save Search as Alert" modal is the one other alert-specific dialog in the app and also sets `style={{ fontFamily: "Lustria, serif" }}` on its `DialogTitle`, even though `ProjectDetailsPage.tsx`'s other dialogs (delete confirm, custom category) use the plain default title font. Alert-related modals get the serif treatment consistently; the rest of this page's dialogs don't.
+- **Single acknowledgement action** — no separate "no thanks" button. Since the default is already on, dismissing via the `Switch` inside the modal (or via `X`/overlay click) covers the opt-out path; a second explicit decline button would be redundant.
+- **Only on create, not on every edit/republish** — re-publishing an already-published program never reopens this modal or resets an alert the user turned off; the prompt is a one-time "moment of investment" nudge, not a recurring interruption.
+
+### Confirmation feedback
+
+Every explicit toggle flip (card row, or the `Switch` inside the post-creation modal) fires a `sonner` toast, mirroring the toast used by Grant Search's alert-creation flow:
+
+```tsx
+toast.success("Weekly alert turned on", {
+  description: `You'll get an email when new grants match "${project.title}".`,
+  duration: 4000,
+});
+// vs. a neutral (non-success) toast for turning off, same duration
+```
+
+The one silent case is the auto-creation on publish — the post-creation modal itself is that moment's confirmation, so firing a toast underneath it would be redundant.
+
+### Data model
+
+Reuses the exact `grantAlerts` localStorage record Grant Search's "Save as Alert" flow writes (see `GrantAlert` in `src/data/types.ts`), adding one field:
+
+- **`programId`** — the program's `id`, set whenever an alert is created or toggled from a program's own page. `programs: string[]` (title strings) is still populated for display parity with search-created alerts, but `programId` is the stable link — a program rename won't orphan its alert. Alerts created from Grant Search's free-text flow simply leave `programId` unset.
+- Toggling **off** never deletes the alert record — it flips `enabled: false`, same as the existing per-alert `Switch` in `GrantAlertsManager`. This keeps the same alert (and its `alertsSent` history) available if the user turns it back on later, from either the program card or Settings.
 
 ---
 
