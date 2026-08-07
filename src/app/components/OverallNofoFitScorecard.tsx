@@ -30,13 +30,17 @@ const STATUS_STYLES: Record<
   },
 };
 
-/** Same score-band thresholds used on MyGrantReadiness, so a "92%" reads as
- * the same color everywhere in the app. */
-function getScoreBandClasses(score: number): { text: string; bar: string } {
-  if (score >= 90) return { text: "text-teal-700", bar: "bg-teal-600" };
-  if (score >= 75) return { text: "text-blue-700", bar: "bg-blue-500" };
-  if (score >= 65) return { text: "text-amber-700", bar: "bg-amber-500" };
-  return { text: "text-red-700", bar: "bg-red-500" };
+/**
+ * Same score-band thresholds used on MyGrantReadiness, so a "92%" reads as
+ * the same color everywhere in the app. The meter's unfilled track is a
+ * lighter step of the same ramp as its fill (not a neutral gray), so
+ * severity reads across the whole tile, not just the filled portion.
+ */
+function getScoreBandClasses(score: number): { text: string; bar: string; track: string } {
+  if (score >= 90) return { text: "text-teal-700", bar: "bg-teal-600", track: "bg-teal-100" };
+  if (score >= 75) return { text: "text-blue-700", bar: "bg-blue-500", track: "bg-blue-100" };
+  if (score >= 65) return { text: "text-amber-700", bar: "bg-amber-500", track: "bg-amber-100" };
+  return { text: "text-red-700", bar: "bg-red-500", track: "bg-red-100" };
 }
 
 export interface FitCategory {
@@ -44,18 +48,21 @@ export interface FitCategory {
   score: number;
 }
 
-interface CategoryBarProps extends FitCategory {}
+interface CategoryTileProps extends FitCategory {}
 
-function CategoryBar({ label, score }: CategoryBarProps) {
+/**
+ * One category as a compact stat tile: label, value, and a short meter —
+ * six of these read as a scannable scorecard grid instead of six identical
+ * full-width bars stacked into a wall.
+ */
+function CategoryTile({ label, score }: CategoryTileProps) {
   const band = getScoreBandClasses(score);
   return (
-    <li>
-      <div className="mb-1 flex items-baseline justify-between gap-3">
-        <span className="text-xs font-medium text-gray-700">{label}</span>
-        <span className={`text-xs font-semibold ${band.text}`}>{score}%</span>
-      </div>
+    <div className="rounded-xl border border-gray-100 p-3.5">
+      <p className="truncate text-xs font-medium text-gray-500">{label}</p>
+      <p className={`mt-0.5 text-lg font-semibold leading-none ${band.text}`}>{score}%</p>
       <div
-        className="h-2 w-full overflow-hidden rounded-full bg-gray-100"
+        className={`mt-2.5 h-1.5 w-full overflow-hidden rounded-full ${band.track}`}
         role="progressbar"
         aria-label={label}
         aria-valuenow={score}
@@ -67,7 +74,7 @@ function CategoryBar({ label, score }: CategoryBarProps) {
           style={{ width: `${Math.max(0, Math.min(100, score))}%` }}
         />
       </div>
-    </li>
+    </div>
   );
 }
 
@@ -178,11 +185,16 @@ export function OverallNofoFitScorecard({
       {/* Body */}
       <div className="flex flex-col gap-5 px-6 py-5">
         {/* Category breakdown */}
-        <ul className="space-y-3">
-          {categories.map((category) => (
-            <CategoryBar key={category.label} {...category} />
-          ))}
-        </ul>
+        <div>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Category Breakdown
+          </p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {categories.map((category) => (
+              <CategoryTile key={category.label} {...category} />
+            ))}
+          </div>
+        </div>
 
         {/* Strengths / Risks */}
         <div className="grid grid-cols-1 gap-4 border-t border-gray-100 pt-5 md:grid-cols-2">
