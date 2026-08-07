@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from "../components/ui/popover";
 import { EligibilityAssessmentResults } from "../components/EligibilityAssessmentResults";
+import { OverallNofoFitScorecard } from "../components/OverallNofoFitScorecard";
 
 interface FilterOption {
   id: string;
@@ -192,6 +193,16 @@ export function CopyPage() {
             Figma node 12683:25855, with an added 20/100 fit score meter
           </p>
           <EligibilityAssessmentResults />
+        </div>
+
+        <div className="mt-12">
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">
+            Overall NOFO Fit Scorecard
+          </h2>
+          <p className="text-sm text-gray-500 mb-6">
+            Same card pattern, extended with a category breakdown and next steps
+          </p>
+          <OverallNofoFitScorecard />
         </div>
       </div>
     </div>
