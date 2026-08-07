@@ -7,6 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "../components/ui/popover";
+import { EligibilityAssessmentResults } from "../components/EligibilityAssessmentResults";
 
 interface FilterOption {
   id: string;
@@ -181,6 +182,16 @@ export function CopyPage() {
               </div>
             </PopoverContent>
           </Popover>
+        </div>
+
+        <div className="mt-12">
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">
+            Eligibility Assessment Results
+          </h2>
+          <p className="text-sm text-gray-500 mb-6">
+            Figma node 12683:25855, with an added 20/100 fit score meter
+          </p>
+          <EligibilityAssessmentResults />
         </div>
       </div>
     </div>
