@@ -17,6 +17,7 @@ import { OnboardingPage3 } from "./pages/OnboardingPage3";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { ProjectDetailsPage } from "./pages/ProjectDetailsPage";
 import { MyGrantReadiness } from "./pages/MyGrantReadiness.tsx";
+import { EligibilityAssessmentPage } from "./pages/EligibilityAssessmentPage";
 import { DesignSystemPage } from "./pages/DesignSystemPage";
 import { CopyPage } from "./pages/CopyPage";
 import { SuperAdminIAPage } from "./pages/SuperAdminIAPage";
@@ -135,6 +136,10 @@ const routes = [
       {
         path: "grant/:id",
         element: <GrantDetailPage />,
+      },
+      {
+        path: "eligibility-assessment",
+        element: <EligibilityAssessmentPage />,
       },
       {
         path: "organization",
