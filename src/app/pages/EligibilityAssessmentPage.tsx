@@ -6,6 +6,7 @@ import {
   Banknote,
   ShieldCheck,
   ArrowRight,
+  ArrowLeft,
   Bookmark,
   Share2,
   FolderPlus,
@@ -57,6 +58,7 @@ const GRANT_DETAILS: { label: string; value: string }[] = [
   { label: "Total Funding Pool", value: "Up to $52.65M (Child Protection Addendum)" },
   { label: "Expected Number of Awards", value: "Up to 5 awards (Child Protection Addendum)" },
   { label: "Key Deadline", value: "SOI due May 31, 2026, 11:59 pm EST" },
+  { label: "Applicable to Churches?", value: "Yes" },
   { label: "Funding Instrument", value: "Grant or cooperative agreement; cooperative agreements carry substantial federal involvement" },
   { label: "Project Period", value: "Up to 5 years" },
   { label: "Phase at Hand", value: "Phase 1 only: Statement of Interest (SOI), not a full application" },
@@ -184,6 +186,20 @@ export function EligibilityAssessmentPage() {
   const [programLinked, setProgramLinked] = useState(false);
   const [reportGeneratedAt, setReportGeneratedAt] = useState<number | null>(null);
   const [showApplicationLoading, setShowApplicationLoading] = useState(false);
+  const [isSticky, setIsSticky] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const scrollContainer = document.querySelector("main");
+    if (!scrollContainer) return;
+    const handleScroll = () => {
+      if (triggerRef.current) {
+        setIsSticky(triggerRef.current.getBoundingClientRect().bottom <= 0);
+      }
+    };
+    scrollContainer.addEventListener("scroll", handleScroll);
+    return () => scrollContainer.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const sectionIds = ON_THIS_PAGE.map((s) => s.id);
@@ -207,7 +223,8 @@ export function EligibilityAssessmentPage() {
     const el = document.getElementById(sectionId);
     const scrollContainer = document.querySelector("main");
     if (el && scrollContainer) {
-      const top = el.getBoundingClientRect().top + scrollContainer.scrollTop - 24;
+      const offset = isSticky ? 80 : 24;
+      const top = el.getBoundingClientRect().top + scrollContainer.scrollTop - offset;
       scrollContainer.scrollTo({ top, behavior: "smooth" });
     }
   };
@@ -224,8 +241,76 @@ export function EligibilityAssessmentPage() {
     <div className="min-h-screen bg-gray-50">
       <ApplicationLoadingModal isOpen={showApplicationLoading} grantTitle={GRANT_TITLE} grantId={GRANT_ID} />
 
+      {/* Sticky condensed header — offset past the global sidebar (lg:w-60 / xl:w-64)
+          so it never draws over SharedSidebar while scrolling. */}
+      <AnimatePresence>
+        {isSticky && (
+          <motion.div
+            initial={{ y: -80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] } }}
+            exit={{ y: -80, opacity: 0, transition: { duration: 0.24, ease: [0.4, 0, 1, 1] } }}
+            className="fixed top-0 left-0 lg:left-60 xl:left-64 right-0 z-50 bg-white/97 backdrop-blur-md border-b border-gray-200/80 shadow-[0_1px_12px_rgba(0,0,0,0.07)]"
+          >
+            <div className="max-w-6xl mx-auto px-6 py-2.5">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <Link
+                    to="/"
+                    className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 p-1 -ml-1 rounded-md hover:bg-gray-100"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </Link>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-sm font-semibold text-gray-900 truncate leading-tight" style={{ fontFamily: "Cabin, sans-serif" }}>
+                      {GRANT_TITLE}
+                    </h2>
+                    <div className="flex items-center gap-3 mt-0.5">
+                      <Badge className="text-[10px] px-1.5 py-0 h-4 bg-green-50 text-green-700 border-green-200">
+                        Applications Open
+                      </Badge>
+                      <span className="text-[11px] text-gray-500 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Closes May 31, 2026
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsSaved((v) => !v)}
+                    className={`gap-1.5 h-8 text-xs ${isSaved ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"}`}
+                  >
+                    <Bookmark className={`w-3.5 h-3.5 ${isSaved ? "fill-current" : ""}`} />
+                    {isSaved ? "Saved" : "Save"}
+                  </Button>
+                  <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50 h-8 text-xs" onClick={handleShare}>
+                    {linkCopied ? <Check className="w-3.5 h-3.5 mr-1.5 text-teal-600" /> : <Share2 className="w-3.5 h-3.5 mr-1.5" />}
+                    {linkCopied ? "Copied" : "Share"}
+                  </Button>
+                  <Button variant="outline" size="sm" className="border-gray-200 text-gray-600 hover:bg-gray-50 h-8 text-xs px-3">
+                    <FolderPlus className="w-3.5 h-3.5 mr-1.5 text-gray-500" />
+                    Add Programs
+                    {programLinked && (
+                      <span className="inline-flex size-4 items-center justify-center rounded bg-teal-600 text-[10px] font-medium text-white ml-1.5">
+                        1
+                      </span>
+                    )}
+                  </Button>
+                  <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white font-semibold h-8 text-xs px-4" onClick={handleStartApplication}>
+                    Start Application
+                    <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
-      <div className="bg-white">
+      <div className="bg-white" ref={triggerRef}>
         <div className="max-w-6xl mx-auto px-6 pt-5 pb-6">
           <Breadcrumb className="mb-5">
             <BreadcrumbList>
@@ -346,11 +431,21 @@ export function EligibilityAssessmentPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Location</span>
-                    <Badge className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 border-blue-200">International</Badge>
+                    <span className="text-sm font-medium text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>US</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Region</span>
+                    <span className="text-sm font-medium text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>International</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Status</span>
                     <Badge className="text-xs px-2 py-0.5 bg-green-50 text-green-700 border-green-200">Open</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Opening Date</span>
+                    <span className="text-sm font-medium text-gray-900 text-right" style={{ fontFamily: "Cabin, sans-serif" }}>
+                      March 5, 12:00 am ET
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Closing Date</span>
@@ -367,8 +462,12 @@ export function EligibilityAssessmentPage() {
                     <span className="text-sm font-medium text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>$53M</span>
                   </div>
                   <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Competitive</span>
+                    <span className="text-sm font-medium text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>Yes</span>
+                  </div>
+                  <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Difficulty</span>
-                    <span className="text-sm font-medium text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>Expert Assistance</span>
+                    <Badge className="text-xs px-2 py-0.5 bg-red-50 text-red-700 border-red-200">Expert Assistance</Badge>
                   </div>
                 </div>
               </div>
