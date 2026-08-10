@@ -121,8 +121,7 @@ export function EligibilityReport({ actionItems, passItems, onToggleActionItem, 
   return (
     <div className="space-y-5">
       <OverallNofoFitScorecard
-        overallScore={isAllComplete ? 100 : 87}
-        status={isAllComplete ? "go" : "go"}
+        showScore={false}
         categories={isAllComplete ? BASE_CATEGORIES.map((c) => ({ ...c, score: 100 })) : BASE_CATEGORIES}
         risks={isAllComplete ? [] : BASE_RISKS}
         nextSteps={isAllComplete ? [] : undefined}
