@@ -107,7 +107,7 @@ export function ProgramAssociationStep({
 
       <div className="pt-8">
         <div className="border-t border-gray-100 pt-[25px] flex items-center justify-between">
-          <Button variant="ghost" onClick={onBack} disabled className="gap-1.5 text-gray-500 opacity-30 cursor-not-allowed">
+          <Button variant="ghost" onClick={onBack} className="gap-1.5 text-gray-500">
             <ArrowLeft className="size-4" />
             Back
           </Button>
