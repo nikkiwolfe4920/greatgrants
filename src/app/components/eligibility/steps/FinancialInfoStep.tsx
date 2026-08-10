@@ -37,6 +37,14 @@ export function FinancialInfoStep({ value, onChange, onBack, onContinue }: Finan
   const set = <K extends keyof FinancialInfoState>(key: K, val: FinancialInfoState[K]) =>
     onChange({ ...value, [key]: val });
 
+  const isComplete =
+    value.orgRegistrationType !== "" &&
+    value.cfr200Compliant !== "" &&
+    value.financialSystemTracking !== "" &&
+    value.timeEffortReporting !== "" &&
+    value.indirectCostAgreement.trim() !== "" &&
+    value.costShareLiquidity !== "";
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-[33px]">
       <div className="flex items-center gap-3">
@@ -141,7 +149,11 @@ export function FinancialInfoStep({ value, onChange, onBack, onContinue }: Finan
             <ArrowLeft className="size-4" />
             Back
           </Button>
-          <Button onClick={onContinue} className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
+          <Button
+            onClick={onContinue}
+            disabled={!isComplete}
+            className={isComplete ? "bg-teal-600 hover:bg-teal-700 text-white gap-1.5" : "bg-gray-100 text-gray-400 gap-1.5 cursor-not-allowed"}
+          >
             Continue
             <ArrowRight className="size-4" />
           </Button>

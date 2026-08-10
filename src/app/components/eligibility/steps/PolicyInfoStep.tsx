@@ -20,6 +20,15 @@ export function PolicyInfoStep({ value, onChange, onBack, onCheckEligibility, is
   const set = <K extends keyof PolicyInfoState>(key: K, val: PolicyInfoState[K]) =>
     onChange({ ...value, [key]: val });
 
+  const isComplete =
+    value.complianceTrackingSoftware !== "" &&
+    value.federalDataTracking !== "" &&
+    value.demographicDataCollection !== "" &&
+    value.internalControlsDocs !== "" &&
+    value.procurementPolicies !== "" &&
+    value.timeEffortPolicies !== "" &&
+    value.conflictOfInterestPolicies !== "";
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-[33px]">
       <div className="flex items-center gap-3">
@@ -90,7 +99,11 @@ export function PolicyInfoStep({ value, onChange, onBack, onCheckEligibility, is
             <ArrowLeft className="size-4" />
             Back
           </Button>
-          <Button onClick={onCheckEligibility} disabled={isSubmitting} className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
+          <Button
+            onClick={onCheckEligibility}
+            disabled={isSubmitting || !isComplete}
+            className={isComplete ? "bg-teal-600 hover:bg-teal-700 text-white gap-1.5" : "bg-gray-100 text-gray-400 gap-1.5 cursor-not-allowed"}
+          >
             {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
             Check My Eligibility
           </Button>

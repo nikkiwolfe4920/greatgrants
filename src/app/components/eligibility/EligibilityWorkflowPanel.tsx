@@ -32,6 +32,8 @@ interface EligibilityWorkflowPanelProps {
   /** Fires once the eligibility report has been generated, with a timestamp (or null when retaking). */
   onReportGenerated?: (generatedAt: number | null) => void;
   onStartApplication?: () => void;
+  /** Fires on every Continue / Check My Eligibility / step-1-Back so the page can scroll back up and anchor on the "Eligibility Assessment" heading. */
+  onAnchorScroll?: () => void;
 }
 
 /**
@@ -44,6 +46,7 @@ export function EligibilityWorkflowPanel({
   onProgramLinked,
   onReportGenerated,
   onStartApplication,
+  onAnchorScroll,
 }: EligibilityWorkflowPanelProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [programId, setProgramId] = useState("");
@@ -78,6 +81,7 @@ export function EligibilityWorkflowPanel({
   };
 
   const handleCheckEligibility = () => {
+    onAnchorScroll?.();
     setIsSubmitting(true);
     submitTimeoutRef.current = setTimeout(() => {
       setIsSubmitting(false);
@@ -121,8 +125,14 @@ export function EligibilityWorkflowPanel({
           onSelectProgram={setProgramId}
           newProgramName={newProgramName}
           onChangeNewProgramName={setNewProgramName}
-          onBack={onExit}
-          onContinue={() => setCurrentStep(2)}
+          onBack={() => {
+            onAnchorScroll?.();
+            onExit();
+          }}
+          onContinue={() => {
+            onAnchorScroll?.();
+            setCurrentStep(2);
+          }}
           canContinue={canContinueStep1}
         />
       )}
@@ -132,7 +142,10 @@ export function EligibilityWorkflowPanel({
           fields={orgFields}
           onUpdateField={handleUpdateOrgField}
           onBack={() => setCurrentStep(1)}
-          onContinue={() => setCurrentStep(3)}
+          onContinue={() => {
+            onAnchorScroll?.();
+            setCurrentStep(3);
+          }}
         />
       )}
 
@@ -141,7 +154,10 @@ export function EligibilityWorkflowPanel({
           value={financialInfo}
           onChange={setFinancialInfo}
           onBack={() => setCurrentStep(2)}
-          onContinue={() => setCurrentStep(4)}
+          onContinue={() => {
+            onAnchorScroll?.();
+            setCurrentStep(4);
+          }}
         />
       )}
 

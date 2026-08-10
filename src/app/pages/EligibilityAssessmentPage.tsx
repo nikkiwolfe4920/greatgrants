@@ -544,6 +544,7 @@ export function EligibilityAssessmentPage() {
                       onProgramLinked={setProgramLinked}
                       onReportGenerated={setReportGeneratedAt}
                       onStartApplication={handleStartApplication}
+                      onAnchorScroll={() => scrollToSection("eligibility-assessment")}
                     />
                   </motion.div>
                 ) : (
