@@ -10,7 +10,6 @@ import {
   Share2,
   FolderPlus,
   CheckCircle2,
-  ImageOff,
   FileText,
   Download,
   ChevronDown,
@@ -337,16 +336,6 @@ export function EligibilityAssessmentPage() {
                     </button>
                   ))}
                 </nav>
-              </div>
-
-              {/* Image placeholder */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col items-center justify-center">
-                <div className="size-[88px] rounded-xl bg-gray-100 flex items-center justify-center">
-                  <ImageOff className="size-8 text-gray-300" />
-                </div>
-                <p className="text-xs text-gray-400 mt-2" style={{ fontFamily: "Cabin, sans-serif" }}>
-                  No program image provided
-                </p>
               </div>
 
               {/* Quick Stats */}

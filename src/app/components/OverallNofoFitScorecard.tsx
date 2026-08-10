@@ -115,6 +115,8 @@ export interface OverallNofoFitScorecardProps {
   title?: string;
   overallScore?: number;
   status?: GoStatus;
+  /** Show the score number and GO/Caution/No-Go badge in the header. Defaults to true. */
+  showScore?: boolean;
   categories?: FitCategory[];
   strengths?: string[];
   risks?: string[];
@@ -131,6 +133,7 @@ export function OverallNofoFitScorecard({
   title = "Overall NOFO Fit",
   overallScore = 87,
   status = "go",
+  showScore = true,
   categories = [
     { label: "Eligibility", score: 100 },
     { label: "Mission Fit", score: 92 },
@@ -175,17 +178,19 @@ export function OverallNofoFitScorecard({
             <p className="truncate text-base font-semibold text-gray-900">{title}</p>
           </div>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <span className="text-2xl font-semibold leading-none text-gray-900">
-            {overallScore}
-          </span>
-          <span
-            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${statusStyles.badgeBg} ${statusStyles.badgeBorder} ${statusStyles.badgeText}`}
-          >
-            <StatusIcon className="size-3.5" aria-hidden="true" />
-            {statusStyles.label}
-          </span>
-        </div>
+        {showScore && (
+          <div className="flex shrink-0 flex-col items-end gap-1.5">
+            <span className="text-2xl font-semibold leading-none text-gray-900">
+              {overallScore}
+            </span>
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${statusStyles.badgeBg} ${statusStyles.badgeBorder} ${statusStyles.badgeText}`}
+            >
+              <StatusIcon className="size-3.5" aria-hidden="true" />
+              {statusStyles.label}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Body */}
