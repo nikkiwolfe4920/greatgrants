@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, ChevronDown, ChevronRight, X } from "lucide-react";
+import { Link } from "react-router";
+import { Plus, ChevronDown, ChevronRight, X, ArrowRight } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import {
@@ -190,7 +191,13 @@ export function CopyPage() {
             Eligibility Assessment Results
           </h2>
           <p className="text-sm text-gray-500 mb-6">
-            Figma node 12683:25855, with an added 20/100 fit score meter
+            Figma node 12683:25855, with an added 20/100 fit score meter. See the full 4-step
+            workflow this feeds into at{" "}
+            <Link to="/eligibility-assessment" className="text-teal-600 font-medium hover:underline inline-flex items-center gap-1">
+              /eligibility-assessment
+              <ArrowRight className="size-3.5" />
+            </Link>
+            .
           </p>
           <EligibilityAssessmentResults />
         </div>
