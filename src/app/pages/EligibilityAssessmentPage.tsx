@@ -82,6 +82,7 @@ const DOCUMENTS = [
 
 const ON_THIS_PAGE = [
   { id: "overview", label: "Overview" },
+  { id: "eligible-activities", label: "Eligible Activities" },
   { id: "eligibility-assessment", label: "Eligibility Assessment" },
   { id: "who-can-apply", label: "Who Can Apply" },
   { id: "assessment-criteria", label: "Assessment Criteria" },
@@ -111,16 +112,9 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
   );
 }
 
-function DefaultEligibilitySection({ onStart }: { onStart: () => void }) {
+function EligibleActivitiesSection() {
   return (
-    <motion.div
-      key="default"
-      initial={{ opacity: 0, x: 24 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -24 }}
-      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-      className="bg-white border border-gray-200 rounded-xl p-[33px]"
-    >
+    <div className="bg-white border border-gray-200 rounded-xl p-[33px]">
       <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
         Eligible Activities
       </h3>
@@ -136,35 +130,44 @@ function DefaultEligibilitySection({ onStart }: { onStart: () => void }) {
       <p className="text-base text-gray-700 mt-4" style={{ fontFamily: "Cabin, sans-serif" }}>
         Please refer to the Annual Program Statement for the complete list of eligible activities.
       </p>
+    </div>
+  );
+}
 
-      <div className="mt-6 pt-6 border-t border-gray-100">
-        <div className="rounded-xl bg-purple-50 p-6">
-          <div className="flex items-start gap-4">
-            <div className="size-12 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
-              <ShieldCheck className="size-6 text-teal-600" />
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-                Check Your Eligibility
-              </h4>
-              <p className="text-sm text-gray-600 mt-2 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
-                Answer a few questions and we&apos;ll automatically verify what we already know about your
-                organization — then give you a personalized eligibility score and GO / NO-GO recommendation.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 mt-6">
-            <Button onClick={onStart} className="bg-[#9810fa] hover:bg-[#8710e0] text-white gap-2">
-              <Sparkles className="size-4" />
-              Start Eligibility Assessment
-              <ArrowRight className="size-4" />
-            </Button>
-            <span className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
-              ~5 minutes • 5 steps
-            </span>
-          </div>
+function CheckYourEligibilityCard({ onStart }: { onStart: () => void }) {
+  return (
+    <motion.div
+      key="default"
+      initial={{ opacity: 0, x: 24 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -24 }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      className="rounded-xl bg-purple-50 p-6"
+    >
+      <div className="flex items-start gap-4">
+        <div className="size-12 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
+          <ShieldCheck className="size-6 text-[#9810fa]" />
         </div>
+        <div>
+          <h4 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+            Check Your Eligibility
+          </h4>
+          <p className="text-sm text-gray-600 mt-2 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
+            Answer a few questions and we&apos;ll automatically verify what we already know about your
+            organization — then give you a personalized eligibility score and GO / NO-GO recommendation.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 mt-6">
+        <Button onClick={onStart} className="bg-[#9810fa] hover:bg-[#8710e0] text-white gap-2">
+          <Sparkles className="size-4" />
+          Start Eligibility Assessment
+          <ArrowRight className="size-4" />
+        </Button>
+        <span className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
+          ~5 minutes • 5 steps
+        </span>
       </div>
     </motion.div>
   );
@@ -288,15 +291,6 @@ export function EligibilityAssessmentPage() {
                   <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50 h-8 text-xs" onClick={handleShare}>
                     {linkCopied ? <Check className="w-3.5 h-3.5 mr-1.5 text-teal-600" /> : <Share2 className="w-3.5 h-3.5 mr-1.5" />}
                     {linkCopied ? "Copied" : "Share"}
-                  </Button>
-                  <Button variant="outline" size="sm" className="border-gray-200 text-gray-600 hover:bg-gray-50 h-8 text-xs px-3">
-                    <FolderPlus className="w-3.5 h-3.5 mr-1.5 text-gray-500" />
-                    Add Programs
-                    {programLinked && (
-                      <span className="inline-flex size-4 items-center justify-center rounded bg-teal-600 text-[10px] font-medium text-white ml-1.5">
-                        1
-                      </span>
-                    )}
                   </Button>
                   <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white font-semibold h-8 text-xs px-4" onClick={handleStartApplication}>
                     Start Application
@@ -423,55 +417,6 @@ export function EligibilityAssessmentPage() {
                 </nav>
               </div>
 
-              {/* Quick Stats */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4" style={{ fontFamily: "Cabin, sans-serif" }}>
-                  Quick Stats
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Location</span>
-                    <span className="text-sm font-medium text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>US</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Region</span>
-                    <span className="text-sm font-medium text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>International</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Status</span>
-                    <Badge className="text-xs px-2 py-0.5 bg-green-50 text-green-700 border-green-200">Open</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Opening Date</span>
-                    <span className="text-sm font-medium text-gray-900 text-right" style={{ fontFamily: "Cabin, sans-serif" }}>
-                      March 5, 12:00 am ET
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Closing Date</span>
-                    <span className="text-sm font-medium text-gray-900 text-right" style={{ fontFamily: "Cabin, sans-serif" }}>
-                      May 31, 11:59 pm ET
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Recipients</span>
-                    <span className="text-sm font-medium text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>5</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Total Pool</span>
-                    <span className="text-sm font-medium text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>$53M</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Competitive</span>
-                    <span className="text-sm font-medium text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>Yes</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Difficulty</span>
-                    <Badge className="text-xs px-2 py-0.5 bg-red-50 text-red-700 border-red-200">Expert Assistance</Badge>
-                  </div>
-                </div>
-              </div>
-
               {/* Documents */}
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 <button onClick={() => setDocsExpanded((v) => !v)} className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors">
@@ -510,6 +455,47 @@ export function EligibilityAssessmentPage() {
                   )}
                 </AnimatePresence>
               </div>
+
+              {/* Quick Stats */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <h3 className="text-sm font-semibold text-gray-900 mb-4" style={{ fontFamily: "Cabin, sans-serif" }}>
+                  Quick Stats
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Location</span>
+                    <span className="text-sm font-medium text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>US</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Region</span>
+                    <span className="text-sm font-medium text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>International</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Status</span>
+                    <Badge className="text-xs px-2 py-0.5 bg-green-50 text-green-700 border-green-200">Open</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Opening Date</span>
+                    <span className="text-sm font-medium text-gray-900 text-right" style={{ fontFamily: "Cabin, sans-serif" }}>
+                      March 5, 12:00 am ET
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Closing Date</span>
+                    <span className="text-sm font-medium text-gray-900 text-right" style={{ fontFamily: "Cabin, sans-serif" }}>
+                      May 31, 11:59 pm ET
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Recipients</span>
+                    <span className="text-sm font-medium text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>5</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Total Pool</span>
+                    <span className="text-sm font-medium text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>$53M</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -534,9 +520,15 @@ export function EligibilityAssessmentPage() {
               </div>
             </section>
 
-            {/* Eligibility Activities & Assessment */}
+            {/* Eligible Activities */}
+            <section id="eligible-activities" className="scroll-mt-8">
+              <SectionHeading>Eligible Activities</SectionHeading>
+              <EligibleActivitiesSection />
+            </section>
+
+            {/* Eligibility Assessment — slides open into the eligibility workflow */}
             <section id="eligibility-assessment" className="scroll-mt-8">
-              <SectionHeading>Eligibility Activities &amp; Assessment</SectionHeading>
+              <SectionHeading>Eligibility Assessment</SectionHeading>
 
               <AnimatePresence mode="wait">
                 {isAssessing ? (
@@ -555,7 +547,7 @@ export function EligibilityAssessmentPage() {
                     />
                   </motion.div>
                 ) : (
-                  <DefaultEligibilitySection onStart={() => setIsAssessing(true)} />
+                  <CheckYourEligibilityCard onStart={() => setIsAssessing(true)} />
                 )}
               </AnimatePresence>
             </section>
