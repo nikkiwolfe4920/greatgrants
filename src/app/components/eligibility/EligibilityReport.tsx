@@ -1,17 +1,13 @@
-import { CheckCircle2, Circle, XCircle } from "lucide-react";
+import { CheckCircle2, Circle, XCircle, ArrowRight, RotateCcw } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/app/components/ui/accordion";
-import type { ActionItem, ActionItemPriority, PassItem } from "@/data/eligibilityAssessmentData";
-
-const PRIORITY_STYLES: Record<ActionItemPriority, { label: string; bg: string; border: string; text: string }> = {
-  high: { label: "High Priority", bg: "bg-red-50", border: "border-red-100", text: "text-red-600" },
-  medium: { label: "Medium", bg: "bg-amber-50", border: "border-amber-100", text: "text-amber-700" },
-  optional: { label: "Optional", bg: "bg-gray-100", border: "border-gray-200", text: "text-gray-500" },
-};
+import { Button } from "@/app/components/ui/button";
+import { OverallNofoFitScorecard, type FitCategory } from "@/app/components/OverallNofoFitScorecard";
+import type { ActionItem, PassItem } from "@/data/eligibilityAssessmentData";
 
 interface ActionItemRowProps {
   item: ActionItem;
@@ -19,8 +15,6 @@ interface ActionItemRowProps {
 }
 
 function ActionItemRow({ item, onToggle }: ActionItemRowProps) {
-  const priorityStyle = PRIORITY_STYLES[item.priority];
-
   return (
     <div
       className={`rounded-lg border p-[17px] flex items-start gap-4 transition-colors ${
@@ -48,9 +42,6 @@ function ActionItemRow({ item, onToggle }: ActionItemRowProps) {
           >
             {item.title}
           </p>
-          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${priorityStyle.bg} ${priorityStyle.border} ${priorityStyle.text}`}>
-            {priorityStyle.label}
-          </span>
           {item.completed ? (
             <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700">
               <CheckCircle2 className="size-3" />
@@ -90,38 +81,59 @@ function PassTagRow({ item }: { item: PassItem }) {
   );
 }
 
+const BASE_CATEGORIES: FitCategory[] = [
+  { label: "Eligibility", score: 100 },
+  { label: "Mission Fit", score: 92 },
+  { label: "Program Alignment", score: 84 },
+  { label: "Capacity", score: 71 },
+  { label: "Compliance", score: 100 },
+  { label: "Competitiveness", score: 65 },
+];
+
+const BASE_RISKS = ["No prior awards from this agency", "Limited evaluation framework", "Matching funds not secured"];
+
 interface EligibilityReportProps {
   actionItems: ActionItem[];
   passItems: PassItem[];
   onToggleActionItem: (id: string) => void;
   onRetake: () => void;
+  onStartApplication: () => void;
 }
 
 /**
- * The eligibility report — Figma node 12683:25848, with the interactive
- * action-item checkbox behavior from nodes 12683:26425 (in progress) and
- * 12683:26857 (all checked / prompt to retake).
+ * The eligibility report — Figma node 12683:25848: a single "Eligibility
+ * Activities & Assessment" heading (rendered by the parent page) followed
+ * by the two modules that make it up — the NOFO Analysis fit card
+ * (OverallNofoFitScorecard, node 12749:6075) and the Action Items
+ * accordion (node 12683:25936, renamed from "Final Snapshot", no priority
+ * badges). Once every action item is checked, the fit card goes to a
+ * clean 100%/no-risk state and a "Start Application" prompt replaces the
+ * retake link.
  */
-export function EligibilityReport({ actionItems, passItems, onToggleActionItem, onRetake }: EligibilityReportProps) {
+export function EligibilityReport({ actionItems, passItems, onToggleActionItem, onRetake, onStartApplication }: EligibilityReportProps) {
   const completedCount = actionItems.filter((item) => item.completed).length;
   const totalCount = actionItems.length;
   const percent = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
   const passCount = passItems.length;
-  const unresolvedCount = totalCount - completedCount + 0; // "Unresolved" tracks the fit criteria, held constant like the design
+  const unresolvedCount = totalCount - completedCount;
+  const isAllComplete = totalCount > 0 && completedCount === totalCount;
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold text-gray-900 mb-2" style={{ fontFamily: "Lustria, serif" }}>
-        Eligibility Assessment
-      </h2>
-      <div className="w-16 h-1 bg-teal-500 rounded-full mb-6" />
+    <div className="space-y-5">
+      <OverallNofoFitScorecard
+        overallScore={isAllComplete ? 100 : 87}
+        status={isAllComplete ? "go" : "go"}
+        categories={isAllComplete ? BASE_CATEGORIES.map((c) => ({ ...c, score: 100 })) : BASE_CATEGORIES}
+        risks={isAllComplete ? [] : BASE_RISKS}
+        nextSteps={isAllComplete ? [] : undefined}
+      />
 
-      <Accordion type="single" defaultValue="snapshot" collapsible className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <AccordionItem value="snapshot" className="border-b-0">
+      <Accordion type="single" defaultValue="action-items" collapsible className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <AccordionItem value="action-items" className="border-b-0">
           <AccordionTrigger className="px-5 py-4 no-underline hover:no-underline">
             <div className="flex items-center gap-2">
               <span className="text-base font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-                Final Snapshot
+                Action Items
               </span>
               <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-semibold text-green-700">
                 <CheckCircle2 className="size-3" />
@@ -159,29 +171,41 @@ export function EligibilityReport({ actionItems, passItems, onToggleActionItem, 
         </AccordionItem>
       </Accordion>
 
-      <div className="mt-5 bg-white border border-red-100 rounded-2xl p-6 flex items-start gap-4">
-        <div className="size-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
-          <XCircle className="size-5 text-red-500" />
+      {isAllComplete ? (
+        <div className="bg-teal-50 border border-teal-200 rounded-2xl p-6 flex items-start gap-4">
+          <div className="size-10 rounded-xl bg-teal-100 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="size-5 text-teal-700" />
+          </div>
+          <div className="flex-1">
+            <p className="text-base text-gray-900" style={{ fontFamily: "Lustria, serif" }}>
+              All clear — you&apos;re ready to apply
+            </p>
+            <p className="text-sm text-gray-600 mt-1 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
+              Every action item is resolved and your NOFO fit is 100% with no outstanding risks. You&apos;re in strong
+              shape to move forward with a full application.
+            </p>
+            <Button onClick={onStartApplication} className="mt-4 bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
+              Start Application
+              <ArrowRight className="size-4" />
+            </Button>
+          </div>
         </div>
-        <div className="flex-1">
-          <p className="text-base text-gray-900" style={{ fontFamily: "Lustria, serif" }}>
-            Might not be a strong fit
-          </p>
-          <p className="text-sm text-gray-500 mt-1 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
-            Based on your eligibility assessment, your organization may not meet the core criteria for this grant at
-            this time. Work through the action items above to close gaps — then retake the assessment to see if your
-            fit has improved.
+      ) : (
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
+            Work through the action items above to close gaps, then retake the assessment.
           </p>
           <button
             type="button"
             onClick={onRetake}
-            className="mt-3 text-sm font-semibold text-teal-700 hover:text-teal-800 hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-teal-700 hover:text-teal-800 hover:underline shrink-0"
             style={{ fontFamily: "Cabin, sans-serif" }}
           >
+            <RotateCcw className="size-3.5" />
             Retake the assessment
           </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }

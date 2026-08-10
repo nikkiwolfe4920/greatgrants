@@ -27,6 +27,11 @@ const STEP_LABELS = [
 
 interface EligibilityWorkflowPanelProps {
   onExit: () => void;
+  /** Fires as soon as a program is selected/named in step 1 (and clears if deselected). */
+  onProgramLinked?: (linked: boolean) => void;
+  /** Fires once the eligibility report has been generated, with a timestamp (or null when retaking). */
+  onReportGenerated?: (generatedAt: number | null) => void;
+  onStartApplication?: () => void;
 }
 
 /**
@@ -34,7 +39,12 @@ interface EligibilityWorkflowPanelProps {
  * Organization Details → Financial Info → Policy Info → (loader) → report.
  * Owns all step state so the individual step components stay presentational.
  */
-export function EligibilityWorkflowPanel({ onExit }: EligibilityWorkflowPanelProps) {
+export function EligibilityWorkflowPanel({
+  onExit,
+  onProgramLinked,
+  onReportGenerated,
+  onStartApplication,
+}: EligibilityWorkflowPanelProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [programId, setProgramId] = useState("");
   const [newProgramName, setNewProgramName] = useState("");
@@ -55,6 +65,14 @@ export function EligibilityWorkflowPanel({ onExit }: EligibilityWorkflowPanelPro
   const canContinueStep1 =
     programId !== "" && (programId !== NEW_PROGRAM_OPTION || newProgramName.trim() !== "");
 
+  useEffect(() => {
+    onProgramLinked?.(canContinueStep1);
+  }, [canContinueStep1, onProgramLinked]);
+
+  useEffect(() => {
+    if (showReport) onReportGenerated?.(Date.now());
+  }, [showReport, onReportGenerated]);
+
   const handleUpdateOrgField = (key: string, value: string) => {
     setOrgFields((prev) => prev.map((f) => (f.key === key ? { ...f, value, filled: value.trim() !== "" } : f)));
   };
@@ -72,6 +90,7 @@ export function EligibilityWorkflowPanel({ onExit }: EligibilityWorkflowPanelPro
   };
 
   const handleRetake = () => {
+    onReportGenerated?.(null);
     setShowReport(false);
     setCurrentStep(1);
   };
@@ -87,6 +106,7 @@ export function EligibilityWorkflowPanel({ onExit }: EligibilityWorkflowPanelPro
         passItems={eligibilityPassItems}
         onToggleActionItem={handleToggleActionItem}
         onRetake={handleRetake}
+        onStartApplication={() => onStartApplication?.()}
       />
     );
   }
