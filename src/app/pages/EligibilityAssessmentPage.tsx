@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronUp,
   Check,
+  Sparkles,
 } from "lucide-react";
 import { Badge } from "@/app/components/ui/badge";
 import {
@@ -60,12 +61,17 @@ const GRANT_DETAILS: { label: string; value: string }[] = [
   { label: "Funding Instrument", value: "Grant or cooperative agreement; cooperative agreements carry substantial federal involvement" },
   { label: "Project Period", value: "Up to 5 years" },
   { label: "Phase at Hand", value: "Phase 1 only: Statement of Interest (SOI), not a full application" },
-];
-
-const RESTRICTIONS: { label: string; value: string }[] = [
   { label: "Eligible Applicants", value: "U.S. and foreign organizations, including nonprofits, for-profits, and government entities" },
   { label: "Match / Cost Share", value: "Not required and will not be scored" },
   { label: "Closing Info", value: "Child Protection Addendum: Statement of Interest (SOI) due May 31, 2026, 11:59 pm EST" },
+];
+
+const RESTRICTIONS = [
+  "Direct cash transfers or stipends to individual beneficiaries.",
+  "Construction, renovation, or other major capital improvements to facilities.",
+  "Lobbying, political party activities, or advocacy for specific legislation.",
+  "General institutional operating support that is not tied to Child Protection Addendum program activities.",
+  "Programs that duplicate an existing, actively funded GHSD award without demonstrating clear additionality.",
 ];
 
 const DOCUMENTS = [
@@ -78,6 +84,7 @@ const ON_THIS_PAGE = [
   { id: "eligibility-assessment", label: "Eligibility Assessment" },
   { id: "who-can-apply", label: "Who Can Apply" },
   { id: "assessment-criteria", label: "Assessment Criteria" },
+  { id: "restrictions", label: "Restrictions" },
   { id: "grant-details", label: "Grant Details" },
 ];
 
@@ -129,11 +136,34 @@ function DefaultEligibilitySection({ onStart }: { onStart: () => void }) {
         Please refer to the Annual Program Statement for the complete list of eligible activities.
       </p>
 
-      <div className="pt-6 mt-2 border-t border-gray-100">
-        <Button onClick={onStart} className="bg-teal-600 hover:bg-teal-700 text-white gap-2 mt-6">
-          <ShieldCheck className="size-4" />
-          Start Eligibility Assessment
-        </Button>
+      <div className="mt-6 pt-6 border-t border-gray-100">
+        <div className="rounded-xl bg-purple-50 p-6">
+          <div className="flex items-start gap-4">
+            <div className="size-12 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
+              <ShieldCheck className="size-6 text-teal-600" />
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                Check Your Eligibility
+              </h4>
+              <p className="text-sm text-gray-600 mt-2 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
+                Answer a few questions and we&apos;ll automatically verify what we already know about your
+                organization — then give you a personalized eligibility score and GO / NO-GO recommendation.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 mt-6">
+            <Button onClick={onStart} className="bg-[#9810fa] hover:bg-[#8710e0] text-white gap-2">
+              <Sparkles className="size-4" />
+              Start Eligibility Assessment
+              <ArrowRight className="size-4" />
+            </Button>
+            <span className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
+              ~5 minutes • 5 steps
+            </span>
+          </div>
+        </div>
       </div>
     </motion.div>
   );
@@ -440,13 +470,6 @@ export function EligibilityAssessmentPage() {
                   <DefaultEligibilitySection onStart={() => setIsAssessing(true)} />
                 )}
               </AnimatePresence>
-
-              {!isAssessing && (
-                <p className="text-xs text-gray-400 mt-4 flex items-center gap-1.5" style={{ fontFamily: "Cabin, sans-serif" }}>
-                  Assessing your fit takes about 5 minutes.
-                  <ArrowRight className="size-3" />
-                </p>
-              )}
             </section>
 
             {/* Who Can Apply */}
@@ -502,6 +525,21 @@ export function EligibilityAssessmentPage() {
               </div>
             </section>
 
+            {/* Restrictions */}
+            <section id="restrictions" className="scroll-mt-8">
+              <SectionHeading>Restrictions</SectionHeading>
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <p className="text-base text-gray-700" style={{ fontFamily: "Cabin, sans-serif" }}>
+                  The following are ineligible for funding:
+                </p>
+                <ul className="mt-3 pl-6 space-y-1 list-disc text-base text-gray-700" style={{ fontFamily: "Cabin, sans-serif" }}>
+                  {RESTRICTIONS.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+
             {/* Grant Details */}
             <section id="grant-details" className="scroll-mt-8">
               <SectionHeading>Grant Details</SectionHeading>
@@ -513,20 +551,6 @@ export function EligibilityAssessmentPage() {
                       <p className="text-base text-gray-900 mt-0.5" style={{ fontFamily: "Cabin, sans-serif" }}>{field.value}</p>
                     </div>
                   ))}
-                </div>
-
-                <div className="mt-6 pt-6 border-t border-gray-100">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3" style={{ fontFamily: "Cabin, sans-serif" }}>
-                    Restrictions
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {RESTRICTIONS.map((field) => (
-                      <div key={field.label}>
-                        <p className="text-sm font-medium text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>{field.label}</p>
-                        <p className="text-base text-gray-900 mt-0.5" style={{ fontFamily: "Cabin, sans-serif" }}>{field.value}</p>
-                      </div>
-                    ))}
-                  </div>
                 </div>
 
                 <div className="mt-6 pt-6 border-t border-gray-100">
