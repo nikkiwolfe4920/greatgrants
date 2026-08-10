@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle2, Pencil, Plus } from "lucide-react";
+import { CheckCircle2, Pencil } from "lucide-react";
 import { Input } from "@/app/components/ui/input";
 import { Textarea } from "@/app/components/ui/textarea";
 import { Button } from "@/app/components/ui/button";
@@ -113,52 +113,27 @@ interface MissingFieldRowProps {
 /**
  * A field the org profile is missing — the "MISSING DETAILS" module from
  * Figma node 12683:25174, styled in the amber "needs attention" treatment.
- * Per request, the input is entered directly inline in the yellow module
- * rather than opening a separate modal.
+ * The input is blank and open directly in the yellow module — no "ADD"
+ * button/click-to-reveal step.
  */
 export function MissingFieldRow({ label, onSave }: MissingFieldRowProps) {
   const [draft, setDraft] = useState("");
-  const [isAdding, setIsAdding] = useState(false);
-
-  const commit = () => {
-    if (!draft.trim()) return;
-    onSave(draft.trim());
-    setIsAdding(false);
-  };
 
   return (
-    <div className="bg-amber-50 border border-amber-200 rounded-lg p-[13px] flex items-center justify-between gap-3">
-      <div className="min-w-0 flex-1">
-        <p className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
-          {label}
-        </p>
-        {isAdding ? (
-          <Input
-            autoFocus
-            value={draft}
-            placeholder={`Enter ${label.toLowerCase()}`}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={commit}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") commit();
-              if (e.key === "Escape") setIsAdding(false);
-            }}
-            className="h-7 mt-0.5 bg-white border-amber-300"
-          />
-        ) : (
-          <p className="text-sm font-mono tracking-wide text-gray-400 mt-0.5">——</p>
-        )}
-      </div>
-      {!isAdding && (
-        <button
-          type="button"
-          onClick={() => setIsAdding(true)}
-          className="shrink-0 inline-flex items-center gap-1 rounded border border-amber-400 px-2.5 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors"
-        >
-          <Plus className="size-3" />
-          ADD
-        </button>
-      )}
+    <div className="bg-amber-50 border border-amber-200 rounded-lg p-[13px]">
+      <p className="text-xs text-gray-500 mb-1" style={{ fontFamily: "Cabin, sans-serif" }}>
+        {label}
+      </p>
+      <Input
+        value={draft}
+        placeholder={`Enter ${label.toLowerCase()}`}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => onSave(draft.trim())}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") onSave(draft.trim());
+        }}
+        className="h-8 bg-white border-amber-300"
+      />
     </div>
   );
 }

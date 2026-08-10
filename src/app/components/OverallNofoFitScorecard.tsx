@@ -83,23 +83,29 @@ function ListSection({
   titleColor,
   itemIcon,
   items,
+  emptyLabel,
 }: {
   title: string;
   titleColor: string;
   itemIcon: ReactNode;
   items: string[];
+  emptyLabel?: string;
 }) {
   return (
     <div className="rounded-xl border border-gray-100 p-4">
       <p className={`text-xs font-semibold uppercase tracking-wide ${titleColor}`}>{title}</p>
-      <ul className="mt-3 space-y-2.5">
-        {items.map((item) => (
-          <li key={item} className="flex items-start gap-2">
-            <span className="mt-0.5 shrink-0">{itemIcon}</span>
-            <span className="text-xs leading-relaxed text-gray-600">{item}</span>
-          </li>
-        ))}
-      </ul>
+      {items.length > 0 ? (
+        <ul className="mt-3 space-y-2.5">
+          {items.map((item) => (
+            <li key={item} className="flex items-start gap-2">
+              <span className="mt-0.5 shrink-0">{itemIcon}</span>
+              <span className="text-xs leading-relaxed text-gray-600">{item}</span>
+            </li>
+          ))}
+        </ul>
+      ) : emptyLabel ? (
+        <p className="mt-3 text-xs leading-relaxed text-gray-400">{emptyLabel}</p>
+      ) : null}
     </div>
   );
 }
@@ -207,25 +213,28 @@ export function OverallNofoFitScorecard({
           <ListSection
             title="Risks"
             titleColor="text-amber-600"
+            emptyLabel="No risks identified — nice work."
             itemIcon={<AlertTriangle className="size-3.5 text-amber-500" aria-hidden="true" />}
             items={risks}
           />
         </div>
 
         {/* Recommended Next Steps */}
-        <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5">
-          <p className="text-xs font-semibold text-gray-700">Recommended Next Steps</p>
-          <ol className="mt-2.5 space-y-2">
-            {nextSteps.map((step, index) => (
-              <li key={step} className="flex items-start gap-2.5">
-                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-teal-50 text-[11px] font-semibold text-teal-700">
-                  {index + 1}
-                </span>
-                <span className="pt-0.5 text-xs leading-relaxed text-gray-600">{step}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
+        {nextSteps.length > 0 && (
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5">
+            <p className="text-xs font-semibold text-gray-700">Recommended Next Steps</p>
+            <ol className="mt-2.5 space-y-2">
+              {nextSteps.map((step, index) => (
+                <li key={step} className="flex items-start gap-2.5">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-teal-50 text-[11px] font-semibold text-teal-700">
+                    {index + 1}
+                  </span>
+                  <span className="pt-0.5 text-xs leading-relaxed text-gray-600">{step}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
       </div>
     </div>
   );
