@@ -142,32 +142,34 @@ function CheckYourEligibilityCard({ onStart }: { onStart: () => void }) {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -24 }}
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-      className="rounded-xl bg-purple-50 p-6"
+      className="bg-white rounded-xl border border-gray-200 p-6"
     >
-      <div className="flex items-start gap-4">
-        <div className="size-12 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
-          <ShieldCheck className="size-6 text-[#9810fa]" />
+      <div className="rounded-xl bg-purple-50 p-6">
+        <div className="flex items-start gap-4">
+          <div className="size-12 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
+            <ShieldCheck className="size-6 text-[#9810fa]" />
+          </div>
+          <div>
+            <h4 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+              Check Your Eligibility
+            </h4>
+            <p className="text-sm text-gray-600 mt-2 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
+              Answer a few questions and we&apos;ll automatically verify what we already know about your
+              organization — then give you a personalized eligibility score and GO / NO-GO recommendation.
+            </p>
+          </div>
         </div>
-        <div>
-          <h4 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-            Check Your Eligibility
-          </h4>
-          <p className="text-sm text-gray-600 mt-2 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
-            Answer a few questions and we&apos;ll automatically verify what we already know about your
-            organization — then give you a personalized eligibility score and GO / NO-GO recommendation.
-          </p>
-        </div>
-      </div>
 
-      <div className="flex items-center gap-3 mt-6">
-        <Button onClick={onStart} className="bg-[#9810fa] hover:bg-[#8710e0] text-white gap-2">
-          <Sparkles className="size-4" />
-          Start Eligibility Assessment
-          <ArrowRight className="size-4" />
-        </Button>
-        <span className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
-          ~5 minutes • 5 steps
-        </span>
+        <div className="flex items-center gap-3 mt-6">
+          <Button onClick={onStart} className="bg-[#9810fa] hover:bg-[#8710e0] text-white gap-2">
+            <Sparkles className="size-4" />
+            Start Eligibility Assessment
+            <ArrowRight className="size-4" />
+          </Button>
+          <span className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
+            ~5 minutes • 5 steps
+          </span>
+        </div>
       </div>
     </motion.div>
   );
