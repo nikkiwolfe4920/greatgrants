@@ -95,7 +95,11 @@ export function ProgramAssociationStep({
           </button>
 
           {selectedProgram && (
-            <ProgramSelectedNotice name={selectedProgram.name} description={selectedProgram.description} />
+            <ProgramSelectedNotice
+              name={selectedProgram.name}
+              description={selectedProgram.description}
+              improvementItems={selectedProgram.improvementItems}
+            />
           )}
         </div>
       </div>

@@ -110,6 +110,9 @@ export function FinancialInfoStep({ value, onChange, onBack, onContinue }: Finan
             </Label>
             {value.orgRegistrationType !== "" && <ConfirmedBadge />}
           </div>
+          <div className="mb-3">
+            <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
+          </div>
           <div className="flex flex-col gap-2">
             {REGISTRATION_OPTIONS.map((option) => (
               <button
@@ -137,43 +140,28 @@ export function FinancialInfoStep({ value, onChange, onBack, onContinue }: Finan
               </button>
             ))}
           </div>
-          <div className="pt-3">
-            <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
-          </div>
         </div>
 
-        <div>
-          <YesNoUnsureQuestion
-            question="Is the organization compliant with a 2 CFR 200 audit requirement (including a Single Audit)?"
-            value={value.cfr200Compliant}
-            onChange={(v) => set("cfr200Compliant", v)}
-          />
-          <div className="pt-3">
-            <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
-          </div>
-        </div>
+        <YesNoUnsureQuestion
+          question="Is the organization compliant with a 2 CFR 200 audit requirement (including a Single Audit)?"
+          value={value.cfr200Compliant}
+          onChange={(v) => set("cfr200Compliant", v)}
+          tip={<HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>}
+        />
 
-        <div>
-          <YesNoUnsureQuestion
-            question="Can the organization's financial system track expenses by individual grant and manage federal drawdowns?"
-            value={value.financialSystemTracking}
-            onChange={(v) => set("financialSystemTracking", v)}
-          />
-          <div className="pt-3">
-            <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
-          </div>
-        </div>
+        <YesNoUnsureQuestion
+          question="Can the organization's financial system track expenses by individual grant and manage federal drawdowns?"
+          value={value.financialSystemTracking}
+          onChange={(v) => set("financialSystemTracking", v)}
+          tip={<HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>}
+        />
 
-        <div>
-          <YesNoUnsureQuestion
-            question="Can the organization's financial system support time and effort reporting?"
-            value={value.timeEffortReporting}
-            onChange={(v) => set("timeEffortReporting", v)}
-          />
-          <div className="pt-3">
-            <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
-          </div>
-        </div>
+        <YesNoUnsureQuestion
+          question="Can the organization's financial system support time and effort reporting?"
+          value={value.timeEffortReporting}
+          onChange={(v) => set("timeEffortReporting", v)}
+          tip={<HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>}
+        />
 
         <div>
           <div className="flex items-start justify-between gap-3 mb-2">
@@ -183,27 +171,23 @@ export function FinancialInfoStep({ value, onChange, onBack, onContinue }: Finan
             </Label>
             {value.indirectCostAgreement.trim() !== "" && <ConfirmedBadge />}
           </div>
+          <div className="mb-3">
+            <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
+          </div>
           <Input
             id="indirectCostAgreement"
             value={value.indirectCostAgreement}
             onChange={(e) => set("indirectCostAgreement", e.target.value)}
             placeholder='e.g., "NICRA at 35%" or "De minimis 15%"'
           />
-          <div className="pt-3">
-            <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
-          </div>
         </div>
 
-        <div>
-          <YesNoUnsureQuestion
-            question="Does the organization have liquidity or committed financial resources to meet cost-share/matching requirements?"
-            value={value.costShareLiquidity}
-            onChange={(v) => set("costShareLiquidity", v)}
-          />
-          <div className="pt-3">
-            <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
-          </div>
-        </div>
+        <YesNoUnsureQuestion
+          question="Does the organization have liquidity or committed financial resources to meet cost-share/matching requirements?"
+          value={value.costShareLiquidity}
+          onChange={(v) => set("costShareLiquidity", v)}
+          tip={<HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>}
+        />
       </div>
 
       <div className="pt-8">

@@ -72,82 +72,54 @@ export function PolicyInfoStep({ value, onChange, onBack, onCheckEligibility, is
           </span>
         </div>
 
-        <div>
-          <YesNoUnsureQuestion
-            question="Does the organization have software or a financial system to track deadlines, reporting, and compliance?"
-            value={value.complianceTrackingSoftware}
-            onChange={(v) => set("complianceTrackingSoftware", v)}
-          />
-          <div className="pt-3">
-            <HelpfulTipAccordion>{POLICY_TIP}</HelpfulTipAccordion>
-          </div>
-        </div>
+        <YesNoUnsureQuestion
+          question="Does the organization have software or a financial system to track deadlines, reporting, and compliance?"
+          value={value.complianceTrackingSoftware}
+          onChange={(v) => set("complianceTrackingSoftware", v)}
+          tip={<HelpfulTipAccordion>{POLICY_TIP}</HelpfulTipAccordion>}
+        />
 
-        <div>
-          <YesNoUnsureQuestion
-            question="Can the organization track/collect outcome data aligned with federal measures (e.g., GPRA)?"
-            value={value.federalDataTracking}
-            onChange={(v) => set("federalDataTracking", v)}
-          />
-          <div className="pt-3">
-            <HelpfulTipAccordion>{POLICY_TIP}</HelpfulTipAccordion>
-          </div>
-        </div>
+        <YesNoUnsureQuestion
+          question="Can the organization track/collect outcome data aligned with federal measures (e.g., GPRA)?"
+          value={value.federalDataTracking}
+          onChange={(v) => set("federalDataTracking", v)}
+          tip={<HelpfulTipAccordion>{POLICY_TIP}</HelpfulTipAccordion>}
+        />
 
-        <div>
-          <YesNoUnsureQuestion
-            question="Does the organization collect disaggregated demographic data?"
-            value={value.demographicDataCollection}
-            onChange={(v) => set("demographicDataCollection", v)}
-          />
-          <div className="pt-3">
-            <HelpfulTipAccordion>{POLICY_TIP}</HelpfulTipAccordion>
-          </div>
-        </div>
+        <YesNoUnsureQuestion
+          question="Does the organization collect disaggregated demographic data?"
+          value={value.demographicDataCollection}
+          onChange={(v) => set("demographicDataCollection", v)}
+          tip={<HelpfulTipAccordion>{POLICY_TIP}</HelpfulTipAccordion>}
+        />
 
-        <div>
-          <YesNoUnsureQuestion
-            question="Does the organization have documented internal controls for federal compliance?"
-            value={value.internalControlsDocs}
-            onChange={(v) => set("internalControlsDocs", v)}
-          />
-          <div className="pt-3">
-            <HelpfulTipAccordion>{POLICY_TIP}</HelpfulTipAccordion>
-          </div>
-        </div>
+        <YesNoUnsureQuestion
+          question="Does the organization have documented internal controls for federal compliance?"
+          value={value.internalControlsDocs}
+          onChange={(v) => set("internalControlsDocs", v)}
+          tip={<HelpfulTipAccordion>{POLICY_TIP}</HelpfulTipAccordion>}
+        />
 
-        <div>
-          <YesNoUnsureQuestion
-            question="Does the organization have documented policies for procurement and subrecipient monitoring?"
-            value={value.procurementPolicies}
-            onChange={(v) => set("procurementPolicies", v)}
-          />
-          <div className="pt-3">
-            <HelpfulTipAccordion>{POLICY_TIP}</HelpfulTipAccordion>
-          </div>
-        </div>
+        <YesNoUnsureQuestion
+          question="Does the organization have documented policies for procurement and subrecipient monitoring?"
+          value={value.procurementPolicies}
+          onChange={(v) => set("procurementPolicies", v)}
+          tip={<HelpfulTipAccordion>{POLICY_TIP}</HelpfulTipAccordion>}
+        />
 
-        <div>
-          <YesNoUnsureQuestion
-            question="Does the organization have documented policies for time and effort reporting (personnel)?"
-            value={value.timeEffortPolicies}
-            onChange={(v) => set("timeEffortPolicies", v)}
-          />
-          <div className="pt-3">
-            <HelpfulTipAccordion>{POLICY_TIP}</HelpfulTipAccordion>
-          </div>
-        </div>
+        <YesNoUnsureQuestion
+          question="Does the organization have documented policies for time and effort reporting (personnel)?"
+          value={value.timeEffortPolicies}
+          onChange={(v) => set("timeEffortPolicies", v)}
+          tip={<HelpfulTipAccordion>{POLICY_TIP}</HelpfulTipAccordion>}
+        />
 
-        <div>
-          <YesNoUnsureQuestion
-            question="Does the organization have documented policies for conflict of interest and record retention?"
-            value={value.conflictOfInterestPolicies}
-            onChange={(v) => set("conflictOfInterestPolicies", v)}
-          />
-          <div className="pt-3">
-            <HelpfulTipAccordion>{POLICY_TIP}</HelpfulTipAccordion>
-          </div>
-        </div>
+        <YesNoUnsureQuestion
+          question="Does the organization have documented policies for conflict of interest and record retention?"
+          value={value.conflictOfInterestPolicies}
+          onChange={(v) => set("conflictOfInterestPolicies", v)}
+          tip={<HelpfulTipAccordion>{POLICY_TIP}</HelpfulTipAccordion>}
+        />
       </div>
 
       <div className="pt-8">
