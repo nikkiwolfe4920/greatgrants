@@ -4,7 +4,32 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { YesNoUnsureQuestion } from "@/app/components/eligibility/YesNoUnsure";
 import { GettingGrantReadyBanner } from "@/app/components/eligibility/GettingGrantReadyBanner";
+import { HelpfulTipAccordion } from "@/app/components/eligibility/HelpfulTipAccordion";
 import type { FinancialInfoState } from "@/data/eligibilityAssessmentData";
+
+const FINANCIAL_TIP = (
+  <>
+    Most grants require tax-exempt status, so this affects your eligibility. Choose{" "}
+    <span className="font-semibold text-gray-900">501(c)(3): Church</span> if the IRS treats you as a church —
+    churches are tax-exempt without filing a Form 990; <span className="font-semibold text-gray-900">501(c)(3): Non-Profit</span>{" "}
+    if you hold an IRS determination letter but aren't a church;{" "}
+    <span className="font-semibold text-gray-900">Other Recognized Non-Profit Status</span> for other 501(c) types or a
+    fiscal-sponsor arrangement; <span className="font-semibold text-gray-900">For-Profit</span> businesses are ineligible
+    for most grants. Not sure? Check your IRS determination letter or the IRS Tax Exempt Organization Search.{" "}
+    <span className="italic">
+      (Resource:{" "}
+      <a
+        href="https://www.irs.gov/charities-non-profits/exempt-organization-types"
+        target="_blank"
+        rel="noreferrer"
+        className="underline hover:text-gray-900"
+      >
+        irs.gov/charities-non-profits/exempt-organization-types
+      </a>
+      )
+    </span>
+  </>
+);
 
 function ConfirmedBadge() {
   return (
@@ -112,25 +137,43 @@ export function FinancialInfoStep({ value, onChange, onBack, onContinue }: Finan
               </button>
             ))}
           </div>
+          <div className="pt-3">
+            <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
+          </div>
         </div>
 
-        <YesNoUnsureQuestion
-          question="Is the organization compliant with a 2 CFR 200 audit requirement (including a Single Audit)?"
-          value={value.cfr200Compliant}
-          onChange={(v) => set("cfr200Compliant", v)}
-        />
+        <div>
+          <YesNoUnsureQuestion
+            question="Is the organization compliant with a 2 CFR 200 audit requirement (including a Single Audit)?"
+            value={value.cfr200Compliant}
+            onChange={(v) => set("cfr200Compliant", v)}
+          />
+          <div className="pt-3">
+            <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
+          </div>
+        </div>
 
-        <YesNoUnsureQuestion
-          question="Can the organization's financial system track expenses by individual grant and manage federal drawdowns?"
-          value={value.financialSystemTracking}
-          onChange={(v) => set("financialSystemTracking", v)}
-        />
+        <div>
+          <YesNoUnsureQuestion
+            question="Can the organization's financial system track expenses by individual grant and manage federal drawdowns?"
+            value={value.financialSystemTracking}
+            onChange={(v) => set("financialSystemTracking", v)}
+          />
+          <div className="pt-3">
+            <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
+          </div>
+        </div>
 
-        <YesNoUnsureQuestion
-          question="Can the organization's financial system support time and effort reporting?"
-          value={value.timeEffortReporting}
-          onChange={(v) => set("timeEffortReporting", v)}
-        />
+        <div>
+          <YesNoUnsureQuestion
+            question="Can the organization's financial system support time and effort reporting?"
+            value={value.timeEffortReporting}
+            onChange={(v) => set("timeEffortReporting", v)}
+          />
+          <div className="pt-3">
+            <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
+          </div>
+        </div>
 
         <div>
           <div className="flex items-start justify-between gap-3 mb-2">
@@ -146,13 +189,21 @@ export function FinancialInfoStep({ value, onChange, onBack, onContinue }: Finan
             onChange={(e) => set("indirectCostAgreement", e.target.value)}
             placeholder='e.g., "NICRA at 35%" or "De minimis 15%"'
           />
+          <div className="pt-3">
+            <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
+          </div>
         </div>
 
-        <YesNoUnsureQuestion
-          question="Does the organization have liquidity or committed financial resources to meet cost-share/matching requirements?"
-          value={value.costShareLiquidity}
-          onChange={(v) => set("costShareLiquidity", v)}
-        />
+        <div>
+          <YesNoUnsureQuestion
+            question="Does the organization have liquidity or committed financial resources to meet cost-share/matching requirements?"
+            value={value.costShareLiquidity}
+            onChange={(v) => set("costShareLiquidity", v)}
+          />
+          <div className="pt-3">
+            <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
+          </div>
+        </div>
       </div>
 
       <div className="pt-8">
