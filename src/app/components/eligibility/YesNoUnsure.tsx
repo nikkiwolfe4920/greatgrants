@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { CheckCircle2 } from "lucide-react";
 import type { YesNoUnsure as YesNoUnsureValue } from "@/data/eligibilityAssessmentData";
 
@@ -15,6 +16,8 @@ interface YesNoUnsureQuestionProps {
   value: YesNoUnsureValue;
   onChange: (value: YesNoUnsureValue) => void;
   required?: boolean;
+  /** Renders directly underneath the question text, before the answer options — e.g. a Helpful Tip accordion. */
+  tip?: ReactNode;
 }
 
 /**
@@ -23,7 +26,7 @@ interface YesNoUnsureQuestionProps {
  * eligibility workflow's Step 3 & 4 questions feel identical to the
  * organization profile the answers ultimately roll up into.
  */
-export function YesNoUnsureQuestion({ question, value, onChange, required = true }: YesNoUnsureQuestionProps) {
+export function YesNoUnsureQuestion({ question, value, onChange, required = true, tip }: YesNoUnsureQuestionProps) {
   const options: { value: YesNoUnsureValue; label: string; color: "teal" | "orange" }[] = [
     { value: "yes", label: "Yes", color: "teal" },
     { value: "no", label: "No", color: "orange" },
@@ -38,6 +41,7 @@ export function YesNoUnsureQuestion({ question, value, onChange, required = true
         </label>
         {value === "yes" && <ConfirmedBadge />}
       </div>
+      {tip && <div className="mb-3">{tip}</div>}
       <div className="flex flex-col gap-2">
         {options.map((option) => (
           <button

@@ -7,6 +7,8 @@ export interface EligibilityProgram {
   id: string;
   name: string;
   description: string;
+  /** Program health-check results — fields still missing from the program's profile, if any. */
+  improvementItems?: string[];
 }
 
 export const eligibilityPrograms: EligibilityProgram[] = [
@@ -15,6 +17,7 @@ export const eligibilityPrograms: EligibilityProgram[] = [
     name: "Child Protection Systems Initiative",
     description:
       "Strengthening national child protection frameworks and workforce in Sub-Saharan Africa.",
+    improvementItems: ["Program Description", "Documents", "Partnerships"],
   },
   {
     id: "family-based-care-reform",
