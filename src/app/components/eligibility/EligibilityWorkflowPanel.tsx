@@ -84,7 +84,7 @@ export function EligibilityWorkflowPanel({
     submitTimeoutRef.current = setTimeout(() => {
       setIsSubmitting(false);
       setShowReport(true);
-    }, 1600);
+    }, 4000);
   };
 
   const handleToggleActionItem = (id: string) => {
