@@ -1,15 +1,14 @@
+import { useState } from "react";
+import { useNavigate } from "react-router";
 import { FolderOpen, FolderPlus, ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
-import { Input } from "@/app/components/ui/input";
 import { eligibilityPrograms } from "@/data/eligibilityAssessmentData";
-
-export const NEW_PROGRAM_OPTION = "__new_program__";
+import { ProgramSelectedNotice } from "@/app/components/eligibility/ProgramSelectedNotice";
+import { CreateProgramDialog } from "@/app/components/eligibility/CreateProgramDialog";
 
 interface ProgramAssociationStepProps {
   selectedProgramId: string;
   onSelectProgram: (id: string) => void;
-  newProgramName: string;
-  onChangeNewProgramName: (value: string) => void;
   onBack: () => void;
   onContinue: () => void;
   canContinue: boolean;
@@ -17,17 +16,21 @@ interface ProgramAssociationStepProps {
 
 /**
  * Step 1 of the eligibility workflow — Figma nodes 12683:23302 (empty
- * state) and 12683:23953 (selected state).
+ * state) and 12683:23953 (selected state). The selected-program
+ * confirmation banner is Figma node 12827:24450, and the "create new
+ * program" confirmation modal is Figma node 12827:29300.
  */
 export function ProgramAssociationStep({
   selectedProgramId,
   onSelectProgram,
-  newProgramName,
-  onChangeNewProgramName,
   onBack,
   onContinue,
   canContinue,
 }: ProgramAssociationStepProps) {
+  const navigate = useNavigate();
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const selectedProgram = eligibilityPrograms.find((program) => program.id === selectedProgramId);
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-[33px]">
       <div className="flex items-center gap-3">
@@ -82,10 +85,8 @@ export function ProgramAssociationStep({
 
           <button
             type="button"
-            onClick={() => onSelectProgram(NEW_PROGRAM_OPTION)}
-            className={`w-full text-left rounded-lg border-2 border-dashed p-[18px] flex items-center gap-3 transition-colors ${
-              selectedProgramId === NEW_PROGRAM_OPTION ? "border-teal-400 bg-teal-50/40" : "border-gray-200 hover:border-gray-300"
-            }`}
+            onClick={() => setShowCreateDialog(true)}
+            className="w-full text-left rounded-lg border-2 border-dashed border-gray-200 hover:border-gray-300 p-[18px] flex items-center gap-3 transition-colors"
           >
             <FolderPlus className="size-4 text-gray-500 shrink-0" />
             <span className="text-sm text-gray-600" style={{ fontFamily: "Cabin, sans-serif" }}>
@@ -93,14 +94,8 @@ export function ProgramAssociationStep({
             </span>
           </button>
 
-          {selectedProgramId === NEW_PROGRAM_OPTION && (
-            <Input
-              autoFocus
-              value={newProgramName}
-              onChange={(e) => onChangeNewProgramName(e.target.value)}
-              placeholder="Name your new program"
-              className="ml-1"
-            />
+          {selectedProgram && (
+            <ProgramSelectedNotice name={selectedProgram.name} description={selectedProgram.description} />
           )}
         </div>
       </div>
@@ -121,6 +116,12 @@ export function ProgramAssociationStep({
           </Button>
         </div>
       </div>
+
+      <CreateProgramDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onContinue={() => navigate("/project-details")}
+      />
     </div>
   );
 }
