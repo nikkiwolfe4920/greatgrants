@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { FolderOpen, FolderPlus, ArrowLeft, ArrowRight } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { FolderOpen, FolderPlus, ArrowLeft, ArrowRight, Check, AlertCircle } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { eligibilityPrograms } from "@/data/eligibilityAssessmentData";
-import { ProgramSelectedNotice } from "@/app/components/eligibility/ProgramSelectedNotice";
 import { CreateProgramDialog } from "@/app/components/eligibility/CreateProgramDialog";
 
 interface ProgramAssociationStepProps {
@@ -16,9 +16,10 @@ interface ProgramAssociationStepProps {
 
 /**
  * Step 1 of the eligibility workflow — Figma nodes 12683:23302 (empty
- * state) and 12683:23953 (selected state). The selected-program
- * confirmation banner is Figma node 12827:24450, and the "create new
- * program" confirmation modal is Figma node 12827:29300.
+ * state) and 12683:23953 (selected state). Selecting a program drawers
+ * open its own row to reveal a health-check "Improve your program" alert
+ * when the program's profile is incomplete — Figma node 12827:24434 — the
+ * "create new program" confirmation modal is Figma node 12827:29300.
  */
 export function ProgramAssociationStep({
   selectedProgramId,
@@ -29,7 +30,6 @@ export function ProgramAssociationStep({
 }: ProgramAssociationStepProps) {
   const navigate = useNavigate();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const selectedProgram = eligibilityPrograms.find((program) => program.id === selectedProgramId);
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-[33px]">
@@ -55,31 +55,69 @@ export function ProgramAssociationStep({
         <div className="pt-4 space-y-3">
           {eligibilityPrograms.map((program) => {
             const isSelected = selectedProgramId === program.id;
+            const hasImprovementAlert = isSelected && !!program.improvementItems?.length;
             return (
-              <button
+              <div
                 key={program.id}
-                type="button"
-                onClick={() => onSelectProgram(program.id)}
-                className={`w-full text-left rounded-lg border-2 p-[18px] flex items-start gap-3 transition-colors ${
+                className={`w-full rounded-lg border-2 transition-colors ${
                   isSelected ? "border-teal-600 bg-teal-50" : "border-gray-200 hover:border-gray-300"
                 }`}
               >
-                <div
-                  className={`mt-0.5 size-5 rounded-full border-2 shrink-0 flex items-center justify-center ${
-                    isSelected ? "border-teal-600 bg-teal-600" : "border-gray-300"
-                  }`}
+                <button
+                  type="button"
+                  onClick={() => onSelectProgram(program.id)}
+                  className="w-full text-left p-[18px] flex items-start gap-3"
                 >
-                  {isSelected && <div className="size-2 rounded-full bg-white" />}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-                    {program.name}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "Cabin, sans-serif" }}>
-                    {program.description}
-                  </p>
-                </div>
-              </button>
+                  <div
+                    className={`mt-0.5 size-5 rounded-full border-2 shrink-0 flex items-center justify-center ${
+                      isSelected ? "border-teal-600 bg-teal-600" : "border-gray-300"
+                    }`}
+                  >
+                    {isSelected && <Check className="size-3 text-white" strokeWidth={3} />}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                      {program.name}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5" style={{ fontFamily: "Cabin, sans-serif" }}>
+                      {program.description}
+                    </p>
+                  </div>
+                </button>
+
+                <AnimatePresence>
+                  {hasImprovementAlert && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-[18px] pb-[18px]">
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-[13px]">
+                          <div className="flex items-start gap-3">
+                            <AlertCircle className="size-5 text-amber-600 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-sm font-semibold text-red-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                                Improve your program
+                              </p>
+                              <ul
+                                className="list-disc pl-[18px] pt-2 space-y-0 text-xs text-amber-900"
+                                style={{ fontFamily: "Cabin, sans-serif" }}
+                              >
+                                {program.improvementItems!.map((item) => (
+                                  <li key={item}>{item}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             );
           })}
 
@@ -93,14 +131,6 @@ export function ProgramAssociationStep({
               I would like to create a new program
             </span>
           </button>
-
-          {selectedProgram && (
-            <ProgramSelectedNotice
-              name={selectedProgram.name}
-              description={selectedProgram.description}
-              improvementItems={selectedProgram.improvementItems}
-            />
-          )}
         </div>
       </div>
 
