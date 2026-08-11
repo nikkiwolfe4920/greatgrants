@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { StepperHeader } from "@/app/components/eligibility/StepperHeader";
-import { ProgramAssociationStep, NEW_PROGRAM_OPTION } from "@/app/components/eligibility/steps/ProgramAssociationStep";
+import { ProgramAssociationStep } from "@/app/components/eligibility/steps/ProgramAssociationStep";
 import { OrganizationDetailsStep } from "@/app/components/eligibility/steps/OrganizationDetailsStep";
 import { FinancialInfoStep } from "@/app/components/eligibility/steps/FinancialInfoStep";
 import { PolicyInfoStep } from "@/app/components/eligibility/steps/PolicyInfoStep";
@@ -50,7 +50,6 @@ export function EligibilityWorkflowPanel({
 }: EligibilityWorkflowPanelProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [programId, setProgramId] = useState("");
-  const [newProgramName, setNewProgramName] = useState("");
   const [orgFields, setOrgFields] = useState<OrgDetailField[]>(orgDetailFields);
   const [financialInfo, setFinancialInfo] = useState<FinancialInfoState>(defaultFinancialInfo);
   const [policyInfo, setPolicyInfo] = useState<PolicyInfoState>(defaultPolicyInfo);
@@ -65,8 +64,7 @@ export function EligibilityWorkflowPanel({
     };
   }, []);
 
-  const canContinueStep1 =
-    programId !== "" && (programId !== NEW_PROGRAM_OPTION || newProgramName.trim() !== "");
+  const canContinueStep1 = programId !== "";
 
   useEffect(() => {
     onProgramLinked?.(canContinueStep1);
@@ -123,8 +121,6 @@ export function EligibilityWorkflowPanel({
         <ProgramAssociationStep
           selectedProgramId={programId}
           onSelectProgram={setProgramId}
-          newProgramName={newProgramName}
-          onChangeNewProgramName={setNewProgramName}
           onBack={() => {
             onAnchorScroll?.();
             onExit();
