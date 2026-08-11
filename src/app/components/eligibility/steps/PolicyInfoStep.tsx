@@ -1,6 +1,7 @@
 import { ShieldCheck, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { YesNoUnsureQuestion } from "@/app/components/eligibility/YesNoUnsure";
+import { GettingGrantReadyBanner } from "@/app/components/eligibility/GettingGrantReadyBanner";
 import type { PolicyInfoState } from "@/data/eligibilityAssessmentData";
 
 interface PolicyInfoStepProps {
@@ -20,14 +21,18 @@ export function PolicyInfoStep({ value, onChange, onBack, onCheckEligibility, is
   const set = <K extends keyof PolicyInfoState>(key: K, val: PolicyInfoState[K]) =>
     onChange({ ...value, [key]: val });
 
-  const isComplete =
-    value.complianceTrackingSoftware !== "" &&
-    value.federalDataTracking !== "" &&
-    value.demographicDataCollection !== "" &&
-    value.internalControlsDocs !== "" &&
-    value.procurementPolicies !== "" &&
-    value.timeEffortPolicies !== "" &&
-    value.conflictOfInterestPolicies !== "";
+  const confirmedFlags = [
+    value.complianceTrackingSoftware === "yes",
+    value.federalDataTracking === "yes",
+    value.demographicDataCollection === "yes",
+    value.internalControlsDocs === "yes",
+    value.procurementPolicies === "yes",
+    value.timeEffortPolicies === "yes",
+    value.conflictOfInterestPolicies === "yes",
+  ];
+  const confirmedCount = confirmedFlags.filter(Boolean).length;
+  const totalCount = confirmedFlags.length;
+  const isComplete = confirmedCount === totalCount;
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-[33px]">
@@ -46,9 +51,16 @@ export function PolicyInfoStep({ value, onChange, onBack, onCheckEligibility, is
       </div>
 
       <div className="pt-6 space-y-6">
-        <p className="text-sm text-gray-600" style={{ fontFamily: "Cabin, sans-serif" }}>
-          Federal awards require robust back-office capacity. Be honest — gaps here are fixable before submission.
-        </p>
+        <GettingGrantReadyBanner />
+
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm text-gray-600" style={{ fontFamily: "Cabin, sans-serif" }}>
+            Please answer the following questions to help us assess policy and compliance.
+          </p>
+          <span className="text-sm font-medium text-gray-500 whitespace-nowrap" style={{ fontFamily: "Cabin, sans-serif" }}>
+            {confirmedCount} of {totalCount} Confirmed
+          </span>
+        </div>
 
         <YesNoUnsureQuestion
           question="Does the organization have software or a financial system to track deadlines, reporting, and compliance?"

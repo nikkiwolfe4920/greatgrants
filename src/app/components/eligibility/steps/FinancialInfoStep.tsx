@@ -3,6 +3,7 @@ import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { YesNoUnsureQuestion } from "@/app/components/eligibility/YesNoUnsure";
+import { GettingGrantReadyBanner } from "@/app/components/eligibility/GettingGrantReadyBanner";
 import type { FinancialInfoState } from "@/data/eligibilityAssessmentData";
 
 function ConfirmedBadge() {
@@ -37,13 +38,17 @@ export function FinancialInfoStep({ value, onChange, onBack, onContinue }: Finan
   const set = <K extends keyof FinancialInfoState>(key: K, val: FinancialInfoState[K]) =>
     onChange({ ...value, [key]: val });
 
-  const isComplete =
-    value.orgRegistrationType !== "" &&
-    value.cfr200Compliant !== "" &&
-    value.financialSystemTracking !== "" &&
-    value.timeEffortReporting !== "" &&
-    value.indirectCostAgreement.trim() !== "" &&
-    value.costShareLiquidity !== "";
+  const confirmedFlags = [
+    value.orgRegistrationType !== "",
+    value.cfr200Compliant === "yes",
+    value.financialSystemTracking === "yes",
+    value.timeEffortReporting === "yes",
+    value.indirectCostAgreement.trim() !== "",
+    value.costShareLiquidity === "yes",
+  ];
+  const confirmedCount = confirmedFlags.filter(Boolean).length;
+  const totalCount = confirmedFlags.length;
+  const isComplete = confirmedCount === totalCount;
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-[33px]">
@@ -62,9 +67,16 @@ export function FinancialInfoStep({ value, onChange, onBack, onContinue }: Finan
       </div>
 
       <div className="pt-6 space-y-6">
-        <p className="text-sm text-gray-600" style={{ fontFamily: "Cabin, sans-serif" }}>
-          Please answer the following questions to help us assess your financial readiness for this grant.
-        </p>
+        <GettingGrantReadyBanner />
+
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm text-gray-600" style={{ fontFamily: "Cabin, sans-serif" }}>
+            Please answer the following questions to help us assess your financial readiness for applying for grants.
+          </p>
+          <span className="text-sm font-medium text-gray-500 whitespace-nowrap" style={{ fontFamily: "Cabin, sans-serif" }}>
+            {confirmedCount} of {totalCount} Confirmed
+          </span>
+        </div>
 
         <div>
           <div className="flex items-start justify-between gap-3 mb-3">

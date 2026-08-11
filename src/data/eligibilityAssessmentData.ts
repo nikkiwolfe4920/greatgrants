@@ -80,8 +80,8 @@ export interface FinancialInfoState {
 }
 
 export const defaultFinancialInfo: FinancialInfoState = {
-  orgRegistrationType: "501c3-church",
-  cfr200Compliant: "yes",
+  orgRegistrationType: "",
+  cfr200Compliant: "",
   financialSystemTracking: "",
   timeEffortReporting: "",
   indirectCostAgreement: "",
