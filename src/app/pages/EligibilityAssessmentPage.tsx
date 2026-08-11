@@ -528,8 +528,13 @@ export function EligibilityAssessmentPage() {
               <EligibleActivitiesSection />
             </section>
 
-            {/* Eligibility Assessment — slides open into the eligibility workflow */}
-            <section id="eligibility-assessment" className="scroll-mt-8">
+            {/* Eligibility Assessment — slides open into the eligibility workflow.
+                overflowAnchor is disabled here because this section's content
+                height changes drastically (step form -> loader -> report) the
+                instant Check My Eligibility is clicked; without it Chrome's
+                scroll anchoring can silently fight the JS-driven scroll back
+                up to this heading. */}
+            <section id="eligibility-assessment" className="scroll-mt-8" style={{ overflowAnchor: "none" }}>
               <SectionHeading>Eligibility Assessment</SectionHeading>
 
               <AnimatePresence mode="wait">
