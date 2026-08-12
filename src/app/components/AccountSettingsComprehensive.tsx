@@ -125,25 +125,31 @@ function GrantAlertsManager() {
                 </span>
               </div>
               <p className="text-sm text-gray-600">
-                {alert.email} • {alert.frequency} emails
+                {/* Grant-specific alerts (Get Alert on a single grant, linked
+                    via grantId) are a plain on/off notification, not a
+                    recurring digest — no frequency to report or edit. */}
+                {alert.grantId ? alert.email : `${alert.email} • ${alert.frequency} emails`}
               </p>
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Frequency Dropdown */}
-              <Select 
-                value={alert.frequency} 
-                onValueChange={(value) => updateFrequency(alert.id, value)}
-              >
-                <SelectTrigger className="w-[110px] h-9 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Weekly">Weekly</SelectItem>
-                  <SelectItem value="Bi-Weekly">Bi-Weekly</SelectItem>
-                  <SelectItem value="Monthly">Monthly</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Frequency Dropdown — hidden for grant-specific alerts, which
+                  have no frequency concept (see comment above). */}
+              {!alert.grantId && (
+                <Select
+                  value={alert.frequency}
+                  onValueChange={(value) => updateFrequency(alert.id, value)}
+                >
+                  <SelectTrigger className="w-[110px] h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Weekly">Weekly</SelectItem>
+                    <SelectItem value="Bi-Weekly">Bi-Weekly</SelectItem>
+                    <SelectItem value="Monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
 
               {/* Toggle Switch */}
               <Switch 
