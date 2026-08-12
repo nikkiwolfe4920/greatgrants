@@ -10,8 +10,6 @@ import {
   User,
   Users,
   X,
-  Check,
-  Minus,
   HardDrive,
   Flame,
   Loader2,
@@ -40,16 +38,11 @@ import { Badge } from "@/app/components/ui/badge";
 import { Checkbox } from "@/app/components/ui/checkbox";
 import { Switch } from "@/app/components/ui/switch";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/app/components/ui/accordion";
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/app/components/ui/tooltip";
+import { FocusAreasField } from "@/app/components/focus-areas/FocusAreasField";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -296,323 +289,33 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
   const [activeRequirement, setActiveRequirement] = useState<string | null>(null);
 
   // Focus Areas state
-  const [selectedFocusAreas, setSelectedFocusAreas] = useState<Record<string, string[]>>({});
+  //
+  // Flat array of leaf/subcategory values only — this mirrors the
+  // `Organization.focusAreas: string[]` shape in `src/data/types.ts`.
+  // Parent categories are never stored here; they're derived on demand from
+  // the taxonomy via getFocusAreaParent() for display/grouping purposes
+  // (selected-count badges, grouped tag preview, etc.). The taxonomy itself
+  // lives in src/lib/constants/focus-areas.ts (moved there unchanged from
+  // the inline object this used to be) so it can be shared with the
+  // FocusAreasField component tree.
+  const [focusAreas, setFocusAreas] = useState<string[]>([]);
 
-  // Focus area categories with sub-options (max 15 each)
-  const focusAreaCategories = {
-    "Agriculture & Food Systems": [
-      "Food Banks & Pantries",
-      "Community Gardens",
-      "Urban Agriculture",
-      "Farm to Table Programs",
-      "Food Security Initiatives",
-      "Nutrition Education",
-      "Sustainable Farming",
-      "Agricultural Research",
-      "Farmers Markets",
-      "Food Waste Reduction",
-      "Rural Agricultural Development",
-      "Aquaculture & Fisheries",
-      "School Meal Programs",
-      "Food Justice & Access",
-      "Agricultural Training"
-    ],
-    "Education": [
-      "Early Childhood Education",
-      "K-12 Education",
-      "Higher Education",
-      "Adult Education & Literacy",
-      "Special Education",
-      "STEM Education",
-      "Arts Education",
-      "Vocational Training",
-      "Educational Technology",
-      "Teacher Development",
-      "Scholarships & Financial Aid",
-      "After-School Programs",
-      "English as Second Language",
-      "College Access Programs",
-      "Educational Equity"
-    ],
-    "Health & Human Services": [
-      "Primary Care",
-      "Mental Health Services",
-      "Substance Abuse Treatment",
-      "Public Health",
-      "Maternal & Child Health",
-      "Senior Health Services",
-      "Disability Services",
-      "Preventive Care",
-      "Health Education",
-      "Access to Healthcare",
-      "Community Health Centers",
-      "Telemedicine",
-      "Chronic Disease Management",
-      "Reproductive Health",
-      "Health Insurance Navigation"
-    ],
-    "Housing & Homelessness": [
-      "Affordable Housing Development",
-      "Homeless Services",
-      "Emergency Shelter",
-      "Transitional Housing",
-      "Housing Counseling",
-      "Fair Housing Advocacy",
-      "Permanent Supportive Housing",
-      "Rental Assistance",
-      "Homeownership Programs",
-      "Housing Rehabilitation",
-      "Eviction Prevention",
-      "Housing Navigation",
-      "Rapid Rehousing",
-      "Youth Homelessness",
-      "Family Housing"
-    ],
-    "Community & Economic Development": [
-      "Job Creation & Training",
-      "Small Business Development",
-      "Workforce Development",
-      "Financial Literacy",
-      "Microfinance & Lending",
-      "Entrepreneurship Programs",
-      "Community Planning",
-      "Neighborhood Revitalization",
-      "Business Incubators",
-      "Economic Empowerment",
-      "Main Street Revitalization",
-      "Cooperative Development",
-      "Rural Economic Development",
-      "Trade & Commerce",
-      "Technology & Innovation Hubs"
-    ],
-    "Public Safety & Justice": [
-      "Crime Prevention",
-      "Community Policing",
-      "Victim Services",
-      "Violence Prevention",
-      "Youth Intervention",
-      "Criminal Justice Reform",
-      "Legal Aid Services",
-      "Reentry Programs",
-      "Restorative Justice",
-      "Gang Prevention",
-      "Domestic Violence Services",
-      "Civil Rights Advocacy",
-      "Police-Community Relations",
-      "Juvenile Justice",
-      "Court-Appointed Advocacy"
-    ],
-    "Environment & Climate": [
-      "Climate Action",
-      "Conservation & Preservation",
-      "Renewable Energy",
-      "Recycling & Waste Reduction",
-      "Water Quality & Conservation",
-      "Air Quality Improvement",
-      "Wildlife Protection",
-      "Sustainable Practices",
-      "Green Infrastructure",
-      "Environmental Education",
-      "Pollution Prevention",
-      "Ecosystem Restoration",
-      "Clean Energy Transition",
-      "Climate Resilience",
-      "Environmental Justice"
-    ],
-    "Technology & Digital Innovation": [
-      "Digital Literacy",
-      "Technology Access",
-      "Broadband Expansion",
-      "Coding & Programming Education",
-      "Cybersecurity",
-      "Digital Inclusion",
-      "Tech Training & Certification",
-      "Innovation Labs",
-      "Data Science & Analytics",
-      "Artificial Intelligence",
-      "Assistive Technology",
-      "Smart City Initiatives",
-      "Digital Health Solutions",
-      "EdTech Programs",
-      "Tech Entrepreneurship"
-    ],
-    "Arts, Culture & Humanities": [
-      "Visual Arts",
-      "Performing Arts",
-      "Music Programs",
-      "Theater & Drama",
-      "Dance",
-      "Literary Arts",
-      "Cultural Heritage Preservation",
-      "Museums & Galleries",
-      "Arts Education",
-      "Community Arts",
-      "Public Art",
-      "Arts Access & Equity",
-      "Cultural Festivals",
-      "Historic Preservation",
-      "Creative Placemaking"
-    ],
-    "Faith-Based & Community Organizations": [
-      "Congregational Support",
-      "Faith-Based Social Services",
-      "Interfaith Initiatives",
-      "Religious Education",
-      "Community Outreach",
-      "Pastoral Care",
-      "Mission & Ministry Programs",
-      "Faith & Justice Advocacy",
-      "Spiritual Development",
-      "Religious Cultural Programs",
-      "Faith-Based Youth Programs",
-      "Community Chaplaincy",
-      "Faith & Health Integration",
-      "Religious Literacy",
-      "Clergy Development"
-    ],
-    "Transportation & Infrastructure": [
-      "Public Transit",
-      "Transportation Access",
-      "Infrastructure Development",
-      "Road Safety",
-      "Bike & Pedestrian Programs",
-      "Transit-Oriented Development",
-      "Transportation Equity",
-      "Rural Transportation",
-      "Accessible Transportation",
-      "Electric Vehicle Infrastructure",
-      "Complete Streets",
-      "Freight & Logistics",
-      "Transportation Planning",
-      "Bridge & Road Maintenance",
-      "Multimodal Transportation"
-    ],
-    "Science & Research": [
-      "Medical Research",
-      "Scientific Innovation",
-      "Research Institutions",
-      "Laboratory Services",
-      "Clinical Trials",
-      "Data Collection & Analysis",
-      "Research Grants",
-      "Scientific Education",
-      "Technology Transfer",
-      "Biomedical Research",
-      "Environmental Research",
-      "Social Science Research",
-      "STEM Research",
-      "Research Ethics",
-      "Science Communication"
-    ],
-    "Veterans & Military Programs": [
-      "Veteran Employment",
-      "Veteran Housing",
-      "Veteran Healthcare",
-      "Military Family Support",
-      "Transition Assistance",
-      "PTSD & Mental Health",
-      "Disability Benefits",
-      "Education Benefits",
-      "Veteran Entrepreneurship",
-      "Homeless Veteran Services",
-      "Military Spouse Programs",
-      "Veteran Legal Services",
-      "Peer Support Programs",
-      "Adaptive Sports",
-      "Memorial & Recognition"
-    ],
-    "Disaster Relief & Emergency Management": [
-      "Emergency Response",
-      "Disaster Preparedness",
-      "Emergency Shelter",
-      "Disaster Recovery",
-      "Crisis Management",
-      "Emergency Food & Water",
-      "Search & Rescue",
-      "Medical Emergency Response",
-      "Community Resilience",
-      "Hazard Mitigation",
-      "Emergency Communications",
-      "Disaster Mental Health",
-      "Rebuilding Programs",
-      "Emergency Planning",
-      "First Responder Support"
-    ],
-    "International Development & Humanitarian Aid": [
-      "Global Health Programs",
-      "International Education",
-      "Humanitarian Relief",
-      "Global Poverty Alleviation",
-      "International Agriculture",
-      "Clean Water Access",
-      "Refugee Services",
-      "Global Human Rights",
-      "International Development",
-      "Microfinance Abroad",
-      "Global Environmental Programs",
-      "International Peacebuilding",
-      "Global Disaster Response",
-      "Cross-Cultural Exchange",
-      "International Advocacy"
-    ]
+  // Focus Areas is a selection-type field: it must auto-save immediately on
+  // every add/remove, with no debounce and no Save/Cancel — unlike the rest
+  // of this form, which batches changes through the 2s hasUnsavedChanges
+  // effect below. Reuses the same isAutoSaving/lastSaved indicators the page
+  // already shows for consistency, just without waiting on that timer.
+  const handleFocusAreasChange = (next: string[]) => {
+    setFocusAreas(next);
+    setIsAutoSaving(true);
+    // Simulate the persistence call (existing saveFocusAreasActionDirect
+    // equivalent, once this app has a backend to call).
+    setTimeout(() => {
+      setLastSaved(new Date());
+      setIsAutoSaving(false);
+    }, 400);
   };
 
-  // Toggle individual focus area option
-  const toggleFocusAreaOption = (category: string, option: string) => {
-    setSelectedFocusAreas(prev => {
-      const categorySelections = prev[category] || [];
-      const newSelections = categorySelections.includes(option)
-        ? categorySelections.filter(o => o !== option)
-        : [...categorySelections, option];
-      
-      if (newSelections.length === 0) {
-        const { [category]: _, ...rest } = prev;
-        return rest;
-      }
-      
-      return { ...prev, [category]: newSelections };
-    });
-    setHasUnsavedChanges(true);
-  };
-
-  // Toggle all options in a category
-  const toggleAllInCategory = (category: string) => {
-    const allOptions = focusAreaCategories[category as keyof typeof focusAreaCategories];
-    const currentSelections = selectedFocusAreas[category] || [];
-    
-    setSelectedFocusAreas(prev => {
-      if (currentSelections.length === allOptions.length) {
-        // Deselect all
-        const { [category]: _, ...rest } = prev;
-        return rest;
-      } else {
-        // Select all
-        return { ...prev, [category]: allOptions };
-      }
-    });
-    setHasUnsavedChanges(true);
-  };
-
-  // Clear all selections
-  const clearAllSelections = () => {
-    setSelectedFocusAreas({});
-    setHasUnsavedChanges(true);
-  };
-
-  // Get total selection count
-  const getTotalSelections = () => {
-    return Object.values(selectedFocusAreas).reduce((sum, arr) => sum + arr.length, 0);
-  };
-
-  // Get category selection status
-  const getCategoryStatus = (category: string) => {
-    const allOptions = focusAreaCategories[category as keyof typeof focusAreaCategories];
-    const selected = selectedFocusAreas[category] || [];
-    
-    if (selected.length === 0) return "none";
-    if (selected.length === allOptions.length) return "all";
-    return "partial";
-  };
 
   // Key Contacts state
   const [leaders, setLeaders] = useState<Leader[]>([
@@ -902,9 +605,11 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
   };
 
   const getFocusAreasCount = () => {
-    return Object.keys(selectedFocusAreas).filter(
-      (cat) => selectedFocusAreas[cat] && selectedFocusAreas[cat].length > 0
-    ).length;
+    // focusAreas is now a flat array of leaf values (see the Focus Areas
+    // state above), so this is just the number of selections — matches the
+    // "Add 2 or More Focus Areas" checklist label more literally than the
+    // old per-category count did.
+    return focusAreas.length;
   };
 
   const getChecklistItems = () => {
@@ -1125,7 +830,9 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
         'annual-budget': { tab: 'details', field: 'annualBudget' },
         'mission-statement': { tab: 'details', field: 'missionStatement' },
         'vision-statement': { tab: 'details', field: 'visionStatement' },
-        'focus-areas': { tab: 'focus-areas', field: '' },
+        // Focus Areas now lives as a compact field on Legal Info (where
+        // Congressional District used to be) rather than its own tab.
+        'focus-areas': { tab: 'legal-info', field: 'focusAreas' },
         'financial-readiness': { tab: 'financial-info', field: 'orgRegistrationType' },
         'policies-compliance': { tab: 'policies-compliance', field: 'complianceTrackingSoftware' },
       };
@@ -1309,13 +1016,7 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
               >
                 Details
               </TabsTrigger>
-              <TabsTrigger 
-                value="focus-areas"
-                className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
-              >
-                Focus Areas
-              </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="key-contacts"
                 className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
               >
@@ -1552,17 +1253,11 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                     />
                   </div>
 
-                  <div className="col-span-2 space-y-1.5">
-                    <Label htmlFor="congressionalDistrict">
-                      Congressional District
-                    </Label>
-                    <Input 
-                      id="congressionalDistrict"
-                      value={legalInfo.congressionalDistrict}
-                      onChange={(e) => handleLegalInfoChange('congressionalDistrict', e.target.value)}
-                      placeholder="Enter congressional district"
-                    />
-                  </div>
+                  <FocusAreasField
+                    value={focusAreas}
+                    onChange={handleFocusAreasChange}
+                    highlighted={highlightedField === 'focusAreas' || highlightedFields.includes('focusAreas')}
+                  />
                 </div>
               </div>
             </TabsContent>
@@ -1722,203 +1417,6 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                     />
                   </div>
                 </div>
-              </div>
-            </TabsContent>
-
-            {/* Focus Areas Tab */}
-            <TabsContent value="focus-areas" className="space-y-6">
-              {/* Summary Card */}
-              {getTotalSelections() > 0 && (
-                <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Check className="w-5 h-5 text-teal-600" />
-                      <span className="text-sm font-medium text-teal-900">
-                        {getTotalSelections()} focus area{getTotalSelections() > 1 ? 's' : ''} selected across {Object.keys(selectedFocusAreas).length} categor{Object.keys(selectedFocusAreas).length > 1 ? 'ies' : 'y'}
-                      </span>
-                    </div>
-                    <Button
-                      onClick={clearAllSelections}
-                      variant="ghost"
-                      size="sm"
-                      className="text-teal-700 hover:text-teal-800 hover:bg-teal-100"
-                    >
-                      <X className="w-4 h-4 mr-1" />
-                      Clear all
-                    </Button>
-                  </div>
-                  
-                  {/* Selected items preview */}
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {Object.entries(selectedFocusAreas).map(([category, options]) => {
-                      const allOptions = focusAreaCategories[category as keyof typeof focusAreaCategories];
-                      const isFullySelected = options.length === allOptions.length;
-                      
-                      if (isFullySelected) {
-                        // Show category name with "All" indicator when fully selected
-                        return (
-                          <Badge
-                            key={category}
-                            variant="secondary"
-                            className="bg-teal-600 border-teal-600 text-white hover:bg-teal-700"
-                          >
-                            <span className="font-semibold">{category}</span>
-                            <span className="ml-1.5 opacity-90">(All)</span>
-                            <button
-                              onClick={() => toggleAllInCategory(category)}
-                              className="ml-2 hover:bg-teal-500 rounded-full p-0.5"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </Badge>
-                        );
-                      } else {
-                        // Show individual items when partially selected
-                        return options.map(option => (
-                          <Badge
-                            key={`${category}-${option}`}
-                            variant="secondary"
-                            className="bg-white border-teal-300 text-teal-700 hover:bg-teal-50"
-                          >
-                            {option}
-                            <button
-                              onClick={() => toggleFocusAreaOption(category, option)}
-                              className="ml-1 hover:bg-teal-200 rounded-full p-0.5"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </Badge>
-                        ));
-                      }
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Categories Accordion */}
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <div className="p-6 border-b border-gray-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-base font-semibold text-gray-900">Select Focus Areas</h3>
-                    {getTotalSelections() > 0 && (
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-teal-600 text-white text-sm px-3 py-1">
-                          {getTotalSelections()} selected
-                        </Badge>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    Choose the primary areas your organization focuses on. Expand each category to see all available options.
-                  </p>
-                </div>
-
-                <Accordion type="multiple" className="w-full">
-                  {Object.entries(focusAreaCategories).map(([category, options]) => {
-                    const selectedCount = selectedFocusAreas[category]?.length || 0;
-                    const totalCount = options.length;
-                    const status = getCategoryStatus(category);
-
-                    return (
-                      <AccordionItem key={category} value={category} className="border-gray-200">
-                        <AccordionTrigger className={`px-6 hover:bg-gray-50 data-[state=open]:bg-gray-50 transition-colors ${
-                          status === "all" ? "bg-teal-50" : ""
-                        }`}>
-                          <div className="flex items-center justify-between w-full pr-4">
-                            <div className="flex items-center gap-3">
-                              {/* Category checkbox indicator */}
-                              <div
-                                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                                  status === "all"
-                                    ? "bg-teal-600 border-teal-600"
-                                    : status === "partial"
-                                    ? "bg-teal-600 border-teal-600"
-                                    : "border-gray-300 bg-white"
-                                }`}
-                              >
-                                {status === "all" && <Check className="w-3.5 h-3.5 text-white" />}
-                                {status === "partial" && <Minus className="w-3.5 h-3.5 text-white" />}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className={`text-sm font-medium ${
-                                  status === "all" ? "text-teal-900 font-semibold" : "text-gray-900"
-                                }`}>
-                                  {category}
-                                </span>
-                                {status === "all" && (
-                                  <span className="text-xs font-medium text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full">
-                                    All selected
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            
-                            <Badge 
-                              variant={selectedCount > 0 ? "default" : "outline"}
-                              className={`${
-                                status === "all" 
-                                  ? "bg-teal-600 text-white font-semibold" 
-                                  : selectedCount > 0 
-                                  ? "bg-teal-600" 
-                                  : ""
-                              }`}
-                            >
-                              {selectedCount} of {totalCount}
-                            </Badge>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-6 pb-4">
-                          {/* Select All toggle */}
-                          <div className="mb-4 pb-4 border-b border-gray-200">
-                            <button
-                              onClick={() => toggleAllInCategory(category)}
-                              className="flex items-center gap-2 text-sm font-medium text-teal-600 hover:text-teal-700 transition-colors"
-                            >
-                              {status === "all" ? (
-                                <>
-                                  <Minus className="w-4 h-4" />
-                                  Deselect all
-                                </>
-                              ) : (
-                                <>
-                                  <Check className="w-4 h-4" />
-                                  Select all
-                                </>
-                              )}
-                            </button>
-                          </div>
-
-                          {/* Options grid */}
-                          <div className="grid grid-cols-2 gap-3">
-                            {options.map(option => {
-                              const isSelected = selectedFocusAreas[category]?.includes(option);
-                              
-                              return (
-                                <label
-                                  key={option}
-                                  className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                                    isSelected
-                                      ? "border-teal-600 bg-teal-50"
-                                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                                  }`}
-                                >
-                                  <Checkbox
-                                    checked={isSelected}
-                                    onCheckedChange={() => toggleFocusAreaOption(category, option)}
-                                    className="mt-0.5"
-                                  />
-                                  <span className="text-sm text-gray-700 leading-tight flex-1">
-                                    {option}
-                                  </span>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    );
-                  })}
-                </Accordion>
               </div>
             </TabsContent>
 
