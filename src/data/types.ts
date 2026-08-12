@@ -218,6 +218,12 @@ export interface GrantAlert {
   // program's own page rather than from a free-text search, so it survives
   // program renames — `programs` above stores display titles only.
   programId?: string;
+  // Links this alert to a single Grant search result (see GrantSearch.tsx /
+  // GrantDetailPage.tsx and useGrantAlerts). Set when the alert is the
+  // per-grant "Get Alert" toggle rather than a saved-search or program alert.
+  // Independent of `saved_grants` — see useSavedGrants — a grant can be
+  // alerted, saved, both, or neither.
+  grantId?: string;
   alertsSent: number;
   createdAt: string;
   lastSent?: string;
