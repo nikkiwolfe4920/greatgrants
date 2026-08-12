@@ -1519,7 +1519,7 @@ export function GrantSearch() {
                     </div>
                   )}
                   
-                  <div className="p-5 flex-1">
+                  <div className="p-5 flex-1 min-w-0">
                     {/* Header */}
                     <div className="mb-3">
                       <div className="flex items-start justify-between gap-4 mb-2">
