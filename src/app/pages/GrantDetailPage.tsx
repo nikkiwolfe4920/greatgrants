@@ -21,6 +21,7 @@ import {
   ArrowRight,
   Shield,
   Bookmark,
+  Bell,
   ChevronDown,
   ChevronUp,
   X
@@ -39,6 +40,9 @@ import {
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { ApplicationLoadingModal } from "../components/ApplicationLoadingModal";
 import { ShareGrantModal } from "../components/ShareGrantModal";
+import { GrantAlertCrossSellDialog, CrossSellDirection } from "../components/GrantAlertCrossSellDialog";
+import { useSavedGrants } from "@/hooks/useSavedGrants";
+import { useGrantAlerts } from "@/hooks/useGrantAlerts";
 
 interface GrantDocument {
   name: string;
@@ -323,11 +327,23 @@ export function GrantDetailPage() {
   const [isSticky, setIsSticky] = useState(false);
   const [showLoadingModal, setShowLoadingModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-const [isSaved, setIsSaved] = useState(false);
   const [activeSection, setActiveSection] = useState('overview');
   const [docsExpanded, setDocsExpanded] = useState(true);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
+
+  // Save Grant and Get Alert are independent booleans backed by their own
+  // data models — saved_grants (useSavedGrants) and grant_alerts
+  // (useGrantAlerts). Same source of truth as the search cards, so state
+  // stays consistent whichever surface the user toggles from.
+  const { isGrantSaved, saveGrant, unsaveGrant } = useSavedGrants();
+  const { isGrantAlertEnabled, setAlertEnabled } = useGrantAlerts();
+  const isSaved = grant ? isGrantSaved(grant.id) : false;
+  const isAlertOn = grant ? isGrantAlertEnabled(grant.id) : false;
+
+  // Save ⇄ Alert Cross-Sell Dialog State — see GrantAlertCrossSellDialog.
+  const [crossSellOpen, setCrossSellOpen] = useState(false);
+  const [crossSellDirection, setCrossSellDirection] = useState<CrossSellDirection>("save-to-alert");
 
   useEffect(() => {
     if (grant) {
@@ -339,41 +355,32 @@ const [isSaved, setIsSaved] = useState(false);
     }
   }, [grant]);
 
-  useEffect(() => {
-    if (grant) {
-      const saved = JSON.parse(localStorage.getItem("savedGrants") || "[]");
-      setIsSaved(saved.some((g: any) => g.id === grant.id));
-    }
-  }, [grant]);
-
-  useEffect(() => {
-    const handleSavedGrantsUpdate = () => {
-      if (grant) {
-        const saved = JSON.parse(localStorage.getItem("savedGrants") || "[]");
-        setIsSaved(saved.some((g: any) => g.id === grant.id));
-      }
-    };
-    window.addEventListener("savedGrantsUpdated", handleSavedGrantsUpdate);
-    return () => window.removeEventListener("savedGrantsUpdated", handleSavedGrantsUpdate);
-  }, [grant]);
-
   const handleStartApplication = () => setShowLoadingModal(true);
   const handleShareGrant = () => setShowShareModal(true);
 
   const toggleSaveGrant = () => {
     if (!grant) return;
-    const saved = JSON.parse(localStorage.getItem("savedGrants") || "[]");
-    const recent = JSON.parse(localStorage.getItem("recentlyViewedGrants") || "[]");
-    const isGrantSaved = saved.some((g: any) => g.id === grant.id);
-    if (isGrantSaved) {
-      localStorage.setItem("savedGrants", JSON.stringify(saved.filter((g: any) => g.id !== grant.id)));
-      setIsSaved(false);
-    } else {
-      const recentGrant = recent.find((g: any) => g.id === grant.id);
-      localStorage.setItem("savedGrants", JSON.stringify([{ ...grant, savedAt: Date.now(), lastViewed: recentGrant?.lastViewed || Date.now() }, ...saved]));
-      setIsSaved(true);
+    if (isSaved) {
+      unsaveGrant(grant);
+      return;
     }
-    window.dispatchEvent(new Event("savedGrantsUpdated"));
+    saveGrant(grant);
+    // Save → Alert cross-sell: optional, declinable, never mutates alert state.
+    if (!isAlertOn) {
+      setCrossSellDirection("save-to-alert");
+      setCrossSellOpen(true);
+    }
+  };
+
+  const toggleGrantAlert = () => {
+    if (!grant) return;
+    const nextEnabled = !isAlertOn;
+    setAlertEnabled(grant, nextEnabled);
+    // Alert → Save cross-sell: optional, declinable, never auto-saves.
+    if (nextEnabled && !isSaved) {
+      setCrossSellDirection("alert-to-save");
+      setCrossSellOpen(true);
+    }
   };
 
   useEffect(() => {
@@ -475,11 +482,16 @@ const [isSaved, setIsSaved] = useState(false);
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
                   <Button variant="outline" size="sm" onClick={toggleSaveGrant}
                     className={`gap-1.5 h-8 text-xs ${isSaved ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"}`}>
                     <Bookmark className={`w-3.5 h-3.5 ${isSaved ? "fill-current" : ""}`} />
                     {isSaved ? "Saved" : "Save"}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={toggleGrantAlert}
+                    className={`gap-1.5 h-8 text-xs ${isAlertOn ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"}`}>
+                    <Bell className={`w-3.5 h-3.5 ${isAlertOn ? "fill-current" : ""}`} />
+                    {isAlertOn ? "Alert Active" : "Get Alert"}
                   </Button>
                   <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50 h-8 text-xs" onClick={handleShareGrant}>
                     <Share2 className="w-3.5 h-3.5 mr-1.5" />
@@ -549,12 +561,12 @@ const [isSaved, setIsSaved] = useState(false);
 
           {/* Header */}
           <div ref={triggerRef}>
-            <div className="flex items-start justify-between gap-6 mb-3">
-              <h1 className="text-[2rem] leading-tight text-gray-900 flex-1" style={{ fontFamily: 'Lustria, serif', fontWeight: 600 }}>
+            <div className="flex items-start justify-between gap-6 mb-3 flex-wrap">
+              <h1 className="text-[2rem] leading-tight text-gray-900 flex-1 min-w-0" style={{ fontFamily: 'Lustria, serif', fontWeight: 600 }}>
                 {grant.title}
               </h1>
               <div className="flex flex-col items-end gap-2 flex-shrink-0 pt-1">
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2.5 flex-wrap justify-end">
                   <Button
                     variant="outline"
                     onClick={toggleSaveGrant}
@@ -563,6 +575,15 @@ const [isSaved, setIsSaved] = useState(false);
                   >
                     <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
                     {isSaved ? "Saved" : "Save"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={toggleGrantAlert}
+                    className={`gap-1.5 ${isAlertOn ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"}`}
+                    style={{ fontFamily: 'Cabin, sans-serif' }}
+                  >
+                    <Bell className={`w-4 h-4 ${isAlertOn ? "fill-current" : ""}`} />
+                    {isAlertOn ? "Alert Active" : "Get Alert"}
                   </Button>
                   <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 font-medium" style={{ fontFamily: 'Cabin, sans-serif' }} onClick={handleShareGrant}>
                     <Share2 className="w-4 h-4 mr-2" />
@@ -1035,6 +1056,25 @@ const [isSaved, setIsSaved] = useState(false);
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         grant={grant}
+      />
+
+      {/* Save ⇄ Alert Cross-Sell */}
+      <GrantAlertCrossSellDialog
+        open={crossSellOpen}
+        onOpenChange={setCrossSellOpen}
+        direction={crossSellDirection}
+        grantTitle={grant.title}
+        onAccept={() => {
+          if (crossSellDirection === "save-to-alert") {
+            setAlertEnabled(grant, true);
+          } else {
+            saveGrant(grant);
+          }
+        }}
+        onDecline={() => {
+          // Intentionally a no-op: declining leaves the action the user
+          // already took untouched — see GrantAlertCrossSellDialog.
+        }}
       />
     </div>
   );

@@ -75,6 +75,9 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { GrantAlertCrossSellDialog, CrossSellDirection } from "./GrantAlertCrossSellDialog";
+import { useSavedGrants } from "@/hooks/useSavedGrants";
+import { useGrantAlerts } from "@/hooks/useGrantAlerts";
 
 interface Grant {
   id: string;
@@ -632,7 +635,11 @@ export function GrantSearch() {
   const [publishedProjects, setPublishedProjects] = useState<Array<{ id: string; title: string; isNationalProgram?: boolean }>>([]);
   const [nationalProgramActive, setNationalProgramActive] = useState(false);
   const lastAutoAppliedProjectRef = useRef<string | null>(null);
-  const [savedGrants, setSavedGrants] = useState<string[]>([]);
+  // Save Grant and Get Alert are independent booleans backed by their own
+  // data models — saved_grants (useSavedGrants) and grant_alerts
+  // (useGrantAlerts). Neither hook mutates the other's state.
+  const { isGrantSaved, saveGrant, unsaveGrant } = useSavedGrants();
+  const { isGrantAlertEnabled, setAlertEnabled } = useGrantAlerts();
   const [recentlyViewed, setRecentlyViewed] = useState<Grant[]>([]);
   const [hasWebsite, setHasWebsite] = useState(false);
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
@@ -655,7 +662,15 @@ export function GrantSearch() {
   const [unsaveDialogOpen, setUnsaveDialogOpen] = useState(false);
   const [grantToUnsave, setGrantToUnsave] = useState<Grant | null>(null);
 
-  // Load published projects and saved grants from localStorage
+  // Save ⇄ Alert Cross-Sell Dialog State
+  // Shown once, immediately after Save or Get Alert is turned on for a grant,
+  // offering the other (still-off) action. Declining leaves the action the
+  // user just took untouched — see GrantAlertCrossSellDialog.
+  const [crossSellOpen, setCrossSellOpen] = useState(false);
+  const [crossSellDirection, setCrossSellDirection] = useState<CrossSellDirection>("save-to-alert");
+  const [crossSellGrant, setCrossSellGrant] = useState<Grant | null>(null);
+
+  // Load published projects from localStorage
   useEffect(() => {
     const loadPublishedProjects = () => {
       try {
@@ -670,12 +685,6 @@ export function GrantSearch() {
       } catch (error) {
         console.error("Failed to load projects", error);
       }
-    };
-
-    const loadSavedGrants = () => {
-      const saved = JSON.parse(localStorage.getItem("savedGrants") || "[]");
-      const savedIds = saved.map((g: Grant) => g.id);
-      setSavedGrants(savedIds);
     };
 
     const loadRecentlyViewed = () => {
@@ -696,19 +705,16 @@ export function GrantSearch() {
     };
 
     loadPublishedProjects();
-    loadSavedGrants();
     loadRecentlyViewed();
     loadWebsite();
     loadNudgeDismissed();
 
-    // Listen for project and saved grants updates
+    // Listen for project updates
     const handleProjectsUpdate = () => loadPublishedProjects();
-    const handleSavedGrantsUpdate = () => loadSavedGrants();
     const handleRecentlyViewedUpdate = () => loadRecentlyViewed();
     const handleOrgProfileUpdate = () => loadWebsite();
 
     window.addEventListener("projectsUpdated", handleProjectsUpdate);
-    window.addEventListener("savedGrantsUpdated", handleSavedGrantsUpdate);
     window.addEventListener("recentlyViewedUpdated", handleRecentlyViewedUpdate);
     window.addEventListener("organizationProfileUpdated", handleOrgProfileUpdate);
     // Native "storage" only fires in OTHER tabs/windows, not the one that made
@@ -718,7 +724,6 @@ export function GrantSearch() {
 
     return () => {
       window.removeEventListener("projectsUpdated", handleProjectsUpdate);
-      window.removeEventListener("savedGrantsUpdated", handleSavedGrantsUpdate);
       window.removeEventListener("recentlyViewedUpdated", handleRecentlyViewedUpdate);
       window.removeEventListener("organizationProfileUpdated", handleOrgProfileUpdate);
       window.removeEventListener("storage", handleOrgProfileUpdate);
@@ -796,39 +801,43 @@ export function GrantSearch() {
 
   const toggleSaveGrant = (e: React.MouseEvent, grant: Grant) => {
     e.stopPropagation();
-    const saved = JSON.parse(localStorage.getItem("savedGrants") || "[]");
-    const recent = JSON.parse(localStorage.getItem("recentlyViewedGrants") || "[]");
-    const isSaved = saved.some((g: Grant) => g.id === grant.id);
 
-    if (isSaved) {
+    if (isGrantSaved(grant.id)) {
       // Show unsave dialog
       setGrantToUnsave(grant);
       setUnsaveDialogOpen(true);
-    } else {
-      // Save - get lastViewed from recently viewed if exists
-      const recentGrant = recent.find((g: Grant) => g.id === grant.id);
-      const grantToSave = {
-        ...grant,
-        savedAt: Date.now(),
-        lastViewed: recentGrant?.lastViewed || Date.now()
-      };
-      const updated = [grantToSave, ...saved];
-      localStorage.setItem("savedGrants", JSON.stringify(updated));
-      setSavedGrants(updated.map((g: Grant) => g.id));
-      window.dispatchEvent(new Event("savedGrantsUpdated"));
+      return;
+    }
+
+    saveGrant(grant);
+
+    // Save → Alert cross-sell: optional, declinable, never mutates alert state.
+    if (!isGrantAlertEnabled(grant.id)) {
+      setCrossSellGrant(grant);
+      setCrossSellDirection("save-to-alert");
+      setCrossSellOpen(true);
     }
   };
 
   const confirmUnsave = () => {
     if (grantToUnsave) {
-      const saved = JSON.parse(localStorage.getItem("savedGrants") || "[]");
-      const updated = saved.filter((g: Grant) => g.id !== grantToUnsave.id);
-      localStorage.setItem("savedGrants", JSON.stringify(updated));
-      setSavedGrants(updated.map((g: Grant) => g.id));
-      window.dispatchEvent(new Event("savedGrantsUpdated"));
+      unsaveGrant(grantToUnsave);
     }
     setUnsaveDialogOpen(false);
     setGrantToUnsave(null);
+  };
+
+  const toggleGrantAlert = (e: React.MouseEvent, grant: Grant) => {
+    e.stopPropagation();
+    const nextEnabled = !isGrantAlertEnabled(grant.id);
+    setAlertEnabled(grant, nextEnabled);
+
+    // Alert → Save cross-sell: optional, declinable, never auto-saves.
+    if (nextEnabled && !isGrantSaved(grant.id)) {
+      setCrossSellGrant(grant);
+      setCrossSellDirection("alert-to-save");
+      setCrossSellOpen(true);
+    }
   };
 
   const formatTimeAgo = (timestamp: number) => {
@@ -1614,26 +1623,42 @@ export function GrantSearch() {
                         </Badge>
                       </div>
 
-                      {/* Save/Unsave Section */}
-                      <div className={`flex items-center gap-2 ${viewMode === "grid" ? "flex-col items-end" : ""}`}>
-                        {savedGrants.includes(grant.id) && grantWithTimestamp.lastViewed && (
+                      {/* Save Grant / Get Alert — two independent actions, each with
+                          its own on/off state. Neither toggling one affects the other. */}
+                      <div className={`flex gap-1.5 ${viewMode === "grid" ? "flex-col items-end" : "items-center"}`}>
+                        {isGrantSaved(grant.id) && grantWithTimestamp.lastViewed && (
                           <span className="text-xs text-gray-500">
                             Last viewed {formatTimeAgo(grantWithTimestamp.lastViewed)}
                           </span>
                         )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => toggleSaveGrant(e, grantWithTimestamp)}
-                          className={`gap-1.5 ${
-                            savedGrants.includes(grant.id)
-                              ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100"
-                              : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"
-                          }`}
-                        >
-                          <Bookmark className={`w-3.5 h-3.5 ${savedGrants.includes(grant.id) ? "fill-current" : ""}`} />
-                          {savedGrants.includes(grant.id) ? "Unsave" : "Save"}
-                        </Button>
+                        <div className="flex items-center gap-2 flex-wrap justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => toggleSaveGrant(e, grantWithTimestamp)}
+                            className={`gap-1.5 ${
+                              isGrantSaved(grant.id)
+                                ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100"
+                                : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"
+                            }`}
+                          >
+                            <Bookmark className={`w-3.5 h-3.5 ${isGrantSaved(grant.id) ? "fill-current" : ""}`} />
+                            {isGrantSaved(grant.id) ? "Unsave" : "Save"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => toggleGrantAlert(e, grant)}
+                            className={`gap-1.5 ${
+                              isGrantAlertEnabled(grant.id)
+                                ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100"
+                                : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"
+                            }`}
+                          >
+                            <Bell className={`w-3.5 h-3.5 ${isGrantAlertEnabled(grant.id) ? "fill-current" : ""}`} />
+                            {isGrantAlertEnabled(grant.id) ? "Alert Active" : "Get Alert"}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1959,6 +1984,27 @@ export function GrantSearch() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Save ⇄ Alert Cross-Sell */}
+    <GrantAlertCrossSellDialog
+      open={crossSellOpen}
+      onOpenChange={setCrossSellOpen}
+      direction={crossSellDirection}
+      grantTitle={crossSellGrant?.title || ""}
+      onAccept={() => {
+        if (!crossSellGrant) return;
+        if (crossSellDirection === "save-to-alert") {
+          setAlertEnabled(crossSellGrant, true);
+        } else {
+          saveGrant(crossSellGrant);
+        }
+      }}
+      onDecline={() => {
+        // Intentionally a no-op: declining leaves the action the user
+        // already took untouched (saved=true,alert=false or
+        // saved=false,alert=true) — see GrantAlertCrossSellDialog.
+      }}
+    />
     </div>
   );
 }
