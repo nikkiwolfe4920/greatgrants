@@ -8,6 +8,7 @@ import {
   ArrowRight,
   ArrowLeft,
   Bookmark,
+  Bell,
   Share2,
   FolderPlus,
   CheckCircle2,
@@ -31,9 +32,32 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { EligibilityWorkflowPanel } from "@/app/components/eligibility/EligibilityWorkflowPanel";
 import { ApplicationLoadingModal } from "@/app/components/ApplicationLoadingModal";
+import { GrantAlertCrossSellDialog, CrossSellDirection } from "@/app/components/GrantAlertCrossSellDialog";
+import { useSavedGrants } from "@/hooks/useSavedGrants";
+import { useGrantAlerts } from "@/hooks/useGrantAlerts";
 
 const GRANT_ID = "dfop0017890-child-protection";
 const GRANT_TITLE = "Advancing Global Health — Child Development, Care, and Protection Addendum";
+
+// Minimal saved_grants / grant_alerts record for this fixed opportunity —
+// same shape GrantSearch/GrantDetailPage save, so this grant renders
+// correctly if it shows up in Saved Grants or Settings → Alerts.
+const GRANT_RECORD = {
+  id: GRANT_ID,
+  title: GRANT_TITLE,
+  description:
+    "Global Health NOFO addendum supporting child protection systems, family-based care, and early childhood development outcomes.",
+  status: "Open" as const,
+  maxAmount: 250000000,
+  location: "US",
+  locationType: "Federal" as const,
+  who: "U.S. and foreign organizations, including nonprofits, for-profits, and government entities",
+  difficulty: "Expert Assistance" as const,
+  relevance: 90,
+  category: "Government" as const,
+  closeDate: "May 31, 2026",
+  sectors: ["Global Health", "Child Protection", "Family-Based Care"],
+};
 
 const ELIGIBLE_ACTIVITIES = [
   "Strengthening national and sub-national child protection systems and workforce",
@@ -186,13 +210,25 @@ export function EligibilityAssessmentPage() {
   const [isAssessing, setIsAssessing] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
   const [docsExpanded, setDocsExpanded] = useState(true);
-  const [isSaved, setIsSaved] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [programLinked, setProgramLinked] = useState(false);
   const [reportGeneratedAt, setReportGeneratedAt] = useState<number | null>(null);
   const [showApplicationLoading, setShowApplicationLoading] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
+
+  // Save Grant and Get Alert are independent booleans backed by their own
+  // data models — saved_grants (useSavedGrants) and grant_alerts
+  // (useGrantAlerts). Same source of truth as GrantSearch / GrantDetailPage,
+  // so state stays consistent across every surface this opportunity appears.
+  const { isGrantSaved, saveGrant, unsaveGrant } = useSavedGrants();
+  const { isGrantAlertEnabled, setAlertEnabled } = useGrantAlerts();
+  const isSaved = isGrantSaved(GRANT_ID);
+  const isAlertOn = isGrantAlertEnabled(GRANT_ID);
+
+  // Save ⇄ Alert Cross-Sell Dialog State — see GrantAlertCrossSellDialog.
+  const [crossSellOpen, setCrossSellOpen] = useState(false);
+  const [crossSellDirection, setCrossSellDirection] = useState<CrossSellDirection>("save-to-alert");
 
   useEffect(() => {
     const scrollContainer = document.querySelector("main");
@@ -242,9 +278,51 @@ export function EligibilityAssessmentPage() {
 
   const handleStartApplication = () => setShowApplicationLoading(true);
 
+  const toggleSaveGrant = () => {
+    if (isSaved) {
+      unsaveGrant(GRANT_RECORD);
+      return;
+    }
+    saveGrant(GRANT_RECORD);
+    // Save → Alert cross-sell: optional, declinable, never mutates alert state.
+    if (!isAlertOn) {
+      setCrossSellDirection("save-to-alert");
+      setCrossSellOpen(true);
+    }
+  };
+
+  const toggleGrantAlert = () => {
+    const nextEnabled = !isAlertOn;
+    setAlertEnabled(GRANT_RECORD, nextEnabled);
+    // Alert → Save cross-sell: optional, declinable, never auto-saves.
+    if (nextEnabled && !isSaved) {
+      setCrossSellDirection("alert-to-save");
+      setCrossSellOpen(true);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <ApplicationLoadingModal isOpen={showApplicationLoading} grantTitle={GRANT_TITLE} grantId={GRANT_ID} />
+
+      {/* Save ⇄ Alert Cross-Sell */}
+      <GrantAlertCrossSellDialog
+        open={crossSellOpen}
+        onOpenChange={setCrossSellOpen}
+        direction={crossSellDirection}
+        grantTitle={GRANT_TITLE}
+        onAccept={() => {
+          if (crossSellDirection === "save-to-alert") {
+            setAlertEnabled(GRANT_RECORD, true);
+          } else {
+            saveGrant(GRANT_RECORD);
+          }
+        }}
+        onDecline={() => {
+          // Intentionally a no-op: declining leaves the action the user
+          // already took untouched — see GrantAlertCrossSellDialog.
+        }}
+      />
 
       {/* Sticky condensed header — offset past the global sidebar (lg:w-60 / xl:w-64)
           so it never draws over SharedSidebar while scrolling. */}
@@ -280,15 +358,24 @@ export function EligibilityAssessmentPage() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsSaved((v) => !v)}
+                    onClick={toggleSaveGrant}
                     className={`gap-1.5 h-8 text-xs ${isSaved ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"}`}
                   >
                     <Bookmark className={`w-3.5 h-3.5 ${isSaved ? "fill-current" : ""}`} />
                     {isSaved ? "Saved" : "Save"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleGrantAlert}
+                    className={`gap-1.5 h-8 text-xs ${isAlertOn ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"}`}
+                  >
+                    <Bell className={`w-3.5 h-3.5 ${isAlertOn ? "fill-current" : ""}`} />
+                    {isAlertOn ? "Alert Active" : "Get Alert"}
                   </Button>
                   <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50 h-8 text-xs" onClick={handleShare}>
                     {linkCopied ? <Check className="w-3.5 h-3.5 mr-1.5 text-teal-600" /> : <Share2 className="w-3.5 h-3.5 mr-1.5" />}
@@ -324,8 +411,8 @@ export function EligibilityAssessmentPage() {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <div className="flex items-start justify-between gap-6">
-            <div className="flex-1">
+          <div className="flex items-start justify-between gap-6 flex-wrap">
+            <div className="flex-1 min-w-0">
               <h1 className="text-[2.25rem] leading-tight text-gray-900" style={{ fontFamily: "Lustria, serif", fontWeight: 400 }}>
                 {GRANT_TITLE}
               </h1>
@@ -349,10 +436,14 @@ export function EligibilityAssessmentPage() {
             </div>
 
             <div className="flex flex-col items-end gap-3 shrink-0">
-              <div className="flex items-center gap-3">
-                <Button variant="outline" onClick={() => setIsSaved((v) => !v)} className={`gap-1.5 ${isSaved ? "border-teal-200 bg-teal-50 text-teal-700" : ""}`}>
+              <div className="flex items-center gap-3 flex-wrap justify-end">
+                <Button variant="outline" onClick={toggleSaveGrant} className={`gap-1.5 ${isSaved ? "border-teal-200 bg-teal-50 text-teal-700" : ""}`}>
                   <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
                   {isSaved ? "Saved" : "Save"}
+                </Button>
+                <Button variant="outline" onClick={toggleGrantAlert} className={`gap-1.5 ${isAlertOn ? "border-teal-200 bg-teal-50 text-teal-700" : ""}`}>
+                  <Bell className={`w-4 h-4 ${isAlertOn ? "fill-current" : ""}`} />
+                  {isAlertOn ? "Alert Active" : "Get Alert"}
                 </Button>
                 <Button variant="outline" onClick={handleShare} className="gap-1.5">
                   {linkCopied ? <Check className="w-4 h-4 text-teal-600" /> : <Share2 className="w-4 h-4" />}
