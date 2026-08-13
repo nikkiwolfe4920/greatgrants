@@ -20,6 +20,7 @@ import { MyGrantReadiness } from "./pages/MyGrantReadiness.tsx";
 import { EligibilityAssessmentPage } from "./pages/EligibilityAssessmentPage";
 import { DesignSystemPage } from "./pages/DesignSystemPage";
 import { CopyPage } from "./pages/CopyPage";
+import { EmailsPage } from "./pages/EmailsPage";
 import { SuperAdminIAPage } from "./pages/SuperAdminIAPage";
 import { SuperAdminSearchPage } from "./pages/SuperAdminSearchPage";
 import { SubscribeEntryPage } from "./pages/SubscribeEntryPage";
@@ -83,6 +84,10 @@ const routes = [
   {
     path: "/copy",
     element: <CopyPage />,
+  },
+  {
+    path: "/emails",
+    element: <EmailsPage />,
   },
   {
     path: "/super-admin",
