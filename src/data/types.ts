@@ -213,14 +213,13 @@ export interface GrantAlert {
   searchQuery?: string;
   filters: GrantFilter[];
   programs: string[];
-  // Links this alert to a specific Program record (see the `Project` type in
-  // ProjectDetailsPage.tsx). Set when the alert was created/enabled from a
-  // program's own page rather than from a free-text search, so it survives
-  // program renames — `programs` above stores display titles only.
+  // Legacy field from the removed program-level "Weekly Grant Alert" toggle
+  // (formerly on ProjectDetailsPage.tsx). No longer written by any live flow;
+  // kept optional so old localStorage records don't break parsing.
   programId?: string;
   // Links this alert to a single Grant search result (see GrantSearch.tsx /
   // GrantDetailPage.tsx and useGrantAlerts). Set when the alert is the
-  // per-grant "Get Alert" toggle rather than a saved-search or program alert.
+  // per-grant "Get Alert" toggle — the only alert entry point in the product.
   // Independent of `saved_grants` — see useSavedGrants — a grant can be
   // alerted, saved, both, or neither.
   grantId?: string;

@@ -1,17 +1,12 @@
 /**
  * useGrantAlerts
  *
- * Single source of truth for the per-grant "Get Alert" feature. This reuses
- * the existing `grantAlerts` localStorage record (the `GrantAlert` shape in
- * `@/data/types`) that already backs two other alert entry points:
- *   - the Grant Search "Save as Alert" flow (a saved-search alert)
- *   - the Program "Weekly Grant Alert" toggle on ProjectDetailsPage, linked
- *     via `programId`
- *
- * This hook adds a third, independent linkage — `grantId` — for subscribing
- * to updates on one specific grant surfaced in search results or on its
- * detail page. Records are disambiguated purely by which id field is set, so
- * this shares storage with zero risk of colliding with the other two flows.
+ * Single source of truth for the per-grant "Get Alert" feature — the only
+ * grant-alert entry point in the product. Turned on from a grant list item
+ * on /search or from a grant's own detail page, linked via `grantId` (the
+ * `GrantAlert` shape in `@/data/types`) in the `grantAlerts` localStorage
+ * record. Account Settings → Emails reads this same record, filtered to
+ * `grantId`-linked entries, as the list of Grant Opportunity Alerts.
  *
  * Get Alert is intentionally independent from Save Grant (see
  * useSavedGrants). Do not add save side-effects here.

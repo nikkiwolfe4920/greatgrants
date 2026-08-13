@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { FolderOpen, Plus, MapPin, Users, Upload, X, FileText, Edit2, Trash2, ChevronDown, ChevronUp, AlertCircle, FileCheck, Clock, DollarSign, UserCircle2, Check, Info, Globe, Bell } from "lucide-react";
+import { FolderOpen, Plus, MapPin, Users, Upload, X, FileText, Edit2, Trash2, ChevronDown, ChevronUp, AlertCircle, FileCheck, Clock, DollarSign, UserCircle2, Check, Info, Globe } from "lucide-react";
 import { Link } from "react-router";
-import { toast } from "sonner";
 import { Button } from "../components/ui/button";
 import {
   Dialog,
@@ -205,13 +204,6 @@ export function ProjectDetailsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
   const [showCreateFromDocumentModal, setShowCreateFromDocumentModal] = useState(false);
-  const [showAlertPrompt, setShowAlertPrompt] = useState(false);
-  const [alertPromptProject, setAlertPromptProject] = useState<Project | null>(null);
-
-  // Weekly grant alerts — reuses the same "grantAlerts" localStorage record
-  // shape created by the Grant Search "Save as Alert" flow, linked here to a
-  // specific program via `programId`.
-  const [grantAlerts, setGrantAlerts] = useState<any[]>([]);
 
   // Form states for the inline "add" rows
   const [geoForm, setGeoForm] = useState({ country: "USA", state: "", name: "" });
@@ -224,21 +216,15 @@ export function ProjectDetailsPage() {
   const [customCategory, setCustomCategory] = useState("");
   const [hasHydrated, setHasHydrated] = useState(false);
 
-  // Load previously published programs and any existing grant alerts on mount.
-  // Gates the write-effect below via `hasHydrated` so it doesn't clobber
-  // localStorage with the initial empty `projects` state before this runs.
+  // Load previously published programs on mount. Gates the write-effect below
+  // via `hasHydrated` so it doesn't clobber localStorage with the initial
+  // empty `projects` state before this runs.
   useEffect(() => {
     try {
       const savedProjects = localStorage.getItem("projects");
       if (savedProjects) setProjects(JSON.parse(savedProjects));
     } catch (error) {
       console.error("Failed to load projects", error);
-    }
-    try {
-      const savedAlerts = localStorage.getItem("grantAlerts");
-      if (savedAlerts) setGrantAlerts(JSON.parse(savedAlerts));
-    } catch (error) {
-      console.error("Failed to load grant alerts", error);
     }
     setHasHydrated(true);
   }, []);
@@ -298,67 +284,6 @@ export function ProjectDetailsPage() {
     setContactForm({ firstName: "", lastName: "", email: "", phone: "" });
     setUrlInput("");
     setUrlTouched(false);
-  };
-
-  // --- Program weekly alerts -------------------------------------------------
-  // Reuses the exact "grantAlerts" localStorage record shape created by the
-  // Grant Search "Save as Alert" flow (see GrantSearch.tsx), linked to a
-  // specific program via `programId` so the alert survives program title edits
-  // and is manageable from Settings → Emails, same as any other grant alert.
-  const persistGrantAlerts = (alerts: any[]) => {
-    setGrantAlerts(alerts);
-    localStorage.setItem("grantAlerts", JSON.stringify(alerts));
-  };
-
-  const getProgramAlert = (programId: string) =>
-    grantAlerts.find((alert) => alert.programId === programId);
-
-  const isProgramAlertEnabled = (programId: string) =>
-    getProgramAlert(programId)?.enabled === true;
-
-  const handleToggleProgramAlert = (
-    project: Project,
-    enabled: boolean,
-    options?: { silent?: boolean }
-  ) => {
-    const existing = getProgramAlert(project.id);
-
-    const updatedAlerts = existing
-      ? grantAlerts.map((alert) =>
-          alert.id === existing.id ? { ...alert, enabled } : alert
-        )
-      : [
-          ...grantAlerts,
-          {
-            id: `alert-${Date.now()}`,
-            name: `${project.title} Weekly Alert`,
-            frequency: "Weekly",
-            email: "olivia@untitledu.com",
-            searchQuery: "",
-            filters: [],
-            programs: [project.title],
-            programId: project.id,
-            alertsSent: 0,
-            enabled,
-            createdAt: new Date().toISOString(),
-          },
-        ];
-
-    persistGrantAlerts(updatedAlerts);
-
-    if (options?.silent) return;
-
-    if (enabled) {
-      toast.success("Weekly alert turned on", {
-        description: `You'll get an email when new grants match "${project.title}".`,
-        duration: 4000,
-      });
-    } else {
-      toast("Weekly alert turned off", {
-        description: `You won't receive emails for "${project.title}" until you turn it back on.`,
-        duration: 4000,
-      });
-    }
   };
 
   const buildProjectRecord = (now: number): Project => ({
@@ -428,11 +353,6 @@ export function ProjectDetailsPage() {
     } else {
       const newProject: Project = { ...buildProjectRecord(now), publishedAt: now };
       setProjects([...projects, newProject]);
-      // Default weekly alerts ON for a newly published program — silent because
-      // the post-creation prompt below is the confirmation for this moment.
-      handleToggleProgramAlert(newProject, true, { silent: true });
-      setAlertPromptProject(newProject);
-      setShowAlertPrompt(true);
     }
 
     setIsCreatingProject(false);
@@ -1317,12 +1237,6 @@ export function ProjectDetailsPage() {
                         <span className="px-2.5 py-0.5 bg-teal-100 text-teal-700 text-xs font-medium rounded-full">
                           Published
                         </span>
-                        {isProgramAlertEnabled(project.id) && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
-                            <Bell className="w-3 h-3" />
-                            Weekly Alerts On
-                          </span>
-                        )}
                       </div>
                       <p className="text-sm text-gray-600 mb-3">{project.summary}</p>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -1378,35 +1292,6 @@ export function ProjectDetailsPage() {
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
-                  </div>
-
-                  {/* Weekly Grant Alert — persistent, discoverable entry point for a
-                      program-level alert. No search text required to turn this on. */}
-                  <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                    <div className="min-w-0">
-                      <label
-                        htmlFor={`alert-toggle-${project.id}`}
-                        className="font-medium text-gray-900 cursor-pointer flex items-center gap-2"
-                      >
-                        <Bell className="w-4 h-4 text-teal-600 flex-shrink-0" />
-                        Weekly grant alert
-                      </label>
-                      <p className="text-sm text-gray-600 mt-0.5">
-                        Weekly email when new grants match this program. Manage anytime in{" "}
-                        <Link
-                          to="/settings?tab=emails"
-                          className="font-medium text-teal-700 hover:text-teal-800 underline"
-                        >
-                          Settings
-                        </Link>.
-                      </p>
-                    </div>
-                    <Switch
-                      id={`alert-toggle-${project.id}`}
-                      checked={isProgramAlertEnabled(project.id)}
-                      onCheckedChange={(checked) => handleToggleProgramAlert(project, checked)}
-                      className="flex-shrink-0"
-                    />
                   </div>
 
                   {/* Expanded Details */}
@@ -1672,65 +1557,6 @@ export function ProjectDetailsPage() {
         onOpenChange={setShowCreateFromDocumentModal}
         onProcessDocument={handleCreateProgramFromDocument}
       />
-
-      {/* Weekly Alert Prompt — shown immediately after a program is published,
-          inviting the user to keep the default-on weekly alert running. */}
-      <Dialog open={showAlertPrompt} onOpenChange={setShowAlertPrompt}>
-        <DialogContent className="sm:max-w-[480px]">
-          <DialogHeader>
-            <div className="w-11 h-11 rounded-full bg-teal-50 flex items-center justify-center mb-1">
-              <Bell className="w-5 h-5 text-teal-600" />
-            </div>
-            <DialogTitle style={{ fontFamily: "Lustria, serif" }}>
-              Program published — stay in the loop
-            </DialogTitle>
-            <DialogDescription>
-              We've turned on a weekly grant alert for{" "}
-              <span className="font-medium text-gray-900">"{alertPromptProject?.title}"</span>{" "}
-              so you'll get an email the moment new matching grants appear. No search text required.
-            </DialogDescription>
-          </DialogHeader>
-
-          {alertPromptProject && (
-            <div className="flex items-center justify-between gap-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-              <div>
-                <label htmlFor="alert-prompt-toggle" className="font-medium text-gray-900 cursor-pointer">
-                  Weekly grant alert
-                </label>
-                <p className="text-sm text-gray-600 mt-0.5">
-                  Weekly email when new grants match this program.
-                </p>
-              </div>
-              <Switch
-                id="alert-prompt-toggle"
-                checked={isProgramAlertEnabled(alertPromptProject.id)}
-                onCheckedChange={(checked) => handleToggleProgramAlert(alertPromptProject, checked)}
-                className="flex-shrink-0"
-              />
-            </div>
-          )}
-
-          <p className="text-xs text-gray-500">
-            You can turn this on or off anytime from this program, or manage it in{" "}
-            <Link
-              to="/settings?tab=emails"
-              onClick={() => setShowAlertPrompt(false)}
-              className="font-medium text-teal-700 hover:text-teal-800 underline"
-            >
-              Settings
-            </Link>.
-          </p>
-
-          <DialogFooter>
-            <Button
-              onClick={() => setShowAlertPrompt(false)}
-              className="bg-teal-600 hover:bg-teal-700 text-white w-full sm:w-auto"
-            >
-              Got it
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

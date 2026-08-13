@@ -26,7 +26,6 @@ import {
   SearchX,
   FolderOpen,
   Bell,
-  CheckCircle2,
   Bookmark,
   DollarSign,
   Info,
@@ -652,12 +651,6 @@ export function GrantSearch() {
   const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(false);
   const [filterNavigationStack, setFilterNavigationStack] = useState<FilterOption[]>([]);
   
-  // Save Alert Modal State
-  const [isSaveAlertModalOpen, setIsSaveAlertModalOpen] = useState(false);
-  const [alertName, setAlertName] = useState("");
-  const [alertFrequency, setAlertFrequency] = useState("Weekly");
-  const [isCreatingAlert, setIsCreatingAlert] = useState(false);
-
   // Unsave Dialog State
   const [unsaveDialogOpen, setUnsaveDialogOpen] = useState(false);
   const [grantToUnsave, setGrantToUnsave] = useState<Grant | null>(null);
@@ -1366,17 +1359,6 @@ export function GrantSearch() {
               </div>
 
               <div className="flex items-center gap-2">
-              {/* Save as Alert Button */}
-              <Button 
-                variant="default" 
-                size="sm" 
-                className="gap-2 bg-teal-600 hover:bg-teal-700 text-white"
-                onClick={() => setIsSaveAlertModalOpen(true)}
-              >
-                <Bell className="w-3.5 h-3.5" />
-                Save as Alert
-              </Button>
-
               {/* View Toggle */}
               <div className="flex items-center bg-white border border-gray-200 rounded-lg p-0.5">
                 <button
@@ -1766,195 +1748,6 @@ export function GrantSearch() {
         </div>
       </aside>
     </div>
-
-    {/* Save Search as Alert Modal */}
-    <Dialog open={isSaveAlertModalOpen} onOpenChange={setIsSaveAlertModalOpen}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle className="text-xl" style={{ fontFamily: 'Lustria, serif' }}>
-            Save Search as Alert
-          </DialogTitle>
-          <DialogDescription>
-            Get notified when new grants match your current search criteria
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-6 py-4">
-          {/* Search Criteria Display */}
-          <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg p-4 border border-teal-100">
-            <div className="flex items-start gap-2 mb-3">
-              <Bell className="w-4 h-4 text-teal-600 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <h4 className="text-sm font-semibold text-teal-900 mb-1">Your Search Criteria</h4>
-                <p className="text-xs text-teal-700">You'll be notified about grants matching:</p>
-              </div>
-            </div>
-
-            {/* Programs Selected */}
-            {publishedProjects.length > 0 && selectedProject !== "all-projects" && (
-              <div className="mb-3">
-                <p className="text-xs font-medium text-teal-900 mb-1.5">Program(s)</p>
-                <div className="flex flex-wrap gap-1.5">
-                  <Badge className="bg-white text-teal-700 border border-teal-200 text-xs px-2 py-0.5">
-                    {publishedProjects.find(p => p.id === selectedProject)?.title || "Selected Program"}
-                  </Badge>
-                </div>
-              </div>
-            )}
-
-            {/* Search Prompt */}
-            {searchQuery && (
-              <div className="mb-3">
-                <p className="text-xs font-medium text-teal-900 mb-1.5">Search Prompt</p>
-                <p className="text-xs text-teal-700 bg-white rounded px-2 py-1.5 border border-teal-100">
-                  "{searchQuery}"
-                </p>
-              </div>
-            )}
-
-            {/* Filter Tags */}
-            {advancedFilters.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-teal-900 mb-1.5">Filters</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {advancedFilters.map(filter => (
-                    <Badge key={filter.id} className="bg-white text-teal-700 border border-teal-200 text-xs px-2 py-0.5">
-                      {filter.label}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Alert Name */}
-          <div className="space-y-2">
-            <Label htmlFor="alertName" className="text-sm font-medium text-gray-900">
-              Alert Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="alertName"
-              value={alertName}
-              onChange={(e) => setAlertName(e.target.value)}
-              placeholder="My Grant Alert"
-              className="w-full"
-            />
-          </div>
-
-          {/* Email Address */}
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium text-gray-900">
-              Email Address
-            </Label>
-            <Input
-              id="email"
-              value="olivia@untitledu.com"
-              disabled
-              className="w-full bg-gray-50 cursor-not-allowed"
-            />
-          </div>
-
-          {/* Notification Frequency */}
-          <div className="space-y-2">
-            <Label htmlFor="frequency" className="text-sm font-medium text-gray-900">
-              Notification Frequency
-            </Label>
-            <Select value={alertFrequency} onValueChange={setAlertFrequency}>
-              <SelectTrigger id="frequency" className="w-full border-gray-200">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Weekly">Weekly</SelectItem>
-                <SelectItem value="Bi-Weekly">Bi-Weekly</SelectItem>
-                <SelectItem value="Monthly">Monthly</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Info Message */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex gap-2">
-            <div className="text-blue-600 flex-shrink-0 mt-0.5">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8 0C3.6 0 0 3.6 0 8C0 12.4 3.6 16 8 16C12.4 16 16 12.4 16 8C16 3.6 12.4 0 8 0ZM8 12C7.4 12 7 11.6 7 11C7 10.4 7.4 10 8 10C8.6 10 9 10.4 9 11C9 11.6 8.6 12 8 12ZM9 9H7V4H9V9Z" fill="currentColor"/>
-              </svg>
-            </div>
-            <p className="text-xs text-blue-700 leading-relaxed">
-              We'll email you once a week with new grants. You can manage or delete this alert anytime in{" "}
-              <button 
-                className="font-semibold underline hover:text-blue-800"
-                onClick={() => {
-                  setIsSaveAlertModalOpen(false);
-                  navigate("/settings");
-                }}
-              >
-                Settings
-              </button>.
-            </p>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setIsSaveAlertModalOpen(false);
-              setAlertName("");
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            className="bg-teal-600 hover:bg-teal-700 text-white"
-            disabled={!alertName.trim() || isCreatingAlert}
-            onClick={async () => {
-              setIsCreatingAlert(true);
-              
-              // Save the alert to localStorage
-              const newAlert = {
-                id: `alert-${Date.now()}`,
-                name: alertName,
-                frequency: alertFrequency,
-                email: "olivia@untitledu.com",
-                searchQuery: searchQuery,
-                filters: advancedFilters,
-                programs: selectedProject !== "all-projects" 
-                  ? [publishedProjects.find(p => p.id === selectedProject)?.title || ""]
-                  : [],
-                alertsSent: 0,
-                enabled: true,
-                createdAt: new Date().toISOString(),
-              };
-
-              const existingAlerts = JSON.parse(localStorage.getItem("grantAlerts") || "[]");
-              localStorage.setItem("grantAlerts", JSON.stringify([...existingAlerts, newAlert]));
-
-              // Show success toast with elegant styling
-              toast.success("Alert created successfully!", {
-                description: `You'll receive ${alertFrequency.toLowerCase()} updates for "${alertName}"`,
-                duration: 4000,
-              });
-
-              // Wait a moment to show the success state
-              await new Promise(resolve => setTimeout(resolve, 600));
-
-              // Close modal and reset state
-              setIsSaveAlertModalOpen(false);
-              setAlertName("");
-              setIsCreatingAlert(false);
-            }}
-          >
-            {isCreatingAlert ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 mr-2 animate-in fade-in zoom-in" />
-                Created!
-              </>
-            ) : (
-              "Create Alert"
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
 
     {/* Unsave Confirmation Dialog */}
     <Dialog open={unsaveDialogOpen} onOpenChange={setUnsaveDialogOpen}>
