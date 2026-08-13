@@ -43,13 +43,6 @@ import {
 } from "@/app/components/ui/alert-dialog";
 import { SuccessNotification } from "@/app/components/SuccessNotification";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/app/components/ui/select";
-import {
   Breadcrumb,
   BreadcrumbList,
   BreadcrumbItem,
@@ -61,6 +54,13 @@ import {
 import { Link } from "react-router";
 
 // Grant Alerts Manager Component
+//
+// Shows Grant Opportunity alerts only — the ones created via the "Get Alert"
+// toggle on a grant list item on /search or on a grant's own detail page
+// (see useGrantAlerts.ts). Saved-search and program-level alerts have been
+// removed, but older localStorage records without a `grantId` may still
+// exist from before that removal, so we filter them out here rather than
+// assume the array is already clean.
 function GrantAlertsManager() {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [deleteAlertId, setDeleteAlertId] = useState<string | null>(null);
@@ -68,32 +68,27 @@ function GrantAlertsManager() {
   // Load alerts from localStorage
   useEffect(() => {
     const savedAlerts = JSON.parse(localStorage.getItem("grantAlerts") || "[]");
-    setAlerts(savedAlerts);
+    setAlerts(savedAlerts.filter((alert: any) => !!alert.grantId));
   }, []);
 
-  // Toggle alert enabled/disabled
+  // Toggle alert enabled/disabled. Writes back against the full (unfiltered)
+  // stored list so any other alert records aren't dropped.
   const toggleAlert = (alertId: string) => {
-    const updatedAlerts = alerts.map(alert =>
+    const allAlerts = JSON.parse(localStorage.getItem("grantAlerts") || "[]");
+    const updatedAllAlerts = allAlerts.map((alert: any) =>
       alert.id === alertId ? { ...alert, enabled: !alert.enabled } : alert
     );
-    setAlerts(updatedAlerts);
-    localStorage.setItem("grantAlerts", JSON.stringify(updatedAlerts));
+    localStorage.setItem("grantAlerts", JSON.stringify(updatedAllAlerts));
+    setAlerts(updatedAllAlerts.filter((alert: any) => !!alert.grantId));
   };
 
-  // Update alert frequency
-  const updateFrequency = (alertId: string, frequency: string) => {
-    const updatedAlerts = alerts.map(alert =>
-      alert.id === alertId ? { ...alert, frequency } : alert
-    );
-    setAlerts(updatedAlerts);
-    localStorage.setItem("grantAlerts", JSON.stringify(updatedAlerts));
-  };
-
-  // Delete alert
+  // Delete alert. Writes back against the full (unfiltered) stored list so
+  // any other alert records aren't dropped.
   const deleteAlert = (alertId: string) => {
-    const updatedAlerts = alerts.filter(alert => alert.id !== alertId);
-    setAlerts(updatedAlerts);
-    localStorage.setItem("grantAlerts", JSON.stringify(updatedAlerts));
+    const allAlerts = JSON.parse(localStorage.getItem("grantAlerts") || "[]");
+    const remainingAllAlerts = allAlerts.filter((alert: any) => alert.id !== alertId);
+    localStorage.setItem("grantAlerts", JSON.stringify(remainingAllAlerts));
+    setAlerts(remainingAllAlerts.filter((alert: any) => !!alert.grantId));
     setDeleteAlertId(null);
   };
 
@@ -130,21 +125,6 @@ function GrantAlertsManager() {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Frequency Dropdown */}
-              <Select 
-                value={alert.frequency} 
-                onValueChange={(value) => updateFrequency(alert.id, value)}
-              >
-                <SelectTrigger className="w-[110px] h-9 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Weekly">Weekly</SelectItem>
-                  <SelectItem value="Bi-Weekly">Bi-Weekly</SelectItem>
-                  <SelectItem value="Monthly">Monthly</SelectItem>
-                </SelectContent>
-              </Select>
-
               {/* Toggle Switch */}
               <Switch 
                 checked={alert.enabled}
@@ -891,21 +871,15 @@ export function AccountSettingsComprehensive({ onBack, onAccountDeleted }: Accou
                   <h2 className="text-base font-semibold text-gray-900">Grant Opportunity Alerts</h2>
                 </div>
                 <p className="text-sm text-gray-600 mb-6">
-                  Get automatic email notifications about grants matching your criteria. Turn on a weekly
-                  alert for any of your programs from{" "}
-                  <button
-                    className="text-teal-600 hover:text-teal-700 font-medium underline"
-                    onClick={() => navigate('/project-details')}
-                  >
-                    My Programs
-                  </button>
-                  , or{" "}
+                  Get automatic email notifications about grant opportunities you're tracking. Select
+                  "Get Alert" on a grant from{" "}
                   <button
                     className="text-teal-600 hover:text-teal-700 font-medium underline"
                     onClick={() => navigate('/search')}
                   >
-                    start a new search
-                  </button>.
+                    search results
+                  </button>{" "}
+                  or its grant opportunity page to add it here.
                 </p>
 
                 {/* Load and Display Saved Alerts */}
