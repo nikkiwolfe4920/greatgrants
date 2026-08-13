@@ -6,19 +6,26 @@ import { GrantMatchCard } from "./GrantMatchCard";
 import { AlertUpdateList } from "./AlertUpdateList";
 import { weeklyDigestEmailMock, type AlertDigestSection } from "@/data/emailAlerts";
 
+const ALERT_KIND_LABEL: Record<AlertDigestSection["kind"], string> = {
+  grant: "Grant alert",
+  "saved-search": "Saved search alert",
+  program: "Program alert",
+};
+
 /**
  * Figma node 13014:42002 — "Grant Alert / Duration Email".
  *
  * The Figma frame only shows one alert's generic "Top Matches for You" list.
  * Per the product goal, ONE weekly email must roll up every alert type a
- * user has active — grant-specific alerts (date/amendment/status/sponsor/
- * NOFO changes) and saved-search alerts alike — each with its own change
- * log and top-3 matches, instead of a separate email per alert per change.
- * This component keeps the Figma frame's visual language (card list +
+ * user has active — grant alerts, saved-search alerts, and program alerts
+ * alike (see AlertDigestSection in @/data/emailAlerts for what distinguishes
+ * them) — each with its own top matches, instead of a separate email per
+ * alert. This component keeps the Figma frame's visual language (card list +
  * teal "want better results" CTA) but repeats it once per saved alert via
- * `AlertDigestSection`, and adds an update feed above each alert's matches
- * so date/amendment/status/sponsor/NOFO changes are visible in the same
- * send instead of being their own emails.
+ * `AlertDigestSection`. Only "grant" sections get a "what's changed" feed
+ * above their matches — a saved-search or program alert isn't tied to one
+ * grant, so there's no single grant's date/amendment/status/sponsor/NOFO
+ * history to report; they only ever surface new matches.
  */
 export function WeeklyAlertDigestEmail() {
   const { username, weekOf, sections } = weeklyDigestEmailMock;
@@ -64,7 +71,7 @@ function AlertSection({ section, isLast }: { section: AlertDigestSection; isLast
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-base font-semibold text-gray-900">{section.alertName}</h2>
           <Badge variant="outline" className="border-gray-200 text-gray-500">
-            {section.kind === "grant" ? "Grant alert" : "Saved search alert"}
+            {ALERT_KIND_LABEL[section.kind]}
           </Badge>
         </div>
         <a href="#" className="text-xs font-medium text-teal-700 underline hover:text-teal-800">
@@ -72,7 +79,7 @@ function AlertSection({ section, isLast }: { section: AlertDigestSection; isLast
         </a>
       </div>
 
-      {section.updates.length > 0 && (
+      {section.kind === "grant" && section.updates.length > 0 && (
         <div className="mt-4 rounded-xl bg-gray-50 p-4">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
             What&rsquo;s changed
@@ -81,7 +88,11 @@ function AlertSection({ section, isLast }: { section: AlertDigestSection; isLast
         </div>
       )}
 
-      <h3 className="mt-6 text-sm font-semibold text-gray-900">Top matches for {section.alertName}</h3>
+      <h3 className="mt-6 text-sm font-semibold text-gray-900">
+        {section.kind === "program"
+          ? `Top Grants that Match ${section.alertName}`
+          : `Top matches similar to ${section.alertName}`}
+      </h3>
       <div className="mt-3 flex flex-col gap-4">
         {section.matches.map((match) => (
           <GrantMatchCard key={match.id} match={match} />

@@ -68,9 +68,9 @@ export function EmailsPage() {
           description={
             <>
               Figma node 13014:42002, extended into the combined weekly send: one email rolls up{" "}
-              <em>every</em> saved alert &mdash; date changes, amendments, opening/status changes,
-              agency/sponsor changes, and NOFO section edits &mdash; each with its own top-3 matches,
-              instead of a separate email per alert per change.
+              <em>every</em> saved alert &mdash; grant alerts (with their date, amendment,
+              status, sponsor, and NOFO section changes), saved-search alerts, and program
+              alerts &mdash; each with its own top matches, instead of a separate email per alert.
             </>
           }
         >
