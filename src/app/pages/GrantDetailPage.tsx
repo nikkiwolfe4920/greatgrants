@@ -21,7 +21,7 @@ import {
   ArrowRight,
   Shield,
   Bookmark,
-  Bell,
+  Eye,
   ChevronDown,
   ChevronUp,
   X
@@ -41,6 +41,7 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { ApplicationLoadingModal } from "../components/ApplicationLoadingModal";
 import { ShareGrantModal } from "../components/ShareGrantModal";
 import { GrantAlertCrossSellDialog, CrossSellDirection } from "../components/GrantAlertCrossSellDialog";
+import { StopWatchingDialog } from "../components/StopWatchingDialog";
 import { useSavedGrants } from "@/hooks/useSavedGrants";
 import { useGrantAlerts } from "@/hooks/useGrantAlerts";
 
@@ -332,18 +333,22 @@ export function GrantDetailPage() {
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
 
-  // Save Grant and Get Alert are independent booleans backed by their own
+  // Save Grant and Watch are independent booleans backed by their own
   // data models — saved_grants (useSavedGrants) and grant_alerts
   // (useGrantAlerts). Same source of truth as the search cards, so state
   // stays consistent whichever surface the user toggles from.
   const { isGrantSaved, saveGrant, unsaveGrant } = useSavedGrants();
-  const { isGrantAlertEnabled, setAlertEnabled } = useGrantAlerts();
+  const { isGrantAlertEnabled, setAlertEnabled, removeAlert } = useGrantAlerts();
   const isSaved = grant ? isGrantSaved(grant.id) : false;
   const isAlertOn = grant ? isGrantAlertEnabled(grant.id) : false;
 
-  // Save ⇄ Alert Cross-Sell Dialog State — see GrantAlertCrossSellDialog.
+  // Save → Watch Cross-Sell Dialog State — see GrantAlertCrossSellDialog.
+  // Watch itself never triggers this — turning Watch on only shows a toast.
   const [crossSellOpen, setCrossSellOpen] = useState(false);
   const [crossSellDirection, setCrossSellDirection] = useState<CrossSellDirection>("save-to-alert");
+
+  // Stop Watching Dialog State — confirmation shown before turning off Watch.
+  const [stopWatchingDialogOpen, setStopWatchingDialogOpen] = useState(false);
 
   useEffect(() => {
     if (grant) {
@@ -372,15 +377,24 @@ export function GrantDetailPage() {
     }
   };
 
-  const toggleGrantAlert = () => {
+  const toggleWatch = () => {
     if (!grant) return;
-    const nextEnabled = !isAlertOn;
-    setAlertEnabled(grant, nextEnabled);
-    // Alert → Save cross-sell: optional, declinable, never auto-saves.
-    if (nextEnabled && !isSaved) {
-      setCrossSellDirection("alert-to-save");
-      setCrossSellOpen(true);
+
+    if (isAlertOn) {
+      // Turning Watch off is destructive (deletes the alert) — confirm first.
+      setStopWatchingDialogOpen(true);
+      return;
     }
+
+    // Turning Watch on is instant — no modal, just a toast (see useGrantAlerts).
+    setAlertEnabled(grant, true);
+  };
+
+  const confirmStopWatching = () => {
+    if (grant) {
+      removeAlert(grant.id, { grantTitle: grant.title });
+    }
+    setStopWatchingDialogOpen(false);
   };
 
   useEffect(() => {
@@ -488,10 +502,10 @@ export function GrantDetailPage() {
                     <Bookmark className={`w-3.5 h-3.5 ${isSaved ? "fill-current" : ""}`} />
                     {isSaved ? "Saved" : "Save"}
                   </Button>
-                  <Button variant="outline" size="sm" onClick={toggleGrantAlert}
+                  <Button variant="outline" size="sm" onClick={toggleWatch}
                     className={`gap-1.5 h-8 text-xs ${isAlertOn ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"}`}>
-                    <Bell className={`w-3.5 h-3.5 ${isAlertOn ? "fill-current" : ""}`} />
-                    {isAlertOn ? "Alert Active" : "Get Alert"}
+                    <Eye className="w-3.5 h-3.5" />
+                    {isAlertOn ? "Watching" : "Watch"}
                   </Button>
                   <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50 h-8 text-xs" onClick={handleShareGrant}>
                     <Share2 className="w-3.5 h-3.5 mr-1.5" />
@@ -578,12 +592,12 @@ export function GrantDetailPage() {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={toggleGrantAlert}
+                    onClick={toggleWatch}
                     className={`gap-1.5 ${isAlertOn ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"}`}
                     style={{ fontFamily: 'Cabin, sans-serif' }}
                   >
-                    <Bell className={`w-4 h-4 ${isAlertOn ? "fill-current" : ""}`} />
-                    {isAlertOn ? "Alert Active" : "Get Alert"}
+                    <Eye className="w-4 h-4" />
+                    {isAlertOn ? "Watching" : "Watch"}
                   </Button>
                   <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 font-medium" style={{ fontFamily: 'Cabin, sans-serif' }} onClick={handleShareGrant}>
                     <Share2 className="w-4 h-4 mr-2" />
@@ -1058,23 +1072,24 @@ export function GrantDetailPage() {
         grant={grant}
       />
 
-      {/* Save ⇄ Alert Cross-Sell */}
+      {/* Save → Watch Cross-Sell */}
       <GrantAlertCrossSellDialog
         open={crossSellOpen}
         onOpenChange={setCrossSellOpen}
         direction={crossSellDirection}
         grantTitle={grant.title}
-        onAccept={() => {
-          if (crossSellDirection === "save-to-alert") {
-            setAlertEnabled(grant, true);
-          } else {
-            saveGrant(grant);
-          }
-        }}
+        onAccept={() => setAlertEnabled(grant, true)}
         onDecline={() => {
-          // Intentionally a no-op: declining leaves the action the user
-          // already took untouched — see GrantAlertCrossSellDialog.
+          // Intentionally a no-op: declining leaves Save on and Watch off,
+          // untouched — see GrantAlertCrossSellDialog.
         }}
+      />
+
+      {/* Stop Watching Confirmation */}
+      <StopWatchingDialog
+        open={stopWatchingDialogOpen}
+        onOpenChange={setStopWatchingDialogOpen}
+        onConfirm={confirmStopWatching}
       />
     </div>
   );

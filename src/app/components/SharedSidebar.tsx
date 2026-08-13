@@ -13,6 +13,7 @@ import {
   Sparkles,
   AlertCircle,
   Bookmark,
+  Eye,
   Clock,
   Loader2,
   Menu,
@@ -91,6 +92,7 @@ export function SharedSidebar() {
   const [isLoadingOrganization, setIsLoadingOrganization] = useState(false);
   const [publishedProjectsCount, setPublishedProjectsCount] = useState(0);
   const [savedGrantsCount, setSavedGrantsCount] = useState(0);
+  const [watchListCount, setWatchListCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
 
@@ -99,6 +101,7 @@ export function SharedSidebar() {
   const isApplicationSectionPage = location.pathname.startsWith("/application/");
   const isGrantDetailPage = location.pathname.startsWith("/grant/");
   const isSavedGrantsPage = location.pathname === "/saved-grants";
+  const isWatchListPage = location.pathname === "/watch-list";
 
   const isOrgProfileComplete = orgProfileItemsRemaining === 0;
   const hasPublishedPrograms = publishedProjectsCount >= 1;
@@ -133,6 +136,20 @@ export function SharedSidebar() {
     updateSavedGrantsCount();
     window.addEventListener("savedGrantsUpdated", updateSavedGrantsCount);
     return () => window.removeEventListener("savedGrantsUpdated", updateSavedGrantsCount);
+  }, []);
+
+  // Watch List count — grants being watched via the "Watch" toggle on
+  // /search, a grant detail page, or /eligibility-assessment (see
+  // useGrantAlerts). Mirrors the Saved Grants count pattern above.
+  useEffect(() => {
+    const updateWatchListCount = () => {
+      const alerts = JSON.parse(localStorage.getItem("grantAlerts") || "[]");
+      const watched = Array.isArray(alerts) ? alerts.filter((a: any) => !!a.grantId) : [];
+      setWatchListCount(watched.length);
+    };
+    updateWatchListCount();
+    window.addEventListener("grantAlertsUpdated", updateWatchListCount);
+    return () => window.removeEventListener("grantAlertsUpdated", updateWatchListCount);
   }, []);
 
   const handleOrganizationSwitch = (orgName: string) => {
@@ -297,6 +314,25 @@ export function SharedSidebar() {
               {savedGrantsCount > 0 && (
                 <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0">
                   {savedGrantsCount}
+                </span>
+              )}
+            </button>
+          </li>
+
+          {/* 4. Watch List */}
+          <li>
+            <button
+              onClick={() => navigate("/watch-list")}
+              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
+                isWatchListPage ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-100"
+              }`}
+              style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isWatchListPage ? 600 : 400, fontSize: '14px' }}
+            >
+              <Eye className="w-4 h-4 shrink-0" />
+              <span className="flex-1 truncate">Watch List</span>
+              {watchListCount > 0 && (
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0">
+                  {watchListCount}
                 </span>
               )}
             </button>

@@ -8,7 +8,7 @@ import {
   ArrowRight,
   ArrowLeft,
   Bookmark,
-  Bell,
+  Eye,
   Share2,
   FolderPlus,
   CheckCircle2,
@@ -33,6 +33,7 @@ import { Button } from "@/app/components/ui/button";
 import { EligibilityWorkflowPanel } from "@/app/components/eligibility/EligibilityWorkflowPanel";
 import { ApplicationLoadingModal } from "@/app/components/ApplicationLoadingModal";
 import { GrantAlertCrossSellDialog, CrossSellDirection } from "@/app/components/GrantAlertCrossSellDialog";
+import { StopWatchingDialog } from "@/app/components/StopWatchingDialog";
 import { useSavedGrants } from "@/hooks/useSavedGrants";
 import { useGrantAlerts } from "@/hooks/useGrantAlerts";
 
@@ -217,18 +218,22 @@ export function EligibilityAssessmentPage() {
   const [isSticky, setIsSticky] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
 
-  // Save Grant and Get Alert are independent booleans backed by their own
+  // Save Grant and Watch are independent booleans backed by their own
   // data models — saved_grants (useSavedGrants) and grant_alerts
   // (useGrantAlerts). Same source of truth as GrantSearch / GrantDetailPage,
   // so state stays consistent across every surface this opportunity appears.
   const { isGrantSaved, saveGrant, unsaveGrant } = useSavedGrants();
-  const { isGrantAlertEnabled, setAlertEnabled } = useGrantAlerts();
+  const { isGrantAlertEnabled, setAlertEnabled, removeAlert } = useGrantAlerts();
   const isSaved = isGrantSaved(GRANT_ID);
   const isAlertOn = isGrantAlertEnabled(GRANT_ID);
 
-  // Save ⇄ Alert Cross-Sell Dialog State — see GrantAlertCrossSellDialog.
+  // Save → Watch Cross-Sell Dialog State — see GrantAlertCrossSellDialog.
+  // Watch itself never triggers this — turning Watch on only shows a toast.
   const [crossSellOpen, setCrossSellOpen] = useState(false);
   const [crossSellDirection, setCrossSellDirection] = useState<CrossSellDirection>("save-to-alert");
+
+  // Stop Watching Dialog State — confirmation shown before turning off Watch.
+  const [stopWatchingDialogOpen, setStopWatchingDialogOpen] = useState(false);
 
   useEffect(() => {
     const scrollContainer = document.querySelector("main");
@@ -291,37 +296,44 @@ export function EligibilityAssessmentPage() {
     }
   };
 
-  const toggleGrantAlert = () => {
-    const nextEnabled = !isAlertOn;
-    setAlertEnabled(GRANT_RECORD, nextEnabled);
-    // Alert → Save cross-sell: optional, declinable, never auto-saves.
-    if (nextEnabled && !isSaved) {
-      setCrossSellDirection("alert-to-save");
-      setCrossSellOpen(true);
+  const toggleWatch = () => {
+    if (isAlertOn) {
+      // Turning Watch off is destructive (deletes the alert) — confirm first.
+      setStopWatchingDialogOpen(true);
+      return;
     }
+
+    // Turning Watch on is instant — no modal, just a toast (see useGrantAlerts).
+    setAlertEnabled(GRANT_RECORD, true);
+  };
+
+  const confirmStopWatching = () => {
+    removeAlert(GRANT_RECORD.id, { grantTitle: GRANT_RECORD.title });
+    setStopWatchingDialogOpen(false);
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <ApplicationLoadingModal isOpen={showApplicationLoading} grantTitle={GRANT_TITLE} grantId={GRANT_ID} />
 
-      {/* Save ⇄ Alert Cross-Sell */}
+      {/* Save → Watch Cross-Sell */}
       <GrantAlertCrossSellDialog
         open={crossSellOpen}
         onOpenChange={setCrossSellOpen}
         direction={crossSellDirection}
         grantTitle={GRANT_TITLE}
-        onAccept={() => {
-          if (crossSellDirection === "save-to-alert") {
-            setAlertEnabled(GRANT_RECORD, true);
-          } else {
-            saveGrant(GRANT_RECORD);
-          }
-        }}
+        onAccept={() => setAlertEnabled(GRANT_RECORD, true)}
         onDecline={() => {
-          // Intentionally a no-op: declining leaves the action the user
-          // already took untouched — see GrantAlertCrossSellDialog.
+          // Intentionally a no-op: declining leaves Save on and Watch off,
+          // untouched — see GrantAlertCrossSellDialog.
         }}
+      />
+
+      {/* Stop Watching Confirmation */}
+      <StopWatchingDialog
+        open={stopWatchingDialogOpen}
+        onOpenChange={setStopWatchingDialogOpen}
+        onConfirm={confirmStopWatching}
       />
 
       {/* Sticky condensed header — offset past the global sidebar (lg:w-60 / xl:w-64)
@@ -371,11 +383,11 @@ export function EligibilityAssessmentPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={toggleGrantAlert}
+                    onClick={toggleWatch}
                     className={`gap-1.5 h-8 text-xs ${isAlertOn ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"}`}
                   >
-                    <Bell className={`w-3.5 h-3.5 ${isAlertOn ? "fill-current" : ""}`} />
-                    {isAlertOn ? "Alert Active" : "Get Alert"}
+                    <Eye className="w-3.5 h-3.5" />
+                    {isAlertOn ? "Watching" : "Watch"}
                   </Button>
                   <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50 h-8 text-xs" onClick={handleShare}>
                     {linkCopied ? <Check className="w-3.5 h-3.5 mr-1.5 text-teal-600" /> : <Share2 className="w-3.5 h-3.5 mr-1.5" />}
@@ -441,9 +453,9 @@ export function EligibilityAssessmentPage() {
                   <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
                   {isSaved ? "Saved" : "Save"}
                 </Button>
-                <Button variant="outline" onClick={toggleGrantAlert} className={`gap-1.5 ${isAlertOn ? "border-teal-200 bg-teal-50 text-teal-700" : ""}`}>
-                  <Bell className={`w-4 h-4 ${isAlertOn ? "fill-current" : ""}`} />
-                  {isAlertOn ? "Alert Active" : "Get Alert"}
+                <Button variant="outline" onClick={toggleWatch} className={`gap-1.5 ${isAlertOn ? "border-teal-200 bg-teal-50 text-teal-700" : ""}`}>
+                  <Eye className="w-4 h-4" />
+                  {isAlertOn ? "Watching" : "Watch"}
                 </Button>
                 <Button variant="outline" onClick={handleShare} className="gap-1.5">
                   {linkCopied ? <Check className="w-4 h-4 text-teal-600" /> : <Share2 className="w-4 h-4" />}
