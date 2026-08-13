@@ -293,7 +293,7 @@ export const FOCUS_AREA_PARENT_ORDER: string[] = Object.keys(FOCUS_AREA_TAXONOMY
 export const FOCUS_AREA_MAX_SELECTIONS = 10;
 
 /** Selection count at which the field starts warning the user they're approaching the cap. */
-export const FOCUS_AREA_WARNING_THRESHOLD = 7;
+export const FOCUS_AREA_WARNING_THRESHOLD = 9;
 
 /**
  * Number of children shown under an expanded parent before the user has to
