@@ -8,9 +8,25 @@
  *     alert (grant-specific or saved-search, see useGrantAlerts /
  *     useSavedGrants / GrantFilter in @/data/types) finds new similar grants.
  *  2. A combined weekly digest — one email per user per week that rolls up
- *     EVERY alert they have active (grant alerts AND saved-search alerts)
- *     into a single send, each with its own change log and top matches,
+ *     EVERY alert they have active (grant alerts, saved-search alerts, AND
+ *     program alerts) into a single send, each with its own top matches,
  *     instead of a separate email per alert per change.
+ *
+ * There are three alert kinds, matching the three ways GrantAlert is
+ * disambiguated today (see useGrantAlerts.ts / ProjectDetailsPage.tsx):
+ *  - "grant"       — watching ONE specific grant a user already found (via
+ *                    grantId). This is the only kind with grant-level
+ *                    "what changed" events (date/amendment/status/sponsor/
+ *                    NOFO) — there's a single grant to track changes on.
+ *  - "saved-search" — watching free-text search criteria (via searchQuery/
+ *                    filters). No single grant to track changes on, so no
+ *                    "what's changed" — just fresh matches.
+ *  - "program"     — watching an org's own published Program for new
+ *                    matching grants (via programId, the "Weekly grant
+ *                    alert" toggle on ProjectDetailsPage). Also match-only,
+ *                    headed "Top Grants that Match {programName}" rather
+ *                    than "similar to" since it's matching against the
+ *                    program's profile, not a search string or a grant.
  *
  * Not wired to real data yet — this is preview content for the /emails page,
  * shaped to match GrantAlert so swapping in live data later is a straight
@@ -53,7 +69,7 @@ export interface EmailGrantMatch {
 export interface AlertDigestSection {
   alertId: string;
   alertName: string;
-  kind: "grant" | "saved-search";
+  kind: "grant" | "saved-search" | "program";
   updates: AlertUpdateEvent[];
   matches: EmailGrantMatch[];
   /** Full match count from the underlying search — may exceed matches.length. */
@@ -86,6 +102,10 @@ const IMG_SMALL_BUSINESS =
   "https://images.unsplash.com/photo-1753185234794-e3b41b94a352?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800";
 const IMG_COMMUNITY =
   "https://images.unsplash.com/photo-1758936381780-8092bc60e153?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800";
+const IMG_RURAL =
+  "https://images.unsplash.com/photo-1760033444489-462f148d598b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800";
+const IMG_ARTS =
+  "https://images.unsplash.com/photo-1766846573044-f1107ca5418b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800";
 
 /** Figma node 13002:22993 — "Grant Alert / Email / Similar Grants" */
 export const similarGrantsEmailMock = {
@@ -138,24 +158,9 @@ export const weeklyDigestEmailMock = {
       alertId: "alert-search-faith-based-youth",
       alertName: "Faith-Based Youth Ministry and Education Programs",
       kind: "saved-search",
-      updates: [
-        {
-          id: "upd-1",
-          type: "nofo-section",
-          grantTitle: "Youth Faith Partnership Grant",
-          grantId: "grant-youth-faith-partnership",
-          detail: "The \"Eligible Applicants\" section was revised to include faith-based coalitions.",
-          occurredAt: "2026-03-12",
-        },
-        {
-          id: "upd-2",
-          type: "date-change",
-          grantTitle: "Community Mentoring Initiative",
-          grantId: "grant-community-mentoring",
-          detail: "Deadline moved from 2026-04-15 to 2026-05-01.",
-          occurredAt: "2026-03-10",
-        },
-      ],
+      // A saved-search alert isn't tied to one grant, so there's nothing at
+      // the grant level to report as "changed" — just fresh matches.
+      updates: [],
       matches: [
         {
           id: "grant-youth-mentoring",
@@ -238,6 +243,45 @@ export const weeklyDigestEmailMock = {
         },
       ] satisfies EmailGrantMatch[],
       totalMatchCount: 5,
+    },
+    {
+      alertId: "alert-program-community-food-security",
+      alertName: "Community Food Security Program",
+      kind: "program",
+      // Program alerts (the "Weekly grant alert" toggle on a published
+      // Program, see ProjectDetailsPage) surface new matches against the
+      // program's profile — there's no single grant to log changes on.
+      updates: [],
+      matches: [
+        {
+          id: "grant-food-security-1",
+          rank: 1,
+          title: "USDA Community Food Projects Competitive Grant",
+          image: IMG_COMMUNITY,
+          amountLabel: "$50,000 – $400,000",
+          deadlineLabel: "2026-04-10",
+          summary: "Funds community-led projects that increase food security and build self-reliance among low-income communities.",
+        },
+        {
+          id: "grant-food-security-2",
+          rank: 2,
+          title: "Rural Food Access Partnership Grant",
+          image: IMG_RURAL,
+          amountLabel: "$20,000 – $90,000",
+          deadlineLabel: "2026-05-08",
+          summary: "Supports partnerships that expand food access and nutrition education in rural counties.",
+        },
+        {
+          id: "grant-food-security-3",
+          rank: 3,
+          title: "Neighborhood Food Justice Initiative",
+          image: IMG_ARTS,
+          amountLabel: "$15,000 – $60,000",
+          deadlineLabel: "2026-04-25",
+          summary: "Funds community organizing and food-justice programming led by grassroots and faith-based groups.",
+        },
+      ] satisfies EmailGrantMatch[],
+      totalMatchCount: 8,
     },
   ] satisfies AlertDigestSection[],
 };

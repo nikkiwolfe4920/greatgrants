@@ -1,5 +1,6 @@
 import { Button } from "../ui/button";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
+import { GetAlertButton } from "./GetAlertButton";
 import type { EmailGrantMatch } from "@/data/emailAlerts";
 
 interface GrantMatchCardProps {
@@ -36,10 +37,11 @@ export function GrantMatchCard({ match, href }: GrantMatchCardProps) {
           <br />
           Deadline: {match.deadlineLabel}
         </p>
-        <div>
-          <Button asChild variant="outline" size="sm" className="mt-1">
+        <div className="mt-1 flex flex-wrap gap-2">
+          <Button asChild variant="outline" size="sm">
             <a href={href ?? `/grant/${match.id}`}>View Details</a>
           </Button>
+          <GetAlertButton grant={{ id: match.id, title: match.title }} />
         </div>
       </div>
     </div>
