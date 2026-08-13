@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import logoImg from "figma:asset/80f16235e4f02631f57c6cf6e509cba581c33eb4.png";
 import {
   Settings,
@@ -32,6 +32,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/ta
 import { Switch } from "@/app/components/ui/switch";
 import { Badge } from "@/app/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/app/components/ui/dialog";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -53,170 +61,12 @@ import {
 } from "@/app/components/ui/breadcrumb";
 import { Link } from "react-router";
 
-// Grant Alerts Manager Component
-//
-// Shows Grant Opportunity alerts only — the ones created via the "Get Alert"
-// toggle on a grant list item on /search or on a grant's own detail page
-// (see useGrantAlerts.ts). Saved-search and program-level alerts have been
-// removed, but older localStorage records without a `grantId` may still
-// exist from before that removal, so we filter them out here rather than
-// assume the array is already clean.
-function GrantAlertsManager() {
-  const [alerts, setAlerts] = useState<any[]>([]);
-  const [deleteAlertId, setDeleteAlertId] = useState<string | null>(null);
-
-  // Load alerts from localStorage
-  useEffect(() => {
-    const savedAlerts = JSON.parse(localStorage.getItem("grantAlerts") || "[]");
-    setAlerts(savedAlerts.filter((alert: any) => !!alert.grantId));
-  }, []);
-
-  // Toggle alert enabled/disabled. Writes back against the full (unfiltered)
-  // stored list so any other alert records aren't dropped.
-  const toggleAlert = (alertId: string) => {
-    const allAlerts = JSON.parse(localStorage.getItem("grantAlerts") || "[]");
-    const updatedAllAlerts = allAlerts.map((alert: any) =>
-      alert.id === alertId ? { ...alert, enabled: !alert.enabled } : alert
-    );
-    localStorage.setItem("grantAlerts", JSON.stringify(updatedAllAlerts));
-    setAlerts(updatedAllAlerts.filter((alert: any) => !!alert.grantId));
-  };
-
-  // Delete alert. Writes back against the full (unfiltered) stored list so
-  // any other alert records aren't dropped.
-  const deleteAlert = (alertId: string) => {
-    const allAlerts = JSON.parse(localStorage.getItem("grantAlerts") || "[]");
-    const remainingAllAlerts = allAlerts.filter((alert: any) => alert.id !== alertId);
-    localStorage.setItem("grantAlerts", JSON.stringify(remainingAllAlerts));
-    setAlerts(remainingAllAlerts.filter((alert: any) => !!alert.grantId));
-    setDeleteAlertId(null);
-  };
-
-  if (alerts.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-        <p className="text-gray-600 mb-2">No grant alerts configured yet</p>
-        <p className="text-sm text-gray-500">Start a search to create your first alert</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      {alerts.map((alert) => (
-        <div 
-          key={alert.id} 
-          className="bg-white border border-gray-200 rounded-lg p-5"
-          style={{ fontFamily: 'Cabin, sans-serif' }}
-        >
-          {/* Alert Header with Actions */}
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1.5">
-                <h3 className="text-base font-semibold text-gray-900">{alert.name}</h3>
-                <span className="text-xs text-gray-500">
-                  {alert.alertsSent} alerts sent
-                </span>
-              </div>
-              <p className="text-sm text-gray-600">
-                {alert.email} • {alert.frequency} emails
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              {/* Toggle Switch */}
-              <Switch 
-                checked={alert.enabled}
-                onCheckedChange={() => toggleAlert(alert.id)}
-              />
-
-              {/* Delete Button */}
-              <button
-                className="text-gray-400 hover:text-red-600 transition-colors p-1"
-                onClick={() => setDeleteAlertId(alert.id)}
-                title="Delete alert"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Alert Criteria */}
-          <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-            {/* Programs */}
-            {alert.programs && alert.programs.length > 0 && alert.programs[0] !== "" && (
-              <div>
-                <p className="text-xs font-semibold text-gray-700 mb-2">Program(s)</p>
-                <p className="text-sm text-gray-900">
-                  {alert.programs.join(", ")}
-                </p>
-              </div>
-            )}
-
-            {/* Search Prompt */}
-            {alert.searchQuery && (
-              <div>
-                <p className="text-xs font-semibold text-gray-700 mb-2">Search Prompt</p>
-                <p className="text-sm text-gray-900">
-                  {alert.searchQuery}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Filters - Full Width Below */}
-          {alert.filters && alert.filters.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              <div className="flex flex-wrap gap-2">
-                {alert.filters.map((filter: any) => (
-                  <span 
-                    key={filter.id} 
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-medium"
-                  >
-                    {filter.label}
-                    <X className="w-3 h-3" />
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      ))}
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteAlertId !== null} onOpenChange={(open) => !open && setDeleteAlertId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle style={{ fontFamily: 'Lustria, serif' }}>
-              Delete Grant Alert?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-600 leading-relaxed">
-              You're about to delete this alert. You will no longer receive email notifications for grants matching this criteria. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="border-gray-300">Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              className="bg-red-600 hover:bg-red-700 text-white"
-              onClick={() => deleteAlertId && deleteAlert(deleteAlertId)}
-            >
-              Delete Alert
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
-  );
-}
-
 interface AccountSettingsComprehensiveProps {
   onBack?: () => void;
   onAccountDeleted?: () => void;
 }
 
 export function AccountSettingsComprehensive({ onBack, onAccountDeleted }: AccountSettingsComprehensiveProps = {}) {
-  const navigate = useNavigate();
   const location = useLocation();
   
   const [activeTab, setActiveTab] = useState('profile');
@@ -273,17 +123,19 @@ export function AccountSettingsComprehensive({ onBack, onAccountDeleted }: Accou
     microsoft: true,
   });
 
-  // Notification preferences
-  const [notifications, setNotifications] = useState({
-    emailNotifications: true,
-    applicationUpdates: true,
-    deadlineReminders: true,
-    teamInvites: true,
-    weeklyDigest: false,
-    marketingEmails: false,
-    pushNotifications: true,
-    smsNotifications: false,
+  // Email preferences — Account Settings → Emails. Security & Account
+  // Alerts is required and cannot be disabled (account security/billing
+  // notices); Product Updates and Tips & Best Practices are optional.
+  const [emailPreferences, setEmailPreferences] = useState({
+    securityAlerts: true,
+    productUpdates: true,
+    tipsAndBestPractices: true,
   });
+
+  // Cookie preferences dialog — essential cookies are always on; analytics
+  // stays off until the user explicitly accepts.
+  const [cookiePreferencesOpen, setCookiePreferencesOpen] = useState(false);
+  const [analyticsCookiesEnabled, setAnalyticsCookiesEnabled] = useState(false);
 
   // Privacy settings
   const [privacy, setPrivacy] = useState({
@@ -439,6 +291,21 @@ export function AccountSettingsComprehensive({ onBack, onAccountDeleted }: Accou
   const handleCloudConnectionToggle = (provider: "google" | "microsoft", connected: boolean) => {
     // Only one cloud service can be connected at a time.
     setCloudConnections({ google: false, microsoft: false, [provider]: connected });
+  };
+
+  const handleEmailPreferenceToggle = (
+    key: "productUpdates" | "tipsAndBestPractices",
+    enabled: boolean
+  ) => {
+    setEmailPreferences((prev) => ({ ...prev, [key]: enabled }));
+  };
+
+  const handleSaveCookiePreferences = () => {
+    setCookiePreferencesOpen(false);
+    showSuccess(
+      "Cookie preferences saved",
+      analyticsCookiesEnabled ? "Analytics cookies are now enabled." : "Analytics cookies remain disabled."
+    );
   };
 
   const handleVerifyEmail = () => {
@@ -866,24 +733,90 @@ export function AccountSettingsComprehensive({ onBack, onAccountDeleted }: Accou
             {/* Emails Tab */}
             <TabsContent value="emails" className="space-y-6">
               <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Bell className="w-5 h-5 text-teal-600" />
-                  <h2 className="text-base font-semibold text-gray-900">Grant Opportunity Alerts</h2>
+                <div className="flex items-center gap-2 mb-1">
+                  <Mail className="w-5 h-5 text-teal-600" />
+                  <h2 className="text-base font-semibold text-gray-900">Email Preferences</h2>
                 </div>
                 <p className="text-sm text-gray-600 mb-6">
-                  Get automatic email notifications about grant opportunities you're tracking. Select
-                  "Get Alert" on a grant from{" "}
-                  <button
-                    className="text-teal-600 hover:text-teal-700 font-medium underline"
-                    onClick={() => navigate('/search')}
-                  >
-                    search results
-                  </button>{" "}
-                  or its grant opportunity page to add it here.
+                  Manage which email communications you receive from Great Grants
                 </p>
 
-                {/* Load and Display Saved Alerts */}
-                <GrantAlertsManager />
+                {/* Essential Emails */}
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-1">Essential Emails</h3>
+                  <p className="text-sm text-gray-500 mb-3">
+                    These emails are required for account security and cannot be disabled
+                  </p>
+                  <div className="flex items-start justify-between gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                    <div className="flex items-start gap-3">
+                      <Shield className="w-5 h-5 text-teal-600 mt-0.5 shrink-0" />
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-semibold text-gray-900">Security & Account Alerts</span>
+                          <Badge className="bg-teal-600 text-white border-teal-600 text-xs font-medium">
+                            Required
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          Critical notifications about account activity, billing, security, password changes,
+                          and service availability
+                        </p>
+                      </div>
+                    </div>
+                    <Switch checked={emailPreferences.securityAlerts} disabled className="shrink-0 mt-0.5" />
+                  </div>
+                </div>
+
+                {/* Product & Educational Content */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Product & Educational Content</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-4 p-4 border border-gray-200 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <Bell className="w-5 h-5 text-gray-500 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 mb-1">Product Updates & New Features</p>
+                          <p className="text-sm text-gray-600">
+                            Announcements about new features, product improvements, and platform updates
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={emailPreferences.productUpdates}
+                        onCheckedChange={(checked) => handleEmailPreferenceToggle("productUpdates", checked)}
+                        className="shrink-0 mt-0.5"
+                      />
+                    </div>
+                    <div className="flex items-start justify-between gap-4 p-4 border border-gray-200 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <Mail className="w-5 h-5 text-gray-500 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 mb-1">Tips & Best Practices</p>
+                          <p className="text-sm text-gray-600">
+                            Grant writing tips, best-practice guides, educational resources, and expert advice
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={emailPreferences.tipsAndBestPractices}
+                        onCheckedChange={(checked) => handleEmailPreferenceToggle("tipsAndBestPractices", checked)}
+                        className="shrink-0 mt-0.5"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Privacy */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">Privacy</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Manage which cookies Great Grants may use. Essential cookies are always on; analytics cookies
+                  stay off until you accept.
+                </p>
+                <Button variant="outline" onClick={() => setCookiePreferencesOpen(true)}>
+                  Cookie Preferences
+                </Button>
               </div>
             </TabsContent>
 
@@ -1002,7 +935,7 @@ export function AccountSettingsComprehensive({ onBack, onAccountDeleted }: Accou
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleVerifyEmail}
               className="bg-teal-600 hover:bg-teal-700"
             >
@@ -1011,6 +944,54 @@ export function AccountSettingsComprehensive({ onBack, onAccountDeleted }: Accou
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Cookie Preferences Dialog */}
+      <Dialog open={cookiePreferencesOpen} onOpenChange={setCookiePreferencesOpen}>
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>Cookie Preferences</DialogTitle>
+            <DialogDescription className="text-gray-600 leading-relaxed">
+              Manage which cookies Great Grants may use.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+              <div>
+                <p className="text-sm font-semibold text-gray-900 mb-1">Essential</p>
+                <p className="text-sm text-gray-600">
+                  Required for the site to function — sign-in, security, and saved preferences.
+                </p>
+              </div>
+              <Switch checked disabled className="shrink-0 mt-0.5" />
+            </div>
+            <div className="flex items-start justify-between gap-4 p-4 border border-gray-200 rounded-lg">
+              <div>
+                <p className="text-sm font-semibold text-gray-900 mb-1">Analytics</p>
+                <p className="text-sm text-gray-600">
+                  Helps us understand how Great Grants is used so we can improve it. Off until you accept.
+                </p>
+              </div>
+              <Switch
+                checked={analyticsCookiesEnabled}
+                onCheckedChange={setAnalyticsCookiesEnabled}
+                className="shrink-0 mt-0.5"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCookiePreferencesOpen(false)}
+              className="border-gray-300"
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSaveCookiePreferences} className="bg-teal-600 hover:bg-teal-700 text-white">
+              Save Preferences
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

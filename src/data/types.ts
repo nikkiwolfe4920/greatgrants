@@ -219,9 +219,9 @@ export interface GrantAlert {
   programId?: string;
   // Links this alert to a single Grant search result (see GrantSearch.tsx /
   // GrantDetailPage.tsx and useGrantAlerts). Set when the alert is the
-  // per-grant "Get Alert" toggle — the only alert entry point in the product.
+  // per-grant "Watch" toggle — the only alert entry point in the product.
   // Independent of `saved_grants` — see useSavedGrants — a grant can be
-  // alerted, saved, both, or neither.
+  // watched, saved, both, or neither.
   grantId?: string;
   alertsSent: number;
   createdAt: string;

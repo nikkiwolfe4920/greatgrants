@@ -1,4 +1,4 @@
-import { Bell, Bookmark } from "lucide-react";
+import { Eye, Bookmark } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -21,10 +21,12 @@ interface GrantAlertCrossSellDialogProps {
 }
 
 /**
- * Optional cross-sell shown right after a user takes ONE of the two
- * independent actions on a grant — Save or Get Alert — offering the other.
+ * Optional cross-sell shown right after a user Saves a grant, offering to
+ * also Watch it. ("alert-to-save" is kept on the CrossSellDirection type
+ * for backward compatibility but is no longer triggered anywhere — turning
+ * Watch on never opens a modal, only a toast. See useGrantAlerts.)
  *
- * Save and Get Alert are independent booleans (see useSavedGrants /
+ * Save and Watch are independent booleans (see useSavedGrants /
  * useGrantAlerts). Declining here must never change the action the user
  * already took, and accepting here must never be the only way to reach the
  * other state — both remain reachable directly from their own button at any
@@ -61,26 +63,26 @@ export function GrantAlertCrossSellDialog({
         <DialogHeader>
           <div className="w-11 h-11 rounded-full bg-teal-50 flex items-center justify-center mb-1">
             {isOfferingAlert ? (
-              <Bell className="w-5 h-5 text-teal-600" />
+              <Eye className="w-5 h-5 text-teal-600" />
             ) : (
               <Bookmark className="w-5 h-5 text-teal-600" />
             )}
           </div>
           <DialogTitle style={{ fontFamily: "Lustria, serif" }}>
-            {isOfferingAlert ? "Also get alerts for this grant?" : "Also save this grant?"}
+            {isOfferingAlert ? "Also watch this grant?" : "Also save this grant?"}
           </DialogTitle>
           <DialogDescription className="text-gray-600 leading-relaxed">
             {isOfferingAlert ? (
               <>
-                You saved <span className="font-medium text-gray-900">"{grantTitle}"</span>. Get Alert
+                You saved <span className="font-medium text-gray-900">"{grantTitle}"</span>. Watch
                 is a separate, optional subscription — turn it on and we'll notify you about updates to
-                this grant. Saving it doesn't require alerts, and you can skip this.
+                this grant. Saving it doesn't require watching, and you can skip this.
               </>
             ) : (
               <>
-                You turned on alerts for <span className="font-medium text-gray-900">"{grantTitle}"</span>.
+                You started watching <span className="font-medium text-gray-900">"{grantTitle}"</span>.
                 Saving is separate and optional — it just keeps this grant in your Saved Grants list.
-                Alerts don't require saving, and you can skip this.
+                Watching doesn't require saving, and you can skip this.
               </>
             )}
           </DialogDescription>
@@ -96,8 +98,8 @@ export function GrantAlertCrossSellDialog({
           >
             {isOfferingAlert ? (
               <>
-                <Bell className="w-3.5 h-3.5" />
-                Get Alert
+                <Eye className="w-3.5 h-3.5" />
+                Watch
               </>
             ) : (
               <>

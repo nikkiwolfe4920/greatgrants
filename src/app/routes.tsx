@@ -6,6 +6,7 @@ import { ApplicationSectionPage } from "./pages/ApplicationSectionPage";
 import { GrantSearchPage } from "./pages/GrantSearchPage";
 import { GrantDetailPage } from "./pages/GrantDetailPage";
 import { SavedGrantsPage } from "./pages/SavedGrantsPage";
+import { WatchListPage } from "./pages/WatchListPage";
 import { OrganizationPage } from "./pages/OrganizationPage";
 import { OrganizationsPage } from "./pages/OrganizationsPage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -137,6 +138,10 @@ const routes = [
       {
         path: "saved-grants",
         element: <SavedGrantsPage />,
+      },
+      {
+        path: "watch-list",
+        element: <WatchListPage />,
       },
       {
         path: "grant/:id",
