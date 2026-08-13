@@ -58,15 +58,26 @@ export interface AlertUpdateEvent {
   occurredAt: string;
 }
 
+export type GrantMatchStatus = "Open" | "Pending" | "Closed";
+
 export interface EmailGrantMatch {
   id: string;
   rank: number;
   title: string;
   image: string;
   amountLabel: string;
+  locationLabel: string;
   deadlineLabel: string;
+  status: GrantMatchStatus;
   summary: string;
 }
+
+/** Mirrors the status-badge color switch on GrantSearch.tsx's grid/list cards. */
+export const GRANT_STATUS_BADGE_CLASS: Record<GrantMatchStatus, string> = {
+  Open: "bg-green-50 text-green-700 border-green-200",
+  Pending: "bg-blue-50 text-blue-700 border-blue-200",
+  Closed: "bg-gray-100 text-gray-600 border-gray-200",
+};
 
 /**
  * One saved alert's contribution to the weekly digest. `kind` mirrors how
@@ -128,7 +139,9 @@ export const similarGrantsEmailMock = {
         "U.S. Geological Survey – The Educational Component of the National Cooperative Geologic Mapping Program",
       image: IMG_MOUNTAINS,
       amountLabel: "$45,000 – $120,000",
+      locationLabel: "US: National",
       deadlineLabel: "2026-03-31",
+      status: "Open",
       summary:
         "Provides mentorship and training for U.S. Earth science students while carrying out the NCGMP mission and Department of the Interior priorities.",
     },
@@ -138,7 +151,9 @@ export const similarGrantsEmailMock = {
       title: "Office of Indian Energy Policy and Programs – Unleashing Tribal Energy Development",
       image: IMG_SOLAR,
       amountLabel: "$100,000 – $500,000",
+      locationLabel: "US: Tribal Lands",
       deadlineLabel: "2026-03-31",
+      status: "Open",
       summary:
         "Advances affordable, reliable, and secure energy through development of Tribal energy resources for the benefit of Tribes and their members.",
     },
@@ -149,7 +164,9 @@ export const similarGrantsEmailMock = {
         "Bureau of Educational and Cultural Affairs (ECA) – Mandela Washington Fellowship for Young African Leaders (YALI Fellowship)",
       image: IMG_CLASSROOM,
       amountLabel: "$25,000 – $75,000",
+      locationLabel: "International",
       deadlineLabel: "2026-03-31",
+      status: "Pending",
       summary:
         "Promotes engagement between emerging African thought leaders and American innovators, educators, and institutions.",
     },
@@ -190,7 +207,9 @@ export const weeklyDigestEmailMock = {
           title: "National Youth Mentoring Collaborative Grant",
           image: IMG_YOUTH_MENTORING,
           amountLabel: "$20,000 – $60,000",
+          locationLabel: "US: National",
           deadlineLabel: "2026-05-30",
+          status: "Open",
           summary: "Funds mentoring and enrichment programs for at-risk youth run by community and faith organizations.",
         },
         {
@@ -199,7 +218,9 @@ export const weeklyDigestEmailMock = {
           title: "Faith-Based Education Access Fund",
           image: IMG_CLASSROOM,
           amountLabel: "$10,000 – $40,000",
+          locationLabel: "US: National",
           deadlineLabel: "2026-06-01",
+          status: "Open",
           summary: "Supports tutoring, literacy, and after-school education programs led by congregations and nonprofits.",
         },
         {
@@ -208,7 +229,9 @@ export const weeklyDigestEmailMock = {
           title: "Community Schools Partnership Program",
           image: IMG_COMMUNITY,
           amountLabel: "$15,000 – $50,000",
+          locationLabel: "US: National",
           deadlineLabel: "2026-04-20",
+          status: "Open",
           summary: "Connects schools with local youth-serving organizations to expand wraparound services.",
         },
       ] satisfies EmailGrantMatch[],
@@ -251,7 +274,9 @@ export const weeklyDigestEmailMock = {
           title: "Faith-Rooted Small Business Accelerator",
           image: IMG_SMALL_BUSINESS,
           amountLabel: "$25,000 – $75,000",
+          locationLabel: "US: National",
           deadlineLabel: "2026-04-30",
+          status: "Open",
           summary: "Seed funding and technical assistance for small businesses launched by faith-based organizations.",
         },
         {
@@ -260,7 +285,9 @@ export const weeklyDigestEmailMock = {
           title: "Community Enterprise Development Grant",
           image: IMG_COMMUNITY,
           amountLabel: "$10,000 – $50,000",
+          locationLabel: "US: National",
           deadlineLabel: "2026-05-15",
+          status: "Open",
           summary: "Supports nonprofit-led small business incubation in underserved neighborhoods.",
         },
       ] satisfies EmailGrantMatch[],
@@ -295,7 +322,9 @@ export const weeklyDigestEmailMock = {
           title: "USDA Community Food Projects Competitive Grant",
           image: IMG_COMMUNITY,
           amountLabel: "$50,000 – $400,000",
+          locationLabel: "US: National",
           deadlineLabel: "2026-04-10",
+          status: "Open",
           summary: "Funds community-led projects that increase food security and build self-reliance among low-income communities.",
         },
         {
@@ -304,7 +333,9 @@ export const weeklyDigestEmailMock = {
           title: "Rural Food Access Partnership Grant",
           image: IMG_RURAL,
           amountLabel: "$20,000 – $90,000",
+          locationLabel: "US: Rural Counties",
           deadlineLabel: "2026-05-08",
+          status: "Open",
           summary: "Supports partnerships that expand food access and nutrition education in rural counties.",
         },
         {
@@ -313,7 +344,9 @@ export const weeklyDigestEmailMock = {
           title: "Neighborhood Food Justice Initiative",
           image: IMG_ARTS,
           amountLabel: "$15,000 – $60,000",
+          locationLabel: "US: Local",
           deadlineLabel: "2026-04-25",
+          status: "Pending",
           summary: "Funds community organizing and food-justice programming led by grassroots and faith-based groups.",
         },
       ] satisfies EmailGrantMatch[],
