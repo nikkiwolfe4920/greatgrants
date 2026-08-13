@@ -68,9 +68,10 @@ export function EmailsPage() {
           description={
             <>
               Figma node 13014:42002, extended into the combined weekly send: one email rolls up{" "}
-              <em>every</em> saved alert &mdash; grant alerts (with their date, amendment,
-              status, sponsor, and NOFO section changes), saved-search alerts, and program
-              alerts &mdash; each with its own top matches, instead of a separate email per alert.
+              <em>every</em> grant alert a user has active, each named after the one grant it
+              watches (e.g. &ldquo;Church-Based Small Business Development Fund&rdquo;), with its
+              own date/amendment/status/sponsor/NOFO change feed plus its own top matches &mdash;
+              instead of a separate email per alert.
             </>
           }
         >

@@ -31,6 +31,13 @@
  * Not wired to real data yet — this is preview content for the /emails page,
  * shaped to match GrantAlert so swapping in live data later is a straight
  * mapping exercise, not a redesign.
+ *
+ * `weeklyDigestEmailMock` currently demonstrates three "grant" alerts, each
+ * named after the one specific grant it watches (e.g. "Church-Based Small
+ * Business Development Fund") rather than a search phrase or program name —
+ * every section gets its own "what's changed" feed plus its "top matches
+ * similar to" list. The "saved-search"/"program" kinds above stay supported
+ * in the type so a real digest can still mix them in later.
  */
 
 /** The kinds of changes a saved alert can fire on for a grant it's watching. */
@@ -155,12 +162,27 @@ export const weeklyDigestEmailMock = {
   weekOf: "March 9–15, 2026",
   sections: [
     {
-      alertId: "alert-search-faith-based-youth",
-      alertName: "Faith-Based Youth Ministry and Education Programs",
-      kind: "saved-search",
-      // A saved-search alert isn't tied to one grant, so there's nothing at
-      // the grant level to report as "changed" — just fresh matches.
-      updates: [],
+      alertId: "alert-grant-faith-based-youth-ministry",
+      alertName: "Faith-Based Youth Ministry and Education Grant",
+      kind: "grant",
+      updates: [
+        {
+          id: "upd-1",
+          type: "nofo-section",
+          grantTitle: "Faith-Based Youth Ministry and Education Grant",
+          grantId: "grant-faith-based-youth-ministry",
+          detail: "The \"Eligible Applicants\" section was revised to include faith-based coalitions.",
+          occurredAt: "2026-03-12",
+        },
+        {
+          id: "upd-2",
+          type: "date-change",
+          grantTitle: "Faith-Based Youth Ministry and Education Grant",
+          grantId: "grant-faith-based-youth-ministry",
+          detail: "Deadline moved from 2026-04-15 to 2026-05-01.",
+          occurredAt: "2026-03-10",
+        },
+      ],
       matches: [
         {
           id: "grant-youth-mentoring",
@@ -245,13 +267,27 @@ export const weeklyDigestEmailMock = {
       totalMatchCount: 5,
     },
     {
-      alertId: "alert-program-community-food-security",
-      alertName: "Community Food Security Program",
-      kind: "program",
-      // Program alerts (the "Weekly grant alert" toggle on a published
-      // Program, see ProjectDetailsPage) surface new matches against the
-      // program's profile — there's no single grant to log changes on.
-      updates: [],
+      alertId: "alert-grant-community-food-security",
+      alertName: "Community Food Security Grant",
+      kind: "grant",
+      updates: [
+        {
+          id: "upd-6",
+          type: "status-change",
+          grantTitle: "Community Food Security Grant",
+          grantId: "grant-community-food-security",
+          detail: "This grant re-opened for applications after a temporary pause.",
+          occurredAt: "2026-03-12",
+        },
+        {
+          id: "upd-7",
+          type: "sponsor-change",
+          grantTitle: "Community Food Security Grant",
+          grantId: "grant-community-food-security",
+          detail: "Administering agency changed from USDA Regional Office to USDA National Office.",
+          occurredAt: "2026-03-10",
+        },
+      ],
       matches: [
         {
           id: "grant-food-security-1",
