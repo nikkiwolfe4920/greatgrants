@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { Gauge, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { Gauge, CheckCircle2, AlertTriangle, XCircle, ArrowRight } from "lucide-react";
+import { Button } from "@/app/components/ui/button";
 
 type GoStatus = "go" | "caution" | "no-go";
 
@@ -121,6 +122,8 @@ export interface OverallNofoFitScorecardProps {
   strengths?: string[];
   risks?: string[];
   nextSteps?: string[];
+  /** Shows the "ready to apply" CTA (Figma node 12827:38919) at the bottom of the card when provided. Renders regardless of the category breakdown's scores. */
+  onStartApplication?: () => void;
 }
 
 /**
@@ -159,6 +162,7 @@ export function OverallNofoFitScorecard({
     "Add partner MOUs.",
     "Strengthen evidence of measurable outcomes.",
   ],
+  onStartApplication,
 }: OverallNofoFitScorecardProps) {
   const statusStyles = STATUS_STYLES[status];
   const StatusIcon = statusStyles.Icon;
@@ -238,6 +242,32 @@ export function OverallNofoFitScorecard({
                 </li>
               ))}
             </ol>
+          </div>
+        )}
+
+        {/* Ready-to-apply CTA — Figma node 12827:38919, folded into the card
+            footer instead of stacked as its own duplicate card. Always
+            rendered when a handler is provided, independent of the category
+            breakdown's scores, so there's always a way into the application. */}
+        {onStartApplication && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3.5">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-teal-100">
+                <CheckCircle2 className="size-4 text-teal-700" aria-hidden="true" />
+              </div>
+              <p className="text-xs leading-relaxed text-gray-700">
+                <span className="font-semibold text-gray-900">Ready to move forward? </span>
+                Start your application whenever you are.
+              </p>
+            </div>
+            <Button
+              onClick={onStartApplication}
+              size="sm"
+              className="shrink-0 bg-teal-600 hover:bg-teal-700 text-white gap-1.5"
+            >
+              Start Application
+              <ArrowRight className="size-3.5" />
+            </Button>
           </div>
         )}
       </div>
