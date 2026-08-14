@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, XCircle, ArrowRight, RotateCcw } from "lucide-react";
+import { CheckCircle2, Circle, XCircle, ArrowRight } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -96,7 +96,6 @@ interface EligibilityReportProps {
   actionItems: ActionItem[];
   passItems: PassItem[];
   onToggleActionItem: (id: string) => void;
-  onRetake: () => void;
   onStartApplication: () => void;
 }
 
@@ -107,10 +106,11 @@ interface EligibilityReportProps {
  * (OverallNofoFitScorecard, node 12749:6075) and the Action Items
  * accordion (node 12683:25936, renamed from "Final Snapshot", no priority
  * badges). Once every action item is checked, the fit card goes to a
- * clean 100%/no-risk state and a "Start Application" prompt replaces the
- * retake link.
+ * clean 100%/no-risk state. The "ready to apply" CTA (node 12827:38919)
+ * always renders at the bottom, regardless of how many action items are
+ * checked off, so there's always a path into the application.
  */
-export function EligibilityReport({ actionItems, passItems, onToggleActionItem, onRetake, onStartApplication }: EligibilityReportProps) {
+export function EligibilityReport({ actionItems, passItems, onToggleActionItem, onStartApplication }: EligibilityReportProps) {
   const completedCount = actionItems.filter((item) => item.completed).length;
   const totalCount = actionItems.length;
   const percent = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
@@ -125,6 +125,7 @@ export function EligibilityReport({ actionItems, passItems, onToggleActionItem, 
         categories={isAllComplete ? BASE_CATEGORIES.map((c) => ({ ...c, score: 100 })) : BASE_CATEGORIES}
         risks={isAllComplete ? [] : BASE_RISKS}
         nextSteps={[]}
+        onStartApplication={onStartApplication}
       />
 
       <Accordion type="single" defaultValue="action-items" collapsible className="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -170,41 +171,37 @@ export function EligibilityReport({ actionItems, passItems, onToggleActionItem, 
         </AccordionItem>
       </Accordion>
 
-      {isAllComplete ? (
-        <div className="bg-teal-50 border border-teal-200 rounded-2xl p-6 flex items-start gap-4">
-          <div className="size-10 rounded-xl bg-teal-100 flex items-center justify-center shrink-0">
-            <CheckCircle2 className="size-5 text-teal-700" />
-          </div>
-          <div className="flex-1">
-            <p className="text-base text-gray-900" style={{ fontFamily: "Lustria, serif" }}>
-              All clear — you&apos;re ready to apply
-            </p>
-            <p className="text-sm text-gray-600 mt-1 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
-              Every action item is resolved and your NOFO fit is 100% with no outstanding risks. You&apos;re in strong
-              shape to move forward with a full application.
-            </p>
-            <Button onClick={onStartApplication} className="mt-4 bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
-              Start Application
-              <ArrowRight className="size-4" />
-            </Button>
-          </div>
+      {/* "Ready to apply" CTA — Figma node 12827:38919. Always shown at the
+          bottom of the report regardless of how many action items are
+          checked off, so there's always a clear next step into the
+          application. */}
+      <div className="bg-teal-50 border border-teal-200 rounded-2xl p-6 flex items-start gap-4">
+        <div className="size-10 rounded-xl bg-teal-100 flex items-center justify-center shrink-0">
+          <CheckCircle2 className="size-5 text-teal-700" />
         </div>
-      ) : (
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
-            Work through the action items above to close gaps, then retake the assessment.
+        <div className="flex-1">
+          <p className="text-base text-gray-900" style={{ fontFamily: "Lustria, serif" }}>
+            {isAllComplete ? <>All clear — you&apos;re ready to apply</> : <>Ready when you are</>}
           </p>
-          <button
-            type="button"
-            onClick={onRetake}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-teal-700 hover:text-teal-800 hover:underline shrink-0"
-            style={{ fontFamily: "Cabin, sans-serif" }}
-          >
-            <RotateCcw className="size-3.5" />
-            Retake the assessment
-          </button>
+          <p className="text-sm text-gray-600 mt-1 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
+            {isAllComplete ? (
+              <>
+                Every action item is resolved and your NOFO fit is 100% with no outstanding risks. You&apos;re in
+                strong shape to move forward with a full application.
+              </>
+            ) : (
+              <>
+                You can start your application any time — keep closing out action items above to strengthen your
+                NOFO fit along the way.
+              </>
+            )}
+          </p>
+          <Button onClick={onStartApplication} className="mt-4 bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
+            Start Application
+            <ArrowRight className="size-4" />
+          </Button>
         </div>
-      )}
+      </div>
     </div>
   );
 }

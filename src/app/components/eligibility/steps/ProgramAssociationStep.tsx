@@ -31,6 +31,8 @@ export function ProgramAssociationStep({
   const navigate = useNavigate();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
+  const handleImproveProgram = () => navigate("/project-details");
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-[33px]">
       <div className="flex items-center gap-3">
@@ -113,6 +115,14 @@ export function ProgramAssociationStep({
                             </div>
                           </div>
                         </div>
+                        <Button
+                          onClick={handleImproveProgram}
+                          size="sm"
+                          className="mt-3 bg-teal-600 hover:bg-teal-700 text-white gap-1.5"
+                        >
+                          Improve Program
+                          <ArrowRight className="size-4" />
+                        </Button>
                       </div>
                     </motion.div>
                   )}

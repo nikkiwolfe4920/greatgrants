@@ -84,17 +84,16 @@ export function EligibilityWorkflowPanel({
     submitTimeoutRef.current = setTimeout(() => {
       setIsSubmitting(false);
       setShowReport(true);
+      // Re-anchor once the NOFO Analysis / Overall NOFO Fit report actually
+      // mounts — the loader can run long enough for the user to scroll away,
+      // so the click-time scroll above isn't enough to guarantee the report
+      // opens at the top, anchored on the "Eligibility Assessment" heading.
+      onAnchorScroll?.();
     }, 4000);
   };
 
   const handleToggleActionItem = (id: string) => {
     setActionItems((prev) => prev.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item)));
-  };
-
-  const handleRetake = () => {
-    onReportGenerated?.(null);
-    setShowReport(false);
-    setCurrentStep(1);
   };
 
   if (isSubmitting) {
@@ -107,7 +106,6 @@ export function EligibilityWorkflowPanel({
         actionItems={actionItems}
         passItems={eligibilityPassItems}
         onToggleActionItem={handleToggleActionItem}
-        onRetake={handleRetake}
         onStartApplication={() => onStartApplication?.()}
       />
     );
