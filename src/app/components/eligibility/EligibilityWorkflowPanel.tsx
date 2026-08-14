@@ -74,21 +74,38 @@ export function EligibilityWorkflowPanel({
     if (showReport) onReportGenerated?.(Date.now());
   }, [showReport, onReportGenerated]);
 
+  // onAnchorScroll is a fresh closure on every parent render (it captures
+  // the page's scroll-container ref), so it can't go in a dependency array
+  // without re-firing on unrelated re-renders — keep the latest one in a
+  // ref instead and read it from effects below.
+  const onAnchorScrollRef = useRef(onAnchorScroll);
+  useEffect(() => {
+    onAnchorScrollRef.current = onAnchorScroll;
+  }, [onAnchorScroll]);
+
+  // Anchor on the "Eligibility Assessment" heading right as the loading
+  // spinner mounts, and again once the report replaces it. Driving this
+  // from effects (rather than calling onAnchorScroll inline inside the
+  // click handler, before React has actually rendered the spinner) means
+  // the scroll always runs against the DOM the user is about to see, not
+  // the Step 4 form that's on its way out.
+  useEffect(() => {
+    if (isSubmitting) onAnchorScrollRef.current?.();
+  }, [isSubmitting]);
+
+  useEffect(() => {
+    if (showReport) onAnchorScrollRef.current?.();
+  }, [showReport]);
+
   const handleUpdateOrgField = (key: string, value: string) => {
     setOrgFields((prev) => prev.map((f) => (f.key === key ? { ...f, value, filled: value.trim() !== "" } : f)));
   };
 
   const handleCheckEligibility = () => {
-    onAnchorScroll?.();
     setIsSubmitting(true);
     submitTimeoutRef.current = setTimeout(() => {
       setIsSubmitting(false);
       setShowReport(true);
-      // Re-anchor once the NOFO Analysis / Overall NOFO Fit report actually
-      // mounts — the loader can run long enough for the user to scroll away,
-      // so the click-time scroll above isn't enough to guarantee the report
-      // opens at the top, anchored on the "Eligibility Assessment" heading.
-      onAnchorScroll?.();
     }, 4000);
   };
 
