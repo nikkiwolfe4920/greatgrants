@@ -126,6 +126,7 @@ export function EligibilityReport({ actionItems, passItems, onToggleActionItem, 
         risks={isAllComplete ? [] : BASE_RISKS}
         nextSteps={[]}
         onStartApplication={onStartApplication}
+        allActionsComplete={isAllComplete}
       />
 
       <Accordion type="single" defaultValue="action-items" collapsible className="bg-white border border-gray-200 rounded-xl overflow-hidden">

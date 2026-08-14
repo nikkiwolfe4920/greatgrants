@@ -124,6 +124,8 @@ export interface OverallNofoFitScorecardProps {
   nextSteps?: string[];
   /** Shows the "ready to apply" CTA (Figma node 12827:38919) at the bottom of the card when provided. Renders regardless of the category breakdown's scores. */
   onStartApplication?: () => void;
+  /** Swaps the CTA copy to the "all clear" variant once every action item is resolved. Defaults to false. */
+  allActionsComplete?: boolean;
 }
 
 /**
@@ -163,6 +165,7 @@ export function OverallNofoFitScorecard({
     "Strengthen evidence of measurable outcomes.",
   ],
   onStartApplication,
+  allActionsComplete = false,
 }: OverallNofoFitScorecardProps) {
   const statusStyles = STATUS_STYLES[status];
   const StatusIcon = statusStyles.Icon;
@@ -256,8 +259,17 @@ export function OverallNofoFitScorecard({
                 <CheckCircle2 className="size-4 text-teal-700" aria-hidden="true" />
               </div>
               <p className="text-xs leading-relaxed text-gray-700">
-                <span className="font-semibold text-gray-900">Ready to move forward? </span>
-                Start your application whenever you are.
+                {allActionsComplete ? (
+                  <>
+                    <span className="font-semibold text-gray-900">All clear — you&apos;re ready to apply. </span>
+                    No outstanding risks or unresolved items.
+                  </>
+                ) : (
+                  <>
+                    <span className="font-semibold text-gray-900">Ready to move forward? </span>
+                    Start your application whenever you are.
+                  </>
+                )}
               </p>
             </div>
             <Button
