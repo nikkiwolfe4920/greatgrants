@@ -4,7 +4,10 @@ import type { YesNoUnsure as YesNoUnsureValue } from "@/data/eligibilityAssessme
 
 function ConfirmedBadge() {
   return (
-    <span className="inline-flex items-center gap-1 flex-shrink-0 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700 whitespace-nowrap">
+    <span
+      data-figma-component="ConfirmedBadge"
+      className="inline-flex items-center gap-1 flex-shrink-0 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700 whitespace-nowrap"
+    >
       <CheckCircle2 className="w-3.5 h-3.5" />
       Confirmed
     </span>
@@ -34,9 +37,9 @@ export function YesNoUnsureQuestion({ question, value, onChange, required = true
   ];
 
   return (
-    <div>
+    <div data-figma-component="YesNoQuestion">
       <div className="flex items-start justify-between gap-3 mb-3">
-        <label className="block text-sm font-medium text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+        <label className="block text-sm font-medium text-gray-900">
           {question} {required && <span className="text-red-500">*</span>}
         </label>
         {value === "yes" && <ConfirmedBadge />}
@@ -68,7 +71,7 @@ export function YesNoUnsureQuestion({ question, value, onChange, required = true
               >
                 {value === option.value && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
               </div>
-              <span className="text-sm font-medium" style={{ fontFamily: "Cabin, sans-serif" }}>
+              <span className="text-sm font-medium">
                 {option.label}
               </span>
             </div>

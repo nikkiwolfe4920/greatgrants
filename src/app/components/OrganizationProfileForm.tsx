@@ -1,22 +1,15 @@
 import { useState, useEffect, useRef } from "react";
-import logoImg from "figma:asset/80f16235e4f02631f57c6cf6e509cba581c33eb4.png";
 import {
   Building2,
-  ArrowLeft,
   Clock,
-  Save,
   Plus,
-  Trash2,
   User,
   Users,
   X,
   HardDrive,
-  Flame,
   Loader2,
   CheckCircle2,
-  Circle,
   ExternalLink,
-  FileText,
   AlertTriangle,
   Info
 } from "lucide-react";
@@ -35,7 +28,6 @@ import {
   SelectValue,
 } from "@/app/components/ui/select";
 import { Badge } from "@/app/components/ui/badge";
-import { Checkbox } from "@/app/components/ui/checkbox";
 import {
   Tooltip,
   TooltipContent,
@@ -55,6 +47,9 @@ import {
 } from "@/app/components/ui/breadcrumb";
 import { ReadinessQuestionnaire, type ReadinessCategory } from "@/app/components/ReadinessQuestionnaire";
 import { useReadinessScore } from "@/app/contexts/ReadinessScoreContext";
+import { YesNoUnsureQuestion } from "@/app/components/eligibility/YesNoUnsure";
+import { RailChecklistItem } from "@/app/components/organization/RailChecklistItem";
+import { PersonCard } from "@/app/components/organization/PersonCard";
 
 interface Leader {
   id: string;
@@ -81,7 +76,10 @@ interface OrganizationProfileFormProps {
 
 function ConfirmedBadge() {
   return (
-    <span className="inline-flex items-center gap-1 flex-shrink-0 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700 whitespace-nowrap">
+    <span
+      data-figma-component="ConfirmedBadge"
+      className="inline-flex items-center gap-1 flex-shrink-0 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700 whitespace-nowrap"
+    >
       <CheckCircle2 className="w-3.5 h-3.5" />
       Confirmed
     </span>
@@ -90,7 +88,11 @@ function ConfirmedBadge() {
 
 function ReadinessScoringBanner({ requiresInputs = false }: { requiresInputs?: boolean }) {
   return (
-    <div className="mb-6 rounded-lg border border-teal-200 bg-teal-50 p-4">
+    <div
+      data-figma-component="Alert"
+      data-figma-variant="Info"
+      className="mb-6 rounded-lg border border-teal-200 bg-teal-50 p-4"
+    >
       <div className="flex items-start gap-3">
         <Info className="w-5 h-5 text-teal-700 flex-shrink-0 mt-0.5" />
         <div className="flex-1">
@@ -110,6 +112,45 @@ function ReadinessScoringBanner({ requiresInputs = false }: { requiresInputs?: b
     </div>
   );
 }
+
+/**
+ * "Last saved …" status + Save Progress button. Previously duplicated
+ * verbatim at the top and bottom of the form.
+ */
+function SaveProgressControl({
+  statusLabel,
+  isAutoSaving,
+  onSave,
+}: {
+  statusLabel: string;
+  isAutoSaving: boolean;
+  onSave: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3" data-figma-component="SaveProgressControl">
+      <div className="flex items-center gap-2 text-sm text-gray-600">
+        <Clock className="w-4 h-4" />
+        <span>{statusLabel}</span>
+      </div>
+      <Button
+        className="bg-teal-600 hover:bg-teal-700 text-white"
+        onClick={onSave}
+        disabled={isAutoSaving}
+      >
+        {isAutoSaving ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : (
+          <HardDrive className="w-4 h-4 mr-2" />
+        )}
+        Save Progress
+      </Button>
+    </div>
+  );
+}
+
+/** Shared class string for every top-level profile tab trigger — was previously repeated 5×. */
+const TAB_TRIGGER_CLASS =
+  "gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none";
 
 export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProfileFormProps) {
   const navigate = useNavigate();
@@ -878,67 +919,9 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
   const checklistItems = getChecklistItems();
 
   return (
-    <div className="flex h-screen bg-white">
-      {/* Left Sidebar */}
-      <aside className="w-64 border-r border-gray-200 flex flex-col bg-white">
-        {/* Logo */}
-        <div className="p-4 border-b border-gray-200">
-          <img src={logoImg} alt="Great Grants" className="h-6" />
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 p-3">
-          <ul className="space-y-1">
-            <li>
-              <button 
-                onClick={() => handleNavigateAway('home')}
-                className="flex items-center gap-2 px-3 py-2 w-full text-left text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                  <path d="M2 6L8 2L14 6V13C14 13.5304 13.7893 14.0391 13.4142 14.4142C13.0391 14.7893 12.5304 15 12 15H4C3.46957 15 2.96086 14.7893 2.58579 14.4142C2.21071 14.0391 2 13.5304 2 13V6Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Home
-              </button>
-            </li>
-            <li>
-              <button 
-                onClick={() => handleNavigateAway('grants')}
-                className="flex items-center gap-2 px-3 py-2 w-full text-left text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                  <path d="M13.3333 2H2.66667C1.93029 2 1.33333 2.59695 1.33333 3.33333V12.6667C1.33333 13.403 1.93029 14 2.66667 14H13.3333C14.0697 14 14.6667 13.403 14.6667 12.6667V3.33333C14.6667 2.59695 14.0697 2 13.3333 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                All Applications (2)
-              </button>
-            </li>
-            <li>
-              <button className="flex items-center gap-2 px-3 py-2 w-full text-left text-sm text-gray-700 bg-gray-100 rounded-md font-medium">
-                <Building2 className="w-4 h-4" />
-                Organization Profile
-              </button>
-            </li>
-          </ul>
-        </nav>
-
-        {/* User Profile */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-orange-300 flex items-center justify-center relative">
-              <span className="text-white text-xs font-semibold">OR</span>
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white"></div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-gray-900">Olivia Rhye</div>
-              <div className="text-xs text-gray-500 truncate">olivia@untitledui.com</div>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content Area (including right rail) */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto bg-white">
+    <div className="flex h-screen bg-white overflow-hidden">
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto bg-white">
           <div className="w-full p-8">
           {/* Breadcrumb */}
           <Breadcrumb className="mb-6">
@@ -972,35 +955,16 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                   strokeWidth={1.5}
                 />
               </div>
-              <h1 className="text-2xl text-gray-900 mb-2" style={{ fontFamily: 'Lustria, serif', fontWeight: 600 }}>Organization Profile</h1>
+              <h1 className="text-2xl text-gray-900 mb-2">Organization Profile</h1>
               <p className="text-gray-600">The more you fill out, the faster applications get filled, and the smarter your grant matches become.</p>
             </div>
-            
+
             {/* Save Progress Button - Upper Right */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Clock className="w-4 h-4" />
-                {isAutoSaving ? (
-                  <span>Saving...</span>
-                ) : lastSaved ? (
-                  <span>Last saved {formatTimeAgo(lastSaved)}</span>
-                ) : (
-                  <span>No changes yet</span>
-                )}
-              </div>
-              <Button 
-                className="bg-teal-600 hover:bg-teal-700 text-white"
-                onClick={handleAutoSave}
-                disabled={isAutoSaving}
-              >
-                {isAutoSaving ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <HardDrive className="w-4 h-4 mr-2" />
-                )}
-                Save Progress
-              </Button>
-            </div>
+            <SaveProgressControl
+              statusLabel={isAutoSaving ? 'Saving...' : lastSaved ? `Last saved ${formatTimeAgo(lastSaved)}` : 'No changes yet'}
+              isAutoSaving={isAutoSaving}
+              onSave={handleAutoSave}
+            />
           </div>
 
           {/* Forces existing organizations that pre-date the Focus Areas
@@ -1017,31 +981,31 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
             <TabsList className="!bg-white !border-b !border-gray-200 !p-0 !h-auto !w-full !justify-start !rounded-none !inline-flex">
               <TabsTrigger 
                 value="legal-info" 
-                className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
+                className={TAB_TRIGGER_CLASS}
               >
                 Legal Info
               </TabsTrigger>
               <TabsTrigger 
                 value="details"
-                className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
+                className={TAB_TRIGGER_CLASS}
               >
                 Details
               </TabsTrigger>
               <TabsTrigger
                 value="key-contacts"
-                className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
+                className={TAB_TRIGGER_CLASS}
               >
                 Key Contacts
               </TabsTrigger>
               <TabsTrigger 
                 value="financial-info"
-                className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
+                className={TAB_TRIGGER_CLASS}
               >
                 Financial Info
               </TabsTrigger>
               <TabsTrigger 
                 value="policies-compliance"
-                className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
+                className={TAB_TRIGGER_CLASS}
               >
                 Policies & Compliance
               </TabsTrigger>
@@ -1453,91 +1417,16 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
 
                 <div className="space-y-4">
                   {leaders.map((leader, index) => (
-                    <div key={leader.id} className="p-5 border border-gray-200 rounded-lg bg-white">
-                      <div className="flex items-start justify-between mb-4">
-                        <h4 className="text-sm font-semibold text-gray-700">Leader {index + 1}</h4>
-                        <div className="flex items-center gap-3">
-                          {leader.isPrimaryContact && (
-                            <Badge className="bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-50">
-                              Primary Contact
-                            </Badge>
-                          )}
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <Checkbox
-                              checked={leader.isPrimaryContact}
-                              onCheckedChange={() => toggleLeaderPrimaryContact(leader.id)}
-                              className="data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"
-                            />
-                            <span className="text-xs text-gray-600">Primary Contact</span>
-                          </label>
-                          {leaders.length > 1 && (
-                            <button
-                              onClick={() => handleRemoveLeader(leader.id)}
-                              className="text-red-500 hover:text-red-700 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2">
-                          <Label htmlFor={`leader-name-${leader.id}`} className="text-xs text-gray-700">
-                            Full Name <span className="text-red-500">*</span>
-                          </Label>
-                          <Input 
-                            id={`leader-name-${leader.id}`}
-                            value={leader.fullName}
-                            onChange={(e) => handleLeaderChange(leader.id, 'fullName', e.target.value)}
-                            placeholder="Enter full name"
-                            className="mt-1"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor={`leader-email-${leader.id}`} className="text-xs text-gray-700">
-                            Email <span className="text-red-500">*</span>
-                          </Label>
-                          <Input 
-                            id={`leader-email-${leader.id}`}
-                            type="email"
-                            value={leader.email}
-                            onChange={(e) => handleLeaderChange(leader.id, 'email', e.target.value)}
-                            placeholder="email@example.org"
-                            className="mt-1"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor={`leader-phone-${leader.id}`} className="text-xs text-gray-700">
-                            Phone <span className="text-red-500">*</span>
-                          </Label>
-                          <Input 
-                            id={`leader-phone-${leader.id}`}
-                            type="tel"
-                            value={leader.phone}
-                            onChange={(e) => handleLeaderChange(leader.id, 'phone', e.target.value)}
-                            placeholder="+1 (555) 173-4567"
-                            className="mt-1"
-                          />
-                        </div>
-
-                        <div className="col-span-2">
-                          <Label htmlFor={`leader-bio-${leader.id}`} className="text-xs text-gray-700">
-                            Bio <span className="text-red-500">*</span>
-                          </Label>
-                          <Textarea 
-                            id={`leader-bio-${leader.id}`}
-                            value={leader.bio}
-                            onChange={(e) => handleLeaderChange(leader.id, 'bio', e.target.value)}
-                            placeholder="This is my bio..."
-                            rows={3}
-                            className="mt-1"
-                          />
-                        </div>
-                      </div>
-                    </div>
+                    <PersonCard
+                      key={leader.id}
+                      role="Leader"
+                      index={index}
+                      person={leader}
+                      canRemove={leaders.length > 1}
+                      onChange={(field, value) => handleLeaderChange(leader.id, field, value)}
+                      onTogglePrimary={() => toggleLeaderPrimaryContact(leader.id)}
+                      onRemove={() => handleRemoveLeader(leader.id)}
+                    />
                   ))}
                 </div>
               </div>
@@ -1562,91 +1451,16 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
 
                 <div className="space-y-4">
                   {boardMembers.map((member, index) => (
-                    <div key={member.id} className="p-5 border border-gray-200 rounded-lg bg-white">
-                      <div className="flex items-start justify-between mb-4">
-                        <h4 className="text-sm font-semibold text-gray-700">Board Member {index + 1}</h4>
-                        <div className="flex items-center gap-3">
-                          {member.isPrimaryContact && (
-                            <Badge className="bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-50">
-                              Primary Contact
-                            </Badge>
-                          )}
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <Checkbox
-                              checked={member.isPrimaryContact}
-                              onCheckedChange={() => toggleBoardMemberPrimaryContact(member.id)}
-                              className="data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"
-                            />
-                            <span className="text-xs text-gray-600">Primary Contact</span>
-                          </label>
-                          {boardMembers.length > 1 && (
-                            <button
-                              onClick={() => handleRemoveBoardMember(member.id)}
-                              className="text-red-500 hover:text-red-700 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2">
-                          <Label htmlFor={`board-name-${member.id}`} className="text-xs text-gray-700">
-                            Full Name <span className="text-red-500">*</span>
-                          </Label>
-                          <Input 
-                            id={`board-name-${member.id}`}
-                            value={member.fullName}
-                            onChange={(e) => handleBoardMemberChange(member.id, 'fullName', e.target.value)}
-                            placeholder="Enter full name"
-                            className="mt-1"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor={`board-email-${member.id}`} className="text-xs text-gray-700">
-                            Email <span className="text-red-500">*</span>
-                          </Label>
-                          <Input 
-                            id={`board-email-${member.id}`}
-                            type="email"
-                            value={member.email}
-                            onChange={(e) => handleBoardMemberChange(member.id, 'email', e.target.value)}
-                            placeholder="email@example.org"
-                            className="mt-1"
-                          />
-                        </div>
-
-                        <div>
-                          <Label htmlFor={`board-phone-${member.id}`} className="text-xs text-gray-700">
-                            Phone <span className="text-red-500">*</span>
-                          </Label>
-                          <Input 
-                            id={`board-phone-${member.id}`}
-                            type="tel"
-                            value={member.phone}
-                            onChange={(e) => handleBoardMemberChange(member.id, 'phone', e.target.value)}
-                            placeholder="+1 (555) 173-4567"
-                            className="mt-1"
-                          />
-                        </div>
-
-                        <div className="col-span-2">
-                          <Label htmlFor={`board-bio-${member.id}`} className="text-xs text-gray-700">
-                            Bio <span className="text-red-500">*</span>
-                          </Label>
-                          <Textarea 
-                            id={`board-bio-${member.id}`}
-                            value={member.bio}
-                            onChange={(e) => handleBoardMemberChange(member.id, 'bio', e.target.value)}
-                            placeholder="This is my bio..."
-                            rows={3}
-                            className="mt-1"
-                          />
-                        </div>
-                      </div>
-                    </div>
+                    <PersonCard
+                      key={member.id}
+                      role="Board Member"
+                      index={index}
+                      person={member}
+                      canRemove={boardMembers.length > 1}
+                      onChange={(field, value) => handleBoardMemberChange(member.id, field, value)}
+                      onTogglePrimary={() => toggleBoardMemberPrimaryContact(member.id)}
+                      onRemove={() => handleRemoveBoardMember(member.id)}
+                    />
                   ))}
                 </div>
               </div>
@@ -1656,7 +1470,7 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
             <TabsContent value="financial-info" className="space-y-6">
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Cabin, sans-serif' }}>Financial Readiness</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Financial Readiness</h3>
                   <p className="text-sm text-gray-600">Please answer the following questions to help us assess your financial readiness for applying for grants.</p>
                 </div>
 
@@ -1686,137 +1500,29 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
 
                   {/* CFR 200 Audit Compliance */}
                   <div data-field="cfr200Compliant" className={`transition-all duration-300 ${highlightedField === 'cfr200Compliant' ? 'ring-2 ring-teal-600 bg-teal-50/50 rounded-lg p-4 -m-2' : ''}`}>
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <Label className="block text-sm font-medium text-gray-900">
-                        Is the organization compliant with a 2 CFR 200 audit requirement (including a Single Audit)? <span className="text-red-500">*</span>
-                      </Label>
-                      {financialInfo.cfr200Compliant === 'yes' && <ConfirmedBadge />}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {[
-                        { value: 'yes', label: 'Yes', color: 'teal' },
-                        { value: 'no', label: 'No', color: 'orange' },
-                        { value: 'unsure', label: 'Unsure', color: 'orange' }
-                      ].map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setFinancialInfo({ ...financialInfo, cfr200Compliant: option.value as 'yes' | 'no' | 'unsure' })}
-                          className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                            financialInfo.cfr200Compliant === option.value
-                              ? option.color === 'teal'
-                                ? 'border-teal-600 bg-teal-50 text-gray-900'
-                                : 'border-amber-500 bg-amber-50 text-gray-900'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                              financialInfo.cfr200Compliant === option.value
-                                ? option.color === 'teal'
-                                  ? 'border-teal-600 bg-teal-600'
-                                  : 'border-amber-500 bg-amber-500'
-                                : 'border-gray-300 bg-white'
-                            }`}>
-                              {financialInfo.cfr200Compliant === option.value && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                              )}
-                            </div>
-                            <span className="text-sm font-medium">{option.label}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    <YesNoUnsureQuestion
+                      question="Is the organization compliant with a 2 CFR 200 audit requirement (including a Single Audit)?"
+                      value={financialInfo.cfr200Compliant ?? ''}
+                      onChange={(value) => setFinancialInfo({ ...financialInfo, cfr200Compliant: value === '' ? null : value })}
+                    />
                   </div>
 
                   {/* Financial System Tracking */}
                   <div data-field="financialSystemTracking" className={`transition-all duration-300 ${highlightedField === 'financialSystemTracking' ? 'ring-2 ring-teal-600 bg-teal-50/50 rounded-lg p-4 -m-2' : ''}`}>
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <Label className="block text-sm font-medium text-gray-900">
-                        Can the organization's financial system track expenses by individual grant and manage federal drawdowns? <span className="text-red-500">*</span>
-                      </Label>
-                      {financialInfo.financialSystemTracking === 'yes' && <ConfirmedBadge />}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {[
-                        { value: 'yes', label: 'Yes', color: 'teal' },
-                        { value: 'no', label: 'No', color: 'orange' },
-                        { value: 'unsure', label: 'Unsure', color: 'orange' }
-                      ].map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setFinancialInfo({ ...financialInfo, financialSystemTracking: option.value as 'yes' | 'no' | 'unsure' })}
-                          className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                            financialInfo.financialSystemTracking === option.value
-                              ? option.color === 'teal'
-                                ? 'border-teal-600 bg-teal-50 text-gray-900'
-                                : 'border-amber-500 bg-amber-50 text-gray-900'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                              financialInfo.financialSystemTracking === option.value
-                                ? option.color === 'teal'
-                                  ? 'border-teal-600 bg-teal-600'
-                                  : 'border-amber-500 bg-amber-500'
-                                : 'border-gray-300 bg-white'
-                            }`}>
-                              {financialInfo.financialSystemTracking === option.value && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                              )}
-                            </div>
-                            <span className="text-sm font-medium">{option.label}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    <YesNoUnsureQuestion
+                      question="Can the organization's financial system track expenses by individual grant and manage federal drawdowns?"
+                      value={financialInfo.financialSystemTracking ?? ''}
+                      onChange={(value) => setFinancialInfo({ ...financialInfo, financialSystemTracking: value === '' ? null : value })}
+                    />
                   </div>
 
                   {/* Time and Effort Reporting */}
                   <div data-field="timeEffortReporting" className={`transition-all duration-300 ${highlightedField === 'timeEffortReporting' ? 'ring-2 ring-teal-600 bg-teal-50/50 rounded-lg p-4 -m-2' : ''}`}>
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <Label className="block text-sm font-medium text-gray-900">
-                        Can the organization's financial system support time and effort reporting? <span className="text-red-500">*</span>
-                      </Label>
-                      {financialInfo.timeEffortReporting === 'yes' && <ConfirmedBadge />}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {[
-                        { value: 'yes', label: 'Yes', color: 'teal' },
-                        { value: 'no', label: 'No', color: 'orange' },
-                        { value: 'unsure', label: 'Unsure', color: 'orange' }
-                      ].map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setFinancialInfo({ ...financialInfo, timeEffortReporting: option.value as 'yes' | 'no' | 'unsure' })}
-                          className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                            financialInfo.timeEffortReporting === option.value
-                              ? option.color === 'teal'
-                                ? 'border-teal-600 bg-teal-50 text-gray-900'
-                                : 'border-amber-500 bg-amber-50 text-gray-900'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                              financialInfo.timeEffortReporting === option.value
-                                ? option.color === 'teal'
-                                  ? 'border-teal-600 bg-teal-600'
-                                  : 'border-amber-500 bg-amber-500'
-                                : 'border-gray-300 bg-white'
-                            }`}>
-                              {financialInfo.timeEffortReporting === option.value && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                              )}
-                            </div>
-                            <span className="text-sm font-medium">{option.label}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    <YesNoUnsureQuestion
+                      question="Can the organization's financial system support time and effort reporting?"
+                      value={financialInfo.timeEffortReporting ?? ''}
+                      onChange={(value) => setFinancialInfo({ ...financialInfo, timeEffortReporting: value === '' ? null : value })}
+                    />
                   </div>
 
                   {/* Indirect Cost Agreement */}
@@ -1837,47 +1543,11 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
 
                   {/* Cost Share Liquidity */}
                   <div data-field="costShareLiquidity" className={`transition-all duration-300 ${highlightedField === 'costShareLiquidity' ? 'ring-2 ring-teal-600 bg-teal-50/50 rounded-lg p-4 -m-2' : ''}`}>
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <Label className="block text-sm font-medium text-gray-900">
-                        Does the organization have liquidity or committed financial resources to meet cost-share/matching requirements? <span className="text-red-500">*</span>
-                      </Label>
-                      {financialInfo.costShareLiquidity === 'yes' && <ConfirmedBadge />}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {[
-                        { value: 'yes', label: 'Yes', color: 'teal' },
-                        { value: 'no', label: 'No', color: 'orange' },
-                        { value: 'unsure', label: 'Unsure', color: 'orange' }
-                      ].map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setFinancialInfo({ ...financialInfo, costShareLiquidity: option.value as 'yes' | 'no' | 'unsure' })}
-                          className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                            financialInfo.costShareLiquidity === option.value
-                              ? option.color === 'teal'
-                                ? 'border-teal-600 bg-teal-50 text-gray-900'
-                                : 'border-amber-500 bg-amber-50 text-gray-900'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                              financialInfo.costShareLiquidity === option.value
-                                ? option.color === 'teal'
-                                  ? 'border-teal-600 bg-teal-600'
-                                  : 'border-amber-500 bg-amber-500'
-                                : 'border-gray-300 bg-white'
-                            }`}>
-                              {financialInfo.costShareLiquidity === option.value && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                              )}
-                            </div>
-                            <span className="text-sm font-medium">{option.label}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    <YesNoUnsureQuestion
+                      question="Does the organization have liquidity or committed financial resources to meet cost-share/matching requirements?"
+                      value={financialInfo.costShareLiquidity ?? ''}
+                      onChange={(value) => setFinancialInfo({ ...financialInfo, costShareLiquidity: value === '' ? null : value })}
+                    />
                   </div>
                 </div>
               </div>
@@ -1887,7 +1557,7 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
             <TabsContent value="policies-compliance" className="space-y-6">
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Cabin, sans-serif' }}>Policies & Compliance Readiness</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Policies & Compliance Readiness</h3>
                   <p className="text-sm text-gray-600">Please answer the following questions to help us assess policy and compliance.</p>
                 </div>
 
@@ -1896,317 +1566,65 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                 <div className="space-y-6">
                   {/* Compliance Tracking Software */}
                   <div data-field="complianceTrackingSoftware" className={`transition-all duration-300 ${highlightedField === 'complianceTrackingSoftware' ? 'ring-2 ring-teal-600 bg-teal-50/50 rounded-lg p-4 -m-2' : ''}`}>
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <Label className="block text-sm font-medium text-gray-900">
-                        Does the organization have software or a financial system to track deadlines, reporting, and compliance? <span className="text-red-500">*</span>
-                      </Label>
-                      {policiesCompliance.complianceTrackingSoftware === 'yes' && <ConfirmedBadge />}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {[
-                        { value: 'yes', label: 'Yes', color: 'teal' },
-                        { value: 'no', label: 'No', color: 'orange' },
-                        { value: 'unsure', label: 'Unsure', color: 'orange' }
-                      ].map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setPoliciesCompliance({ ...policiesCompliance, complianceTrackingSoftware: option.value as 'yes' | 'no' | 'unsure' })}
-                          className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                            policiesCompliance.complianceTrackingSoftware === option.value
-                              ? option.color === 'teal'
-                                ? 'border-teal-600 bg-teal-50 text-gray-900'
-                                : 'border-amber-500 bg-amber-50 text-gray-900'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                              policiesCompliance.complianceTrackingSoftware === option.value
-                                ? option.color === 'teal'
-                                  ? 'border-teal-600 bg-teal-600'
-                                  : 'border-amber-500 bg-amber-500'
-                                : 'border-gray-300 bg-white'
-                            }`}>
-                              {policiesCompliance.complianceTrackingSoftware === option.value && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                              )}
-                            </div>
-                            <span className="text-sm font-medium">{option.label}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    <YesNoUnsureQuestion
+                      question="Does the organization have software or a financial system to track deadlines, reporting, and compliance?"
+                      value={policiesCompliance.complianceTrackingSoftware ?? ''}
+                      onChange={(value) => setPoliciesCompliance({ ...policiesCompliance, complianceTrackingSoftware: value === '' ? null : value })}
+                    />
                   </div>
 
                   {/* Federal Data Tracking */}
                   <div data-field="federalDataTracking" className={`transition-all duration-300 ${highlightedField === 'federalDataTracking' ? 'ring-2 ring-teal-600 bg-teal-50/50 rounded-lg p-4 -m-2' : ''}`}>
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <Label className="block text-sm font-medium text-gray-900">
-                        Can the organization track record-collecting data aligned with federal measures (e.g., GPRA)? <span className="text-red-500">*</span>
-                      </Label>
-                      {policiesCompliance.federalDataTracking === 'yes' && <ConfirmedBadge />}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {[
-                        { value: 'yes', label: 'Yes', color: 'teal' },
-                        { value: 'no', label: 'No', color: 'orange' },
-                        { value: 'unsure', label: 'Unsure', color: 'orange' }
-                      ].map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setPoliciesCompliance({ ...policiesCompliance, federalDataTracking: option.value as 'yes' | 'no' | 'unsure' })}
-                          className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                            policiesCompliance.federalDataTracking === option.value
-                              ? option.color === 'teal'
-                                ? 'border-teal-600 bg-teal-50 text-gray-900'
-                                : 'border-amber-500 bg-amber-50 text-gray-900'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                              policiesCompliance.federalDataTracking === option.value
-                                ? option.color === 'teal'
-                                  ? 'border-teal-600 bg-teal-600'
-                                  : 'border-amber-500 bg-amber-500'
-                                : 'border-gray-300 bg-white'
-                            }`}>
-                              {policiesCompliance.federalDataTracking === option.value && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                              )}
-                            </div>
-                            <span className="text-sm font-medium">{option.label}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    <YesNoUnsureQuestion
+                      question="Can the organization track record-collecting data aligned with federal measures (e.g., GPRA)?"
+                      value={policiesCompliance.federalDataTracking ?? ''}
+                      onChange={(value) => setPoliciesCompliance({ ...policiesCompliance, federalDataTracking: value === '' ? null : value })}
+                    />
                   </div>
 
                   {/* Demographic Data Collection */}
                   <div data-field="demographicDataCollection" className={`transition-all duration-300 ${highlightedField === 'demographicDataCollection' ? 'ring-2 ring-teal-600 bg-teal-50/50 rounded-lg p-4 -m-2' : ''}`}>
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <Label className="block text-sm font-medium text-gray-900">
-                        Does the organization collect disaggregated demographic data? <span className="text-red-500">*</span>
-                      </Label>
-                      {policiesCompliance.demographicDataCollection === 'yes' && <ConfirmedBadge />}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {[
-                        { value: 'yes', label: 'Yes', color: 'teal' },
-                        { value: 'no', label: 'No', color: 'orange' },
-                        { value: 'unsure', label: 'Unsure', color: 'orange' }
-                      ].map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setPoliciesCompliance({ ...policiesCompliance, demographicDataCollection: option.value as 'yes' | 'no' | 'unsure' })}
-                          className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                            policiesCompliance.demographicDataCollection === option.value
-                              ? option.color === 'teal'
-                                ? 'border-teal-600 bg-teal-50 text-gray-900'
-                                : 'border-amber-500 bg-amber-50 text-gray-900'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                              policiesCompliance.demographicDataCollection === option.value
-                                ? option.color === 'teal'
-                                  ? 'border-teal-600 bg-teal-600'
-                                  : 'border-amber-500 bg-amber-500'
-                                : 'border-gray-300 bg-white'
-                            }`}>
-                              {policiesCompliance.demographicDataCollection === option.value && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                              )}
-                            </div>
-                            <span className="text-sm font-medium">{option.label}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    <YesNoUnsureQuestion
+                      question="Does the organization collect disaggregated demographic data?"
+                      value={policiesCompliance.demographicDataCollection ?? ''}
+                      onChange={(value) => setPoliciesCompliance({ ...policiesCompliance, demographicDataCollection: value === '' ? null : value })}
+                    />
                   </div>
 
                   {/* Internal Controls Documentation */}
                   <div data-field="internalControlsDocs" className={`transition-all duration-300 ${highlightedField === 'internalControlsDocs' ? 'ring-2 ring-teal-600 bg-teal-50/50 rounded-lg p-4 -m-2' : ''}`}>
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <Label className="block text-sm font-medium text-gray-900">
-                        Does the organization have documented internal controls for federal compliance? <span className="text-red-500">*</span>
-                      </Label>
-                      {policiesCompliance.internalControlsDocs === 'yes' && <ConfirmedBadge />}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {[
-                        { value: 'yes', label: 'Yes', color: 'teal' },
-                        { value: 'no', label: 'No', color: 'orange' },
-                        { value: 'unsure', label: 'Unsure', color: 'orange' }
-                      ].map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setPoliciesCompliance({ ...policiesCompliance, internalControlsDocs: option.value as 'yes' | 'no' | 'unsure' })}
-                          className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                            policiesCompliance.internalControlsDocs === option.value
-                              ? option.color === 'teal'
-                                ? 'border-teal-600 bg-teal-50 text-gray-900'
-                                : 'border-amber-500 bg-amber-50 text-gray-900'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                              policiesCompliance.internalControlsDocs === option.value
-                                ? option.color === 'teal'
-                                  ? 'border-teal-600 bg-teal-600'
-                                  : 'border-amber-500 bg-amber-500'
-                                : 'border-gray-300 bg-white'
-                            }`}>
-                              {policiesCompliance.internalControlsDocs === option.value && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                              )}
-                            </div>
-                            <span className="text-sm font-medium">{option.label}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    <YesNoUnsureQuestion
+                      question="Does the organization have documented internal controls for federal compliance?"
+                      value={policiesCompliance.internalControlsDocs ?? ''}
+                      onChange={(value) => setPoliciesCompliance({ ...policiesCompliance, internalControlsDocs: value === '' ? null : value })}
+                    />
                   </div>
 
                   {/* Procurement Policies */}
                   <div data-field="procurementPolicies" className={`transition-all duration-300 ${highlightedField === 'procurementPolicies' ? 'ring-2 ring-teal-600 bg-teal-50/50 rounded-lg p-4 -m-2' : ''}`}>
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <Label className="block text-sm font-medium text-gray-900">
-                        Does the organization have documented policies for procurement and subrecipient monitoring? <span className="text-red-500">*</span>
-                      </Label>
-                      {policiesCompliance.procurementPolicies === 'yes' && <ConfirmedBadge />}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {[
-                        { value: 'yes', label: 'Yes', color: 'teal' },
-                        { value: 'no', label: 'No', color: 'orange' },
-                        { value: 'unsure', label: 'Unsure', color: 'orange' }
-                      ].map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setPoliciesCompliance({ ...policiesCompliance, procurementPolicies: option.value as 'yes' | 'no' | 'unsure' })}
-                          className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                            policiesCompliance.procurementPolicies === option.value
-                              ? option.color === 'teal'
-                                ? 'border-teal-600 bg-teal-50 text-gray-900'
-                                : 'border-amber-500 bg-amber-50 text-gray-900'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                              policiesCompliance.procurementPolicies === option.value
-                                ? option.color === 'teal'
-                                  ? 'border-teal-600 bg-teal-600'
-                                  : 'border-amber-500 bg-amber-500'
-                                : 'border-gray-300 bg-white'
-                            }`}>
-                              {policiesCompliance.procurementPolicies === option.value && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                              )}
-                            </div>
-                            <span className="text-sm font-medium">{option.label}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    <YesNoUnsureQuestion
+                      question="Does the organization have documented policies for procurement and subrecipient monitoring?"
+                      value={policiesCompliance.procurementPolicies ?? ''}
+                      onChange={(value) => setPoliciesCompliance({ ...policiesCompliance, procurementPolicies: value === '' ? null : value })}
+                    />
                   </div>
 
                   {/* Time and Effort Policies */}
                   <div data-field="timeEffortPolicies" className={`transition-all duration-300 ${highlightedField === 'timeEffortPolicies' ? 'ring-2 ring-teal-600 bg-teal-50/50 rounded-lg p-4 -m-2' : ''}`}>
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <Label className="block text-sm font-medium text-gray-900">
-                        Does the organization have documented policies for time and effort reporting (personnel)? <span className="text-red-500">*</span>
-                      </Label>
-                      {policiesCompliance.timeEffortPolicies === 'yes' && <ConfirmedBadge />}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {[
-                        { value: 'yes', label: 'Yes', color: 'teal' },
-                        { value: 'no', label: 'No', color: 'orange' },
-                        { value: 'unsure', label: 'Unsure', color: 'orange' }
-                      ].map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setPoliciesCompliance({ ...policiesCompliance, timeEffortPolicies: option.value as 'yes' | 'no' | 'unsure' })}
-                          className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                            policiesCompliance.timeEffortPolicies === option.value
-                              ? option.color === 'teal'
-                                ? 'border-teal-600 bg-teal-50 text-gray-900'
-                                : 'border-amber-500 bg-amber-50 text-gray-900'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                              policiesCompliance.timeEffortPolicies === option.value
-                                ? option.color === 'teal'
-                                  ? 'border-teal-600 bg-teal-600'
-                                  : 'border-amber-500 bg-amber-500'
-                                : 'border-gray-300 bg-white'
-                            }`}>
-                              {policiesCompliance.timeEffortPolicies === option.value && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                              )}
-                            </div>
-                            <span className="text-sm font-medium">{option.label}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    <YesNoUnsureQuestion
+                      question="Does the organization have documented policies for time and effort reporting (personnel)?"
+                      value={policiesCompliance.timeEffortPolicies ?? ''}
+                      onChange={(value) => setPoliciesCompliance({ ...policiesCompliance, timeEffortPolicies: value === '' ? null : value })}
+                    />
                   </div>
 
                   {/* Conflict of Interest Policies */}
                   <div data-field="conflictOfInterestPolicies" className={`transition-all duration-300 ${highlightedField === 'conflictOfInterestPolicies' ? 'ring-2 ring-teal-600 bg-teal-50/50 rounded-lg p-4 -m-2' : ''}`}>
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <Label className="block text-sm font-medium text-gray-900">
-                        Does the organization have documented policies for conflict of interest and record retention? <span className="text-red-500">*</span>
-                      </Label>
-                      {policiesCompliance.conflictOfInterestPolicies === 'yes' && <ConfirmedBadge />}
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {[
-                        { value: 'yes', label: 'Yes', color: 'teal' },
-                        { value: 'no', label: 'No', color: 'orange' },
-                        { value: 'unsure', label: 'Unsure', color: 'orange' }
-                      ].map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setPoliciesCompliance({ ...policiesCompliance, conflictOfInterestPolicies: option.value as 'yes' | 'no' | 'unsure' })}
-                          className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                            policiesCompliance.conflictOfInterestPolicies === option.value
-                              ? option.color === 'teal'
-                                ? 'border-teal-600 bg-teal-50 text-gray-900'
-                                : 'border-amber-500 bg-amber-50 text-gray-900'
-                              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                              policiesCompliance.conflictOfInterestPolicies === option.value
-                                ? option.color === 'teal'
-                                  ? 'border-teal-600 bg-teal-600'
-                                  : 'border-amber-500 bg-amber-500'
-                                : 'border-gray-300 bg-white'
-                            }`}>
-                              {policiesCompliance.conflictOfInterestPolicies === option.value && (
-                                <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                              )}
-                            </div>
-                            <span className="text-sm font-medium">{option.label}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    <YesNoUnsureQuestion
+                      question="Does the organization have documented policies for conflict of interest and record retention?"
+                      value={policiesCompliance.conflictOfInterestPolicies ?? ''}
+                      onChange={(value) => setPoliciesCompliance({ ...policiesCompliance, conflictOfInterestPolicies: value === '' ? null : value })}
+                    />
                   </div>
                 </div>
               </div>
@@ -2215,28 +1633,11 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
 
           {/* Save Progress Button - Lower Right */}
           <div className="flex items-center justify-end gap-3 mt-8">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Clock className="w-4 h-4" />
-              {isAutoSaving ? (
-                <span>Saving...</span>
-              ) : lastSaved ? (
-                <span>Last saved {formatTimeAgo(lastSaved)}</span>
-              ) : (
-                <span>No changes yet</span>
-              )}
-            </div>
-            <Button 
-              className="bg-teal-600 hover:bg-teal-700 text-white"
-              onClick={handleAutoSave}
-              disabled={isAutoSaving}
-            >
-              {isAutoSaving ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <HardDrive className="w-4 h-4 mr-2" />
-              )}
-              Save Progress
-            </Button>
+            <SaveProgressControl
+              statusLabel={isAutoSaving ? 'Saving...' : lastSaved ? `Last saved ${formatTimeAgo(lastSaved)}` : 'No changes yet'}
+              isAutoSaving={isAutoSaving}
+              onSave={handleAutoSave}
+            />
           </div>
 
         </div>
@@ -2247,14 +1648,14 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
         initial={{ width: 0, opacity: 0 }}
         animate={{ width: 320, opacity: 1 }}
         transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        className="bg-[#F9FAFB] border-l border-gray-200 overflow-hidden flex-shrink-0 relative"
+        className="bg-gray-50 border-l border-gray-200 overflow-hidden flex-shrink-0 relative"
       >
             <div className="overflow-y-auto h-full">
               <div className="p-6">
             {/* Header */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
-                <h2 className="text-base font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                <h2 className="text-base font-semibold text-gray-900">
                   Profile Completion
                 </h2>
                 {(() => {
@@ -2296,7 +1697,7 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                       style={badgeStyle}
                     >
                       {iconElement}
-                      <span className="text-white text-xs font-semibold" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                      <span className="text-white text-xs font-semibold">
                         {completedCount}/{totalCount} Done
                       </span>
                     </div>
@@ -2311,436 +1712,241 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
             {/* Legal Info Section */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                <h3 className="text-sm font-semibold text-gray-900">
                   Legal Info
                 </h3>
                 <span className="text-xs text-gray-500">~5 minutes to complete</span>
               </div>
-              
+
               <div className="space-y-3">
-                {/* EIN */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('ein');
-                    setActiveRequirement('ein');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('ein')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                <RailChecklistItem
+                  title="EIN"
+                  completed={!!checklistItems.find(item => item.id === 'ein')?.completed}
+                  active={activeRequirement === 'ein'}
+                  onSelect={() => { handleRailItemClick('ein'); setActiveRequirement('ein'); }}
+                  onHoverStart={() => setActiveRequirement('ein')}
+                  onHoverEnd={() => setActiveRequirement(null)}
+                  description={
                     checklistItems.find(item => item.id === 'ein')?.completed
-                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
-                      : activeRequirement === 'ein' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    {checklistItems.find(item => item.id === 'ein')?.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">EIN</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        {checklistItems.find(item => item.id === 'ein')?.completed
-                          ? 'Your EIN is validated and ready'
-                          : 'Enter your 9-digit Employer Identification Number'}
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                      ? 'Your EIN is validated and ready'
+                      : 'Enter your 9-digit Employer Identification Number'
+                  }
+                />
 
-                {/* UEI */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('uei');
-                    setActiveRequirement('uei');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('uei')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                <RailChecklistItem
+                  title="UEI"
+                  completed={!!checklistItems.find(item => item.id === 'uei')?.completed}
+                  active={activeRequirement === 'uei'}
+                  onSelect={() => { handleRailItemClick('uei'); setActiveRequirement('uei'); }}
+                  onHoverStart={() => setActiveRequirement('uei')}
+                  onHoverEnd={() => setActiveRequirement(null)}
+                  description={
                     checklistItems.find(item => item.id === 'uei')?.completed
-                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
-                      : activeRequirement === 'uei' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    {checklistItems.find(item => item.id === 'uei')?.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">UEI</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        {checklistItems.find(item => item.id === 'uei')?.completed
-                          ? 'Your UEI is verified and ready'
-                          : <>Enter your 12-character Unique Entity Identifier from SAM.gov or{' '}
-                            <a
-                              href="https://sam.gov"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-teal-600 hover:text-teal-700 underline inline-flex items-center gap-0.5"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              register on SAM.gov to get a UEI
-                              <ExternalLink className="w-3 h-3" />
-                            </a></>}
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                      ? 'Your UEI is verified and ready'
+                      : <>Enter your 12-character Unique Entity Identifier from SAM.gov or{' '}
+                        <a
+                          href="https://sam.gov"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-teal-600 hover:text-teal-700 underline inline-flex items-center gap-0.5"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          register on SAM.gov to get a UEI
+                          <ExternalLink className="w-3 h-3" />
+                        </a></>
+                  }
+                />
 
-                {/* Organization Name */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('org-name');
-                    setActiveRequirement('org-name');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('org-name')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                <RailChecklistItem
+                  title="Organization Name"
+                  completed={!!checklistItems.find(item => item.id === 'org-name')?.completed}
+                  active={activeRequirement === 'org-name'}
+                  onSelect={() => { handleRailItemClick('org-name'); setActiveRequirement('org-name'); }}
+                  onHoverStart={() => setActiveRequirement('org-name')}
+                  onHoverEnd={() => setActiveRequirement(null)}
+                  description={
                     checklistItems.find(item => item.id === 'org-name')?.completed
-                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
-                      : activeRequirement === 'org-name' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    {checklistItems.find(item => item.id === 'org-name')?.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Organization Name</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        {checklistItems.find(item => item.id === 'org-name')?.completed
-                          ? "Your organization name is complete"
-                          : "Complete your organization's legal name"}
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                      ? "Your organization name is complete"
+                      : "Complete your organization's legal name"
+                  }
+                />
 
-                {/* Organization Address */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('org-address');
-                    setActiveRequirement('org-address');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('org-address')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                <RailChecklistItem
+                  title="Organization Address"
+                  completed={!!checklistItems.find(item => item.id === 'org-address')?.completed}
+                  active={activeRequirement === 'org-address'}
+                  onSelect={() => { handleRailItemClick('org-address'); setActiveRequirement('org-address'); }}
+                  onHoverStart={() => setActiveRequirement('org-address')}
+                  onHoverEnd={() => setActiveRequirement(null)}
+                  description={
                     checklistItems.find(item => item.id === 'org-address')?.completed
-                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
-                      : activeRequirement === 'org-address' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    {checklistItems.find(item => item.id === 'org-address')?.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Organization Address</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        {checklistItems.find(item => item.id === 'org-address')?.completed
-                          ? "Your organization address is complete"
-                          : "Complete your organization's legal address"}
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                      ? "Your organization address is complete"
+                      : "Complete your organization's legal address"
+                  }
+                />
 
-                {/* Organization Website */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('org-website');
-                    setActiveRequirement('org-website');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('org-website')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                <RailChecklistItem
+                  title="Organization Website"
+                  completed={!!checklistItems.find(item => item.id === 'org-website')?.completed}
+                  active={activeRequirement === 'org-website'}
+                  onSelect={() => { handleRailItemClick('org-website'); setActiveRequirement('org-website'); }}
+                  onHoverStart={() => setActiveRequirement('org-website')}
+                  onHoverEnd={() => setActiveRequirement(null)}
+                  description={
                     checklistItems.find(item => item.id === 'org-website')?.completed
-                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
-                      : activeRequirement === 'org-website' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    {checklistItems.find(item => item.id === 'org-website')?.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Organization Website</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        {checklistItems.find(item => item.id === 'org-website')?.completed
-                          ? "Your website is complete"
-                          : "Complete your organization's web address"}
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                      ? "Your website is complete"
+                      : "Complete your organization's web address"
+                  }
+                />
 
                 {/* Add 2 or More Focus Areas — lives in Legal Info, right
                     after Organization Website, not its own rail section. */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('focus-areas');
-                    setActiveRequirement('focus-areas');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('focus-areas')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                <RailChecklistItem
+                  title={`Add ${FOCUS_AREA_MIN_SELECTIONS} or More Focus Areas`}
+                  completed={!!checklistItems.find(item => item.id === 'focus-areas')?.completed}
+                  active={activeRequirement === 'focus-areas'}
+                  onSelect={() => { handleRailItemClick('focus-areas'); setActiveRequirement('focus-areas'); }}
+                  onHoverStart={() => setActiveRequirement('focus-areas')}
+                  onHoverEnd={() => setActiveRequirement(null)}
+                  description={
                     checklistItems.find(item => item.id === 'focus-areas')?.completed
-                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
-                      : activeRequirement === 'focus-areas' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    {checklistItems.find(item => item.id === 'focus-areas')?.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">
-                        Add {FOCUS_AREA_MIN_SELECTIONS} or More Focus Areas
-                      </div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        {checklistItems.find(item => item.id === 'focus-areas')?.completed
-                          ? `${FOCUS_AREA_MIN_SELECTIONS} or more focus areas selected`
-                          : `${Math.min(getFocusAreasCount(), FOCUS_AREA_MIN_SELECTIONS)} of ${FOCUS_AREA_MIN_SELECTIONS} Completed`}
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                      ? `${FOCUS_AREA_MIN_SELECTIONS} or more focus areas selected`
+                      : `${Math.min(getFocusAreasCount(), FOCUS_AREA_MIN_SELECTIONS)} of ${FOCUS_AREA_MIN_SELECTIONS} Completed`
+                  }
+                />
               </div>
             </div>
 
             {/* Details Section */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                <h3 className="text-sm font-semibold text-gray-900">
                   Details
                 </h3>
                 <span className="text-xs text-gray-500">~10 minutes to complete</span>
               </div>
-              
+
               <div className="space-y-3">
-                {/* Annual Budget */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('annual-budget');
-                    setActiveRequirement('annual-budget');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('annual-budget')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                <RailChecklistItem
+                  title="Annual Budget"
+                  completed={!!checklistItems.find(item => item.id === 'annual-budget')?.completed}
+                  active={activeRequirement === 'annual-budget'}
+                  onSelect={() => { handleRailItemClick('annual-budget'); setActiveRequirement('annual-budget'); }}
+                  onHoverStart={() => setActiveRequirement('annual-budget')}
+                  onHoverEnd={() => setActiveRequirement(null)}
+                  description={
                     checklistItems.find(item => item.id === 'annual-budget')?.completed
-                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
-                      : activeRequirement === 'annual-budget' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    {checklistItems.find(item => item.id === 'annual-budget')?.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Annual Budget</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        {checklistItems.find(item => item.id === 'annual-budget')?.completed
-                          ? 'Your annual budget is complete'
-                          : 'Complete your annual budget'}
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                      ? 'Your annual budget is complete'
+                      : 'Complete your annual budget'
+                  }
+                />
 
-                {/* Mission Statement */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('mission-statement');
-                    setActiveRequirement('mission-statement');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('mission-statement')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                <RailChecklistItem
+                  title="Mission Statement"
+                  completed={!!checklistItems.find(item => item.id === 'mission-statement')?.completed}
+                  active={activeRequirement === 'mission-statement'}
+                  onSelect={() => { handleRailItemClick('mission-statement'); setActiveRequirement('mission-statement'); }}
+                  onHoverStart={() => setActiveRequirement('mission-statement')}
+                  onHoverEnd={() => setActiveRequirement(null)}
+                  description={
                     checklistItems.find(item => item.id === 'mission-statement')?.completed
-                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
-                      : activeRequirement === 'mission-statement' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    {checklistItems.find(item => item.id === 'mission-statement')?.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Mission Statement</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        {checklistItems.find(item => item.id === 'mission-statement')?.completed
-                          ? 'Your mission statement is complete'
-                          : 'Complete your mission statement'}
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                      ? 'Your mission statement is complete'
+                      : 'Complete your mission statement'
+                  }
+                />
 
-                {/* Vision Statement */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('vision-statement');
-                    setActiveRequirement('vision-statement');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('vision-statement')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                <RailChecklistItem
+                  title="Vision Statement"
+                  completed={!!checklistItems.find(item => item.id === 'vision-statement')?.completed}
+                  active={activeRequirement === 'vision-statement'}
+                  onSelect={() => { handleRailItemClick('vision-statement'); setActiveRequirement('vision-statement'); }}
+                  onHoverStart={() => setActiveRequirement('vision-statement')}
+                  onHoverEnd={() => setActiveRequirement(null)}
+                  description={
                     checklistItems.find(item => item.id === 'vision-statement')?.completed
-                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
-                      : activeRequirement === 'vision-statement' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    {checklistItems.find(item => item.id === 'vision-statement')?.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Vision Statement</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        {checklistItems.find(item => item.id === 'vision-statement')?.completed
-                          ? 'Your vision statement is complete'
-                          : 'Complete vision statement'}
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                      ? 'Your vision statement is complete'
+                      : 'Complete vision statement'
+                  }
+                />
               </div>
             </div>
 
             {/* Financial Info Section */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                <h3 className="text-sm font-semibold text-gray-900">
                   Financial Info
                 </h3>
                 <span className="text-xs text-gray-500">~15 minutes to complete</span>
               </div>
-              
+
               <div className="space-y-3">
-                {/* Financial Readiness Questions */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('financial-readiness');
-                    setActiveRequirement('financial-readiness');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('financial-readiness')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                <RailChecklistItem
+                  title="Financial Readiness Questions"
+                  completed={!!checklistItems.find(item => item.id === 'financial-readiness')?.completed}
+                  active={activeRequirement === 'financial-readiness'}
+                  onSelect={() => { handleRailItemClick('financial-readiness'); setActiveRequirement('financial-readiness'); }}
+                  onHoverStart={() => setActiveRequirement('financial-readiness')}
+                  onHoverEnd={() => setActiveRequirement(null)}
+                  description={
                     checklistItems.find(item => item.id === 'financial-readiness')?.completed
-                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
-                      : activeRequirement === 'financial-readiness' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    {checklistItems.find(item => item.id === 'financial-readiness')?.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Financial Readiness Questions</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        {checklistItems.find(item => item.id === 'financial-readiness')?.completed
-                          ? 'All 6 questions confirmed'
-                          : (() => {
-                              const completedCount = [
-                                financialInfo.orgRegistrationType !== '',
-                                financialInfo.cfr200Compliant === 'yes',
-                                financialInfo.financialSystemTracking === 'yes',
-                                financialInfo.timeEffortReporting === 'yes',
-                                financialInfo.indirectCostAgreement.trim() !== '',
-                                financialInfo.costShareLiquidity === 'yes',
-                              ].filter(Boolean).length;
-                              return `${completedCount} of 6 Confirmed`;
-                            })()}
-                      </div>
-                    </div>
-                  </div>
-                </button>
+                      ? 'All 6 questions confirmed'
+                      : (() => {
+                          const completedCount = [
+                            financialInfo.orgRegistrationType !== '',
+                            financialInfo.cfr200Compliant === 'yes',
+                            financialInfo.financialSystemTracking === 'yes',
+                            financialInfo.timeEffortReporting === 'yes',
+                            financialInfo.indirectCostAgreement.trim() !== '',
+                            financialInfo.costShareLiquidity === 'yes',
+                          ].filter(Boolean).length;
+                          return `${completedCount} of 6 Confirmed`;
+                        })()
+                  }
+                />
               </div>
             </div>
 
             {/* Programs & Policies Section */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                <h3 className="text-sm font-semibold text-gray-900">
                   Programs & Policies
                 </h3>
                 <span className="text-xs text-gray-500">~20 minutes to complete</span>
               </div>
-              
-              <div className="space-y-3">
-                {/* Policies & Compliance Questions */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('policies-compliance');
-                    setActiveRequirement('policies-compliance');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('policies-compliance')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
-                    checklistItems.find(item => item.id === 'policies-compliance')?.completed
-                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
-                      : activeRequirement === 'policies-compliance' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    {checklistItems.find(item => item.id === 'policies-compliance')?.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Policies & Compliance Questions</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        {checklistItems.find(item => item.id === 'policies-compliance')?.completed
-                          ? 'All 7 questions confirmed'
-                          : (() => {
-                              const completedCount = [
-                                policiesCompliance.complianceTrackingSoftware === 'yes',
-                                policiesCompliance.federalDataTracking === 'yes',
-                                policiesCompliance.demographicDataCollection === 'yes',
-                                policiesCompliance.internalControlsDocs === 'yes',
-                                policiesCompliance.procurementPolicies === 'yes',
-                                policiesCompliance.timeEffortPolicies === 'yes',
-                                policiesCompliance.conflictOfInterestPolicies === 'yes',
-                              ].filter(Boolean).length;
-                              return `${completedCount} of 7 Confirmed`;
-                            })()}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
 
-            {/* Required Items Checklist */}
-            <div className="space-y-3" style={{ display: 'none' }}>
-              {/* Old content hidden */}
+              <div className="space-y-3">
+                <RailChecklistItem
+                  title="Policies & Compliance Questions"
+                  completed={!!checklistItems.find(item => item.id === 'policies-compliance')?.completed}
+                  active={activeRequirement === 'policies-compliance'}
+                  onSelect={() => { handleRailItemClick('policies-compliance'); setActiveRequirement('policies-compliance'); }}
+                  onHoverStart={() => setActiveRequirement('policies-compliance')}
+                  onHoverEnd={() => setActiveRequirement(null)}
+                  description={
+                    checklistItems.find(item => item.id === 'policies-compliance')?.completed
+                      ? 'All 7 questions confirmed'
+                      : (() => {
+                          const completedCount = [
+                            policiesCompliance.complianceTrackingSoftware === 'yes',
+                            policiesCompliance.federalDataTracking === 'yes',
+                            policiesCompliance.demographicDataCollection === 'yes',
+                            policiesCompliance.internalControlsDocs === 'yes',
+                            policiesCompliance.procurementPolicies === 'yes',
+                            policiesCompliance.timeEffortPolicies === 'yes',
+                            policiesCompliance.conflictOfInterestPolicies === 'yes',
+                          ].filter(Boolean).length;
+                          return `${completedCount} of 7 Confirmed`;
+                        })()
+                  }
+                />
+              </div>
             </div>
 
               </div>
             </div>
       </motion.aside>
-
-      </div>
 
       {/* Unsaved Changes Dialog */}
       <AnimatePresence>

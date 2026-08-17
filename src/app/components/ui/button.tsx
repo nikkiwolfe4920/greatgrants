@@ -46,6 +46,8 @@ const Button = React.forwardRef<
   return (
     <Comp
       data-slot="button"
+      data-figma-component="Button"
+      data-figma-variant={variant ?? "default"}
       className={cn(buttonVariants({ variant, size, className }))}
       ref={ref}
       {...props}

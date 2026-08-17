@@ -117,13 +117,9 @@ export function SubscribeOrgPage() {
               </div>
             )}
 
-            {/* Main content — hide OrganizationProfileForm's built-in sidebar */}
-            <div className="flex-1 overflow-auto subscribe-org-wrapper">
-              <style>{`
-                .subscribe-org-wrapper > div > aside { display: none !important; }
-                .subscribe-org-wrapper > div { display: flex !important; }
-                .subscribe-org-wrapper > div > main { flex: 1 !important; }
-              `}</style>
+            {/* Main content — OrganizationProfileForm no longer renders its own
+                sidebar/shell, so it drops straight into this page's layout. */}
+            <div className="flex-1 overflow-auto">
               <OrganizationProfileForm onBack={() => {}} />
             </div>
           </div>

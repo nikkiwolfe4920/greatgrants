@@ -267,6 +267,18 @@
   --pressed-overlay: rgba(0, 0, 0, 0.08);
   --focus-ring: var(--brand-600);
   --focus-ring-error: var(--error-600);
+
+  /* ========================================
+     ORGANIZATION PROFILE — CHECKLIST STATE
+     Centralizes values that were previously repeated as raw literals
+     across 11 "Profile Completion" rail checklist items on /organization.
+     radius-checklist-card matches the Figma file's bound `radius-lg`
+     variable (10px) — distinct from this file's own 8px --radius-lg, since
+     Figma's radius scale doesn't have a 1:1 name match at that step yet.
+     ======================================== */
+  --success-tint-bg: #edfcf2;
+  --success-tint-border: #aaf0c4;
+  --radius-checklist-card: 10px;
 }
 
 /* ========================================

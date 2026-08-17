@@ -9,6 +9,7 @@ function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
     <nav
       aria-label="breadcrumb"
       data-slot="breadcrumb"
+      data-figma-component="Breadcrumb"
       className={cn("flex items-center gap-2", className)}
       {...props}
     />

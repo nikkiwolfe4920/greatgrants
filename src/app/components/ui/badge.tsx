@@ -37,6 +37,8 @@ function Badge({
   return (
     <Comp
       data-slot="badge"
+      data-figma-component="Badge"
+      data-figma-variant={variant ?? "default"}
       className={cn(badgeVariants({ variant }), className)}
       {...props}
     />

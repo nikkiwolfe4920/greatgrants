@@ -29,6 +29,8 @@ export function FocusAreaRequiredBanner({ count, onAddFocusAreas }: FocusAreaReq
   return (
     <div
       role="alert"
+      data-figma-component="Alert"
+      data-figma-variant="Warning"
       className="mb-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4"
     >
       <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
