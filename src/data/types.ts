@@ -219,10 +219,23 @@ export interface GrantAlert {
   programId?: string;
   // Links this alert to a single Grant search result (see GrantSearch.tsx /
   // GrantDetailPage.tsx and useGrantAlerts). Set when the alert is the
-  // per-grant "Watch" toggle — the only alert entry point in the product.
-  // Independent of `saved_grants` — see useSavedGrants — a grant can be
-  // watched, saved, both, or neither.
+  // per-grant "Watch" toggle — the only grant-tracking action in the product.
   grantId?: string;
+  // Snapshot of the watched grant's own display fields, captured when the
+  // alert is first created — lets the Watch List page (/watch-list) render
+  // the full grant card design without re-looking up the grant elsewhere.
+  grant?: {
+    id: string;
+    title: string;
+    description?: string;
+    status?: 'Open' | 'Pending' | 'Closed';
+    maxAmount?: number;
+    location?: string;
+    closeDate?: string;
+    difficulty?: string;
+    sectors?: string[];
+    image?: string;
+  };
   alertsSent: number;
   createdAt: string;
   lastSent?: string;

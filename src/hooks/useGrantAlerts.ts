@@ -2,15 +2,13 @@
  * useGrantAlerts
  *
  * Single source of truth for the per-grant "Watch" feature — the only
- * grant-alert entry point in the product. Turned on from a grant list item
- * on /search or from a grant's own detail page, linked via `grantId` (the
- * `GrantAlert` shape in `@/data/types`) in the `grantAlerts` localStorage
- * record. The Watch List page (/watch-list) reads this same record,
- * filtered to `grantId`-linked entries, as the list of Grant Opportunity
- * Alerts a user is watching.
- *
- * Watch is intentionally independent from Save Grant (see
- * useSavedGrants). Do not add save side-effects here.
+ * grant-tracking action in the product (the earlier, separate "Save Grant"
+ * feature has been removed and merged into this one). Turned on from a
+ * grant list item on /search, a grant's own detail page, or
+ * /eligibility-assessment, linked via `grantId` (the `GrantAlert` shape in
+ * `@/data/types`) in the `grantAlerts` localStorage record. The Watch List
+ * page (/watch-list) reads this same record, filtered to `grantId`-linked
+ * entries, as the list of Grant Opportunity Alerts a user is watching.
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -22,6 +20,14 @@ const UPDATE_EVENT = "grantAlertsUpdated";
 interface AlertableGrant {
   id: string;
   title: string;
+  description?: string;
+  status?: "Open" | "Pending" | "Closed";
+  maxAmount?: number;
+  location?: string;
+  closeDate?: string;
+  difficulty?: string;
+  sectors?: string[];
+  image?: string;
 }
 
 function readGrantAlerts(): any[] {
@@ -58,12 +64,6 @@ export function useGrantAlerts() {
 
   const setAlertEnabled = useCallback(
     (grant: AlertableGrant, enabled: boolean, options?: { silent?: boolean }) => {
-      // TODO(product decision): the free-tier save limit (see useSavedGrants.ts)
-      // has no bearing here today — Watch succeeds independently of Save
-      // state or any save-limit gate (Option A). If Product decides reaching
-      // the save limit should also block watching, the check belongs here,
-      // before the record is persisted. Do not infer that decision from Save
-      // state in the UI layer.
       const current = readGrantAlerts();
       const existing = current.find((a: any) => a.grantId === grant.id);
 
@@ -80,6 +80,22 @@ export function useGrantAlerts() {
               filters: [],
               programs: [],
               grantId: grant.id,
+              // Snapshot of the grant's own display fields (title, description,
+              // amount, location, etc.) so the Watch List can render the full
+              // grant card design without needing to re-look up the grant from
+              // whatever mock dataset it originally came from.
+              grant: {
+                id: grant.id,
+                title: grant.title,
+                description: grant.description,
+                status: grant.status,
+                maxAmount: grant.maxAmount,
+                location: grant.location,
+                closeDate: grant.closeDate,
+                difficulty: grant.difficulty,
+                sectors: grant.sectors,
+                image: grant.image,
+              },
               alertsSent: 0,
               enabled,
               createdAt: new Date().toISOString(),

@@ -5,8 +5,8 @@
  * can receive:
  *
  *  1. A single-alert "new matches" email — triggered right after a saved
- *     alert (grant-specific or saved-search, see useGrantAlerts /
- *     useSavedGrants / GrantFilter in @/data/types) finds new similar grants.
+ *     alert (grant-specific or saved-search, see useGrantAlerts / GrantFilter
+ *     in @/data/types) finds new similar grants.
  *  2. A combined weekly digest — one email per user per week that rolls up
  *     EVERY alert they have active (grant alerts, saved-search alerts, AND
  *     program alerts) into a single send, each with its own top matches,

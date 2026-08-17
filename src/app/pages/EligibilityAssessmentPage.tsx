@@ -7,7 +7,6 @@ import {
   ShieldCheck,
   ArrowRight,
   ArrowLeft,
-  Bookmark,
   Eye,
   Share2,
   FolderPlus,
@@ -32,17 +31,15 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { EligibilityWorkflowPanel } from "@/app/components/eligibility/EligibilityWorkflowPanel";
 import { ApplicationLoadingModal } from "@/app/components/ApplicationLoadingModal";
-import { GrantAlertCrossSellDialog, CrossSellDirection } from "@/app/components/GrantAlertCrossSellDialog";
 import { StopWatchingDialog } from "@/app/components/StopWatchingDialog";
-import { useSavedGrants } from "@/hooks/useSavedGrants";
 import { useGrantAlerts } from "@/hooks/useGrantAlerts";
 
 const GRANT_ID = "dfop0017890-child-protection";
 const GRANT_TITLE = "Advancing Global Health — Child Development, Care, and Protection Addendum";
 
-// Minimal saved_grants / grant_alerts record for this fixed opportunity —
-// same shape GrantSearch/GrantDetailPage save, so this grant renders
-// correctly if it shows up in Saved Grants or Settings → Alerts.
+// Minimal grant_alerts record for this fixed opportunity — same shape
+// GrantSearch/GrantDetailPage watch, so this grant renders correctly if it
+// shows up in the Watch List.
 const GRANT_RECORD = {
   id: GRANT_ID,
   title: GRANT_TITLE,
@@ -218,19 +215,11 @@ export function EligibilityAssessmentPage() {
   const [isSticky, setIsSticky] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
 
-  // Save Grant and Watch are independent booleans backed by their own
-  // data models — saved_grants (useSavedGrants) and grant_alerts
-  // (useGrantAlerts). Same source of truth as GrantSearch / GrantDetailPage,
-  // so state stays consistent across every surface this opportunity appears.
-  const { isGrantSaved, saveGrant, unsaveGrant } = useSavedGrants();
+  // Watch is the only grant-tracking action on this page — see useGrantAlerts.
+  // Same source of truth as GrantSearch / GrantDetailPage, so state stays
+  // consistent across every surface this opportunity appears.
   const { isGrantAlertEnabled, setAlertEnabled, removeAlert } = useGrantAlerts();
-  const isSaved = isGrantSaved(GRANT_ID);
   const isAlertOn = isGrantAlertEnabled(GRANT_ID);
-
-  // Save → Watch Cross-Sell Dialog State — see GrantAlertCrossSellDialog.
-  // Watch itself never triggers this — turning Watch on only shows a toast.
-  const [crossSellOpen, setCrossSellOpen] = useState(false);
-  const [crossSellDirection, setCrossSellDirection] = useState<CrossSellDirection>("save-to-alert");
 
   // Stop Watching Dialog State — confirmation shown before turning off Watch.
   const [stopWatchingDialogOpen, setStopWatchingDialogOpen] = useState(false);
@@ -283,19 +272,6 @@ export function EligibilityAssessmentPage() {
 
   const handleStartApplication = () => setShowApplicationLoading(true);
 
-  const toggleSaveGrant = () => {
-    if (isSaved) {
-      unsaveGrant(GRANT_RECORD);
-      return;
-    }
-    saveGrant(GRANT_RECORD);
-    // Save → Alert cross-sell: optional, declinable, never mutates alert state.
-    if (!isAlertOn) {
-      setCrossSellDirection("save-to-alert");
-      setCrossSellOpen(true);
-    }
-  };
-
   const toggleWatch = () => {
     if (isAlertOn) {
       // Turning Watch off is destructive (deletes the alert) — confirm first.
@@ -315,19 +291,6 @@ export function EligibilityAssessmentPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <ApplicationLoadingModal isOpen={showApplicationLoading} grantTitle={GRANT_TITLE} grantId={GRANT_ID} />
-
-      {/* Save → Watch Cross-Sell */}
-      <GrantAlertCrossSellDialog
-        open={crossSellOpen}
-        onOpenChange={setCrossSellOpen}
-        direction={crossSellDirection}
-        grantTitle={GRANT_TITLE}
-        onAccept={() => setAlertEnabled(GRANT_RECORD, true)}
-        onDecline={() => {
-          // Intentionally a no-op: declining leaves Save on and Watch off,
-          // untouched — see GrantAlertCrossSellDialog.
-        }}
-      />
 
       {/* Stop Watching Confirmation */}
       <StopWatchingDialog
@@ -371,15 +334,6 @@ export function EligibilityAssessmentPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleSaveGrant}
-                    className={`gap-1.5 h-8 text-xs ${isSaved ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"}`}
-                  >
-                    <Bookmark className={`w-3.5 h-3.5 ${isSaved ? "fill-current" : ""}`} />
-                    {isSaved ? "Saved" : "Save"}
-                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -449,10 +403,6 @@ export function EligibilityAssessmentPage() {
 
             <div className="flex flex-col items-end gap-3 shrink-0">
               <div className="flex items-center gap-3 flex-wrap justify-end">
-                <Button variant="outline" onClick={toggleSaveGrant} className={`gap-1.5 ${isSaved ? "border-teal-200 bg-teal-50 text-teal-700" : ""}`}>
-                  <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
-                  {isSaved ? "Saved" : "Save"}
-                </Button>
                 <Button variant="outline" onClick={toggleWatch} className={`gap-1.5 ${isAlertOn ? "border-teal-200 bg-teal-50 text-teal-700" : ""}`}>
                   <Eye className="w-4 h-4" />
                   {isAlertOn ? "Watching" : "Watch"}

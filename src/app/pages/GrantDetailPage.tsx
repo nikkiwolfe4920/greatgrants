@@ -20,7 +20,6 @@ import {
   Building2,
   ArrowRight,
   Shield,
-  Bookmark,
   Eye,
   ChevronDown,
   ChevronUp,
@@ -40,9 +39,7 @@ import {
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { ApplicationLoadingModal } from "../components/ApplicationLoadingModal";
 import { ShareGrantModal } from "../components/ShareGrantModal";
-import { GrantAlertCrossSellDialog, CrossSellDirection } from "../components/GrantAlertCrossSellDialog";
 import { StopWatchingDialog } from "../components/StopWatchingDialog";
-import { useSavedGrants } from "@/hooks/useSavedGrants";
 import { useGrantAlerts } from "@/hooks/useGrantAlerts";
 
 interface GrantDocument {
@@ -333,19 +330,11 @@ export function GrantDetailPage() {
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
 
-  // Save Grant and Watch are independent booleans backed by their own
-  // data models — saved_grants (useSavedGrants) and grant_alerts
-  // (useGrantAlerts). Same source of truth as the search cards, so state
-  // stays consistent whichever surface the user toggles from.
-  const { isGrantSaved, saveGrant, unsaveGrant } = useSavedGrants();
+  // Watch is the only grant-tracking action on this page — see useGrantAlerts.
+  // Same source of truth as the search cards, so state stays consistent
+  // whichever surface the user toggles from.
   const { isGrantAlertEnabled, setAlertEnabled, removeAlert } = useGrantAlerts();
-  const isSaved = grant ? isGrantSaved(grant.id) : false;
   const isAlertOn = grant ? isGrantAlertEnabled(grant.id) : false;
-
-  // Save → Watch Cross-Sell Dialog State — see GrantAlertCrossSellDialog.
-  // Watch itself never triggers this — turning Watch on only shows a toast.
-  const [crossSellOpen, setCrossSellOpen] = useState(false);
-  const [crossSellDirection, setCrossSellDirection] = useState<CrossSellDirection>("save-to-alert");
 
   // Stop Watching Dialog State — confirmation shown before turning off Watch.
   const [stopWatchingDialogOpen, setStopWatchingDialogOpen] = useState(false);
@@ -362,20 +351,6 @@ export function GrantDetailPage() {
 
   const handleStartApplication = () => setShowLoadingModal(true);
   const handleShareGrant = () => setShowShareModal(true);
-
-  const toggleSaveGrant = () => {
-    if (!grant) return;
-    if (isSaved) {
-      unsaveGrant(grant);
-      return;
-    }
-    saveGrant(grant);
-    // Save → Alert cross-sell: optional, declinable, never mutates alert state.
-    if (!isAlertOn) {
-      setCrossSellDirection("save-to-alert");
-      setCrossSellOpen(true);
-    }
-  };
 
   const toggleWatch = () => {
     if (!grant) return;
@@ -497,11 +472,6 @@ export function GrantDetailPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-                  <Button variant="outline" size="sm" onClick={toggleSaveGrant}
-                    className={`gap-1.5 h-8 text-xs ${isSaved ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"}`}>
-                    <Bookmark className={`w-3.5 h-3.5 ${isSaved ? "fill-current" : ""}`} />
-                    {isSaved ? "Saved" : "Save"}
-                  </Button>
                   <Button variant="outline" size="sm" onClick={toggleWatch}
                     className={`gap-1.5 h-8 text-xs ${isAlertOn ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"}`}>
                     <Eye className="w-3.5 h-3.5" />
@@ -581,15 +551,6 @@ export function GrantDetailPage() {
               </h1>
               <div className="flex flex-col items-end gap-2 flex-shrink-0 pt-1">
                 <div className="flex items-center gap-2.5 flex-wrap justify-end">
-                  <Button
-                    variant="outline"
-                    onClick={toggleSaveGrant}
-                    className={`gap-1.5 ${isSaved ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"}`}
-                    style={{ fontFamily: 'Cabin, sans-serif' }}
-                  >
-                    <Bookmark className={`w-4 h-4 ${isSaved ? "fill-current" : ""}`} />
-                    {isSaved ? "Saved" : "Save"}
-                  </Button>
                   <Button
                     variant="outline"
                     onClick={toggleWatch}
@@ -1070,19 +1031,6 @@ export function GrantDetailPage() {
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
         grant={grant}
-      />
-
-      {/* Save → Watch Cross-Sell */}
-      <GrantAlertCrossSellDialog
-        open={crossSellOpen}
-        onOpenChange={setCrossSellOpen}
-        direction={crossSellDirection}
-        grantTitle={grant.title}
-        onAccept={() => setAlertEnabled(grant, true)}
-        onDecline={() => {
-          // Intentionally a no-op: declining leaves Save on and Watch off,
-          // untouched — see GrantAlertCrossSellDialog.
-        }}
       />
 
       {/* Stop Watching Confirmation */}

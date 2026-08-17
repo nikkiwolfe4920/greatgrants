@@ -1,11 +1,10 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Navigate } from "react-router";
 import { AppLayout } from "./components/AppLayout";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ApplicationsPage } from "./pages/ApplicationsPage";
 import { ApplicationSectionPage } from "./pages/ApplicationSectionPage";
 import { GrantSearchPage } from "./pages/GrantSearchPage";
 import { GrantDetailPage } from "./pages/GrantDetailPage";
-import { SavedGrantsPage } from "./pages/SavedGrantsPage";
 import { WatchListPage } from "./pages/WatchListPage";
 import { OrganizationPage } from "./pages/OrganizationPage";
 import { OrganizationsPage } from "./pages/OrganizationsPage";
@@ -136,8 +135,10 @@ const routes = [
         element: <GrantSearchPage />,
       },
       {
+        // Saved Grants has been merged into the Watch List — redirect any
+        // old bookmarks/links rather than 404ing.
         path: "saved-grants",
-        element: <SavedGrantsPage />,
+        element: <Navigate to="/watch-list" replace />,
       },
       {
         path: "watch-list",

@@ -26,7 +26,6 @@ import {
   SearchX,
   FolderOpen,
   Eye,
-  Bookmark,
   DollarSign,
   Info,
   AlertTriangle
@@ -54,14 +53,6 @@ import {
   SelectValue,
 } from "./ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "./ui/dialog";
-import {
   Breadcrumb,
   BreadcrumbList,
   BreadcrumbItem,
@@ -74,9 +65,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { GrantAlertCrossSellDialog, CrossSellDirection } from "./GrantAlertCrossSellDialog";
 import { StopWatchingDialog } from "./StopWatchingDialog";
-import { useSavedGrants } from "@/hooks/useSavedGrants";
 import { useGrantAlerts } from "@/hooks/useGrantAlerts";
 
 interface Grant {
@@ -635,15 +624,12 @@ export function GrantSearch() {
   const [publishedProjects, setPublishedProjects] = useState<Array<{ id: string; title: string; isNationalProgram?: boolean }>>([]);
   const [nationalProgramActive, setNationalProgramActive] = useState(false);
   const lastAutoAppliedProjectRef = useRef<string | null>(null);
-  // Save Grant and Watch are independent booleans backed by their own
-  // data models — saved_grants (useSavedGrants) and grant_alerts
-  // (useGrantAlerts). Neither hook mutates the other's state.
-  const { isGrantSaved, saveGrant, unsaveGrant } = useSavedGrants();
+  // Watch is the only grant-tracking action on this page — see useGrantAlerts.
   const { isGrantAlertEnabled, setAlertEnabled, removeAlert } = useGrantAlerts();
   const [recentlyViewed, setRecentlyViewed] = useState<Grant[]>([]);
   const [hasWebsite, setHasWebsite] = useState(false);
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
-  
+
   // Unified filter states with default filters
   const [advancedFilters, setAdvancedFilters] = useState<Array<{ id: string; label: string; category: string }>>([
     { id: "scope-national", label: "National", category: "Scope" },
@@ -651,25 +637,12 @@ export function GrantSearch() {
   ]);
   const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(false);
   const [filterNavigationStack, setFilterNavigationStack] = useState<FilterOption[]>([]);
-  
-  // Unsave Dialog State
-  const [unsaveDialogOpen, setUnsaveDialogOpen] = useState(false);
-  const [grantToUnsave, setGrantToUnsave] = useState<Grant | null>(null);
 
   // Stop Watching Dialog State — confirmation shown before turning off Watch
-  // for a grant (see StopWatchingDialog). Watching a grant, like saving one,
-  // is instant; only the destructive "turn it back off" action confirms.
+  // for a grant (see StopWatchingDialog). Watching a grant is instant; only
+  // the destructive "turn it back off" action confirms.
   const [stopWatchingDialogOpen, setStopWatchingDialogOpen] = useState(false);
   const [grantToStopWatching, setGrantToStopWatching] = useState<Grant | null>(null);
-
-  // Save ⇄ Watch Cross-Sell Dialog State
-  // Shown once, immediately after Save is turned on for a grant, offering to
-  // also Watch it. Declining leaves the action the user just took untouched
-  // — see GrantAlertCrossSellDialog. Watch itself never triggers this
-  // cross-sell — turning Watch on only ever shows a toast (see toggleWatch).
-  const [crossSellOpen, setCrossSellOpen] = useState(false);
-  const [crossSellDirection, setCrossSellDirection] = useState<CrossSellDirection>("save-to-alert");
-  const [crossSellGrant, setCrossSellGrant] = useState<Grant | null>(null);
 
   // Load published projects from localStorage
   useEffect(() => {
@@ -798,34 +771,6 @@ export function GrantSearch() {
         ? prev.filter(id => id !== grantId)
         : [...prev, grantId]
     );
-  };
-
-  const toggleSaveGrant = (e: React.MouseEvent, grant: Grant) => {
-    e.stopPropagation();
-
-    if (isGrantSaved(grant.id)) {
-      // Show unsave dialog
-      setGrantToUnsave(grant);
-      setUnsaveDialogOpen(true);
-      return;
-    }
-
-    saveGrant(grant);
-
-    // Save → Alert cross-sell: optional, declinable, never mutates alert state.
-    if (!isGrantAlertEnabled(grant.id)) {
-      setCrossSellGrant(grant);
-      setCrossSellDirection("save-to-alert");
-      setCrossSellOpen(true);
-    }
-  };
-
-  const confirmUnsave = () => {
-    if (grantToUnsave) {
-      unsaveGrant(grantToUnsave);
-    }
-    setUnsaveDialogOpen(false);
-    setGrantToUnsave(null);
   };
 
   const toggleWatch = (e: React.MouseEvent, grant: Grant) => {
@@ -1622,28 +1567,14 @@ export function GrantSearch() {
                         </Badge>
                       </div>
 
-                      {/* Save Grant / Watch — two independent actions, each with
-                          its own on/off state. Neither toggling one affects the other. */}
+                      {/* Watch is the only grant-tracking action here — see useGrantAlerts. */}
                       <div className={`flex gap-1.5 ${viewMode === "grid" ? "flex-col items-end" : "items-center"}`}>
-                        {isGrantSaved(grant.id) && grantWithTimestamp.lastViewed && (
+                        {grantWithTimestamp.lastViewed && (
                           <span className="text-xs text-gray-500">
                             Last viewed {formatTimeAgo(grantWithTimestamp.lastViewed)}
                           </span>
                         )}
                         <div className="flex items-center gap-2 flex-wrap justify-end">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => toggleSaveGrant(e, grantWithTimestamp)}
-                            className={`gap-1.5 ${
-                              isGrantSaved(grant.id)
-                                ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100"
-                                : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"
-                            }`}
-                          >
-                            <Bookmark className={`w-3.5 h-3.5 ${isGrantSaved(grant.id) ? "fill-current" : ""}`} />
-                            {isGrantSaved(grant.id) ? "Unsave" : "Save"}
-                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
@@ -1732,7 +1663,7 @@ export function GrantSearch() {
                   <h3 className="font-semibold text-gray-900">Recently Viewed</h3>
                 </div>
                 <Link
-                  to="/saved-grants?tab=recent"
+                  to="/watch-list?tab=recent"
                   className="text-xs text-teal-600 hover:text-teal-700 font-medium"
                 >
                   More
@@ -1765,51 +1696,6 @@ export function GrantSearch() {
         </div>
       </aside>
     </div>
-
-    {/* Unsave Confirmation Dialog */}
-    <Dialog open={unsaveDialogOpen} onOpenChange={setUnsaveDialogOpen}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle style={{ fontFamily: 'Lustria, serif' }}>
-            Unsave Grant?
-          </DialogTitle>
-          <DialogDescription className="text-gray-600 leading-relaxed">
-            Are you sure you want to remove this grant from your saved list? You can always save it again later.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setUnsaveDialogOpen(false)}
-            className="border-gray-300"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={confirmUnsave}
-            className="bg-red-600 hover:bg-red-700 text-white"
-          >
-            Unsave Grant
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-
-    {/* Save → Watch Cross-Sell */}
-    <GrantAlertCrossSellDialog
-      open={crossSellOpen}
-      onOpenChange={setCrossSellOpen}
-      direction={crossSellDirection}
-      grantTitle={crossSellGrant?.title || ""}
-      onAccept={() => {
-        if (!crossSellGrant) return;
-        setAlertEnabled(crossSellGrant, true);
-      }}
-      onDecline={() => {
-        // Intentionally a no-op: declining leaves Save on and Watch off,
-        // untouched — see GrantAlertCrossSellDialog.
-      }}
-    />
 
     {/* Stop Watching Confirmation */}
     <StopWatchingDialog
