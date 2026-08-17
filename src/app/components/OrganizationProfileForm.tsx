@@ -36,7 +36,6 @@ import {
 } from "@/app/components/ui/select";
 import { Badge } from "@/app/components/ui/badge";
 import { Checkbox } from "@/app/components/ui/checkbox";
-import { Switch } from "@/app/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
@@ -44,6 +43,7 @@ import {
 } from "@/app/components/ui/tooltip";
 import { FocusAreasField } from "@/app/components/focus-areas/FocusAreasField";
 import { FocusAreaRequiredBanner } from "@/app/components/focus-areas/FocusAreaRequiredBanner";
+import { FOCUS_AREA_MIN_SELECTIONS } from "@/lib/constants/focus-areas";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -121,8 +121,9 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const hasUnsavedChangesRef = useRef(false);
-  const [readinessEnabled, setReadinessEnabled] = useState(true);
-  const [showRightRail, setShowRightRail] = useState(true);
+  // Right rail (profile-completion checklist) is always on — there is no
+  // longer a user-facing toggle to hide it (see the removed "Rail Rail"
+  // switch this used to drive).
   const [samGovComplete, setSamGovComplete] = useState(false);
   
   // Readiness questionnaire state
@@ -658,8 +659,8 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
       },
       {
         id: 'focus-areas',
-        label: 'Add 2 or More Focus Areas',
-        completed: focusAreasCount >= 2,
+        label: `Add ${FOCUS_AREA_MIN_SELECTIONS} or More Focus Areas`,
+        completed: focusAreasCount >= FOCUS_AREA_MIN_SELECTIONS,
         count: focusAreasCount,
       },
       {
@@ -938,7 +939,7 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
       <div className="flex-1 flex overflow-hidden">
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto bg-white">
-          <div className={`${showRightRail ? 'w-full' : 'max-w-5xl mx-auto'} p-8`}>
+          <div className="w-full p-8">
           {/* Breadcrumb */}
           <Breadcrumb className="mb-6">
             <BreadcrumbList>
@@ -1003,10 +1004,12 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
           </div>
 
           {/* Forces existing organizations that pre-date the Focus Areas
-              requirement to fill it in — hides itself as soon as at least
-              one is selected. */}
-          {focusAreas.length === 0 && (
-            <FocusAreaRequiredBanner onAddFocusAreas={() => handleRailItemClick('focus-areas')} />
+              requirement to fill it in — hides itself once the minimum is met. */}
+          {focusAreas.length < FOCUS_AREA_MIN_SELECTIONS && (
+            <FocusAreaRequiredBanner
+              count={focusAreas.length}
+              onAddFocusAreas={() => handleRailItemClick('focus-areas')}
+            />
           )}
 
           {/* Tabs */}
@@ -1266,6 +1269,35 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                     onChange={handleFocusAreasChange}
                     highlighted={highlightedField === 'focusAreas' || highlightedFields.includes('focusAreas')}
                   />
+
+                  {/* Moved here from the right rail's "Add 2 or More Focus
+                      Areas" card — now lives with the field it describes
+                      instead of a separate panel. */}
+                  <div
+                    className={`col-span-2 p-3 border rounded-[10px] transition-colors ${
+                      getFocusAreasCount() >= FOCUS_AREA_MIN_SELECTIONS
+                        ? 'border-[#aaf0c4] bg-[#edfcf2]'
+                        : 'border-gray-200 bg-white'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {getFocusAreasCount() >= FOCUS_AREA_MIN_SELECTIONS ? (
+                        <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center flex-shrink-0 mt-0.5" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 mb-0.5">
+                          Add {FOCUS_AREA_MIN_SELECTIONS} or More Focus Areas
+                        </div>
+                        <div className="text-xs text-gray-600 leading-relaxed">
+                          {getFocusAreasCount() >= FOCUS_AREA_MIN_SELECTIONS
+                            ? `${FOCUS_AREA_MIN_SELECTIONS} or more focus areas selected`
+                            : `${Math.min(getFocusAreasCount(), FOCUS_AREA_MIN_SELECTIONS)} of ${FOCUS_AREA_MIN_SELECTIONS} Completed`}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </TabsContent>
@@ -2236,67 +2268,16 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
             </Button>
           </div>
 
-          {/* Readiness Toggle */}
-          <div className="flex items-center justify-end gap-3 mt-6 pb-8">
-            <label htmlFor="readiness-toggle" className="text-sm font-medium text-gray-700">
-              Rail Rail
-            </label>
-            <Switch
-              id="readiness-toggle"
-              checked={readinessEnabled}
-              onCheckedChange={(checked) => {
-                setReadinessEnabled(checked);
-                if (checked) {
-                  setShowRightRail(true); // Open the rail when enabling
-                } else {
-                  setShowRightRail(false); // Close the rail when disabling
-                }
-              }}
-            />
-          </div>
-
         </div>
       </main>
 
-      {/* Right Rail */}
-      <AnimatePresence mode="wait">
-        {readinessEnabled && showRightRail && (
-          <motion.aside 
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-            className="bg-[#F9FAFB] border-l border-gray-200 overflow-hidden flex-shrink-0 relative"
-          >
-            {/* Collapse Button */}
-            <motion.button
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              transition={{ delay: 0.2, duration: 0.2 }}
-              onClick={() => setShowRightRail(false)}
-              className="absolute top-6 -left-4 z-10 w-8 h-8 bg-white rounded-full border-2 border-gray-200 shadow-lg flex items-center justify-center transition-all group"
-              style={{
-                borderColor: '#e5e7eb'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#717BBC';
-                e.currentTarget.style.backgroundColor = '#f0f1f9';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#e5e7eb';
-                e.currentTarget.style.backgroundColor = '#ffffff';
-              }}
-              title="Hide readiness checklist"
-            >
-              <motion.div
-                whileHover={{ x: -2 }}
-                transition={{ duration: 0.2 }}
-              >
-                <X className="w-4 h-4 text-gray-600 group-hover:text-[#717BBC]" />
-              </motion.div>
-            </motion.button>
-
+      {/* Right Rail — always on, no collapse/toggle affordance. */}
+      <motion.aside
+        initial={{ width: 0, opacity: 0 }}
+        animate={{ width: 320, opacity: 1 }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        className="bg-[#F9FAFB] border-l border-gray-200 overflow-hidden flex-shrink-0 relative"
+      >
             <div className="overflow-y-auto h-full">
               <div className="p-6">
             {/* Header */}
@@ -2638,49 +2619,6 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
               </div>
             </div>
 
-            {/* Focus Areas Section */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                  Focus Areas
-                </h3>
-                <span className="text-xs text-gray-500">~15 minutes to complete</span>
-              </div>
-
-              <div className="space-y-3">
-                {/* Add 2 or More Focus Areas */}
-                <button
-                  onClick={() => {
-                    handleRailItemClick('focus-areas');
-                    setActiveRequirement('focus-areas');
-                  }}
-                  onMouseEnter={() => setActiveRequirement('focus-areas')}
-                  onMouseLeave={() => setActiveRequirement(null)}
-                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
-                    checklistItems.find(item => item.id === 'focus-areas')?.completed
-                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
-                      : activeRequirement === 'focus-areas' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    {checklistItems.find(item => item.id === 'focus-areas')?.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-0.5">Add 2 or More Focus Areas</div>
-                      <div className="text-xs text-gray-600 leading-relaxed">
-                        {checklistItems.find(item => item.id === 'focus-areas')?.completed
-                          ? '2 or more focus areas selected'
-                          : `${Math.min(getFocusAreasCount(), 2)} of 2 Completed`}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
-
             {/* Financial Info Section */}
             <div className="mb-6">
               <div className="flex items-center justify-between mb-3">
@@ -2795,76 +2733,8 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
 
               </div>
             </div>
-          </motion.aside>
-        )}
-      </AnimatePresence>
+      </motion.aside>
 
-      {/* Floating Expand Button - Shows when rail is hidden */}
-      <AnimatePresence>
-        {readinessEnabled && !showRightRail && (() => {
-          const completedCount = checklistItems.filter(item => item.completed).length;
-          const totalCount = checklistItems.length;
-          
-          // Determine styling based on completion count
-          let bgGradient = '';
-          let icon = null;
-          let label = '';
-          
-          if (completedCount === totalCount && totalCount > 0) {
-            // All done: Brand green gradient
-            bgGradient = 'linear-gradient(135deg, #087443 0%, #3ccb7f 100%)';
-            icon = (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 20 20" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18.3333 9.22V10C18.3321 11.98 17.6949 12.9 16.6752 14.47C15.6554 16.04 14.1466 17.25 12.3762 17.92C10.6059 18.58 8.66552 18.67 6.83932 18.17C5.01311 17.67 3.39716 16.6 2.23483 15.12C1.0725 13.64 0.424561 11.83 0.487785 9.98C0.551009 8.13 1.32164 6.36 2.58163 4.96C3.84162 3.57 5.52017 2.62 7.37337 2.28C9.22656 1.94 11.1419 2.23 12.8083 3.1M18.3333 4L10 12.34L7.5 9.84" />
-              </svg>
-            );
-            label = 'REQUIRED';
-          } else if (completedCount >= 5) {
-            // Good progress (5-10): Yellow-blue gradient
-            bgGradient = 'linear-gradient(112.95deg, rgb(255, 207, 113) 0%, rgb(35, 118, 221) 100%)';
-            icon = <AlertTriangle className="w-5 h-5" />;
-            label = 'REQUIRED';
-          } else {
-            // Warning (0-4): Orange-red gradient
-            bgGradient = 'linear-gradient(112.95deg, rgb(244, 144, 98) 0%, rgb(253, 55, 31) 100%)';
-            icon = <AlertTriangle className="w-5 h-5" />;
-            label = 'REQUIRED';
-          }
-          
-          return (
-            <motion.button
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ delay: 0.1, duration: 0.3 }}
-              onClick={() => setShowRightRail(true)}
-              className="fixed right-0 top-1/3 z-20 text-white px-3 py-4 rounded-l-xl shadow-xl hover:shadow-2xl transition-all group"
-              style={{ background: bgGradient }}
-              title={`${completedCount}/${totalCount} requirements complete`}
-            >
-              <motion.div
-                className="flex flex-col items-center gap-2"
-                whileHover={{ x: -4 }}
-                transition={{ duration: 0.2 }}
-              >
-                {icon}
-                <div className="writing-mode-vertical text-xs font-semibold tracking-wider" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                  {label}
-                </div>
-                
-                {/* Completion badge */}
-                <div className="bg-white/20 rounded px-2 py-1.5 mt-2">
-                  <div className="text-xs font-bold text-center leading-tight" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                    {completedCount} / {totalCount}
-                    <br />
-                    Done
-                  </div>
-                </div>
-              </motion.div>
-            </motion.button>
-          );
-        })()}
-      </AnimatePresence>
       </div>
 
       {/* Unsaved Changes Dialog */}
