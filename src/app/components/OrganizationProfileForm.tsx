@@ -1269,35 +1269,6 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                     onChange={handleFocusAreasChange}
                     highlighted={highlightedField === 'focusAreas' || highlightedFields.includes('focusAreas')}
                   />
-
-                  {/* Moved here from the right rail's "Add 2 or More Focus
-                      Areas" card — now lives with the field it describes
-                      instead of a separate panel. */}
-                  <div
-                    className={`col-span-2 p-3 border rounded-[10px] transition-colors ${
-                      getFocusAreasCount() >= FOCUS_AREA_MIN_SELECTIONS
-                        ? 'border-[#aaf0c4] bg-[#edfcf2]'
-                        : 'border-gray-200 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      {getFocusAreasCount() >= FOCUS_AREA_MIN_SELECTIONS ? (
-                        <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                      ) : (
-                        <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center flex-shrink-0 mt-0.5" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900 mb-0.5">
-                          Add {FOCUS_AREA_MIN_SELECTIONS} or More Focus Areas
-                        </div>
-                        <div className="text-xs text-gray-600 leading-relaxed">
-                          {getFocusAreasCount() >= FOCUS_AREA_MIN_SELECTIONS
-                            ? `${FOCUS_AREA_MIN_SELECTIONS} or more focus areas selected`
-                            : `${Math.min(getFocusAreasCount(), FOCUS_AREA_MIN_SELECTIONS)} of ${FOCUS_AREA_MIN_SELECTIONS} Completed`}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </TabsContent>
@@ -2507,6 +2478,40 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
                         {checklistItems.find(item => item.id === 'org-website')?.completed
                           ? "Your website is complete"
                           : "Complete your organization's web address"}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Add 2 or More Focus Areas — lives in Legal Info, right
+                    after Organization Website, not its own rail section. */}
+                <button
+                  onClick={() => {
+                    handleRailItemClick('focus-areas');
+                    setActiveRequirement('focus-areas');
+                  }}
+                  onMouseEnter={() => setActiveRequirement('focus-areas')}
+                  onMouseLeave={() => setActiveRequirement(null)}
+                  className={`w-full text-left group p-3 border rounded-[10px] transition-colors ${
+                    checklistItems.find(item => item.id === 'focus-areas')?.completed
+                      ? 'border-[#aaf0c4] bg-[#edfcf2]'
+                      : activeRequirement === 'focus-areas' ? 'border-teal-600 bg-white' : 'border-gray-200 hover:border-teal-400 bg-white'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    {checklistItems.find(item => item.id === 'focus-areas')?.completed ? (
+                      <CheckCircle2 className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white group-hover:border-teal-500 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 mb-0.5">
+                        Add {FOCUS_AREA_MIN_SELECTIONS} or More Focus Areas
+                      </div>
+                      <div className="text-xs text-gray-600 leading-relaxed">
+                        {checklistItems.find(item => item.id === 'focus-areas')?.completed
+                          ? `${FOCUS_AREA_MIN_SELECTIONS} or more focus areas selected`
+                          : `${Math.min(getFocusAreasCount(), FOCUS_AREA_MIN_SELECTIONS)} of ${FOCUS_AREA_MIN_SELECTIONS} Completed`}
                       </div>
                     </div>
                   </div>
