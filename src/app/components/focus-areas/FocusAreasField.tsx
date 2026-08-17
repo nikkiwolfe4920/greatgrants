@@ -35,6 +35,7 @@ export function FocusAreasField({ value, onChange, highlighted }: FocusAreasFiel
   const [open, setOpen] = useState(false);
   const atCap = value.length >= FOCUS_AREA_MAX_SELECTIONS;
   const nearCap = value.length >= FOCUS_AREA_WARNING_THRESHOLD && !atCap;
+  const isEmpty = value.length === 0;
 
   const handleToggle = (leaf: string) => {
     const isSelected = value.includes(leaf);
@@ -53,7 +54,9 @@ export function FocusAreasField({ value, onChange, highlighted }: FocusAreasFiel
 
   return (
     <div className="col-span-2 space-y-1.5" data-field="focusAreas">
-      <Label htmlFor="focusAreas">Focus Areas</Label>
+      <Label htmlFor="focusAreas">
+        Focus Areas <span className="text-red-500">*</span>
+      </Label>
 
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -65,6 +68,7 @@ export function FocusAreasField({ value, onChange, highlighted }: FocusAreasFiel
             aria-expanded={open}
             className={cn(
               "w-full justify-between border-gray-300 bg-white font-normal",
+              isEmpty && !highlighted && "border-amber-300",
               highlighted && "ring-2 ring-teal-600 border-teal-600",
             )}
           >
@@ -91,6 +95,11 @@ export function FocusAreasField({ value, onChange, highlighted }: FocusAreasFiel
         specific program is selected, that program's own focus areas are used for search instead.
       </p>
 
+      {isEmpty && (
+        <p className="text-xs font-medium text-amber-700">
+          Required — select at least one focus area.
+        </p>
+      )}
       {nearCap && (
         <p className="text-xs font-medium text-amber-700">
           {value.length} of {FOCUS_AREA_MAX_SELECTIONS} selected — approaching the limit.

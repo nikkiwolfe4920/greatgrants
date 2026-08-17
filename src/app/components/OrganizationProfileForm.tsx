@@ -43,6 +43,7 @@ import {
   TooltipTrigger,
 } from "@/app/components/ui/tooltip";
 import { FocusAreasField } from "@/app/components/focus-areas/FocusAreasField";
+import { FocusAreaRequiredBanner } from "@/app/components/focus-areas/FocusAreaRequiredBanner";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -1000,6 +1001,13 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
               </Button>
             </div>
           </div>
+
+          {/* Forces existing organizations that pre-date the Focus Areas
+              requirement to fill it in — hides itself as soon as at least
+              one is selected. */}
+          {focusAreas.length === 0 && (
+            <FocusAreaRequiredBanner onAddFocusAreas={() => handleRailItemClick('focus-areas')} />
+          )}
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
