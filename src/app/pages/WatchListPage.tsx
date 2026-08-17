@@ -17,6 +17,7 @@ import {
 } from "../components/ui/breadcrumb";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useGrantAlerts } from "@/hooks/useGrantAlerts";
+import { grantDetails } from "@/data/grantDetails";
 
 const TAB_TRIGGER_CLASS =
   "gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none";
@@ -34,6 +35,30 @@ interface WatchedGrantData {
   image?: string;
   lastViewed?: number;
 }
+
+const grantDetailsById = new Map(grantDetails.map((g) => [g.id, g]));
+
+// Alerts created before useGrantAlerts started snapshotting the grant's own
+// display fields (title, description, amount, location, etc.) only have
+// `grantId` — no `.grant` data — so their card would otherwise render with
+// no thumbnail and no description. Backfill any missing fields here from the
+// grant detail catalog (the same data GrantDetailPage.tsx reads from) rather
+// than trusting the snapshot alone.
+const enrichGrant = (grant: WatchedGrantData): WatchedGrantData => {
+  const catalogEntry = grantDetailsById.get(grant.id);
+  if (!catalogEntry) return grant;
+  return {
+    ...grant,
+    description: grant.description ?? catalogEntry.description,
+    status: grant.status ?? catalogEntry.status,
+    maxAmount: grant.maxAmount ?? catalogEntry.maxAmount,
+    location: grant.location ?? catalogEntry.location,
+    closeDate: grant.closeDate ?? catalogEntry.closeDate,
+    difficulty: grant.difficulty ?? catalogEntry.difficulty,
+    sectors: grant.sectors ?? catalogEntry.sectors,
+    image: grant.image ?? catalogEntry.image,
+  };
+};
 
 /**
  * The Watch List — every grant a user has turned "Watch" on for, from
@@ -199,7 +224,8 @@ export function WatchListPage() {
   );
 
   const renderAlertCard = (alert: any) => {
-    const grant: WatchedGrantData = alert.grant || { id: alert.grantId, title: alert.name.replace(/ Alert$/, "") };
+    const rawGrant: WatchedGrantData = alert.grant || { id: alert.grantId, title: alert.name.replace(/ Alert$/, "") };
+    const grant = enrichGrant(rawGrant);
     return (
       <div
         key={alert.id}
@@ -256,7 +282,8 @@ export function WatchListPage() {
     );
   };
 
-  const renderRecentCard = (grant: WatchedGrantData) => {
+  const renderRecentCard = (rawGrant: WatchedGrantData) => {
+    const grant = enrichGrant(rawGrant);
     const watching = isGrantAlertEnabled(grant.id);
     return (
       <div
