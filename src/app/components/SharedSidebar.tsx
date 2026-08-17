@@ -12,7 +12,6 @@ import {
   Plus,
   Sparkles,
   AlertCircle,
-  Bookmark,
   Eye,
   Clock,
   Loader2,
@@ -91,7 +90,6 @@ export function SharedSidebar() {
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [isLoadingOrganization, setIsLoadingOrganization] = useState(false);
   const [publishedProjectsCount, setPublishedProjectsCount] = useState(0);
-  const [savedGrantsCount, setSavedGrantsCount] = useState(0);
   const [watchListCount, setWatchListCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
@@ -100,7 +98,6 @@ export function SharedSidebar() {
   const isApplicationsPage = location.pathname === "/applications";
   const isApplicationSectionPage = location.pathname.startsWith("/application/");
   const isGrantDetailPage = location.pathname.startsWith("/grant/");
-  const isSavedGrantsPage = location.pathname === "/saved-grants";
   const isWatchListPage = location.pathname === "/watch-list";
 
   const isOrgProfileComplete = orgProfileItemsRemaining === 0;
@@ -126,16 +123,6 @@ export function SharedSidebar() {
     updateProjectCount();
     window.addEventListener("projectsUpdated", updateProjectCount);
     return () => window.removeEventListener("projectsUpdated", updateProjectCount);
-  }, []);
-
-  useEffect(() => {
-    const updateSavedGrantsCount = () => {
-      const saved = JSON.parse(localStorage.getItem("savedGrants") || "[]");
-      setSavedGrantsCount(Array.isArray(saved) ? saved.length : 0);
-    };
-    updateSavedGrantsCount();
-    window.addEventListener("savedGrantsUpdated", updateSavedGrantsCount);
-    return () => window.removeEventListener("savedGrantsUpdated", updateSavedGrantsCount);
   }, []);
 
   // Watch List count — grants being watched via the "Watch" toggle on
@@ -300,26 +287,7 @@ export function SharedSidebar() {
             <div className="border-t border-gray-100" />
           </li>
 
-          {/* 3. Saved Grants */}
-          <li>
-            <button
-              onClick={() => navigate("/saved-grants")}
-              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
-                isSavedGrantsPage ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-100"
-              }`}
-              style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isSavedGrantsPage ? 600 : 400, fontSize: '14px' }}
-            >
-              <Bookmark className="w-4 h-4 shrink-0" />
-              <span className="flex-1 truncate">Saved Grants</span>
-              {savedGrantsCount > 0 && (
-                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0">
-                  {savedGrantsCount}
-                </span>
-              )}
-            </button>
-          </li>
-
-          {/* 4. Watch List */}
+          {/* 3. Watch List */}
           <li>
             <button
               onClick={() => navigate("/watch-list")}

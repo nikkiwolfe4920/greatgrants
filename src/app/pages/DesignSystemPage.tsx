@@ -70,6 +70,7 @@ import {
   Globe,
   Shield,
   Bookmark,
+  Eye,
   Edit2,
   Archive,
   // Grants & Financial
@@ -2064,8 +2065,8 @@ import {
                 </div>
 
                 <button className="flex items-center gap-2 px-3 py-2 w-full text-left rounded-md text-gray-700 hover:bg-gray-100 text-sm">
-                  <Bookmark className="w-4 h-4 shrink-0" />
-                  <span className="flex-1 truncate">Saved Grants</span>
+                  <Eye className="w-4 h-4 shrink-0" />
+                  <span className="flex-1 truncate">Watch List</span>
                 </button>
                 <button className="flex items-center gap-2 px-3 py-2 w-full text-left rounded-md text-gray-700 hover:bg-gray-100 text-sm">
                   <Search className="w-4 h-4 shrink-0" />
