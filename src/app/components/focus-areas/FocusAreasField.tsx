@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/pop
 import { cn } from "@/app/components/ui/utils";
 import {
   FOCUS_AREA_MAX_SELECTIONS,
+  FOCUS_AREA_MIN_SELECTIONS,
   FOCUS_AREA_WARNING_THRESHOLD,
 } from "@/lib/constants/focus-areas";
 import { FocusAreasDropdown } from "./FocusAreasDropdown";
@@ -35,7 +36,7 @@ export function FocusAreasField({ value, onChange, highlighted }: FocusAreasFiel
   const [open, setOpen] = useState(false);
   const atCap = value.length >= FOCUS_AREA_MAX_SELECTIONS;
   const nearCap = value.length >= FOCUS_AREA_WARNING_THRESHOLD && !atCap;
-  const isEmpty = value.length === 0;
+  const belowMinimum = value.length < FOCUS_AREA_MIN_SELECTIONS;
 
   const handleToggle = (leaf: string) => {
     const isSelected = value.includes(leaf);
@@ -68,7 +69,7 @@ export function FocusAreasField({ value, onChange, highlighted }: FocusAreasFiel
             aria-expanded={open}
             className={cn(
               "w-full justify-between border-gray-300 bg-white font-normal",
-              isEmpty && !highlighted && "border-amber-300",
+              belowMinimum && !highlighted && "border-amber-300",
               highlighted && "ring-2 ring-teal-600 border-teal-600",
             )}
           >
@@ -95,9 +96,10 @@ export function FocusAreasField({ value, onChange, highlighted }: FocusAreasFiel
         specific program is selected, that program's own focus areas are used for search instead.
       </p>
 
-      {isEmpty && (
+      {belowMinimum && (
         <p className="text-xs font-medium text-amber-700">
-          Required — select at least one focus area.
+          Required — select at least {FOCUS_AREA_MIN_SELECTIONS} focus areas
+          {value.length === 1 ? " (1 more needed)." : "."}
         </p>
       )}
       {nearCap && (

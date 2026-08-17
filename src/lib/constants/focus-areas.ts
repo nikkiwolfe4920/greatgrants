@@ -292,6 +292,13 @@ export const FOCUS_AREA_PARENT_ORDER: string[] = Object.keys(FOCUS_AREA_TAXONOMY
 /** Hard product cap on how many leaf values an organization can select. */
 export const FOCUS_AREA_MAX_SELECTIONS = 10;
 
+/**
+ * Minimum number of leaf values a complete organization profile must have.
+ * Below this, the field is treated as unfilled — see FocusAreaRequiredBanner
+ * and the "Add 2 or More Focus Areas" profile-completion checklist item.
+ */
+export const FOCUS_AREA_MIN_SELECTIONS = 2;
+
 /** Selection count at which the field starts warning the user they're approaching the cap. */
 export const FOCUS_AREA_WARNING_THRESHOLD = 9;
 
