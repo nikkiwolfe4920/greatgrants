@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { FolderOpen, Plus, MapPin, Users, Upload, FileText, Edit2, Trash2, ChevronDown, ChevronUp, AlertCircle, FileCheck, Clock, DollarSign, UserCircle2, Info, Globe, Save } from "lucide-react";
-import { Link } from "react-router";
+import { useState, useEffect, useRef } from "react";
+import { FolderOpen, Plus, MapPin, Users, Upload, FileText, Edit2, Trash2, ChevronDown, ChevronUp, AlertCircle, FileCheck, Clock, DollarSign, UserCircle2, Info, Globe, Save, Loader2, CheckCircle2 } from "lucide-react";
+import { Link, useBlocker } from "react-router";
 import { Button } from "../components/ui/button";
 import {
   Dialog,
@@ -36,6 +36,7 @@ import {
 } from "../components/ui/dropdown-menu";
 import { CloudDocumentImport, ProviderBadgeIcon, type ImportedCloudFile } from "../components/CloudDocumentImport";
 import { CreateProgramFromDocumentModal, type FastTrackDocumentFile } from "../components/CreateProgramFromDocumentModal";
+import { ProgramFieldsRequiredModal } from "../components/ProgramFieldsRequiredModal";
 
 interface DocumentationFile {
   id: string;
@@ -83,7 +84,11 @@ interface Project {
   selectedPopulations: PopulationCategory[];
   allPopulations: PopulationCategory[];
   estimatedServed: string;
-  status: "published";
+  // "draft" is written by the manual-creation autosave below, before the user
+  // explicitly hits Save — kept out of the Published Programs list (and every
+  // other reader of the "projects" localStorage key, which all already
+  // filter on status === "published") until then.
+  status: "draft" | "published";
   publishedAt?: number;
   lastUpdatedAt: number;
   createdAt: number;
@@ -206,6 +211,26 @@ function getMissingRequiredFields(project: Partial<Project>): MissingField[] {
   return missing;
 }
 
+// Whether the in-progress program has any user-entered content at all. A
+// blank, untouched form has nothing to lose, so it shouldn't trigger the
+// "Program Fields Required" leave-confirmation below.
+function hasAnyProgramData(project: Partial<Project>): boolean {
+  const contact = project.primaryContact;
+  return Boolean(
+    project.title?.trim() ||
+    project.summary?.trim() ||
+    project.url?.trim() ||
+    project.estimatedBudget?.trim() ||
+    project.estimatedServed?.trim() ||
+    project.programDurationMonths ||
+    (project.documentFiles && project.documentFiles.length > 0) ||
+    (project.selectedPopulations && project.selectedPopulations.length > 0) ||
+    project.geoLocations?.some((loc) => loc.state) ||
+    project.partnerships?.some((p) => p.name.trim()) ||
+    (contact && (contact.firstName.trim() || contact.lastName.trim() || contact.email.trim() || contact.phone.trim()))
+  );
+}
+
 export function ProjectDetailsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
@@ -243,6 +268,25 @@ export function ProjectDetailsPage() {
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
   const [showCreateFromDocumentModal, setShowCreateFromDocumentModal] = useState(false);
 
+  // Whether the current form session is editing an already-published program
+  // (vs. a brand-new manual/from-document creation). Autosave and the
+  // "leave without saving" guard below only apply to new-program sessions —
+  // an edit session's Cancel button already safely discards local edits
+  // without touching the untouched, still-published record.
+  const [isEditingExistingProgram, setIsEditingExistingProgram] = useState(false);
+
+  // Autosave — once every required field is filled in on a new-program
+  // session, the in-progress program is saved as a draft (hidden from the
+  // Published Programs list) well before the user reaches for Save Program,
+  // so an accidental navigation never loses completed work.
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // "Leave without saving" flow triggered by the Cancel button (the router
+  // navigation case is handled by the blocker below).
+  const [pendingCancelLeave, setPendingCancelLeave] = useState(false);
+
   const [customCategory, setCustomCategory] = useState("");
   const [hasHydrated, setHasHydrated] = useState(false);
 
@@ -273,6 +317,9 @@ export function ProjectDetailsPage() {
     setEditingProjectId(null);
     setCurrentProject(emptyProject());
     setShowValidationErrors(false);
+    setIsEditingExistingProgram(false);
+    setLastSavedAt(null);
+    setIsAutoSaving(false);
   };
 
   const handleCreateProgramFromDocument = (files: FastTrackDocumentFile[]) => {
@@ -281,6 +328,9 @@ export function ProjectDetailsPage() {
     setCurrentProject({ ...emptyProject(), documentFiles: files });
     setShowValidationErrors(false);
     setShowCreateFromDocumentModal(false);
+    setIsEditingExistingProgram(false);
+    setLastSavedAt(null);
+    setIsAutoSaving(false);
   };
 
   const handleEditProject = (project: Project) => {
@@ -295,10 +345,11 @@ export function ProjectDetailsPage() {
       primaryContact: project.primaryContact || blankPrimaryContact(),
     });
     setShowValidationErrors(false);
+    setIsEditingExistingProgram(true);
   };
 
-  const buildProjectRecord = (now: number): Project => ({
-    id: now.toString(),
+  const buildProjectRecord = (now: number, overrides?: Partial<Pick<Project, "id" | "status">>): Project => ({
+    id: overrides?.id ?? now.toString(),
     title: currentProject.title!,
     summary: currentProject.summary!,
     documentFiles: currentProject.documentFiles || [],
@@ -311,10 +362,17 @@ export function ProjectDetailsPage() {
     selectedPopulations: currentProject.selectedPopulations || [],
     allPopulations: currentProject.allPopulations || predefinedPopulations,
     estimatedServed: currentProject.estimatedServed || "",
-    status: "published",
+    status: overrides?.status ?? "published",
     lastUpdatedAt: now,
     createdAt: now,
   });
+
+  const clearPendingAutoSave = () => {
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
+    }
+  };
 
   const handlePublishProject = () => {
     if (missingFields.length > 0) {
@@ -322,6 +380,7 @@ export function ProjectDetailsPage() {
       return;
     }
 
+    clearPendingAutoSave();
     const now = Date.now();
 
     if (editingProjectId) {
@@ -347,10 +406,25 @@ export function ProjectDetailsPage() {
   };
 
   const handleCancelEdit = () => {
+    clearPendingAutoSave();
     setIsCreatingProject(false);
     setEditingProjectId(null);
     setCurrentProject(emptyProject());
     setShowValidationErrors(false);
+    setIsEditingExistingProgram(false);
+    setLastSavedAt(null);
+    setIsAutoSaving(false);
+  };
+
+  // Cancel button — routes through the "Program Fields Required" modal when
+  // leaving a new-program session would lose entered-but-incomplete work
+  // that hasn't been autosaved yet.
+  const handleCancelClick = () => {
+    if (shouldWarnOnLeave) {
+      setPendingCancelLeave(true);
+    } else {
+      handleCancelEdit();
+    }
   };
 
   const handleDeleteProject = (projectId: string) => {
@@ -516,6 +590,87 @@ export function ProjectDetailsPage() {
   const missingFields = getMissingRequiredFields(currentProject);
   const isPublishDisabled = missingFields.length > 0;
 
+  // Whether leaving right now would actually lose work: a brand-new program
+  // (not an edit of an already-published one), still missing required
+  // fields, with something typed into it, and no autosave draft yet to fall
+  // back on.
+  const shouldWarnOnLeave =
+    isCreatingProject &&
+    !isEditingExistingProgram &&
+    isPublishDisabled &&
+    lastSavedAt === null &&
+    hasAnyProgramData(currentProject);
+
+  // Blocks in-app navigation (sidebar links, the breadcrumb Home link,
+  // browser back/forward) while `shouldWarnOnLeave` is true. Requires the
+  // data router from createBrowserRouter (see routes.tsx) — react-router's
+  // useBlocker only works in Data/Framework routing modes.
+  const blocker = useBlocker(shouldWarnOnLeave);
+  const isLeaveModalOpen = blocker.state === "blocked" || pendingCancelLeave;
+
+  // Native browser warning for a hard reload/tab close, which the router
+  // blocker above can't intercept.
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (shouldWarnOnLeave) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [shouldWarnOnLeave]);
+
+  // Debounced autosave — fires ~1.2s after the user stops editing a new
+  // program, but only once every required field is filled in. Persists the
+  // in-progress program as a draft (kept out of the Published Programs list
+  // until Save/Update is clicked) so completed work is never lost to an
+  // accidental navigation.
+  useEffect(() => {
+    if (!isCreatingProject || isEditingExistingProgram || isPublishDisabled) return;
+
+    const debounce = setTimeout(() => {
+      setIsAutoSaving(true);
+      autoSaveTimeoutRef.current = setTimeout(() => {
+        const now = Date.now();
+        setProjects((prev) => {
+          if (editingProjectId) {
+            return prev.map((p) =>
+              p.id === editingProjectId ? ({ ...p, ...currentProject, lastUpdatedAt: now } as Project) : p
+            );
+          }
+          const draftId = now.toString();
+          setEditingProjectId(draftId);
+          return [...prev, buildProjectRecord(now, { id: draftId, status: "draft" })];
+        });
+        setIsAutoSaving(false);
+        setLastSavedAt(now);
+        autoSaveTimeoutRef.current = null;
+      }, 500);
+    }, 1200);
+
+    return () => {
+      clearTimeout(debounce);
+      clearPendingAutoSave();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentProject, isCreatingProject, isEditingExistingProgram, isPublishDisabled]);
+
+  // "Program Fields Required" modal actions
+  const handleKeepEditingProgram = () => {
+    if (blocker.state === "blocked") blocker.reset();
+    setPendingCancelLeave(false);
+    setShowValidationErrors(true);
+  };
+
+  const handleLeaveProgramWithoutSaving = () => {
+    if (blocker.state === "blocked") blocker.proceed();
+    if (pendingCancelLeave) {
+      setPendingCancelLeave(false);
+      handleCancelEdit();
+    }
+  };
+
   const contact = currentProject.primaryContact || blankPrimaryContact();
   const showErr = showValidationErrors; // shorthand used throughout the form below
 
@@ -615,16 +770,16 @@ export function ProjectDetailsPage() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-2xl font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-                  {editingProjectId ? "Edit Program" : "Create New Program"}
+                  {isEditingExistingProgram ? "Edit Program" : "Create New Program"}
                 </h2>
-                {editingProjectId && (
+                {isEditingExistingProgram && (
                   <p className="text-sm text-gray-500 mt-1">
                     Last updated {formatTimestamp(currentProject.lastUpdatedAt || Date.now())}
                   </p>
                 )}
               </div>
               <div className="flex items-center gap-3">
-                <Button variant="outline" onClick={handleCancelEdit}>
+                <Button variant="outline" onClick={handleCancelClick}>
                   Cancel
                 </Button>
 
@@ -645,8 +800,32 @@ export function ProjectDetailsPage() {
                         disabled={isPublishDisabled}
                         className="bg-teal-600 hover:bg-teal-700 text-white gap-2"
                       >
-                        <Save className="w-4 h-4" />
-                        {editingProjectId ? "Update Program" : "Save Program"}
+                        {isPublishDisabled ? (
+                          <>
+                            <Save className="w-4 h-4" />
+                            {isEditingExistingProgram ? "Update Program" : "Save Program"}
+                          </>
+                        ) : isEditingExistingProgram ? (
+                          <>
+                            <Save className="w-4 h-4" />
+                            Update Program
+                          </>
+                        ) : isAutoSaving ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : lastSavedAt ? (
+                          <>
+                            <CheckCircle2 className="w-4 h-4" />
+                            Saved {formatTimestamp(lastSavedAt)}
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4" />
+                            Save Program
+                          </>
+                        )}
                       </Button>
                     </span>
                   </TooltipTrigger>
@@ -1464,6 +1643,16 @@ export function ProjectDetailsPage() {
         open={showCreateFromDocumentModal}
         onOpenChange={setShowCreateFromDocumentModal}
         onProcessDocument={handleCreateProgramFromDocument}
+      />
+
+      {/* Program Fields Required — shown when leaving a new, incomplete
+          program (Cancel button, sidebar/breadcrumb navigation, browser
+          back/forward) before it's been autosaved. Figma node 13269:35531. */}
+      <ProgramFieldsRequiredModal
+        open={isLeaveModalOpen}
+        missingFields={missingFields}
+        onKeepEditing={handleKeepEditingProgram}
+        onLeaveWithoutSaving={handleLeaveProgramWithoutSaving}
       />
     </div>
   );
