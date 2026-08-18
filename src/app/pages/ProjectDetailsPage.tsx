@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FolderOpen, Plus, MapPin, Users, Upload, X, FileText, Edit2, Trash2, ChevronDown, ChevronUp, AlertCircle, FileCheck, Clock, DollarSign, UserCircle2, Check, Info, Globe } from "lucide-react";
+import { FolderOpen, Plus, MapPin, Users, Upload, FileText, Edit2, Trash2, ChevronDown, ChevronUp, AlertCircle, FileCheck, Clock, DollarSign, UserCircle2, Info, Globe, Save } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "../components/ui/button";
 import {
@@ -8,11 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
-import { Switch } from "../components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -20,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../components/ui/tooltip";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -50,17 +49,11 @@ interface GeoLocation {
   id: string;
   country: string;
   state: string;
-  name: string;
 }
 
 interface Partnership {
   id: string;
   name: string;
-}
-
-interface UrlEntry {
-  id: string;
-  value: string;
 }
 
 interface PrimaryContact {
@@ -82,11 +75,11 @@ interface Project {
   summary: string;
   documentFiles: DocumentationFile[];
   geoLocations: GeoLocation[];
-  isNationalProgram: boolean;
   programDurationMonths: number | null;
+  estimatedBudget: string;
   partnerships: Partnership[];
-  primaryContact: PrimaryContact | null;
-  urls: UrlEntry[];
+  primaryContact: PrimaryContact;
+  url: string;
   selectedPopulations: PopulationCategory[];
   allPopulations: PopulationCategory[];
   estimatedServed: string;
@@ -142,37 +135,75 @@ const formatFileSize = (bytes: number): string => {
 };
 
 const isValidUrlValue = (value: string): boolean => {
-  if (!value.trim()) return false;
+  if (!value.trim()) return true; // URL is optional; only validate format once something is entered
   const pattern = /^(https?:\/\/)?[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+([/?#]\S*)?$/;
   return pattern.test(value.trim());
 };
 
-// Small confirm/add button shared by the Geographic Focus, Program Duration,
-// Partnerships, Primary Point of Contact, and Add URL sections.
-function ConfirmButton({
-  enabled,
-  onClick,
-  title,
-}: {
-  enabled: boolean;
-  onClick: () => void;
-  title?: string;
-}) {
+const isValidEmail = (value: string): boolean => /\S+@\S+\.\S+/.test(value.trim());
+
+const makeBlankGeoLocation = (id: string): GeoLocation => ({ id, country: "USA", state: "" });
+const makeBlankPartnership = (id: string): Partnership => ({ id, name: "" });
+const blankPrimaryContact = (): PrimaryContact => ({ firstName: "", lastName: "", email: "", phone: "" });
+
+// Red border classes applied to a field once validation errors are surfaced
+// (the user hovered or clicked the disabled Save Program button) and that
+// field is still incomplete. Mirrors the Figma error input spec (node
+// 13246:23083): border-error_subtle + red helper text below.
+const errorInputClasses = "border-red-300 focus-visible:border-red-400 focus-visible:ring-red-200";
+
+// Small red helper row shown below a field once it's been flagged as
+// required-but-missing. Matches the Figma "This is an error message." pattern.
+function FieldError({ show, message }: { show: boolean; message: string }) {
+  if (!show) return null;
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={!enabled}
-      title={title}
-      className={`flex items-center justify-center w-9 h-9 rounded-md border transition-colors flex-shrink-0 ${
-        enabled
-          ? "bg-teal-600 border-teal-600 text-white hover:bg-teal-700"
-          : "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed"
-      }`}
-    >
-      <Check className="w-4 h-4" />
-    </button>
+    <p className="flex items-center gap-1 mt-1.5 text-sm text-red-600">
+      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+      {message}
+    </p>
   );
+}
+
+interface MissingField {
+  key: string;
+  label: string;
+}
+
+function getMissingRequiredFields(project: Partial<Project>): MissingField[] {
+  const missing: MissingField[] = [];
+
+  if (!project.title?.trim()) missing.push({ key: "title", label: "Program Title" });
+  if (!project.summary?.trim()) missing.push({ key: "summary", label: "Program Description" });
+
+  const geoLocations = project.geoLocations || [];
+  if (!geoLocations.length || geoLocations.some((loc) => !loc.country || !loc.state)) {
+    missing.push({ key: "geo", label: "Geographic Focus (Country and State for each entry)" });
+  }
+
+  if (!project.programDurationMonths || project.programDurationMonths <= 0) {
+    missing.push({ key: "duration", label: "Program Duration" });
+  }
+
+  if (!project.estimatedBudget?.trim()) {
+    missing.push({ key: "budget", label: "Estimated Total Budget" });
+  }
+
+  if (!project.selectedPopulations || project.selectedPopulations.length === 0) {
+    missing.push({ key: "people-served", label: "People Served (select at least one population)" });
+  }
+
+  const contact = project.primaryContact;
+  if (
+    !contact ||
+    !contact.firstName.trim() ||
+    !contact.lastName.trim() ||
+    !isValidEmail(contact.email) ||
+    contact.phone.trim().length < 7
+  ) {
+    missing.push({ key: "contact", label: "Primary Point of Contact" });
+  }
+
+  return missing;
 }
 
 export function ProjectDetailsPage() {
@@ -181,17 +212,21 @@ export function ProjectDetailsPage() {
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
 
-  // Current project being edited
-  const [currentProject, setCurrentProject] = useState<Partial<Project>>({
+  // Whether required-field errors should be surfaced inline. Stays false
+  // until the user hovers or clicks the disabled Save Program button, per
+  // the Figma error-state spec (node 13246:23083).
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
+
+  const emptyProject = (): Partial<Project> => ({
     title: "",
     summary: "",
     documentFiles: [],
-    geoLocations: [],
-    isNationalProgram: false,
+    geoLocations: [makeBlankGeoLocation("geo-1")],
     programDurationMonths: null,
-    partnerships: [],
-    primaryContact: null,
-    urls: [],
+    estimatedBudget: "",
+    partnerships: [makeBlankPartnership("partner-1")],
+    primaryContact: blankPrimaryContact(),
+    url: "",
     selectedPopulations: [],
     allPopulations: predefinedPopulations,
     estimatedServed: "",
@@ -199,19 +234,14 @@ export function ProjectDetailsPage() {
     selectedApplications: [],
   });
 
+  // Current project being edited
+  const [currentProject, setCurrentProject] = useState<Partial<Project>>(emptyProject());
+
   // Modal states
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
   const [showCreateFromDocumentModal, setShowCreateFromDocumentModal] = useState(false);
-
-  // Form states for the inline "add" rows
-  const [geoForm, setGeoForm] = useState({ country: "USA", state: "", name: "" });
-  const [durationInput, setDurationInput] = useState("");
-  const [partnershipInput, setPartnershipInput] = useState("");
-  const [contactForm, setContactForm] = useState({ firstName: "", lastName: "", email: "", phone: "" });
-  const [urlInput, setUrlInput] = useState("");
-  const [urlTouched, setUrlTouched] = useState(false);
 
   const [customCategory, setCustomCategory] = useState("");
   const [hasHydrated, setHasHydrated] = useState(false);
@@ -238,52 +268,33 @@ export function ProjectDetailsPage() {
     window.dispatchEvent(new Event("projectsUpdated"));
   }, [projects, hasHydrated]);
 
-  const emptyProject: Partial<Project> = {
-    title: "",
-    summary: "",
-    documentFiles: [],
-    geoLocations: [],
-    isNationalProgram: false,
-    programDurationMonths: null,
-    partnerships: [],
-    primaryContact: null,
-    urls: [],
-    selectedPopulations: [],
-    allPopulations: predefinedPopulations,
-    estimatedServed: "",
-    status: "published",
-    selectedApplications: [],
-  };
-
   const handleStartNewProject = () => {
     setIsCreatingProject(true);
     setEditingProjectId(null);
-    setCurrentProject({ ...emptyProject });
-    resetInlineForms();
+    setCurrentProject(emptyProject());
+    setShowValidationErrors(false);
   };
 
   const handleCreateProgramFromDocument = (files: FastTrackDocumentFile[]) => {
     setIsCreatingProject(true);
     setEditingProjectId(null);
-    setCurrentProject({ ...emptyProject, documentFiles: files });
-    resetInlineForms();
+    setCurrentProject({ ...emptyProject(), documentFiles: files });
+    setShowValidationErrors(false);
     setShowCreateFromDocumentModal(false);
   };
 
   const handleEditProject = (project: Project) => {
     setEditingProjectId(project.id);
     setIsCreatingProject(true);
-    setCurrentProject({ ...project });
-    resetInlineForms();
-  };
-
-  const resetInlineForms = () => {
-    setGeoForm({ country: "USA", state: "", name: "" });
-    setDurationInput("");
-    setPartnershipInput("");
-    setContactForm({ firstName: "", lastName: "", email: "", phone: "" });
-    setUrlInput("");
-    setUrlTouched(false);
+    setCurrentProject({
+      ...project,
+      // Normalize older/incomplete records so the always-editable, at-least-one-entry
+      // pattern below always has something to render.
+      geoLocations: project.geoLocations?.length ? project.geoLocations : [makeBlankGeoLocation("geo-1")],
+      partnerships: project.partnerships?.length ? project.partnerships : [makeBlankPartnership("partner-1")],
+      primaryContact: project.primaryContact || blankPrimaryContact(),
+    });
+    setShowValidationErrors(false);
   };
 
   const buildProjectRecord = (now: number): Project => ({
@@ -292,11 +303,11 @@ export function ProjectDetailsPage() {
     summary: currentProject.summary!,
     documentFiles: currentProject.documentFiles || [],
     geoLocations: currentProject.geoLocations || [],
-    isNationalProgram: currentProject.isNationalProgram ?? false,
     programDurationMonths: currentProject.programDurationMonths ?? null,
+    estimatedBudget: currentProject.estimatedBudget || "",
     partnerships: currentProject.partnerships || [],
-    primaryContact: currentProject.primaryContact ?? null,
-    urls: currentProject.urls || [],
+    primaryContact: currentProject.primaryContact || blankPrimaryContact(),
+    url: currentProject.url || "",
     selectedPopulations: currentProject.selectedPopulations || [],
     allPopulations: currentProject.allPopulations || predefinedPopulations,
     estimatedServed: currentProject.estimatedServed || "",
@@ -305,33 +316,9 @@ export function ProjectDetailsPage() {
     createdAt: now,
   });
 
-  const handleSaveDraft = () => {
-    if (!currentProject.title || !currentProject.summary) {
-      alert("Please enter a program title and summary before saving.");
-      return;
-    }
-
-    const now = Date.now();
-
-    if (editingProjectId) {
-      // Update existing project
-      setProjects(projects.map(p =>
-        p.id === editingProjectId
-          ? { ...p, ...currentProject, lastUpdatedAt: now } as Project
-          : p
-      ));
-    } else {
-      setProjects([...projects, buildProjectRecord(now)]);
-    }
-
-    // Close the creation form and show the draft in the list
-    setIsCreatingProject(false);
-    setEditingProjectId(null);
-  };
-
   const handlePublishProject = () => {
-    if (!currentProject.title || !currentProject.summary) {
-      alert("Please enter a program title and summary before publishing.");
+    if (missingFields.length > 0) {
+      setShowValidationErrors(true);
       return;
     }
 
@@ -362,8 +349,8 @@ export function ProjectDetailsPage() {
   const handleCancelEdit = () => {
     setIsCreatingProject(false);
     setEditingProjectId(null);
-    setCurrentProject({ ...emptyProject });
-    resetInlineForms();
+    setCurrentProject(emptyProject());
+    setShowValidationErrors(false);
   };
 
   const handleDeleteProject = (projectId: string) => {
@@ -427,15 +414,15 @@ export function ProjectDetailsPage() {
     });
   };
 
-  // Geographic Focus handlers
+  // Geographic Focus handlers — same "always editable, entry #1 can't be
+  // removed" pattern as the Org Details / Key Contacts tab (Leaders / Board
+  // Members): the Add button appends a new numbered entry, and only entries
+  // after the first show a trash icon.
   const handleAddGeoLocation = () => {
-    if (!geoForm.state || !geoForm.name.trim()) return;
-    const now = Date.now();
     setCurrentProject({
       ...currentProject,
-      geoLocations: [...(currentProject.geoLocations || []), { id: now.toString(), ...geoForm }],
+      geoLocations: [...(currentProject.geoLocations || []), makeBlankGeoLocation(`geo-${Date.now()}`)],
     });
-    setGeoForm({ country: "USA", state: "", name: "" });
   };
 
   const handleRemoveGeoLocation = (id: string) => {
@@ -445,27 +432,25 @@ export function ProjectDetailsPage() {
     });
   };
 
-  // Program Duration handlers
-  const handleConfirmDuration = () => {
-    const value = parseInt(durationInput, 10);
-    if (!value || value <= 0) return;
-    setCurrentProject({ ...currentProject, programDurationMonths: value });
-    setDurationInput("");
-  };
-
-  const handleRemoveDuration = () => {
-    setCurrentProject({ ...currentProject, programDurationMonths: null });
-  };
-
-  // Partnerships handlers
-  const handleAddPartnership = () => {
-    if (!partnershipInput.trim()) return;
-    const now = Date.now();
+  const handleGeoLocationChange = (id: string, field: "country" | "state", value: string) => {
     setCurrentProject({
       ...currentProject,
-      partnerships: [...(currentProject.partnerships || []), { id: now.toString(), name: partnershipInput.trim() }],
+      geoLocations: currentProject.geoLocations?.map(l => (l.id === id ? { ...l, [field]: value } : l)),
     });
-    setPartnershipInput("");
+  };
+
+  // Program Duration — a single, always-editable field (no separate confirm step).
+  const handleDurationChange = (value: string) => {
+    const parsed = parseInt(value, 10);
+    setCurrentProject({ ...currentProject, programDurationMonths: value.trim() && parsed > 0 ? parsed : null });
+  };
+
+  // Partnerships handlers — same numbered add/remove pattern as Geographic Focus.
+  const handleAddPartnership = () => {
+    setCurrentProject({
+      ...currentProject,
+      partnerships: [...(currentProject.partnerships || []), makeBlankPartnership(`partner-${Date.now()}`)],
+    });
   };
 
   const handleRemovePartnership = (id: string) => {
@@ -475,40 +460,18 @@ export function ProjectDetailsPage() {
     });
   };
 
-  // Primary Point of Contact handlers
-  const isContactFormValid = Boolean(
-    contactForm.firstName.trim() &&
-    contactForm.lastName.trim() &&
-    /\S+@\S+\.\S+/.test(contactForm.email.trim()) &&
-    contactForm.phone.trim().length >= 7
-  );
-
-  const handleConfirmContact = () => {
-    if (!isContactFormValid) return;
-    setCurrentProject({ ...currentProject, primaryContact: { ...contactForm } });
-    setContactForm({ firstName: "", lastName: "", email: "", phone: "" });
-  };
-
-  const handleRemoveContact = () => {
-    setCurrentProject({ ...currentProject, primaryContact: null });
-  };
-
-  // Add URL handlers
-  const handleAddUrl = () => {
-    if (!isValidUrlValue(urlInput)) return;
-    const now = Date.now();
+  const handlePartnershipChange = (id: string, value: string) => {
     setCurrentProject({
       ...currentProject,
-      urls: [...(currentProject.urls || []), { id: now.toString(), value: urlInput.trim() }],
+      partnerships: currentProject.partnerships?.map(p => (p.id === id ? { ...p, name: value } : p)),
     });
-    setUrlInput("");
-    setUrlTouched(false);
   };
 
-  const handleRemoveUrl = (id: string) => {
+  // Primary Point of Contact — a single, always-editable record.
+  const handleContactChange = (field: keyof PrimaryContact, value: string) => {
     setCurrentProject({
       ...currentProject,
-      urls: currentProject.urls?.filter(u => u.id !== id),
+      primaryContact: { ...(currentProject.primaryContact || blankPrimaryContact()), [field]: value },
     });
   };
 
@@ -546,10 +509,15 @@ export function ProjectDetailsPage() {
   };
 
   const publishedProjects = projects.filter(p => p.status === "published").sort((a, b) => (b.publishedAt || 0) - (a.publishedAt || 0));
-  const draftProjects: Project[] = [];
 
-  // Check if required fields are filled
-  const isPublishDisabled = !currentProject.title?.trim() || !currentProject.summary?.trim();
+  // Required fields the Save Program button is gated on. Surfaced both in the
+  // persistent "Improve Your Program" banner and in the tooltip shown when
+  // hovering/clicking the disabled button.
+  const missingFields = getMissingRequiredFields(currentProject);
+  const isPublishDisabled = missingFields.length > 0;
+
+  const contact = currentProject.primaryContact || blankPrimaryContact();
+  const showErr = showValidationErrors; // shorthand used throughout the form below
 
   return (
     <div className="min-h-screen bg-white">
@@ -660,16 +628,58 @@ export function ProjectDetailsPage() {
                   Cancel
                 </Button>
 
-                <Button
-                  onClick={handlePublishProject}
-                  disabled={isPublishDisabled}
-                  className="bg-teal-600 hover:bg-teal-700 text-white gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-teal-600"
-                >
-                  <Upload className="w-4 h-4" />
-                  {editingProjectId ? "Update Program" : "Publish Program"}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      // A native `disabled` button won't fire hover/click, so the
+                      // handlers below live on this wrapping span. It's how we
+                      // catch "hover over or click the disabled button" and
+                      // surface the required-field errors per field.
+                      tabIndex={isPublishDisabled ? 0 : -1}
+                      onMouseEnter={() => isPublishDisabled && setShowValidationErrors(true)}
+                      onClick={() => isPublishDisabled && setShowValidationErrors(true)}
+                      className="inline-block"
+                    >
+                      <Button
+                        onClick={handlePublishProject}
+                        disabled={isPublishDisabled}
+                        className="bg-teal-600 hover:bg-teal-700 text-white gap-2"
+                      >
+                        <Save className="w-4 h-4" />
+                        {editingProjectId ? "Update Program" : "Save Program"}
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {isPublishDisabled && (
+                    <TooltipContent side="top" className="max-w-[280px]">
+                      <p className="font-semibold mb-1">Complete these required fields to save:</p>
+                      <ul className="list-disc pl-4 space-y-0.5">
+                        {missingFields.map((field) => (
+                          <li key={field.key}>{field.label}</li>
+                        ))}
+                      </ul>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
               </div>
             </div>
+
+            {/* Improve Your Program Banner */}
+            {isPublishDisabled && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-amber-900">Improve Your Program By Completing All Available Fields</h4>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0.5 mt-2 pl-4 text-xs text-amber-800 list-disc">
+                      {missingFields.map((field) => (
+                        <li key={field.key}>{field.label}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Program Title & Summary */}
             <div className="space-y-6 mb-8">
@@ -681,8 +691,9 @@ export function ProjectDetailsPage() {
                   placeholder="e.g., Community Food Security Program"
                   value={currentProject.title || ""}
                   onChange={(e) => setCurrentProject({ ...currentProject, title: e.target.value })}
-                  className="text-lg"
+                  className={`text-lg ${showErr && !currentProject.title?.trim() ? errorInputClasses : ""}`}
                 />
+                <FieldError show={showErr && !currentProject.title?.trim()} message="Program Title is required." />
               </div>
             </div>
 
@@ -781,8 +792,9 @@ export function ProjectDetailsPage() {
                 value={currentProject.summary || ""}
                 onChange={(e) => setCurrentProject({ ...currentProject, summary: e.target.value })}
                 rows={4}
-                className="text-base"
+                className={`text-base ${showErr && !currentProject.summary?.trim() ? errorInputClasses : ""}`}
               />
+              <FieldError show={showErr && !currentProject.summary?.trim()} message="Program Description is required." />
               <p className="text-xs text-gray-500 mt-1">
                 This summary helps AI understand your program for grant writing and matching.
               </p>
@@ -790,116 +802,76 @@ export function ProjectDetailsPage() {
 
             {/* Geographic Focus Section */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-              <div className="flex items-center gap-3 mb-4">
-                <MapPin className="w-5 h-5 text-teal-600" />
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-                    Geographic Focus <span className="text-red-500">*</span>
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">Add at least one location where your program operates</p>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-5 h-5 text-teal-600" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                      Geographic Focus <span className="text-red-500">*</span>
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Add at least one location where your program operates</p>
+                  </div>
                 </div>
+                <Button onClick={handleAddGeoLocation} variant="outline" size="sm">
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Geographical Focus
+                </Button>
               </div>
 
-              <div
-                role="switch"
-                aria-checked={!!currentProject.isNationalProgram}
-                tabIndex={0}
-                onClick={() => setCurrentProject({ ...currentProject, isNationalProgram: !currentProject.isNationalProgram })}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setCurrentProject({ ...currentProject, isNationalProgram: !currentProject.isNationalProgram });
-                  }
-                }}
-                className="flex items-center justify-between gap-4 p-4 bg-white border border-gray-200 rounded-lg mb-4 cursor-pointer"
-              >
-                <div>
-                  <span className="font-medium text-gray-900">
-                    Select for: National Focus
-                  </span>
-                  <p className="text-sm text-gray-600 mt-0.5">
-                    This option will default your searches to national options. Specific cities and regions of focus can still be entered below.
-                  </p>
-                </div>
-                <Switch
-                  id="national-program-toggle"
-                  checked={!!currentProject.isNationalProgram}
-                  onCheckedChange={(checked) => setCurrentProject({ ...currentProject, isNationalProgram: checked })}
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex-shrink-0"
-                />
-              </div>
+              <div className="space-y-4">
+                {(currentProject.geoLocations || []).map((loc, index) => {
+                  const countryMissing = showErr && !loc.country;
+                  const stateMissing = showErr && !loc.state;
+                  return (
+                    <div key={loc.id} className="p-4 border border-gray-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-sm font-medium text-gray-900">Geographic Focus {index + 1}</h4>
+                        {index > 0 && (
+                          <button
+                            onClick={() => handleRemoveGeoLocation(loc.id)}
+                            className="text-red-500 hover:text-red-600 transition-colors p-1"
+                            title="Remove location"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
 
-              {currentProject.geoLocations && currentProject.geoLocations.length > 0 && (
-                <div className="space-y-2 mb-4">
-                  {currentProject.geoLocations.map((loc) => (
-                    <div key={loc.id} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                      <div className="grid grid-cols-3 gap-6 flex-1">
+                      <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-xs text-gray-500">Location Name</p>
-                          <p className="text-sm font-medium text-gray-900 mt-1">{loc.name}</p>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Country <span className="text-red-500">*</span>
+                          </label>
+                          <Select value={loc.country} onValueChange={(value) => handleGeoLocationChange(loc.id, "country", value)}>
+                            <SelectTrigger className={`border ${countryMissing ? errorInputClasses : "border-gray-300"}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="USA">USA</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FieldError show={countryMissing} message="Country is required." />
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500">Country</p>
-                          <p className="text-sm font-medium text-gray-900 mt-1">{loc.country}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">State</p>
-                          <p className="text-sm font-medium text-gray-900 mt-1">{loc.state}</p>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            State <span className="text-red-500">*</span>
+                          </label>
+                          <Select value={loc.state} onValueChange={(value) => handleGeoLocationChange(loc.id, "state", value)}>
+                            <SelectTrigger className={`border ${stateMissing ? errorInputClasses : "border-gray-300"}`}>
+                              <SelectValue placeholder="Select state" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-64">
+                              {usStates.map((state) => (
+                                <SelectItem key={state} value={state}>{state}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FieldError show={stateMissing} message="State is required." />
                         </div>
                       </div>
-                      <button onClick={() => handleRemoveGeoLocation(loc.id)} className="text-red-500 hover:text-red-600 transition-colors p-1 ml-3 flex-shrink-0">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
                     </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex items-end gap-3 p-4 border border-gray-200 rounded-lg">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Country <span className="text-red-500">*</span>
-                  </label>
-                  <Select value={geoForm.country} onValueChange={(value) => setGeoForm({ ...geoForm, country: value })}>
-                    <SelectTrigger className="border border-gray-300">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USA">USA</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    State <span className="text-red-500">*</span>
-                  </label>
-                  <Select value={geoForm.state} onValueChange={(value) => setGeoForm({ ...geoForm, state: value })}>
-                    <SelectTrigger className="border border-gray-300">
-                      <SelectValue placeholder="Select state" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-64">
-                      {usStates.map((state) => (
-                        <SelectItem key={state} value={state}>{state}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Location Name <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    placeholder="e.g., Austin, Texas"
-                    value={geoForm.name}
-                    onChange={(e) => setGeoForm({ ...geoForm, name: e.target.value })}
-                  />
-                </div>
-                <ConfirmButton
-                  enabled={!!geoForm.state && !!geoForm.name.trim()}
-                  onClick={handleAddGeoLocation}
-                  title="Add location"
-                />
+                  );
+                })}
               </div>
             </div>
 
@@ -915,31 +887,18 @@ export function ProjectDetailsPage() {
                 </div>
               </div>
 
-              {currentProject.programDurationMonths ? (
-                <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                  <p className="text-sm font-medium text-gray-900">{currentProject.programDurationMonths} Months</p>
-                  <button onClick={handleRemoveDuration} className="text-red-500 hover:text-red-600 transition-colors p-1">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <Input
-                    type="number"
-                    min="1"
-                    placeholder="#"
-                    value={durationInput}
-                    onChange={(e) => setDurationInput(e.target.value)}
-                    className="max-w-[100px]"
-                  />
-                  <span className="text-lg text-gray-900">Months</span>
-                  <ConfirmButton
-                    enabled={!!parseInt(durationInput, 10) && parseInt(durationInput, 10) > 0}
-                    onClick={handleConfirmDuration}
-                    title="Confirm duration"
-                  />
-                </div>
-              )}
+              <div className="flex items-center gap-3">
+                <Input
+                  type="number"
+                  min="1"
+                  placeholder="#"
+                  value={currentProject.programDurationMonths ?? ""}
+                  onChange={(e) => handleDurationChange(e.target.value)}
+                  className={`max-w-[100px] ${showErr && !currentProject.programDurationMonths ? errorInputClasses : ""}`}
+                />
+                <span className="text-lg text-gray-900">Months</span>
+              </div>
+              <FieldError show={showErr && !currentProject.programDurationMonths} message="Program Duration is required." />
             </div>
 
             {/* Estimated Total Budget */}
@@ -951,11 +910,12 @@ export function ProjectDetailsPage() {
                 <DollarSign className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <Input
                   placeholder="e.g., $150,000"
-                  value={currentProject.estimatedServed || ""}
-                  onChange={(e) => setCurrentProject({ ...currentProject, estimatedServed: e.target.value })}
-                  className="pl-9"
+                  value={currentProject.estimatedBudget || ""}
+                  onChange={(e) => setCurrentProject({ ...currentProject, estimatedBudget: e.target.value })}
+                  className={`pl-9 max-w-xs ${showErr && !currentProject.estimatedBudget?.trim() ? errorInputClasses : ""}`}
                 />
               </div>
+              <FieldError show={showErr && !currentProject.estimatedBudget?.trim()} message="Estimated Total Budget is required." />
             </div>
 
             {/* People Served Section */}
@@ -964,7 +924,7 @@ export function ProjectDetailsPage() {
                 <Users className="w-5 h-5 text-teal-600" />
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-                    People Served
+                    People Served <span className="text-red-500">*</span>
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">Select populations your program supports</p>
                 </div>
@@ -1002,7 +962,12 @@ export function ProjectDetailsPage() {
                 })}
               </div>
 
-              <div className="flex items-center gap-3 mb-4">
+              <FieldError
+                show={showErr && (currentProject.selectedPopulations?.length ?? 0) === 0}
+                message="Select at least one population served."
+              />
+
+              <div className="flex items-center gap-3 mb-4 mt-2">
                 <Button onClick={() => setShowCategoryModal(true)} variant="outline" size="sm" className="gap-2">
                   <Plus className="w-3.5 h-3.5" />
                   Add Custom Category
@@ -1025,47 +990,44 @@ export function ProjectDetailsPage() {
 
             {/* Partnerships Section */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Users className="w-5 h-5 text-teal-600" />
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-                    Partnership(s)
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">Add at least one partner for initiatives.</p>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div className="flex items-center gap-3">
+                  <Users className="w-5 h-5 text-teal-600" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                      Partnership(s)
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Add at least one partner for initiatives.</p>
+                  </div>
                 </div>
+                <Button onClick={handleAddPartnership} variant="outline" size="sm">
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Partnership
+                </Button>
               </div>
 
-              {currentProject.partnerships && currentProject.partnerships.length > 0 && (
-                <div className="space-y-2 mb-4">
-                  {currentProject.partnerships.map((partner) => (
-                    <div key={partner.id} className="flex items-center justify-between p-3.5 bg-gray-50 border border-gray-200 rounded-lg">
-                      <p className="text-sm font-medium text-gray-900">{partner.name}</p>
-                      <button onClick={() => handleRemovePartnership(partner.id)} className="text-red-500 hover:text-red-600 transition-colors p-1">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+              <div className="space-y-4">
+                {(currentProject.partnerships || []).map((partner, index) => (
+                  <div key={partner.id} className="p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-sm font-medium text-gray-900">Partnership {index + 1}</h4>
+                      {index > 0 && (
+                        <button
+                          onClick={() => handleRemovePartnership(partner.id)}
+                          className="text-red-500 hover:text-red-600 transition-colors p-1"
+                          title="Remove partnership"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex items-center gap-3">
-                <Input
-                  placeholder="Enter Partner"
-                  value={partnershipInput}
-                  onChange={(e) => setPartnershipInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddPartnership();
-                    }
-                  }}
-                  className="flex-1"
-                />
-                <ConfirmButton
-                  enabled={!!partnershipInput.trim()}
-                  onClick={handleAddPartnership}
-                  title="Add partner"
-                />
+                    <Input
+                      placeholder="Enter Partner"
+                      value={partner.name}
+                      onChange={(e) => handlePartnershipChange(partner.id, e.target.value)}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -1081,82 +1043,57 @@ export function ProjectDetailsPage() {
                 </div>
               </div>
 
-              {currentProject.primaryContact ? (
-                <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                  <div className="grid grid-cols-3 gap-6 flex-1">
-                    <div>
-                      <p className="text-xs text-gray-500">Name</p>
-                      <p className="text-sm font-medium text-gray-900 mt-1">
-                        {currentProject.primaryContact.firstName} {currentProject.primaryContact.lastName}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Email Address</p>
-                      <p className="text-sm font-medium text-gray-900 mt-1">{currentProject.primaryContact.email}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Phone Number</p>
-                      <p className="text-sm font-medium text-gray-900 mt-1">{currentProject.primaryContact.phone}</p>
-                    </div>
-                  </div>
-                  <button onClick={handleRemoveContact} className="text-red-500 hover:text-red-600 transition-colors p-1 ml-3 flex-shrink-0">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+              <div className="grid grid-cols-4 gap-3 items-start">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    First Name <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    placeholder="Enter First Name"
+                    value={contact.firstName}
+                    onChange={(e) => handleContactChange("firstName", e.target.value)}
+                    className={showErr && !contact.firstName.trim() ? errorInputClasses : ""}
+                  />
+                  <FieldError show={showErr && !contact.firstName.trim()} message="First Name is required." />
                 </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-4 gap-3 items-start">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        First Name <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        placeholder="Enter First Name"
-                        value={contactForm.firstName}
-                        onChange={(e) => setContactForm({ ...contactForm, firstName: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Last Name <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        placeholder="Enter Last Name"
-                        value={contactForm.lastName}
-                        onChange={(e) => setContactForm({ ...contactForm, lastName: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email Address <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        placeholder="e.g., email@email.com"
-                        value={contactForm.email}
-                        onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Phone Number <span className="text-red-500">*</span>
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          placeholder="e.g., (+1) 123-456-8901"
-                          value={contactForm.phone}
-                          onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                        />
-                        <ConfirmButton
-                          enabled={isContactFormValid}
-                          onClick={handleConfirmContact}
-                          title="Add contact"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-3">Only one primary contact can be added.</p>
-                </>
-              )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Last Name <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    placeholder="Enter Last Name"
+                    value={contact.lastName}
+                    onChange={(e) => handleContactChange("lastName", e.target.value)}
+                    className={showErr && !contact.lastName.trim() ? errorInputClasses : ""}
+                  />
+                  <FieldError show={showErr && !contact.lastName.trim()} message="Last Name is required." />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    placeholder="e.g., email@email.com"
+                    value={contact.email}
+                    onChange={(e) => handleContactChange("email", e.target.value)}
+                    className={showErr && !isValidEmail(contact.email) ? errorInputClasses : ""}
+                  />
+                  <FieldError show={showErr && !isValidEmail(contact.email)} message="A valid email is required." />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    placeholder="e.g., (+1) 123-456-8901"
+                    value={contact.phone}
+                    onChange={(e) => handleContactChange("phone", e.target.value)}
+                    className={showErr && contact.phone.trim().length < 7 ? errorInputClasses : ""}
+                  />
+                  <FieldError show={showErr && contact.phone.trim().length < 7} message="Phone Number is required." />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-3">Only one primary contact can be added.</p>
             </div>
 
             {/* Add URL Section */}
@@ -1171,52 +1108,21 @@ export function ProjectDetailsPage() {
                 </div>
               </div>
 
-              {currentProject.urls && currentProject.urls.length > 0 && (
-                <div className="space-y-2 mb-4">
-                  {currentProject.urls.map((url) => (
-                    <div key={url.id} className="flex items-center justify-between p-3.5 bg-gray-50 border border-gray-200 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-gray-500" />
-                        <p className="text-sm font-medium text-gray-900">{url.value}</p>
-                      </div>
-                      <button onClick={() => handleRemoveUrl(url.id)} className="text-red-500 hover:text-red-600 transition-colors p-1">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex items-center gap-3">
-                <div
-                  className={`flex-1 flex items-center gap-2 px-3.5 py-2.5 rounded-md border transition-colors ${
-                    urlTouched && isValidUrlValue(urlInput)
-                      ? "border-teal-500 bg-teal-50"
-                      : "border-gray-300 bg-white"
-                  }`}
-                >
-                  <Globe className={`w-5 h-5 ${urlTouched && isValidUrlValue(urlInput) ? "text-teal-600" : "text-gray-400"}`} />
-                  <input
-                    type="text"
-                    placeholder="Enter URL"
-                    value={urlInput}
-                    onChange={(e) => setUrlInput(e.target.value)}
-                    onBlur={() => setUrlTouched(true)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddUrl();
-                      }
-                    }}
-                    className="flex-1 outline-none text-sm bg-transparent text-gray-900 placeholder:text-gray-400"
-                  />
-                </div>
-                <ConfirmButton
-                  enabled={isValidUrlValue(urlInput)}
-                  onClick={handleAddUrl}
-                  title="Add URL"
+              <div
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-md border transition-colors ${
+                  !isValidUrlValue(currentProject.url || "") ? errorInputClasses : "border-gray-300 bg-white"
+                }`}
+              >
+                <Globe className="w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Enter URL"
+                  value={currentProject.url || ""}
+                  onChange={(e) => setCurrentProject({ ...currentProject, url: e.target.value })}
+                  className="flex-1 outline-none text-sm bg-transparent text-gray-900 placeholder:text-gray-400"
                 />
               </div>
+              <FieldError show={!isValidUrlValue(currentProject.url || "")} message="Enter a valid URL, e.g. www.example.org." />
             </div>
           </div>
         )}
@@ -1357,8 +1263,8 @@ export function ProjectDetailsPage() {
                           <div className="flex flex-wrap gap-2">
                             {project.geoLocations.map(loc => (
                               <div key={loc.id} className="px-3 py-1.5 bg-gray-50 rounded-lg text-sm">
-                                <span className="font-medium text-gray-900">{loc.name}</span>
-                                <span className="text-gray-500 ml-2">({loc.state}, {loc.country})</span>
+                                <span className="font-medium text-gray-900">{loc.state}</span>
+                                <span className="text-gray-500 ml-2">({loc.country})</span>
                               </div>
                             ))}
                           </div>
@@ -1368,6 +1274,12 @@ export function ProjectDetailsPage() {
                         <div>
                           <h4 className="text-sm font-semibold text-gray-900 mb-2">Program Duration</h4>
                           <p className="text-sm text-gray-600">{project.programDurationMonths} Months</p>
+                        </div>
+                      )}
+                      {project.estimatedBudget && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">Estimated Total Budget</h4>
+                          <p className="text-sm text-gray-600">{project.estimatedBudget}</p>
                         </div>
                       )}
                       {project.selectedPopulations.length > 0 && (
@@ -1387,11 +1299,11 @@ export function ProjectDetailsPage() {
                           )}
                         </div>
                       )}
-                      {project.partnerships.length > 0 && (
+                      {project.partnerships.filter(p => p.name.trim()).length > 0 && (
                         <div>
                           <h4 className="text-sm font-semibold text-gray-900 mb-2">Partnership(s)</h4>
                           <div className="flex flex-wrap gap-2">
-                            {project.partnerships.map(partner => (
+                            {project.partnerships.filter(p => p.name.trim()).map(partner => (
                               <div key={partner.id} className="px-3 py-1.5 bg-gray-50 rounded-lg text-sm font-medium text-gray-900">
                                 {partner.name}
                               </div>
@@ -1399,7 +1311,7 @@ export function ProjectDetailsPage() {
                           </div>
                         </div>
                       )}
-                      {project.primaryContact && (
+                      {project.primaryContact && (project.primaryContact.firstName || project.primaryContact.email) && (
                         <div>
                           <h4 className="text-sm font-semibold text-gray-900 mb-2">Primary Point of Contact</h4>
                           <p className="text-sm text-gray-600">
@@ -1407,15 +1319,11 @@ export function ProjectDetailsPage() {
                           </p>
                         </div>
                       )}
-                      {project.urls.length > 0 && (
+                      {project.url && (
                         <div>
-                          <h4 className="text-sm font-semibold text-gray-900 mb-2">URLs</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {project.urls.map(url => (
-                              <div key={url.id} className="px-3 py-1.5 bg-gray-50 rounded-lg text-sm text-gray-900">
-                                {url.value}
-                              </div>
-                            ))}
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">URL</h4>
+                          <div className="px-3 py-1.5 bg-gray-50 rounded-lg text-sm text-gray-900 inline-block">
+                            {project.url}
                           </div>
                         </div>
                       )}
