@@ -287,25 +287,6 @@ export function SharedSidebar() {
             <div className="border-t border-gray-100" />
           </li>
 
-          {/* 3. Watch List */}
-          <li>
-            <button
-              onClick={() => navigate("/watch-list")}
-              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
-                isWatchListPage ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-100"
-              }`}
-              style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isWatchListPage ? 600 : 400, fontSize: '14px' }}
-            >
-              <Eye className="w-4 h-4 shrink-0" />
-              <span className="flex-1 truncate">Watch List</span>
-              {watchListCount > 0 && (
-                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0">
-                  {watchListCount}
-                </span>
-              )}
-            </button>
-          </li>
-
           {/* Grant Search */}
           <li>
             <button
@@ -414,6 +395,25 @@ export function SharedSidebar() {
                 ))}
               </ul>
             )}
+          </li>
+
+          {/* Watch List */}
+          <li>
+            <button
+              onClick={() => navigate("/watch-list")}
+              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
+                isWatchListPage ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-100"
+              }`}
+              style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isWatchListPage ? 600 : 400, fontSize: '14px' }}
+            >
+              <Eye className="w-4 h-4 shrink-0" />
+              <span className="flex-1 truncate">Watch List</span>
+              {watchListCount > 0 && (
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0">
+                  {watchListCount}
+                </span>
+              )}
+            </button>
           </li>
 
         </ul>
