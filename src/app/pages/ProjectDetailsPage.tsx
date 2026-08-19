@@ -57,6 +57,11 @@ interface Partnership {
   name: string;
 }
 
+interface UrlEntry {
+  id: string;
+  value: string;
+}
+
 interface PrimaryContact {
   firstName: string;
   lastName: string;
@@ -80,7 +85,7 @@ interface Project {
   estimatedBudget: string;
   partnerships: Partnership[];
   primaryContact: PrimaryContact;
-  url: string;
+  urls: UrlEntry[];
   selectedPopulations: PopulationCategory[];
   allPopulations: PopulationCategory[];
   estimatedServed: string;
@@ -149,6 +154,7 @@ const isValidEmail = (value: string): boolean => /\S+@\S+\.\S+/.test(value.trim(
 
 const makeBlankGeoLocation = (id: string): GeoLocation => ({ id, country: "USA", state: "" });
 const makeBlankPartnership = (id: string): Partnership => ({ id, name: "" });
+const makeBlankUrl = (id: string): UrlEntry => ({ id, value: "" });
 const blankPrimaryContact = (): PrimaryContact => ({ firstName: "", lastName: "", email: "", phone: "" });
 
 // Red border classes applied to a field once validation errors are surfaced
@@ -219,7 +225,7 @@ function hasAnyProgramData(project: Partial<Project>): boolean {
   return Boolean(
     project.title?.trim() ||
     project.summary?.trim() ||
-    project.url?.trim() ||
+    project.urls?.some((u) => u.value.trim()) ||
     project.estimatedBudget?.trim() ||
     project.estimatedServed?.trim() ||
     project.programDurationMonths ||
@@ -251,7 +257,7 @@ export function ProjectDetailsPage() {
     estimatedBudget: "",
     partnerships: [makeBlankPartnership("partner-1")],
     primaryContact: blankPrimaryContact(),
-    url: "",
+    urls: [makeBlankUrl("url-1")],
     selectedPopulations: [],
     allPopulations: predefinedPopulations,
     estimatedServed: "",
@@ -343,6 +349,7 @@ export function ProjectDetailsPage() {
       geoLocations: project.geoLocations?.length ? project.geoLocations : [makeBlankGeoLocation("geo-1")],
       partnerships: project.partnerships?.length ? project.partnerships : [makeBlankPartnership("partner-1")],
       primaryContact: project.primaryContact || blankPrimaryContact(),
+      urls: project.urls?.length ? project.urls : [makeBlankUrl("url-1")],
     });
     setShowValidationErrors(false);
     setIsEditingExistingProgram(true);
@@ -358,7 +365,7 @@ export function ProjectDetailsPage() {
     estimatedBudget: currentProject.estimatedBudget || "",
     partnerships: currentProject.partnerships || [],
     primaryContact: currentProject.primaryContact || blankPrimaryContact(),
-    url: currentProject.url || "",
+    urls: currentProject.urls || [],
     selectedPopulations: currentProject.selectedPopulations || [],
     allPopulations: currentProject.allPopulations || predefinedPopulations,
     estimatedServed: currentProject.estimatedServed || "",
@@ -538,6 +545,28 @@ export function ProjectDetailsPage() {
     setCurrentProject({
       ...currentProject,
       partnerships: currentProject.partnerships?.map(p => (p.id === id ? { ...p, name: value } : p)),
+    });
+  };
+
+  // URL handlers — same numbered add/remove pattern as Geographic Focus / Partnerships.
+  const handleAddUrl = () => {
+    setCurrentProject({
+      ...currentProject,
+      urls: [...(currentProject.urls || []), makeBlankUrl(`url-${Date.now()}`)],
+    });
+  };
+
+  const handleRemoveUrl = (id: string) => {
+    setCurrentProject({
+      ...currentProject,
+      urls: currentProject.urls?.filter(u => u.id !== id),
+    });
+  };
+
+  const handleUrlChange = (id: string, value: string) => {
+    setCurrentProject({
+      ...currentProject,
+      urls: currentProject.urls?.map(u => (u.id === id ? { ...u, value } : u)),
     });
   };
 
@@ -1003,9 +1032,8 @@ export function ProjectDetailsPage() {
                   const stateMissing = showErr && !loc.state;
                   return (
                     <div key={loc.id} className="p-4 border border-gray-200 rounded-lg">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-sm font-medium text-gray-900">Geographic Focus {index + 1}</h4>
-                        {index > 0 && (
+                      {index > 0 && (
+                        <div className="flex items-center justify-end mb-2">
                           <button
                             onClick={() => handleRemoveGeoLocation(loc.id)}
                             className="text-red-500 hover:text-red-600 transition-colors p-1"
@@ -1013,8 +1041,8 @@ export function ProjectDetailsPage() {
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
-                        )}
-                      </div>
+                        </div>
+                      )}
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -1188,9 +1216,8 @@ export function ProjectDetailsPage() {
               <div className="space-y-4">
                 {(currentProject.partnerships || []).map((partner, index) => (
                   <div key={partner.id} className="p-4 border border-gray-200 rounded-lg">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-sm font-medium text-gray-900">Partnership {index + 1}</h4>
-                      {index > 0 && (
+                    {index > 0 && (
+                      <div className="flex items-center justify-end mb-2">
                         <button
                           onClick={() => handleRemovePartnership(partner.id)}
                           className="text-red-500 hover:text-red-600 transition-colors p-1"
@@ -1198,8 +1225,8 @@ export function ProjectDetailsPage() {
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                     <Input
                       placeholder="Enter Partner"
                       value={partner.name}
@@ -1277,31 +1304,50 @@ export function ProjectDetailsPage() {
 
             {/* Add URL Section */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Globe className="w-5 h-5 text-teal-600" />
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-                    Add URL
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">Insert a webpage address that describes your initiatives</p>
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div className="flex items-center gap-3">
+                  <Globe className="w-5 h-5 text-teal-600" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                      Add URL
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Insert a webpage address that describes your initiatives</p>
+                  </div>
                 </div>
+                <Button onClick={handleAddUrl} variant="outline" size="sm">
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add URL
+                </Button>
               </div>
 
-              <div
-                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-md border transition-colors ${
-                  !isValidUrlValue(currentProject.url || "") ? errorInputClasses : "border-gray-300 bg-white"
-                }`}
-              >
-                <Globe className="w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Enter URL"
-                  value={currentProject.url || ""}
-                  onChange={(e) => setCurrentProject({ ...currentProject, url: e.target.value })}
-                  className="flex-1 outline-none text-sm bg-transparent text-gray-900 placeholder:text-gray-400"
-                />
+              <div className="space-y-4">
+                {(currentProject.urls || []).map((urlEntry, index) => {
+                  const urlInvalid = !isValidUrlValue(urlEntry.value || "");
+                  return (
+                    <div key={urlEntry.id} className="p-4 border border-gray-200 rounded-lg">
+                      {index > 0 && (
+                        <div className="flex items-center justify-end mb-2">
+                          <button
+                            onClick={() => handleRemoveUrl(urlEntry.id)}
+                            className="text-red-500 hover:text-red-600 transition-colors p-1"
+                            title="Remove URL"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                      <Input
+                        type="text"
+                        placeholder="Enter URL"
+                        value={urlEntry.value}
+                        onChange={(e) => handleUrlChange(urlEntry.id, e.target.value)}
+                        className={urlInvalid ? errorInputClasses : ""}
+                      />
+                      <FieldError show={urlInvalid} message="Enter a valid URL, e.g. www.example.org." />
+                    </div>
+                  );
+                })}
               </div>
-              <FieldError show={!isValidUrlValue(currentProject.url || "")} message="Enter a valid URL, e.g. www.example.org." />
             </div>
           </div>
         )}
@@ -1498,11 +1544,15 @@ export function ProjectDetailsPage() {
                           </p>
                         </div>
                       )}
-                      {project.url && (
+                      {project.urls?.filter(u => u.value.trim()).length > 0 && (
                         <div>
                           <h4 className="text-sm font-semibold text-gray-900 mb-2">URL</h4>
-                          <div className="px-3 py-1.5 bg-gray-50 rounded-lg text-sm text-gray-900 inline-block">
-                            {project.url}
+                          <div className="flex flex-wrap gap-2">
+                            {project.urls.filter(u => u.value.trim()).map(u => (
+                              <div key={u.id} className="px-3 py-1.5 bg-gray-50 rounded-lg text-sm text-gray-900">
+                                {u.value}
+                              </div>
+                            ))}
                           </div>
                         </div>
                       )}
