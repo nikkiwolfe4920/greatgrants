@@ -146,13 +146,6 @@ export function WatchListPage() {
     return `${days}d ago`;
   };
 
-  const getDifficultyColor = (difficulty?: string) => {
-    if (difficulty === "D.I.Y.") return "bg-green-50 text-green-700 border-green-200";
-    if (difficulty === "Might Need Help") return "bg-yellow-50 text-yellow-700 border-yellow-200";
-    if (difficulty === "Expert Assistance") return "bg-red-50 text-red-700 border-red-200";
-    return "bg-gray-50 text-gray-700 border-gray-200";
-  };
-
   const getStatusColor = (status?: string) => {
     if (status === "Open") return "bg-green-50 text-green-700 border-green-200";
     if (status === "Pending") return "bg-amber-50 text-amber-700 border-amber-200";
@@ -206,7 +199,6 @@ export function WatchListPage() {
                   <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">{grant.description}</p>
                 )}
               </div>
-              <Badge className={`${getStatusColor(grant.status)} border shrink-0`}>{grant.status || "Open"}</Badge>
             </div>
           </div>
 
@@ -235,23 +227,7 @@ export function WatchListPage() {
           {/* Tags and Actions */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
-              {grant.difficulty && (
-                <Badge className={`${getDifficultyColor(grant.difficulty)} border text-xs`}>
-                  {grant.difficulty}
-                </Badge>
-              )}
-              {grant.sectors && grant.sectors.length > 0 && (
-                <div className="flex items-center gap-1.5">
-                  {grant.sectors.slice(0, 2).map((sector, idx) => (
-                    <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-medium">
-                      {sector}
-                    </span>
-                  ))}
-                  {grant.sectors.length > 2 && (
-                    <span className="text-xs text-gray-500">+{grant.sectors.length - 2}</span>
-                  )}
-                </div>
-              )}
+              <Badge className={`${getStatusColor(grant.status)} border text-xs`}>{grant.status || "Open"}</Badge>
             </div>
 
             {/* Watch is the only grant-tracking action here — see useGrantAlerts. */}
