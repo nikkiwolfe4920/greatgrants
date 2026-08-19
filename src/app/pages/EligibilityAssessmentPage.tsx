@@ -17,6 +17,7 @@ import {
   ChevronUp,
   Check,
   Sparkles,
+  AlertTriangle,
 } from "lucide-react";
 import { Badge } from "@/app/components/ui/badge";
 import {
@@ -30,9 +31,11 @@ import {
 } from "@/app/components/ui/breadcrumb";
 import { Button } from "@/app/components/ui/button";
 import { EligibilityWorkflowPanel } from "@/app/components/eligibility/EligibilityWorkflowPanel";
+import { AssessmentUsageMeter } from "@/app/components/eligibility/AssessmentUsageMeter";
 import { ApplicationLoadingModal } from "@/app/components/ApplicationLoadingModal";
 import { StopWatchingDialog } from "@/app/components/StopWatchingDialog";
 import { useGrantAlerts } from "@/hooks/useGrantAlerts";
+import { useAssessmentUsage } from "@/hooks/useAssessmentUsage";
 
 const GRANT_ID = "dfop0017890-child-protection";
 const GRANT_TITLE = "Advancing Global Health — Child Development, Care, and Protection Addendum";
@@ -156,7 +159,52 @@ function EligibleActivitiesSection() {
   );
 }
 
-function CheckYourEligibilityCard({ onStart }: { onStart: () => void }) {
+interface CheckYourEligibilityCardProps {
+  onStart: () => void;
+  usedCount: number;
+  limit: number;
+  isExhausted: boolean;
+}
+
+function CheckYourEligibilityCard({ onStart, usedCount, limit, isExhausted }: CheckYourEligibilityCardProps) {
+  if (isExhausted) {
+    return (
+      <motion.div
+        key="exhausted"
+        initial={{ opacity: 0, x: 24 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -24 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        className="bg-white rounded-xl border border-gray-200 p-6"
+      >
+        <div className="rounded-xl bg-red-50 border border-red-100 p-6">
+          <div className="flex items-start gap-4">
+            <div className="size-12 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+              <AlertTriangle className="size-6 text-red-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                You&apos;ve used all {limit} eligibility assessments
+              </h4>
+              <p className="text-sm text-gray-600 mt-2 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
+                Your plan includes {limit} eligibility assessments per billing period, and you&apos;ve used{" "}
+                {usedCount} of {limit}. Upgrade your plan to run more assessments — including this one.
+              </p>
+              <div className="flex items-center gap-3 mt-4">
+                <Button asChild className="bg-red-600 hover:bg-red-700 text-white gap-2">
+                  <Link to="/subscribe/upgrade-modal">
+                    Upgrade Plan
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       key="default"
@@ -182,15 +230,18 @@ function CheckYourEligibilityCard({ onStart }: { onStart: () => void }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 mt-6">
-          <Button onClick={onStart} className="bg-[#9810fa] hover:bg-[#8710e0] text-white gap-2">
-            <Sparkles className="size-4" />
-            Start Eligibility Assessment
-            <ArrowRight className="size-4" />
-          </Button>
-          <span className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
-            ~5 minutes • 5 steps
-          </span>
+        <div className="flex items-center justify-between gap-3 mt-6 flex-wrap">
+          <div className="flex items-center gap-3">
+            <Button onClick={onStart} className="bg-[#9810fa] hover:bg-[#8710e0] text-white gap-2">
+              <Sparkles className="size-4" />
+              Start Eligibility Assessment
+              <ArrowRight className="size-4" />
+            </Button>
+            <span className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
+              ~5 minutes • 5 steps
+            </span>
+          </div>
+          <AssessmentUsageMeter usedCount={usedCount} limit={limit} compact />
         </div>
       </div>
     </motion.div>
@@ -220,6 +271,11 @@ export function EligibilityAssessmentPage() {
   // consistent across every surface this opportunity appears.
   const { isGrantAlertEnabled, setAlertEnabled, removeAlert } = useGrantAlerts();
   const isAlertOn = isGrantAlertEnabled(GRANT_ID);
+
+  // Subscription-wide eligibility assessment usage — shown on the entry
+  // card before starting and passed through to the workflow so it stays
+  // visible during and after the run too.
+  const { usedCount, limit, isExhausted } = useAssessmentUsage();
 
   // Stop Watching Dialog State — confirmation shown before turning off Watch.
   const [stopWatchingDialogOpen, setStopWatchingDialogOpen] = useState(false);
@@ -595,6 +651,8 @@ export function EligibilityAssessmentPage() {
                     transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                   >
                     <EligibilityWorkflowPanel
+                      grantId={GRANT_ID}
+                      grantTitle={GRANT_TITLE}
                       onExit={() => setIsAssessing(false)}
                       onProgramLinked={setProgramLinked}
                       onReportGenerated={setReportGeneratedAt}
@@ -603,7 +661,12 @@ export function EligibilityAssessmentPage() {
                     />
                   </motion.div>
                 ) : (
-                  <CheckYourEligibilityCard onStart={() => setIsAssessing(true)} />
+                  <CheckYourEligibilityCard
+                    onStart={() => setIsAssessing(true)}
+                    usedCount={usedCount}
+                    limit={limit}
+                    isExhausted={isExhausted}
+                  />
                 )}
               </AnimatePresence>
             </section>
