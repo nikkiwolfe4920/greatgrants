@@ -183,6 +183,9 @@ interface MissingField {
 function getMissingRequiredFields(project: Partial<Project>): MissingField[] {
   const missing: MissingField[] = [];
 
+  // Only these four are required to Save — Program Duration, Estimated Total
+  // Budget, Partnerships, and Primary Point of Contact are all optional per
+  // Figma node 13270:15214 (none of those sections carry a required asterisk).
   if (!project.title?.trim()) missing.push({ key: "title", label: "Program Title" });
   if (!project.summary?.trim()) missing.push({ key: "summary", label: "Program Description" });
 
@@ -191,27 +194,8 @@ function getMissingRequiredFields(project: Partial<Project>): MissingField[] {
     missing.push({ key: "geo", label: "Geographic Focus (Country and State for each entry)" });
   }
 
-  if (!project.programDurationMonths || project.programDurationMonths <= 0) {
-    missing.push({ key: "duration", label: "Program Duration" });
-  }
-
-  if (!project.estimatedBudget?.trim()) {
-    missing.push({ key: "budget", label: "Estimated Total Budget" });
-  }
-
   if (!project.selectedPopulations || project.selectedPopulations.length === 0) {
     missing.push({ key: "people-served", label: "People Served (select at least one population)" });
-  }
-
-  const contact = project.primaryContact;
-  if (
-    !contact ||
-    !contact.firstName.trim() ||
-    !contact.lastName.trim() ||
-    !isValidEmail(contact.email) ||
-    contact.phone.trim().length < 7
-  ) {
-    missing.push({ key: "contact", label: "Primary Point of Contact" });
   }
 
   return missing;
@@ -703,6 +687,11 @@ export function ProjectDetailsPage() {
   const contact = currentProject.primaryContact || blankPrimaryContact();
   const showErr = showValidationErrors; // shorthand used throughout the form below
 
+  // Primary Point of Contact is optional (no Figma asterisk), but a partially
+  // filled-in email should still be checked for a valid format — same
+  // "optional but validated once non-empty" pattern as the Add URL section.
+  const emailFormatInvalid = contact.email.trim().length > 0 && !isValidEmail(contact.email);
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto p-8">
@@ -907,7 +896,7 @@ export function ProjectDetailsPage() {
 
             {/* Add Documentation Section */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-              <div className="flex items-center gap-3 mb-5">
+              <div className="flex items-center gap-3 mb-4">
                 <FileText className="w-5 h-5 text-teal-600" />
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
@@ -986,7 +975,7 @@ export function ProjectDetailsPage() {
 
             {/* Program Description */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-              <div className="flex items-center gap-3 mb-5">
+              <div className="flex items-center gap-3 mb-4">
                 <FileText className="w-5 h-5 text-teal-600" />
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
@@ -995,6 +984,21 @@ export function ProjectDetailsPage() {
                   <p className="text-sm text-gray-600 mt-1">Add a brief summary of your program.</p>
                 </div>
               </div>
+
+              {/* Recommended Description banner — Figma node 13270:15451 */}
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-4">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700">Recommended Description</h4>
+                    <p className="text-xs text-blue-700 mt-1">
+                      A strong Program Description is over 150 characters and holds rich data describing outcomes and
+                      success metrics to be used in responses
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <Textarea
                 placeholder="Provide a brief overview of your program, its goals, and impact..."
                 value={currentProject.summary || ""}
@@ -1088,7 +1092,7 @@ export function ProjectDetailsPage() {
                 <Clock className="w-5 h-5 text-teal-600" />
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-                    Program Duration <span className="text-red-500">*</span>
+                    Program Duration
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">Add the program duration in months.</p>
                 </div>
@@ -1101,28 +1105,33 @@ export function ProjectDetailsPage() {
                   placeholder="#"
                   value={currentProject.programDurationMonths ?? ""}
                   onChange={(e) => handleDurationChange(e.target.value)}
-                  className={`max-w-[100px] ${showErr && !currentProject.programDurationMonths ? errorInputClasses : ""}`}
+                  className="max-w-[100px]"
                 />
                 <span className="text-lg text-gray-900">Months</span>
               </div>
-              <FieldError show={showErr && !currentProject.programDurationMonths} message="Program Duration is required." />
             </div>
 
-            {/* Estimated Total Budget */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Estimated Total Budget <span className="text-red-500">*</span>
-              </label>
+            {/* Estimated Total Budget Section */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <DollarSign className="w-5 h-5 text-teal-600" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                    Estimated Total Budget
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">Add the estimated total budget for your program.</p>
+                </div>
+              </div>
+
               <div className="relative max-w-xs">
                 <DollarSign className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <Input
                   placeholder="e.g., $150,000"
                   value={currentProject.estimatedBudget || ""}
                   onChange={(e) => setCurrentProject({ ...currentProject, estimatedBudget: e.target.value })}
-                  className={`pl-9 max-w-xs ${showErr && !currentProject.estimatedBudget?.trim() ? errorInputClasses : ""}`}
+                  className="pl-9 max-w-xs"
                 />
               </div>
-              <FieldError show={showErr && !currentProject.estimatedBudget?.trim()} message="Estimated Total Budget is required." />
             </div>
 
             {/* People Served Section */}
@@ -1243,7 +1252,7 @@ export function ProjectDetailsPage() {
                 <UserCircle2 className="w-5 h-5 text-teal-600" />
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-                    Primary Point of Contact <span className="text-red-500">*</span>
+                    Primary Point of Contact
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">Add primary point of contact for initiatives.</p>
                 </div>
@@ -1251,52 +1260,38 @@ export function ProjectDetailsPage() {
 
               <div className="grid grid-cols-4 gap-3 items-start">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    First Name <span className="text-red-500">*</span>
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
                   <Input
                     placeholder="Enter First Name"
                     value={contact.firstName}
                     onChange={(e) => handleContactChange("firstName", e.target.value)}
-                    className={showErr && !contact.firstName.trim() ? errorInputClasses : ""}
                   />
-                  <FieldError show={showErr && !contact.firstName.trim()} message="First Name is required." />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Last Name <span className="text-red-500">*</span>
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
                   <Input
                     placeholder="Enter Last Name"
                     value={contact.lastName}
                     onChange={(e) => handleContactChange("lastName", e.target.value)}
-                    className={showErr && !contact.lastName.trim() ? errorInputClasses : ""}
                   />
-                  <FieldError show={showErr && !contact.lastName.trim()} message="Last Name is required." />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address <span className="text-red-500">*</span>
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
                   <Input
                     placeholder="e.g., email@email.com"
                     value={contact.email}
                     onChange={(e) => handleContactChange("email", e.target.value)}
-                    className={showErr && !isValidEmail(contact.email) ? errorInputClasses : ""}
+                    className={emailFormatInvalid ? errorInputClasses : ""}
                   />
-                  <FieldError show={showErr && !isValidEmail(contact.email)} message="A valid email is required." />
+                  <FieldError show={emailFormatInvalid} message="Enter a valid email address." />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number <span className="text-red-500">*</span>
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
                   <Input
                     placeholder="e.g., (+1) 123-456-8901"
                     value={contact.phone}
                     onChange={(e) => handleContactChange("phone", e.target.value)}
-                    className={showErr && contact.phone.trim().length < 7 ? errorInputClasses : ""}
                   />
-                  <FieldError show={showErr && contact.phone.trim().length < 7} message="Phone Number is required." />
                 </div>
               </div>
               <p className="text-xs text-gray-500 mt-3">Only one primary contact can be added.</p>
