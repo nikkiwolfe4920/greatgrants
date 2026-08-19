@@ -13,6 +13,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { grantDetails } from "@/data/grantDetails";
 
 const STORAGE_KEY = "grantAlerts";
 const UPDATE_EVENT = "grantAlertsUpdated";
@@ -30,12 +31,69 @@ interface AlertableGrant {
   image?: string;
 }
 
+// The two grants product wants every new user watching out of the box —
+// "nasa-roses" and "2" in grantDetails.ts. Seeded once, the first time this
+// app ever reads grantAlerts on a given browser (see readGrantAlerts below);
+// after that the user's own adds/removes are what's stored, so this never
+// re-appears once someone has actually edited their watch list.
+const DEFAULT_WATCHED_GRANT_IDS = ["nasa-roses", "2"];
+
+function buildDefaultAlerts(): any[] {
+  const grantDetailsById = new Map(grantDetails.map((g) => [g.id, g]));
+  return DEFAULT_WATCHED_GRANT_IDS.map((grantId) => {
+    const grant = grantDetailsById.get(grantId);
+    if (!grant) return null;
+    return {
+      id: `alert-default-${grantId}`,
+      name: `${grant.title} Alert`,
+      frequency: "Weekly",
+      email: "olivia@untitledu.com",
+      searchQuery: "",
+      filters: [],
+      programs: [],
+      grantId,
+      grant: {
+        id: grant.id,
+        title: grant.title,
+        description: grant.description,
+        status: grant.status,
+        maxAmount: grant.maxAmount,
+        location: grant.location,
+        closeDate: grant.closeDate,
+        difficulty: grant.difficulty,
+        sectors: grant.sectors,
+        image: grant.image,
+      },
+      alertsSent: 0,
+      enabled: true,
+      createdAt: new Date().toISOString(),
+    };
+  }).filter(Boolean);
+}
+
 function readGrantAlerts(): any[] {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const raw = localStorage.getItem(STORAGE_KEY);
+    // No key at all means this browser has never touched its watch list —
+    // seed the defaults and persist them. Once the user watches/unwatches
+    // anything, the key exists (even as "[]"), so this only ever fires once.
+    if (raw === null) {
+      const defaults = buildDefaultAlerts();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaults));
+      return defaults;
+    }
+    return JSON.parse(raw);
   } catch {
     return [];
   }
+}
+
+// Seed immediately on module load, not just lazily on this hook's first
+// read — SharedSidebar's watch list count badge reads the same "grantAlerts"
+// key directly (not through this hook), so the defaults need to already be
+// in localStorage before its effect runs, whichever mounts first.
+if (typeof window !== "undefined") {
+  readGrantAlerts();
 }
 
 export function useGrantAlerts() {

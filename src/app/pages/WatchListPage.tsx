@@ -1,6 +1,6 @@
 import { useState, useEffect, type ReactNode } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
-import { Eye, Bell, Clock, Calendar, Globe, Banknote, Award } from "lucide-react";
+import { Eye, Bell, Clock, Calendar, Globe, Banknote, Award, Info } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
@@ -333,6 +333,19 @@ export function WatchListPage() {
         <p className="text-sm text-gray-600" style={{ fontFamily: "Cabin, sans-serif" }}>
           Manage the grants you're watching and revisit what you've recently viewed.
         </p>
+      </div>
+
+      {/* Info banner — Figma node 13203:22575 */}
+      <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 mb-6">
+        <Info className="size-5 text-blue-600 shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-semibold text-blue-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+            Watched opportunities get automatically monitored
+          </p>
+          <p className="text-xs text-blue-800 mt-1" style={{ fontFamily: "Cabin, sans-serif" }}>
+            Every week, you'll receive a email notification for the opportunities in this list if dates, requirements, or critical details change.
+          </p>
+        </div>
       </div>
 
       {/* Tabs — same underlined style used on /organization */}
