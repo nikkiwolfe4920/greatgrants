@@ -36,8 +36,8 @@ export function WeeklyAlertDigestEmail() {
       preheader={`${totalUpdates} updates and new top matches across your ${sections.length} saved alerts this week.`}
       receivedBecause={
         <p>
-          You&rsquo;re receiving this weekly digest because you have {sections.length} active alerts on
-          Great Grants.
+          You&rsquo;re receiving this weekly digest because you have {sections.length} grants you&rsquo;ve
+          added to your watch list on Great Grants.
           <br />
           Thank you,
           <br />
@@ -75,7 +75,7 @@ function AlertSection({ section, isLast }: { section: AlertDigestSection; isLast
           </Badge>
         </div>
         <a href="#" className="text-xs font-medium text-teal-700 underline hover:text-teal-800">
-          Turn off this alert
+          Stop watching
         </a>
       </div>
 
