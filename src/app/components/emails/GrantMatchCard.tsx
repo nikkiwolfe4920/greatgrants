@@ -1,4 +1,3 @@
-import { Banknote, Calendar } from "lucide-react";
 import { Button } from "../ui/button";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { GetAlertButton } from "./GetAlertButton";
@@ -11,18 +10,18 @@ interface GrantMatchCardProps {
 }
 
 /**
- * One ranked grant match, shared by both alert emails. Above `sm` this
- * keeps the Figma card's fixed 164px side photo; below `sm` it switches to
- * the same "photo on top, text beneath" shape as the /search grid-view
- * cards (GrantSearch.tsx) — h-48 full-width photo, rounded-xl corners,
- * 2-line-clamped title/description, and an icon + value metadata row —
- * so a user who already knows that card pattern from search recognizes it
- * here instead of getting a squeezed, inconsistent phone-width layout.
+ * One ranked grant match, shared by both alert emails.
+ *
+ * Figma node 13238:6290 — always a full-width h-48 top photo (never the
+ * side-by-side layout the card used before) with rank + title, a
+ * 2-line-clamped description, and a single bold "Amount: … Deadline: …"
+ * line in place of separate icon rows, so the layout is identical at any
+ * inbox width instead of reflowing between desktop and mobile shapes.
  */
 export function GrantMatchCard({ match, href }: GrantMatchCardProps) {
   return (
-    <div className="flex w-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white sm:flex-row">
-      <div className="h-48 w-full shrink-0 bg-gray-100 sm:h-auto sm:w-[164px]">
+    <div className="flex w-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <div className="h-48 w-full shrink-0 bg-gray-100">
         <ImageWithFallback
           src={match.image}
           alt=""
@@ -35,16 +34,9 @@ export function GrantMatchCard({ match, href }: GrantMatchCardProps) {
           <span className="line-clamp-2">{match.title}</span>
         </h3>
         <p className="line-clamp-2 text-sm leading-relaxed text-gray-600">{match.summary}</p>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-          <span className="flex items-center gap-1.5 text-gray-600">
-            <Banknote className="size-4 shrink-0" />
-            <span className="font-semibold text-gray-900">{match.amountLabel}</span>
-          </span>
-          <span className="flex items-center gap-1.5 text-gray-600">
-            <Calendar className="size-4 shrink-0" />
-            <span className="text-gray-700">{match.deadlineLabel}</span>
-          </span>
-        </div>
+        <p className="text-sm font-bold text-gray-900">
+          Amount: {match.amountLabel} Deadline: {match.deadlineLabel}
+        </p>
         <div className="mt-1 flex flex-wrap gap-2">
           <Button asChild variant="outline" size="sm">
             <a href={href ?? `/grant/${match.id}`}>View Details</a>
