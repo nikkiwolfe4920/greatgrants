@@ -1559,12 +1559,6 @@ export function GrantSearch() {
                         >
                           {grant.status}
                         </Badge>
-                        <Badge className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-                          {grant.difficulty}
-                        </Badge>
-                        <Badge className="text-xs bg-teal-50 text-teal-700 border-teal-200">
-                          {grant.category}
-                        </Badge>
                       </div>
 
                       {/* Watch is the only grant-tracking action here — see useGrantAlerts. */}
