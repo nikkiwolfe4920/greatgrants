@@ -7,6 +7,8 @@ import {
 } from "@/app/components/ui/accordion";
 import { Button } from "@/app/components/ui/button";
 import { OverallNofoFitScorecard, type FitCategory } from "@/app/components/OverallNofoFitScorecard";
+import { AssessmentUsageMeter } from "@/app/components/eligibility/AssessmentUsageMeter";
+import { useAssessmentUsage } from "@/hooks/useAssessmentUsage";
 import type { ActionItem, PassItem } from "@/data/eligibilityAssessmentData";
 
 interface ActionItemRowProps {
@@ -118,8 +120,34 @@ export function EligibilityReport({ actionItems, passItems, onToggleActionItem, 
   const unresolvedCount = totalCount - completedCount;
   const isAllComplete = totalCount > 0 && completedCount === totalCount;
 
+  // Reflects the assessment this report belongs to, which
+  // EligibilityWorkflowPanel already marked as used the moment this report
+  // was generated — this banner is just confirming that back to the user.
+  const { usedCount, limit, isExhausted } = useAssessmentUsage();
+
   return (
     <div className="space-y-5">
+      <div
+        className={`rounded-xl border p-4 flex items-center justify-between gap-4 flex-wrap ${
+          isExhausted ? "bg-amber-50 border-amber-200" : "bg-teal-50 border-teal-200"
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <CheckCircle2 className={`size-5 shrink-0 ${isExhausted ? "text-amber-600" : "text-teal-600"}`} />
+          <div>
+            <p className="text-sm font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+              Assessment complete — marked as used
+            </p>
+            <p className="text-xs text-gray-600 mt-0.5" style={{ fontFamily: "Cabin, sans-serif" }}>
+              {isExhausted
+                ? `That was your last one — all ${limit} assessments included in your plan are now used.`
+                : `${usedCount} of ${limit} assessments used this period.`}
+            </p>
+          </div>
+        </div>
+        <AssessmentUsageMeter usedCount={usedCount} limit={limit} compact />
+      </div>
+
       <OverallNofoFitScorecard
         showScore={false}
         categories={isAllComplete ? BASE_CATEGORIES.map((c) => ({ ...c, score: 100 })) : BASE_CATEGORIES}

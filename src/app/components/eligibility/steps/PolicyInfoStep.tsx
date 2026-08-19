@@ -3,6 +3,7 @@ import { Button } from "@/app/components/ui/button";
 import { YesNoUnsureQuestion } from "@/app/components/eligibility/YesNoUnsure";
 import { GettingGrantReadyBanner } from "@/app/components/eligibility/GettingGrantReadyBanner";
 import { HelpfulTipAccordion } from "@/app/components/eligibility/HelpfulTipAccordion";
+import { useAssessmentUsage } from "@/hooks/useAssessmentUsage";
 import type { PolicyInfoState } from "@/data/eligibilityAssessmentData";
 
 const POLICY_TIP = (
@@ -30,6 +31,8 @@ interface PolicyInfoStepProps {
 export function PolicyInfoStep({ value, onChange, onBack, onCheckEligibility, isSubmitting }: PolicyInfoStepProps) {
   const set = <K extends keyof PolicyInfoState>(key: K, val: PolicyInfoState[K]) =>
     onChange({ ...value, [key]: val });
+
+  const { usedCount, limit } = useAssessmentUsage();
 
   const confirmedFlags = [
     value.complianceTrackingSoftware === "yes",
@@ -128,14 +131,19 @@ export function PolicyInfoStep({ value, onChange, onBack, onCheckEligibility, is
             <ArrowLeft className="size-4" />
             Back
           </Button>
-          <Button
-            onClick={onCheckEligibility}
-            disabled={isSubmitting || !isComplete}
-            className={isComplete ? "bg-teal-600 hover:bg-teal-700 text-white gap-1.5" : "bg-gray-100 text-gray-400 gap-1.5 cursor-not-allowed"}
-          >
-            {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
-            Check My Eligibility
-          </Button>
+          <div className="flex flex-col items-end gap-1.5">
+            <Button
+              onClick={onCheckEligibility}
+              disabled={isSubmitting || !isComplete}
+              className={isComplete ? "bg-teal-600 hover:bg-teal-700 text-white gap-1.5" : "bg-gray-100 text-gray-400 gap-1.5 cursor-not-allowed"}
+            >
+              {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
+              Check My Eligibility
+            </Button>
+            <p className="text-xs text-gray-400" style={{ fontFamily: "Cabin, sans-serif" }}>
+              This will use assessment {usedCount + 1} of {limit} for this period.
+            </p>
+          </div>
         </div>
       </div>
     </div>
