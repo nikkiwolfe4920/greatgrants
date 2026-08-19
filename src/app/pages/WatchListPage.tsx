@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
-import { Eye, Bell, Trash2, Clock, Calendar, MapPin, Banknote, Award } from "lucide-react";
+import { Eye, Bell, Clock, Calendar, Globe, Banknote, Award } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
-import { Switch } from "../components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../components/ui/tooltip";
 import { StopWatchingDialog } from "../components/StopWatchingDialog";
 import {
   Breadcrumb,
@@ -68,20 +68,24 @@ const enrichGrant = (grant: WatchedGrantData): WatchedGrantData => {
  * removed and fully merged into this one — Watch is now the only
  * grant-tracking action anywhere in the app.
  *
+ * Both tabs render grants with the exact same list-item design used on
+ * /search (see GrantSearch.tsx's list view: thumbnail, title with tooltip,
+ * description, $/location/close date, tags, hover state) so a grant looks
+ * the same wherever it shows up. Watch/Watching (backed by useGrantAlerts)
+ * is the only grant-tracking action on either tab — turning it off is
+ * destructive (removeAlert), so it's confirmed via StopWatchingDialog, same
+ * as /search.
+ *
  * Two tabs, styled like the ones on /organization:
- * - "Grant Opportunity Alerts" (default) — the watch list itself, rendered
- *   with the same grant card design Saved Grants used to use (thumbnail,
- *   status, title, description, $, location, close date, tags, hover
- *   state). No "Grant Opportunity Alerts" title on the card itself — the
- *   tab it lives under already says that. Two distinct actions per row,
- *   both backed by useGrantAlerts: the switch pauses/resumes email alerts
- *   (setAlertEnabled) without taking the grant off the list, and the trash
- *   icon removes it entirely (removeAlert) — destructive, so it's confirmed
- *   via StopWatchingDialog.
+ * - "Grant Opportunity Alerts" (default) — the watch list itself. No "Grant
+ *   Opportunity Alerts" title on the card itself — the tab it lives under
+ *   already says that. Adds one extra footer row the /search card doesn't
+ *   have: the alert's email/frequency/sent-count, set off from the rest of
+ *   the card by a top border for spacing.
  * - "Recently Viewed" — grants viewed on their detail page (see
  *   GrantDetailPage), independent of whether they're being watched. Same
- *   card design, with a "last viewed" timestamp and the same Watch/Watching
- *   toggle used everywhere else instead of alert controls.
+ *   card design, with a "last viewed" timestamp next to the Watch/Watching
+ *   button, no extra footer.
  */
 export function WatchListPage() {
   const navigate = useNavigate();
@@ -109,17 +113,6 @@ export function WatchListPage() {
     const tab = searchParams.get("tab");
     if (tab) setActiveTab(tab);
   }, [searchParams]);
-
-  const handleToggle = (alert: any) => {
-    setAlertEnabled({ id: alert.grantId, title: alert.name.replace(/ Alert$/, "") }, !alert.enabled, {
-      silent: true,
-    });
-  };
-
-  const handleDeleteClick = (alert: any) => {
-    setWatchTargetToRemove({ grantId: alert.grantId, title: alert.name.replace(/ Alert$/, "") });
-    setStopWatchingDialogOpen(true);
-  };
 
   const handleWatchToggle = (grant: WatchedGrantData) => {
     if (isGrantAlertEnabled(grant.id)) {
@@ -166,184 +159,149 @@ export function WatchListPage() {
     return "bg-gray-50 text-gray-700 border-gray-200";
   };
 
-  const renderThumbnail = (grant: WatchedGrantData) => (
-    <div className="w-32 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-      {grant.image ? (
-        <ImageWithFallback src={grant.image} alt={grant.title} className="w-full h-full object-cover" />
-      ) : (
-        <div className="w-full h-full bg-gradient-to-br from-teal-100 to-blue-100 flex items-center justify-center">
-          <Award className="w-8 h-8 text-teal-600" />
-        </div>
-      )}
-    </div>
-  );
-
-  const renderMeta = (grant: WatchedGrantData) => (
-    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
-      {typeof grant.maxAmount === "number" && (
-        <div className="flex items-center gap-1.5">
-          <Banknote className="w-4 h-4" />
-          <span className="font-semibold text-gray-900">${grant.maxAmount.toLocaleString()}</span>
-        </div>
-      )}
-      {grant.location && (
-        <div className="flex items-center gap-1.5">
-          <MapPin className="w-4 h-4 text-gray-400" />
-          <span>{grant.location}</span>
-        </div>
-      )}
-      {grant.closeDate && (
-        <div className="flex items-center gap-1.5">
-          <Calendar className="w-4 h-4 text-gray-400" />
-          <span>Closes {grant.closeDate}</span>
-        </div>
-      )}
-    </div>
-  );
-
-  const renderTags = (grant: WatchedGrantData) => (
-    <div className="flex items-center gap-3 flex-wrap">
-      {grant.difficulty && (
-        <Badge className={`${getDifficultyColor(grant.difficulty)} border font-medium text-xs`}>
-          {grant.difficulty}
-        </Badge>
-      )}
-      {grant.sectors && grant.sectors.length > 0 && (
-        <div className="flex items-center gap-1.5">
-          {grant.sectors.slice(0, 2).map((sector, idx) => (
-            <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-medium">
-              {sector}
-            </span>
-          ))}
-          {grant.sectors.length > 2 && (
-            <span className="text-xs text-gray-500">+{grant.sectors.length - 2}</span>
-          )}
-        </div>
-      )}
-    </div>
-  );
-
-  const renderAlertCard = (alert: any) => {
-    const rawGrant: WatchedGrantData = alert.grant || { id: alert.grantId, title: alert.name.replace(/ Alert$/, "") };
-    const grant = enrichGrant(rawGrant);
-    return (
-      <div
-        key={alert.id}
-        className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-teal-300 hover:shadow-lg transition-all cursor-pointer group"
-        onClick={() => navigate(`/grant/${alert.grantId}`)}
-      >
-        <div className="flex gap-4 p-5">
-          {renderThumbnail(grant)}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-3 mb-2">
-              <div className="flex-1">
-                <h3
-                  className="text-base font-semibold text-gray-900 mb-1.5 group-hover:text-teal-600 transition-colors line-clamp-2"
-                  style={{ fontFamily: "Cabin, sans-serif" }}
-                >
-                  {grant.title}
-                </h3>
-                {grant.description && (
-                  <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
-                    {grant.description}
-                  </p>
-                )}
-              </div>
-              <Badge className={`${getStatusColor(grant.status)} border shrink-0`}>{grant.status || "Open"}</Badge>
-            </div>
-
-            {renderMeta(grant)}
-            {renderTags(grant)}
-
-            {/* Alert controls — email, frequency, on/off, remove */}
-            <div className="flex items-center justify-between gap-4 mt-4 pt-4 border-t border-gray-100">
-              <div className="flex items-center gap-2 text-sm text-gray-600 min-w-0">
-                <Bell className="w-4 h-4 text-teal-600 shrink-0" />
-                <span className="truncate">
-                  {alert.email} • {alert.frequency} emails
-                </span>
-                <span className="text-xs text-gray-400 shrink-0 whitespace-nowrap">{alert.alertsSent} sent</span>
-              </div>
-              <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
-                <Switch checked={alert.enabled} onCheckedChange={() => handleToggle(alert)} />
-                <button
-                  className="text-gray-400 hover:text-red-600 transition-colors p-1"
-                  onClick={() => handleDeleteClick(alert)}
-                  title="Stop watching"
-                  aria-label="Stop watching"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderRecentCard = (rawGrant: WatchedGrantData) => {
-    const grant = enrichGrant(rawGrant);
+  // The exact list-item design used on /search (see GrantSearch.tsx's list
+  // view) — thumbnail, title with tooltip, description, $/location/close
+  // date, tags, and the Watch/Watching button, all in the same layout and
+  // classes. `footer`, when given, renders as an extra row below the tags,
+  // set off by a top border — that's the one addition the alerts tab needs.
+  const renderGrantListItem = (grant: WatchedGrantData, footer?: ReactNode) => {
     const watching = isGrantAlertEnabled(grant.id);
     return (
       <div
         key={grant.id}
-        className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-teal-300 hover:shadow-lg transition-all cursor-pointer group"
         onClick={() => navigate(`/grant/${grant.id}`)}
+        className="bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all group overflow-hidden cursor-pointer flex"
       >
-        <div className="flex gap-4 p-5">
-          {renderThumbnail(grant)}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-3 mb-2">
-              <div className="flex-1">
-                <h3
-                  className="text-base font-semibold text-gray-900 mb-1.5 group-hover:text-teal-600 transition-colors line-clamp-2"
-                  style={{ fontFamily: "Cabin, sans-serif" }}
-                >
-                  {grant.title}
-                </h3>
+        {/* Grant Image */}
+        <div className="relative overflow-hidden bg-gray-100 flex-shrink-0 w-32 self-stretch">
+          {grant.image ? (
+            <ImageWithFallback
+              src={grant.image}
+              alt={grant.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-teal-100 to-blue-100 flex items-center justify-center">
+              <Award className="w-8 h-8 text-teal-600" />
+            </div>
+          )}
+        </div>
+
+        <div className="p-5 flex-1 min-w-0">
+          {/* Header */}
+          <div className="mb-3">
+            <div className="flex items-start justify-between gap-4 mb-2">
+              <div className="flex-1 min-w-0">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <h3 className="font-semibold text-gray-900 leading-snug group-hover:text-teal-700 transition-colors mb-2 truncate w-full">
+                      {grant.title}
+                    </h3>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" sideOffset={4} className="max-w-md z-50">
+                    <p className="text-sm leading-relaxed">{grant.title}</p>
+                  </TooltipContent>
+                </Tooltip>
                 {grant.description && (
-                  <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
-                    {grant.description}
-                  </p>
+                  <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">{grant.description}</p>
                 )}
               </div>
               <Badge className={`${getStatusColor(grant.status)} border shrink-0`}>{grant.status || "Open"}</Badge>
             </div>
+          </div>
 
-            {renderMeta(grant)}
-
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              {renderTags(grant)}
-              <div className="flex items-center gap-3">
-                {grant.lastViewed && (
-                  <span className="text-xs text-gray-500 whitespace-nowrap">
-                    Last viewed {formatTimeAgo(grant.lastViewed)}
-                  </span>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleWatchToggle(grant);
-                  }}
-                  className={`gap-1.5 ${
-                    watching
-                      ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100"
-                      : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"
-                  }`}
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  {watching ? "Watching" : "Watch"}
-                </Button>
+          {/* Metadata */}
+          <div className="flex items-center gap-4 mb-3 text-sm flex-wrap">
+            {typeof grant.maxAmount === "number" && (
+              <div className="flex items-center gap-1.5 text-gray-600">
+                <Banknote className="w-4 h-4" />
+                <span className="font-semibold text-gray-900">${grant.maxAmount.toLocaleString()}</span>
               </div>
+            )}
+            {grant.location && (
+              <div className="flex items-center gap-1.5 text-gray-600">
+                <Globe className="w-4 h-4" />
+                <span className="text-gray-700">{grant.location}</span>
+              </div>
+            )}
+            {grant.closeDate && (
+              <div className="flex items-center gap-1.5 text-gray-600">
+                <Calendar className="w-4 h-4" />
+                <span className="text-gray-700">Closes {grant.closeDate}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Tags and Actions */}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              {grant.difficulty && (
+                <Badge className={`${getDifficultyColor(grant.difficulty)} border text-xs`}>
+                  {grant.difficulty}
+                </Badge>
+              )}
+              {grant.sectors && grant.sectors.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  {grant.sectors.slice(0, 2).map((sector, idx) => (
+                    <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs font-medium">
+                      {sector}
+                    </span>
+                  ))}
+                  {grant.sectors.length > 2 && (
+                    <span className="text-xs text-gray-500">+{grant.sectors.length - 2}</span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Watch is the only grant-tracking action here — see useGrantAlerts. */}
+            <div className="flex items-center gap-3 shrink-0">
+              {grant.lastViewed && (
+                <span className="text-xs text-gray-500 whitespace-nowrap">
+                  Last viewed {formatTimeAgo(grant.lastViewed)}
+                </span>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleWatchToggle(grant);
+                }}
+                className={`gap-1.5 ${
+                  watching
+                    ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100"
+                    : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"
+                }`}
+              >
+                <Eye className="w-3.5 h-3.5" />
+                {watching ? "Watching" : "Watch"}
+              </Button>
             </div>
           </div>
+
+          {footer}
         </div>
       </div>
     );
   };
+
+  const renderAlertCard = (alert: any) => {
+    const rawGrant: WatchedGrantData = alert.grant || { id: alert.grantId, title: alert.name.replace(/ Alert$/, "") };
+    const grant = enrichGrant(rawGrant);
+    return renderGrantListItem(
+      grant,
+      <div className="flex items-center gap-2 text-sm text-gray-600 mt-4 pt-4 border-t border-gray-100 min-w-0">
+        <Bell className="w-4 h-4 text-teal-600 shrink-0" />
+        <span className="truncate">
+          {alert.email} • {alert.frequency} emails
+        </span>
+        <span className="text-xs text-gray-400 shrink-0 whitespace-nowrap">{alert.alertsSent} sent</span>
+      </div>,
+    );
+  };
+
+  const renderRecentCard = (rawGrant: WatchedGrantData) => renderGrantListItem(enrichGrant(rawGrant));
 
   return (
     <div className="max-w-[1400px] mx-auto p-6">
@@ -433,8 +391,8 @@ export function WatchListPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Stop Watching Confirmation — shared by the trash icon (alerts tab)
-          and the Watch → off toggle (recently viewed tab) */}
+      {/* Stop Watching Confirmation — shared by the Watch → off toggle on
+          both tabs */}
       <StopWatchingDialog
         open={stopWatchingDialogOpen}
         onOpenChange={setStopWatchingDialogOpen}
