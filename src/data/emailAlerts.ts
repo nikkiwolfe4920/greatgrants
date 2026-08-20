@@ -83,15 +83,12 @@ export interface AlertDigestSection {
   totalMatchCount: number;
 }
 
-export const ALERT_UPDATE_META: Record<
-  AlertUpdateType,
-  { label: string; colorClass: string }
-> = {
-  "date-change": { label: "Deadline updated", colorClass: "bg-blue-50 text-blue-700 border-blue-200" },
-  amendment: { label: "Amendment posted", colorClass: "bg-purple-50 text-purple-700 border-purple-200" },
-  "status-change": { label: "Status changed", colorClass: "bg-amber-50 text-amber-700 border-amber-200" },
-  "sponsor-change": { label: "Agency/sponsor update", colorClass: "bg-slate-50 text-slate-700 border-slate-200" },
-  "nofo-section": { label: "NOFO section updated", colorClass: "bg-teal-50 text-teal-700 border-teal-200" },
+export const ALERT_UPDATE_META: Record<AlertUpdateType, { label: string }> = {
+  "date-change": { label: "Deadline updated" },
+  amendment: { label: "Amendment posted" },
+  "status-change": { label: "Status changed" },
+  "sponsor-change": { label: "Agency/sponsor update" },
+  "nofo-section": { label: "NOFO section updated" },
 };
 
 // Reuse the same Unsplash sourcing convention as GrantSearch.tsx so images
@@ -318,6 +315,27 @@ export const weeklyDigestEmailMock = {
         },
       ] satisfies EmailGrantMatch[],
       totalMatchCount: 8,
+    },
+    {
+      // No `updates` this week — demonstrates the "N More Grants with No
+      // Changes" rollup card (Figma node 13310:9565) instead of its own
+      // full watched-grant card.
+      alertId: "alert-grant-community-garden",
+      alertName: "Community Garden Development Grant",
+      kind: "grant",
+      updates: [],
+      matches: [
+        {
+          id: "grant-garden-1",
+          rank: 1,
+          title: "Urban Green Spaces Grant",
+          image: IMG_RURAL,
+          amountLabel: "$5,000 – $30,000",
+          deadlineLabel: "2026-06-20",
+          summary: "Funds community garden startup costs, tools, and irrigation for neighborhood groups.",
+        },
+      ] satisfies EmailGrantMatch[],
+      totalMatchCount: 3,
     },
   ] satisfies AlertDigestSection[],
 };
