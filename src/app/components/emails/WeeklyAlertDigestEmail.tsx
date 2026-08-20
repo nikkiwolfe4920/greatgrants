@@ -3,7 +3,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { EmailShell } from "./EmailShell";
 import { GrantMatchCard } from "./GrantMatchCard";
-import { AlertUpdateList } from "./AlertUpdateList";
+import { WatchedGrantCard } from "./WatchedGrantCard";
 import { weeklyDigestEmailMock, type AlertDigestSection } from "@/data/emailAlerts";
 
 const ALERT_KIND_LABEL: Record<AlertDigestSection["kind"], string> = {
@@ -13,23 +13,29 @@ const ALERT_KIND_LABEL: Record<AlertDigestSection["kind"], string> = {
 };
 
 /**
- * Figma node 13014:42002 — "Grant Alert / Duration Email".
+ * Figma node 13310:9565 — "Weekly Alert Digest".
  *
- * The Figma frame only shows one alert's generic "Top Matches for You" list.
- * Per the product goal, ONE weekly email must roll up every alert type a
- * user has active — grant alerts, saved-search alerts, and program alerts
- * alike (see AlertDigestSection in @/data/emailAlerts for what distinguishes
- * them) — each with its own top matches, instead of a separate email per
- * alert. This component keeps the Figma frame's visual language (card list +
- * teal "want better results" CTA) but repeats it once per saved alert via
- * `AlertDigestSection`. Only "grant" sections get a "what's changed" feed
- * above their matches — a saved-search or program alert isn't tied to one
- * grant, so there's no single grant's date/amendment/status/sponsor/NOFO
- * history to report; they only ever surface new matches.
+ * The Figma frame reframes the email around a "grant watch list": one card
+ * per watched grant that changed this week (photo/summary/amount/deadline
+ * from its top match, a "what's changed" feed, View Details / Stop
+ * watching), plus a single rollup card for every watched grant with no
+ * changes ("N More Grants with No Changes" + a "View Watch List" CTA)
+ * instead of a per-grant card. That rollup only makes sense for "grant"
+ * kind alerts, since only those track ONE specific grant's own
+ * date/amendment/status/sponsor/NOFO history (see AlertDigestSection in
+ * @/data/emailAlerts) — a saved-search or program alert isn't tied to a
+ * single grant and never has "no changes" to report, only new matches. So
+ * "saved-search"/"program" sections keep the prior card-list layout
+ * (heading + badge + top matches) below the grant cards, unchanged.
  */
 export function WeeklyAlertDigestEmail() {
   const { username, weekOf, sections } = weeklyDigestEmailMock;
   const totalUpdates = sections.reduce((sum, s) => sum + s.updates.length, 0);
+
+  const grantSections = sections.filter((s) => s.kind === "grant");
+  const otherSections = sections.filter((s) => s.kind !== "grant");
+  const changedGrantSections = grantSections.filter((s) => s.updates.length > 0);
+  const unchangedGrantSections = grantSections.filter((s) => s.updates.length === 0);
 
   return (
     <EmailShell
@@ -45,23 +51,51 @@ export function WeeklyAlertDigestEmail() {
         </p>
       }
     >
-      <h1 className="text-base font-semibold text-gray-900">Your weekly grant alert summary</h1>
+      <h1 className="text-base font-semibold text-gray-900">Your weekly grant watch summary</h1>
 
       <p className="mt-3 text-sm leading-5 text-gray-600">Hi {username},</p>
       <p className="mt-3 text-sm leading-5 text-gray-600">
-        Here&rsquo;s what changed and what&rsquo;s new across your saved alerts for the week of{" "}
+        Here&rsquo;s what changed and what&rsquo;s new across your watched grants for the week of{" "}
         <span className="font-bold text-gray-900">{weekOf}.</span>
       </p>
 
       <div className="mt-8 flex flex-col gap-10">
-        {sections.map((section, index) => (
-          <AlertSection key={section.alertId} section={section} isLast={index === sections.length - 1} />
+        {changedGrantSections.map((section) => (
+          <WatchedGrantCard key={section.alertId} section={section} />
+        ))}
+
+        {unchangedGrantSections.length > 0 && <NoChangesCard count={unchangedGrantSections.length} />}
+
+        {otherSections.map((section, index) => (
+          <AlertSection
+            key={section.alertId}
+            section={section}
+            isLast={index === otherSections.length - 1}
+          />
         ))}
       </div>
     </EmailShell>
   );
 }
 
+/** The rollup card for watched grants with nothing to report this week. */
+function NoChangesCard({ count }: { count: number }) {
+  return (
+    <div className="flex w-full flex-col gap-2 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <h3 className="text-base font-semibold text-gray-900">
+        {count} More {count === 1 ? "Grant" : "Grants"} with No Changes
+      </h3>
+      <p className="text-sm leading-5 text-gray-600">
+        If changes occur with any grants on your watch list, you will be notified once a week.
+      </p>
+      <Button className="mt-1 self-start bg-teal-600 text-white hover:bg-teal-700" size="sm" asChild>
+        <a href="#">View Watch List</a>
+      </Button>
+    </div>
+  );
+}
+
+/** Prior card-list layout, kept for "saved-search"/"program" alerts (see file header comment). */
 function AlertSection({ section, isLast }: { section: AlertDigestSection; isLast: boolean }) {
   const extraMatches = section.totalMatchCount - section.matches.length;
 
@@ -78,15 +112,6 @@ function AlertSection({ section, isLast }: { section: AlertDigestSection; isLast
           Stop watching
         </a>
       </div>
-
-      {section.kind === "grant" && section.updates.length > 0 && (
-        <div className="mt-4 rounded-xl bg-gray-50 p-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-            What&rsquo;s changed
-          </p>
-          <AlertUpdateList updates={section.updates} />
-        </div>
-      )}
 
       <h3 className="mt-6 text-sm font-semibold text-gray-900">
         {section.kind === "program"

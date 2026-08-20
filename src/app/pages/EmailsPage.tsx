@@ -67,11 +67,12 @@ export function EmailsPage() {
           title="Weekly Alert Digest"
           description={
             <>
-              Figma node 13014:42002, extended into the combined weekly send: one email rolls up{" "}
-              <em>every</em> grant alert a user has active, each named after the one grant it
-              watches (e.g. &ldquo;Church-Based Small Business Development Fund&rdquo;), with its
-              own date/amendment/status/sponsor/NOFO change feed plus its own top matches &mdash;
-              instead of a separate email per alert.
+              Figma node 13310:9565, extended into the combined weekly send: one email rolls up{" "}
+              <em>every</em> grant alert a user has active. Watched grants that changed this week
+              (e.g. &ldquo;Church-Based Small Business Development Fund&rdquo;) each get their own
+              card with a date/amendment/status/sponsor/NOFO change feed; grants with nothing to
+              report fold into a single &ldquo;N More Grants with No Changes&rdquo; card instead of
+              a separate email per alert.
             </>
           }
         >
