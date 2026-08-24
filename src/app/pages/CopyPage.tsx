@@ -10,6 +10,12 @@ import {
 } from "../components/ui/popover";
 import { EligibilityAssessmentResults } from "../components/EligibilityAssessmentResults";
 import { OverallNofoFitScorecard } from "../components/OverallNofoFitScorecard";
+import {
+  TierModuleConceptRows,
+  TierModuleConceptHero,
+  TierModuleConceptBlocks,
+  type TierModuleProps,
+} from "../components/SidebarTierModuleConcepts";
 
 interface FilterOption {
   id: string;
@@ -59,8 +65,68 @@ const filterCategories: FilterOption[] = [
   },
 ];
 
+// Sample data feeding the Sidebar Tier Usage Module concepts below. Each
+// scenario represents a moment in the Free-tier lifecycle (or the
+// Unlimited tier), so the three concepts can be compared side-by-side
+// under identical data.
+const tierModuleScenarios: Record<string, { label: string; data: Omit<TierModuleProps, "onUpgrade" | "onManagePlan"> }> = {
+  notStarted: {
+    label: "Free — not started",
+    data: {
+      tier: "free",
+      application: { status: "not_started", used: 0, limit: 1 },
+      eligibility: { used: 0, limit: 3 },
+      coaching: { used: 0, limit: 3 },
+      resetDate: "May 31st",
+    },
+  },
+  inProgress: {
+    label: "Free — application used, resources remaining",
+    data: {
+      tier: "free",
+      application: {
+        status: "used",
+        used: 1,
+        limit: 1,
+        grantName: "Community Health Innovation Fund",
+        sectionsCount: 14,
+      },
+      eligibility: { used: 1, limit: 3 },
+      coaching: { used: 1, limit: 3 },
+      resetDate: "May 31st",
+    },
+  },
+  exhausted: {
+    label: "Free — everything used (upgrade moment)",
+    data: {
+      tier: "free",
+      application: {
+        status: "used",
+        used: 1,
+        limit: 1,
+        grantName: "Community Health Innovation Fund",
+        sectionsCount: 14,
+      },
+      eligibility: { used: 3, limit: 3 },
+      coaching: { used: 3, limit: 3 },
+      resetDate: "May 31st",
+    },
+  },
+  unlimited: {
+    label: "Unlimited plan",
+    data: {
+      tier: "unlimited",
+      application: { status: "used", used: 12, limit: 12 },
+      eligibility: { used: 27, limit: 27 },
+      coaching: { used: 5, limit: 5 },
+      resetDate: "May 31st",
+    },
+  },
+};
+
 export function CopyPage() {
   const [isFilterPopoverOpen, setIsFilterPopoverOpen] = useState(true);
+  const [tierScenario, setTierScenario] = useState<keyof typeof tierModuleScenarios>("inProgress");
   const [filterNavigationStack, setFilterNavigationStack] = useState<FilterOption[]>([]);
   const [appliedFilters, setAppliedFilters] = useState<{ id: string; label: string; category: string }[]>([]);
 
@@ -210,6 +276,86 @@ export function CopyPage() {
             Same card pattern, extended with a category breakdown and next steps
           </p>
           <OverallNofoFitScorecard />
+        </div>
+
+        <div className="mt-12">
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">
+            Sidebar Tier Usage Module — Concepts
+          </h2>
+          <p className="text-sm text-gray-500 mb-1 max-w-2xl">
+            Three directions for reworking the left-nav "3 Applications Generated / 0 remaining
+            credits" module (SharedSidebar.tsx) to support the Free and Unlimited tiers. Each
+            surfaces Applications, Eligibility Assessments, and Coaching Passes, with a clear
+            path to upgrade. Toggle the scenario to compare how each concept handles the same
+            moment in the Free-tier lifecycle.
+          </p>
+          <p className="text-xs text-gray-400 mb-5">
+            Cards are rendered at the real sidebar width (256px) so sizing reads accurately.
+          </p>
+
+          {/* Scenario toggle — drives identical sample data into all three concepts */}
+          <div className="flex items-center gap-1.5 flex-wrap mb-6 bg-gray-100 p-1 rounded-lg w-fit">
+            {(Object.keys(tierModuleScenarios) as Array<keyof typeof tierModuleScenarios>).map((key) => (
+              <button
+                key={key}
+                onClick={() => setTierScenario(key)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap ${
+                  tierScenario === key
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {tierModuleScenarios[key].label}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+            <div>
+              <p className="text-xs font-semibold text-gray-700 mb-2">A · Resource Rows</p>
+              <p className="text-xs text-gray-400 mb-3">
+                Minimal change from today's widget — three compact rows in the same cream card,
+                ending in a solid Upgrade CTA on Free.
+              </p>
+              <div className="w-64 bg-white p-2 rounded-md border border-gray-200">
+                <TierModuleConceptRows
+                  {...tierModuleScenarios[tierScenario].data}
+                  onUpgrade={() => alert("Upgrade to Unlimited")}
+                  onManagePlan={() => alert("Manage Plan")}
+                />
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold text-gray-700 mb-2">B · Hero Metric</p>
+              <p className="text-xs text-gray-400 mb-3">
+                Leads with Applications as the headline stat; Eligibility and Coaching become
+                secondary chips. Upgrade is a persistent gradient banner.
+              </p>
+              <div className="w-64 bg-white p-2 rounded-md border border-gray-200">
+                <TierModuleConceptHero
+                  {...tierModuleScenarios[tierScenario].data}
+                  onUpgrade={() => alert("Upgrade to Unlimited")}
+                  onManagePlan={() => alert("Manage Plan")}
+                />
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold text-gray-700 mb-2">C · Usage + Upsell Blocks</p>
+              <p className="text-xs text-gray-400 mb-3">
+                Splits usage from upsell into two cards — a neutral summary plus a distinct teal
+                benefits card on Free, replaced by a quiet confirmation strip on Unlimited.
+              </p>
+              <div className="w-64 bg-gray-50 p-2 rounded-md border border-gray-200">
+                <TierModuleConceptBlocks
+                  {...tierModuleScenarios[tierScenario].data}
+                  onUpgrade={() => alert("Upgrade to Unlimited")}
+                  onManagePlan={() => alert("Manage Plan")}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
