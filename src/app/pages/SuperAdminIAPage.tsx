@@ -207,6 +207,20 @@ function WFButtonSketch({
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   WFTag — Focus Area chip, matches Figma node 13513:31375 (Grant
+   Search / Geo Focus / Added) minus its remove (×) control, since
+   search results and read-only summaries never let you remove a tag
+   from here — only the org's own Profile settings can edit Focus Areas.
+───────────────────────────────────────────────────────────────── */
+function WFTag({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center rounded-md border border-teal-300 bg-white px-1.5 py-0.5 text-[9.5px] font-semibold text-teal-700 whitespace-nowrap">
+      {label}
+    </span>
+  );
+}
+
 function WFInputSketch({
   placeholder,
   icon: Icon,
@@ -304,6 +318,28 @@ function WFCompletionRing({ pct, label }: { pct: number; label: string }) {
         <p className="text-[10.5px] font-semibold text-gray-700 leading-tight truncate">{label}</p>
         <p className="text-[9.5px] text-gray-400 leading-tight">complete</p>
       </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   WFFieldCheck — one field-level completion row for the Org Profile /
+   Program Info summaries, so "every field and if it's completed"
+   reads as a checklist rather than just a rolled-up percentage.
+───────────────────────────────────────────────────────────────── */
+function WFFieldCheck({ label, complete }: { label: string; complete: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-2 py-1.5 border-b border-gray-50 last:border-b-0">
+      <span className="text-[10.5px] text-gray-600">{label}</span>
+      {complete ? (
+        <span className="flex items-center gap-1 text-[9.5px] font-semibold text-teal-700 shrink-0">
+          <Check className="size-3" /> Complete
+        </span>
+      ) : (
+        <span className="flex items-center gap-1 text-[9.5px] font-semibold text-gray-400 shrink-0">
+          <Circle className="size-2.5" /> Incomplete
+        </span>
+      )}
     </div>
   );
 }
@@ -613,6 +649,380 @@ function WireframeItem({
   );
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   Newest Updates — Aug 26 round: Global Organization Search results
+   (Figma node 11994:11265) plus the Organization record drill-down it
+   opens into. Search rows gain Focus Area tags (styled per the tag
+   reference at Figma node 13513:31375, minus its remove control — see
+   WFTag above) and an exact last-login timestamp in place of the
+   relative "2h ago" used on the original P0 wireframe further up this
+   page. The drill-down itself is genuinely tabbed (useState, not a
+   static sketch) since there are seven distinct sections to page
+   through: All Users, Search Count, Org Profile, Program Info,
+   Applications, Focus Areas, Activity.
+───────────────────────────────────────────────────────────────── */
+const NEWEST_SEARCH_RESULTS = [
+  {
+    name: "Acme Nonprofit",
+    members: 14,
+    lastLogin: "Aug 24, 2026, 3:12pm",
+    focusAreas: ["Early Childhood Education", "K-12 Education", "Public Health"],
+  },
+  {
+    name: "Acme Housing Coalition",
+    members: 6,
+    lastLogin: "Aug 23, 2026, 9:05am",
+    focusAreas: ["Homeless Services", "Rental Assistance"],
+  },
+  {
+    name: "Acme Youth Services",
+    members: 2,
+    lastLogin: "Jul 16, 2026, 8:47am",
+    focusAreas: ["After-School Programs", "Youth Intervention"],
+  },
+];
+
+function NewestUpdatesAllUsersTab() {
+  const members = [
+    { name: "Jordan Casey", email: "jordan@acmenonprofit.org", role: "Admin", login: "2h ago" },
+    { name: "Sam Patel", email: "sam@acmenonprofit.org", role: "Admin", login: "1d ago" },
+    { name: "Alex Rivera", email: "alex@acmenonprofit.org", role: "Consultant", login: "41d ago" },
+  ];
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-[9.5px] font-bold text-gray-400 uppercase tracking-wide">
+        All users ({members.length + 11})
+      </p>
+      <div className="rounded-lg border border-gray-100 overflow-hidden">
+        <div className="flex items-center gap-2 bg-gray-50 px-2.5 py-1.5 text-[9.5px] font-bold text-gray-400 uppercase tracking-wide">
+          <span className="flex-1">Member</span>
+          <span className="w-20 shrink-0">Role</span>
+          <span className="w-16 shrink-0">Last login</span>
+          <span className="w-20 shrink-0 text-right">Action</span>
+        </div>
+        {members.map((m) => (
+          <div key={m.email} className="flex items-center gap-2 px-2.5 py-2 border-t border-gray-100">
+            <WFAvatar />
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-semibold text-gray-700 truncate">{m.name}</p>
+              <p className="text-[10px] text-gray-400 truncate">{m.email}</p>
+            </div>
+            <span className="w-20 shrink-0 text-[9.5px] font-semibold uppercase text-gray-400 border border-gray-300 rounded px-1.5 py-0.5 text-center">
+              {m.role}
+            </span>
+            <span className="w-16 shrink-0 text-[10px] text-gray-400">{m.login}</span>
+            <span className="w-20 shrink-0 text-[10px] text-teal-700 font-semibold text-right">
+              Change role
+            </span>
+          </div>
+        ))}
+      </div>
+      <div>
+        <WFVariantLabel>Change role — confirmation modal</WFVariantLabel>
+        <WFFrame title="Change Jordan Casey's role" dashed>
+          <p className="text-[10.5px] text-gray-600 leading-snug">
+            Change <strong>Jordan Casey</strong>'s role in Acme Nonprofit from <strong>Admin</strong> to{" "}
+            <strong>Consultant</strong>? This changes what they can see and do in the org immediately.
+          </p>
+          <div className="flex gap-2 pt-1">
+            <div className="flex-1 rounded-md border border-gray-300 p-2 flex items-center gap-1.5">
+              <Circle className="size-3.5 text-gray-400 shrink-0" />
+              <span className="text-[10.5px] font-semibold text-gray-500">Admin</span>
+            </div>
+            <div className="flex-1 rounded-md border border-teal-400 bg-teal-50 p-2 flex items-center gap-1.5">
+              <CircleDot className="size-3.5 text-teal-600 shrink-0" />
+              <span className="text-[10.5px] font-semibold text-teal-700">Consultant</span>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <WFButtonSketch label="Cancel" />
+            <WFButtonSketch label="Confirm role change" tone="primary" />
+          </div>
+        </WFFrame>
+      </div>
+    </div>
+  );
+}
+
+function NewestUpdatesSearchCountTab() {
+  return (
+    <div className="flex flex-col gap-3">
+      <WFFrame title="Grant search allotment">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-[10px] text-gray-500">
+            <span>Grant searches this cycle</span>
+            <span className="font-semibold">18 / 25</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+            <div className="h-full bg-teal-500" style={{ width: "72%" }} />
+          </div>
+        </div>
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-[10px] text-gray-400 max-w-[220px] leading-snug">
+            Last reset Jul 16, 2026, 10:42am · by Nikki W.
+          </p>
+          <WFButtonSketch label="Reset count" tone="primary" />
+        </div>
+      </WFFrame>
+      <WFFrame title="Reset history">
+        {[
+          ["Jul 16, 2026, 10:42am", "Nikki W."],
+          ["May 2, 2026, 9:03am", "Nikki W."],
+        ].map(([ts, actor]) => (
+          <WFRow key={ts}>
+            <div className="w-32 shrink-0 text-[10px] text-gray-400">{ts}</div>
+            <div className="flex-1 text-[10.5px] text-gray-600">Reset search count</div>
+            <div className="text-[10px] text-gray-400">by {actor}</div>
+          </WFRow>
+        ))}
+      </WFFrame>
+    </div>
+  );
+}
+
+const ORG_PROFILE_FIELDS = [
+  { label: "Organization Name", complete: true },
+  { label: "Organization Address", complete: true },
+  { label: "EIN Number", complete: true },
+  { label: "UEI Number", complete: false },
+  { label: "Organization Website", complete: true },
+  { label: "Annual Budget", complete: true },
+  { label: "Mission Statement", complete: true },
+  { label: "Vision Statement", complete: false },
+  { label: "Add 2 or More Focus Areas", complete: true },
+  { label: "Financial Readiness Questions", complete: true },
+  { label: "Policies & Compliance Questions", complete: false },
+];
+
+function NewestUpdatesOrgProfileTab() {
+  const done = ORG_PROFILE_FIELDS.filter((f) => f.complete).length;
+  const pct = Math.round((done / ORG_PROFILE_FIELDS.length) * 100);
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-[9.5px] font-bold text-gray-400 uppercase tracking-wide">
+        Organization Profile — Summary
+      </p>
+      <div className="rounded-lg border border-gray-100 p-2.5 flex items-center justify-between gap-2">
+        <WFCompletionRing pct={pct} label="Organization Profile" />
+        <span className="text-[10px] text-gray-400">
+          {done} of {ORG_PROFILE_FIELDS.length} fields complete
+        </span>
+      </div>
+      <div className="rounded-lg border border-gray-100 px-2.5">
+        {ORG_PROFILE_FIELDS.map((f) => (
+          <WFFieldCheck key={f.label} label={f.label} complete={f.complete} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const PROGRAM_FIELDS = [
+  { label: "Program Title", complete: true },
+  { label: "Program Description", complete: true },
+  { label: "Geographic Focus", complete: true },
+  { label: "People Served", complete: true },
+  { label: "Program Duration", complete: false },
+  { label: "Estimated Total Budget", complete: false },
+  { label: "Partnerships", complete: true },
+  { label: "Primary Point of Contact", complete: false },
+];
+
+function NewestUpdatesProgramInfoTab() {
+  const done = PROGRAM_FIELDS.filter((f) => f.complete).length;
+  const pct = Math.round((done / PROGRAM_FIELDS.length) * 100);
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-[9.5px] font-bold text-gray-400 uppercase tracking-wide">
+        Program Info (3)
+      </p>
+      <div className="rounded-lg border border-gray-100 p-2.5">
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <WFCompletionRing pct={pct} label="Youth Mentorship Initiative" />
+          <span className="text-[10px] text-gray-400">
+            {done} of {PROGRAM_FIELDS.length} fields complete
+          </span>
+        </div>
+        <div className="px-0.5">
+          {PROGRAM_FIELDS.map((f) => (
+            <WFFieldCheck key={f.label} label={f.label} complete={f.complete} />
+          ))}
+        </div>
+      </div>
+      <WFMeterSection
+        title="Other programs"
+        items={[
+          { name: "Community Health Outreach", pct: 65 },
+          { name: "Housing Stability Fund", pct: 30 },
+        ]}
+      />
+    </div>
+  );
+}
+
+const NEWEST_APPLICATIONS = [
+  {
+    grant: "City Community Development Grant",
+    status: "In Review",
+    pct: 90,
+    started: "Jun 2, 2026",
+    updated: "Aug 20, 2026 · Jordan Casey",
+    deadline: "Sep 5, 2026",
+  },
+  {
+    grant: "Kresge Foundation FY25 Renewal",
+    status: "Draft",
+    pct: 45,
+    started: "Jul 11, 2026",
+    updated: "Aug 18, 2026 · Sam Patel",
+    deadline: "Oct 1, 2026",
+  },
+];
+
+function NewestUpdatesApplicationsTab() {
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-[9.5px] font-bold text-gray-400 uppercase tracking-wide">
+        Applications ({NEWEST_APPLICATIONS.length})
+      </p>
+      <div className="rounded-lg border border-gray-100 overflow-hidden">
+        <div className="flex items-center gap-2 bg-gray-50 px-2.5 py-1.5 text-[9.5px] font-bold text-gray-400 uppercase tracking-wide">
+          <span className="flex-1">Grant</span>
+          <span className="w-16 shrink-0">Status</span>
+          <span className="w-8 shrink-0 text-right">%</span>
+          <span className="w-16 shrink-0">Started</span>
+          <span className="w-40 shrink-0">Last updated · person</span>
+          <span className="w-16 shrink-0">Deadline</span>
+        </div>
+        {NEWEST_APPLICATIONS.map((a) => (
+          <div key={a.grant} className="flex items-center gap-2 px-2.5 py-2 border-t border-gray-100">
+            <span className="flex-1 text-[10.5px] font-semibold text-gray-700 truncate">{a.grant}</span>
+            <span className="w-16 shrink-0 text-[9px] font-semibold uppercase text-teal-700 bg-teal-50 border border-teal-200 rounded px-1.5 py-0.5 text-center">
+              {a.status}
+            </span>
+            <span className="w-8 shrink-0 text-[10px] font-bold text-gray-600 text-right">{a.pct}%</span>
+            <span className="w-16 shrink-0 text-[10px] text-gray-400">{a.started}</span>
+            <span className="w-40 shrink-0 text-[10px] text-gray-400 truncate">{a.updated}</span>
+            <span className="w-16 shrink-0 text-[10px] text-gray-400">{a.deadline}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const ORG_FOCUS_AREAS: Record<string, string[]> = {
+  Education: ["Early Childhood Education", "K-12 Education", "After-School Programs"],
+  "Health & Human Services": ["Public Health"],
+  "Public Safety & Justice": ["Youth Intervention"],
+};
+
+function NewestUpdatesFocusAreasTab() {
+  const total = Object.values(ORG_FOCUS_AREAS).flat().length;
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-[9.5px] font-bold text-gray-400 uppercase tracking-wide">
+        Focus areas ({total} of 10 selected)
+      </p>
+      <div className="flex flex-col gap-2">
+        {Object.entries(ORG_FOCUS_AREAS).map(([parent, leaves]) => (
+          <div key={parent} className="flex flex-wrap items-start gap-1.5">
+            <span className="text-[10px] font-medium text-gray-500 mt-0.5 shrink-0">{parent}:</span>
+            <div className="flex flex-wrap gap-1.5">
+              {leaves.map((leaf) => (
+                <WFTag key={leaf} label={leaf} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <WFCallout>
+        Read-only here — Focus Areas are edited by the org itself from their Profile settings, not
+        from the Admin Portal.
+      </WFCallout>
+    </div>
+  );
+}
+
+function NewestUpdatesActivityTab() {
+  const entries = [
+    { ts: "Aug 24, 2026, 3:12pm", action: "Changed Jordan Casey's role", detail: "Admin → Consultant", actor: "Nikki W." },
+    { ts: "Jul 16, 2026, 10:42am", action: "Reset search count", detail: "0 / 25", actor: "Nikki W." },
+    { ts: "Jul 13, 2026, 3:05pm", action: "Added user", detail: "jordan@acmenonprofit.org", actor: "Nikki W." },
+  ];
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-[9.5px] font-bold text-gray-400 uppercase tracking-wide">Activity</p>
+      <div className="rounded-lg border border-gray-100 overflow-hidden">
+        {entries.map((r, i) => (
+          <div key={i} className="flex items-center gap-2 px-2.5 py-2 border-t border-gray-100 first:border-t-0">
+            <span className="w-28 shrink-0 text-[9.5px] text-gray-400">{r.ts}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10.5px] font-semibold text-gray-700 truncate">
+                {r.action} <span className="font-normal text-gray-400">— {r.detail}</span>
+              </p>
+              <p className="text-[9.5px] text-gray-400">by {r.actor}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const NEWEST_ORG_DETAIL_TABS = [
+  "All Users",
+  "Search Count",
+  "Org Profile",
+  "Program Info",
+  "Applications",
+  "Focus Areas",
+  "Activity",
+] as const;
+
+/**
+ * The record view a search result opens into. Genuinely tabbed (not a
+ * static sketch) — with seven sections to cover, a scrolling single page
+ * would bury Program Info and Activity below the fold.
+ */
+function NewestUpdatesOrgDetailWF() {
+  const [tab, setTab] = useState<(typeof NEWEST_ORG_DETAIL_TABS)[number]>("All Users");
+  return (
+    <WFScreen activeNav="orgs" breadcrumb={["Admin Portal", "Organizations", "Acme Nonprofit"]}>
+      <div className="flex items-center gap-2.5">
+        <WFAvatar size="size-10" />
+        <div>
+          <p className="text-[13px] font-bold text-gray-800">Acme Nonprofit</p>
+          <p className="text-[10px] text-gray-400">14 members · last login Aug 24, 2026, 3:12pm</p>
+        </div>
+      </div>
+      <div className="flex gap-3 text-[10.5px] font-semibold border-b border-gray-100 pt-2 flex-wrap">
+        {NEWEST_ORG_DETAIL_TABS.map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className={`pb-1.5 whitespace-nowrap transition-colors ${
+              tab === t ? "text-teal-700 border-b-2 border-teal-600" : "text-gray-400 hover:text-gray-600"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+      <div className="pt-3 w-full">
+        {tab === "All Users" && <NewestUpdatesAllUsersTab />}
+        {tab === "Search Count" && <NewestUpdatesSearchCountTab />}
+        {tab === "Org Profile" && <NewestUpdatesOrgProfileTab />}
+        {tab === "Program Info" && <NewestUpdatesProgramInfoTab />}
+        {tab === "Applications" && <NewestUpdatesApplicationsTab />}
+        {tab === "Focus Areas" && <NewestUpdatesFocusAreasTab />}
+        {tab === "Activity" && <NewestUpdatesActivityTab />}
+      </div>
+    </WFScreen>
+  );
+}
+
 const CONTENTS = [
   { id: "overview", label: "Overview" },
   { id: "flow", label: "IA Flow" },
@@ -620,6 +1030,7 @@ const CONTENTS = [
   { id: "open-questions", label: "Open Questions" },
   { id: "backlog", label: "Wireframe Backlog" },
   { id: "wireframes", label: "Wireframes" },
+  { id: "newest-updates", label: "Newest Updates" },
 ];
 
 export function SuperAdminIAPage() {
@@ -1913,6 +2324,83 @@ export function SuperAdminIAPage() {
                   action. This stays the default until Nikki decides otherwise.
                 </WFCallout>
               </div>
+            </WireframeItem>
+          </div>
+        </section>
+
+        {/* ── Newest Updates ── */}
+        <section id="newest-updates" className="scroll-mt-8 mb-20">
+          <div className="flex items-center gap-2 mb-1">
+            <Badge className="bg-teal-600 hover:bg-teal-600 text-white">Aug 26, 2026</Badge>
+            <Badge variant="outline" className="text-gray-500 border-gray-300">
+              Figma node 11994:11265
+            </Badge>
+          </div>
+          <h2 className="text-[20px] font-bold text-gray-900 mb-1">Newest Updates</h2>
+          <p className="text-[13px] text-gray-500 mb-6 max-w-2xl">
+            The latest Figma round for Global Organization Search — "Great Grants / Organization
+            Search / Results" (node 11994:11265) — implemented below with two changes from the
+            source file: each result row also shows Focus Areas and an exact last-login timestamp
+            instead of Figma's relative time, and clicking into a result opens a fuller record view
+            than the Overview tab wireframed earlier on this page. The Focus Area tag styling
+            follows the reference at node 13513:31375 ("Grant Search / Geo Focus / Added"), minus
+            its × remove control — these are read-only summaries, not an editable field.
+          </p>
+
+          <div className="flex flex-col gap-6">
+            <WireframeItem
+              title="Global Organization Search — Results"
+              priority="P0"
+              layout="stack"
+              description="Landing screen for the Organizations nav item. Each row now surfaces Focus Areas alongside org name, member count, and last login — the full timestamp, not a relative time — so Support can gauge fit and recency without opening the record."
+            >
+              <WFScreen activeNav="orgs" breadcrumb={["Admin Portal", "Organizations"]}>
+                <div>
+                  <p className="text-[13px] font-bold text-gray-800">Global Organization Search</p>
+                  <p className="text-[10px] text-gray-400">
+                    Search and manage organizations across the Great Grants platform.
+                  </p>
+                </div>
+                <WFInputSketch icon={Search} placeholder="Search organizations…" />
+                <div className="flex items-center gap-2 pt-1">
+                  <WFActionButton icon={Filter} label="Add Filters" />
+                  <span className="text-[10px] text-gray-300 underline">Clear all filters</span>
+                </div>
+                <p className="text-[11px] font-semibold text-gray-700 pt-1">
+                  {NEWEST_SEARCH_RESULTS.length} organizations
+                </p>
+                <div className="border-t border-gray-100 w-full">
+                  {NEWEST_SEARCH_RESULTS.map((r) => (
+                    <div
+                      key={r.name}
+                      className="flex items-start gap-2 py-2.5 border-b border-gray-100 last:border-b-0"
+                    >
+                      <Building2 className="size-3.5 text-gray-300 shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-semibold text-gray-700 truncate">{r.name}</p>
+                        <p className="text-[10px] text-gray-400 truncate">
+                          {r.members} members · last login {r.lastLogin}
+                        </p>
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {r.focusAreas.map((f) => (
+                            <WFTag key={f} label={f} />
+                          ))}
+                        </div>
+                      </div>
+                      <ChevronRight className="size-3.5 text-gray-300 shrink-0 mt-0.5" />
+                    </div>
+                  ))}
+                </div>
+              </WFScreen>
+            </WireframeItem>
+
+            <WireframeItem
+              title="Organization Record — full drill-down"
+              priority="P0"
+              layout="stack"
+              description="Opened from any search result. Seven sections, tabbed: All Users (with per-member role changes behind a confirmation modal), Search Count (with reset + last-reset attribution), Organization Profile and Program Info (each field listed with its own completion state, not just a rolled-up percentage), Applications (status, % complete, dates, and who last touched it), Focus Areas, and Activity. Click a tab below to switch sections."
+            >
+              <NewestUpdatesOrgDetailWF />
             </WireframeItem>
           </div>
         </section>
