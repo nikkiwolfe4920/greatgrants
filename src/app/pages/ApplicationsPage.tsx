@@ -46,6 +46,7 @@ import {
 } from "@/app/components/ui/breadcrumb";
 import { ExportApplicationDialog } from "@/app/components/ExportApplicationDialog";
 import { ApplicationRightRail } from "@/app/components/ApplicationRightRail";
+import { MarkApplicationSubmittedModal } from "@/app/components/MarkApplicationSubmittedModal";
 
 interface Section {
   id: string;
@@ -172,6 +173,7 @@ export function ApplicationsPage() {
   const [pendingAppReady, setPendingAppReady] = useState(false);
   const [applications, setApplications] = useState<Application[]>(mockApplications);
   const [submittingAppId, setSubmittingAppId] = useState<string | null>(null);
+  const [pendingSubmitAppId, setPendingSubmitAppId] = useState<string | null>(null);
   const [movingToActiveAppId, setMovingToActiveAppId] = useState<string | null>(null);
   const [archivingAppId, setArchivingAppId] = useState<string | null>(null);
   const [publishedPrograms, setPublishedPrograms] = useState<Program[]>([]);
@@ -851,7 +853,8 @@ export function ApplicationsPage() {
                           <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:text-gray-900 transition-colors">
                             <input
                               type="checkbox"
-                              onChange={() => handleMarkAsSubmitted(app.id)}
+                              checked={false}
+                              onChange={() => setPendingSubmitAppId(app.id)}
                               className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-2 focus:ring-teal-500 focus:ring-offset-0 cursor-pointer"
                             />
                             <span className="font-medium">Mark as submitted</span>
@@ -1110,6 +1113,18 @@ export function ApplicationsPage() {
           applicationId={selectedAppForExport.id}
         />
       )}
+
+      {/* Mark as Submitted Confirmation + Unlimited Upsell */}
+      <MarkApplicationSubmittedModal
+        open={pendingSubmitAppId !== null}
+        onOpenChange={(next) => {
+          if (!next) setPendingSubmitAppId(null);
+        }}
+        onConfirm={() => {
+          if (pendingSubmitAppId) handleMarkAsSubmitted(pendingSubmitAppId);
+          setPendingSubmitAppId(null);
+        }}
+      />
     </div>
   );
 }
