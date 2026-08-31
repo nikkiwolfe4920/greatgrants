@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Clock,
@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   Eye,
   Share2,
-  FolderPlus,
   CheckCircle2,
   FileText,
   Download,
@@ -34,8 +33,10 @@ import { EligibilityWorkflowPanel } from "@/app/components/eligibility/Eligibili
 import { AssessmentUsageMeter } from "@/app/components/eligibility/AssessmentUsageMeter";
 import { ApplicationLoadingModal } from "@/app/components/ApplicationLoadingModal";
 import { StopWatchingDialog } from "@/app/components/StopWatchingDialog";
+import { ProgramLinkControl } from "@/app/components/ProgramLinkControl";
 import { useGrantAlerts } from "@/hooks/useGrantAlerts";
 import { useAssessmentUsage } from "@/hooks/useAssessmentUsage";
+import { eligibilityPrograms } from "@/data/eligibilityAssessmentData";
 
 const GRANT_ID = "dfop0017890-child-protection";
 const GRANT_TITLE = "Advancing Global Health — Child Development, Care, and Protection Addendum";
@@ -256,11 +257,15 @@ function CheckYourEligibilityCard({ onStart, usedCount, limit, isExhausted }: Ch
  * center.
  */
 export function EligibilityAssessmentPage() {
+  const navigate = useNavigate();
   const [isAssessing, setIsAssessing] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
   const [docsExpanded, setDocsExpanded] = useState(true);
   const [linkCopied, setLinkCopied] = useState(false);
-  const [programLinked, setProgramLinked] = useState(false);
+  // This opportunity can only have one linked program at a time — shared
+  // with the eligibility workflow's Program Association step so the two
+  // stay in sync no matter where the program is linked or switched from.
+  const [linkedProgramId, setLinkedProgramId] = useState<string | null>(null);
   const [reportGeneratedAt, setReportGeneratedAt] = useState<number | null>(null);
   const [showApplicationLoading, setShowApplicationLoading] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
@@ -473,15 +478,18 @@ export function EligibilityAssessmentPage() {
                 </Button>
               </div>
 
-              <Button variant="outline" size="sm" className="h-8 gap-1.5 border-teal-200 text-gray-700 hover:bg-teal-50">
-                <FolderPlus className="w-4 h-4 text-gray-500" />
-                Add Programs
-                {programLinked && (
-                  <span className="inline-flex size-5 items-center justify-center rounded-md bg-teal-600 text-xs font-medium text-white">
-                    1
-                  </span>
-                )}
-              </Button>
+              <ProgramLinkControl
+                programs={eligibilityPrograms.map((program) => ({
+                  id: program.id,
+                  name: program.name,
+                  description: program.description,
+                }))}
+                linkedProgramId={linkedProgramId}
+                onLink={setLinkedProgramId}
+                onUnlink={() => setLinkedProgramId(null)}
+                onCreateProgram={() => navigate("/project-details")}
+                className="h-8"
+              />
 
               {reportGeneratedAt && (
                 <div className="flex items-center gap-1.5 text-sm">
@@ -654,7 +662,8 @@ export function EligibilityAssessmentPage() {
                       grantId={GRANT_ID}
                       grantTitle={GRANT_TITLE}
                       onExit={() => setIsAssessing(false)}
-                      onProgramLinked={setProgramLinked}
+                      programId={linkedProgramId ?? ""}
+                      onProgramIdChange={(id) => setLinkedProgramId(id || null)}
                       onReportGenerated={setReportGeneratedAt}
                       onStartApplication={handleStartApplication}
                       onAnchorScroll={() => scrollToSection("eligibility-assessment")}

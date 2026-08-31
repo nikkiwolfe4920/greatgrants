@@ -32,8 +32,10 @@ interface EligibilityWorkflowPanelProps {
   grantId: string;
   grantTitle: string;
   onExit: () => void;
-  /** Fires as soon as a program is selected/named in step 1 (and clears if deselected). */
-  onProgramLinked?: (linked: boolean) => void;
+  /** Program currently linked to this opportunity — owned by the page so the header's program switcher and step 1 stay in sync. Empty string means none linked. */
+  programId: string;
+  /** Fires whenever step 1's selection changes (and with "" if it's ever cleared). */
+  onProgramIdChange: (programId: string) => void;
   /** Fires once the eligibility report has been generated, with a timestamp (or null when retaking). */
   onReportGenerated?: (generatedAt: number | null) => void;
   onStartApplication?: () => void;
@@ -50,13 +52,13 @@ export function EligibilityWorkflowPanel({
   grantId,
   grantTitle,
   onExit,
-  onProgramLinked,
+  programId,
+  onProgramIdChange,
   onReportGenerated,
   onStartApplication,
   onAnchorScroll,
 }: EligibilityWorkflowPanelProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [programId, setProgramId] = useState("");
   const [orgFields, setOrgFields] = useState<OrgDetailField[]>(orgDetailFields);
   const [financialInfo, setFinancialInfo] = useState<FinancialInfoState>(defaultFinancialInfo);
   const [policyInfo, setPolicyInfo] = useState<PolicyInfoState>(defaultPolicyInfo);
@@ -73,10 +75,6 @@ export function EligibilityWorkflowPanel({
   }, []);
 
   const canContinueStep1 = programId !== "";
-
-  useEffect(() => {
-    onProgramLinked?.(canContinueStep1);
-  }, [canContinueStep1, onProgramLinked]);
 
   useEffect(() => {
     if (showReport) {
@@ -155,7 +153,7 @@ export function EligibilityWorkflowPanel({
       {currentStep === 1 && (
         <ProgramAssociationStep
           selectedProgramId={programId}
-          onSelectProgram={setProgramId}
+          onSelectProgram={onProgramIdChange}
           onBack={() => {
             onAnchorScroll?.();
             onExit();
