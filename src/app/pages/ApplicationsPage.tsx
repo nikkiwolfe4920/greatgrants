@@ -17,9 +17,6 @@ import {
   Sparkles,
   ArrowRight,
   CheckCircle2,
-  FolderOpen,
-  Check,
-  Plus
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
@@ -30,11 +27,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/app/components/ui/dropdown-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/app/components/ui/popover";
+import { ProgramLinkControl } from "@/app/components/ProgramLinkControl";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -177,7 +170,8 @@ export function ApplicationsPage() {
   const [movingToActiveAppId, setMovingToActiveAppId] = useState<string | null>(null);
   const [archivingAppId, setArchivingAppId] = useState<string | null>(null);
   const [publishedPrograms, setPublishedPrograms] = useState<Program[]>([]);
-  const [selectedPrograms, setSelectedPrograms] = useState<Record<string, string[]>>({});
+  // Each application can have at most one linked program, keyed by application id.
+  const [linkedPrograms, setLinkedPrograms] = useState<Record<string, string>>({});
   const [activeSection, setActiveSection] = useState<Section | null>(null);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   
@@ -256,18 +250,17 @@ export function ApplicationsPage() {
     };
   }, []);
   
-  // Toggle program selection for an application
-  const toggleProgramSelection = (appId: string, programId: string) => {
-    setSelectedPrograms(prev => {
-      const current = prev[appId] || [];
-      const isSelected = current.includes(programId);
-      
-      return {
-        ...prev,
-        [appId]: isSelected
-          ? current.filter(id => id !== programId)
-          : [...current, programId]
-      };
+  // Link (or switch) the single program associated with an application.
+  const linkProgram = (appId: string, programId: string) => {
+    setLinkedPrograms(prev => ({ ...prev, [appId]: programId }));
+  };
+
+  // Remove an application's linked program.
+  const unlinkProgram = (appId: string) => {
+    setLinkedPrograms(prev => {
+      const next = { ...prev };
+      delete next[appId];
+      return next;
     });
   };
 
@@ -863,89 +856,18 @@ export function ApplicationsPage() {
                       </div>
                       
                       <div className="flex items-center gap-6">
-                        {/* Add Programs Feature */}
-                        {publishedPrograms.length > 0 ? (
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="gap-1.5 border-teal-200 hover:border-teal-300 hover:bg-teal-50"
-                              >
-                                <FolderOpen className="w-4 h-4 text-teal-600" />
-                                <span className="text-gray-700">Add Programs</span>
-                                {selectedPrograms[app.id]?.length > 0 && (
-                                  <Badge className="ml-1 bg-teal-600 hover:bg-teal-700 text-white text-xs px-1.5">
-                                    {selectedPrograms[app.id].length}
-                                  </Badge>
-                                )}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[420px]" align="end">
-                              <div className="space-y-4">
-                                <div>
-                                  <h4 className="font-semibold text-gray-900 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                                    Add Programs to Application
-                                  </h4>
-                                  <p className="text-xs text-gray-600 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                                    Applying programs to your application makes the application process that much more seamless.
-                                  </p>
-                                </div>
-                                
-                                <div className="border-t border-gray-200 pt-3">
-                                  <p className="text-xs font-medium text-gray-700 mb-3 uppercase tracking-wide" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                                    Select Programs
-                                  </p>
-                                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                                    {publishedPrograms.map((program) => {
-                                      const isSelected = selectedPrograms[app.id]?.includes(program.id) || false;
-                                      
-                                      return (
-                                        <div
-                                          key={program.id}
-                                          onClick={() => toggleProgramSelection(app.id, program.id)}
-                                          className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-teal-300 hover:bg-teal-50/50 cursor-pointer transition-all group"
-                                        >
-                                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${isSelected ? 'bg-teal-600 border-teal-600' : 'border-gray-300 group-hover:border-teal-400'}`}>
-                                            {isSelected && <Check className="w-3 h-3 text-white" />}
-                                          </div>
-                                          <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-gray-900 text-sm mb-1 line-clamp-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                                              {program.title}
-                                            </p>
-                                            {program.summary && (
-                                              <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                                                {program.summary}
-                                              </p>
-                                            )}
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                                
-                                {selectedPrograms[app.id]?.length > 0 && (
-                                  <div className="border-t border-gray-200 pt-3">
-                                    <p className="text-xs text-teal-700 bg-teal-50 rounded-lg p-2 border border-teal-200" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                                      ✓ {selectedPrograms[app.id].length} {selectedPrograms[app.id].length === 1 ? 'program' : 'programs'} selected
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5 border-teal-200 hover:border-teal-300 hover:bg-teal-50"
-                            onClick={() => navigate('/project-details')}
-                          >
-                            <Plus className="w-4 h-4 text-teal-600" />
-                            <span className="text-gray-700">Add Program</span>
-                          </Button>
-                        )}
+                        {/* Linked Program */}
+                        <ProgramLinkControl
+                          programs={publishedPrograms.map((program) => ({
+                            id: program.id,
+                            name: program.title,
+                            description: program.summary,
+                          }))}
+                          linkedProgramId={linkedPrograms[app.id] ?? null}
+                          onLink={(programId) => linkProgram(app.id, programId)}
+                          onUnlink={() => unlinkProgram(app.id)}
+                          onCreateProgram={() => navigate('/project-details')}
+                        />
                         
                         {/* Export Button aligned to the right */}
                         <Button
