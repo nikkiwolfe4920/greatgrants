@@ -20,6 +20,10 @@ interface ProgramAssociationStepProps {
  * open its own row to reveal a health-check "Improve your program" alert
  * when the program's profile is incomplete — Figma node 12827:24434 — the
  * "create new program" confirmation modal is Figma node 12827:29300.
+ *
+ * The alert's "Improve your program" CTA routes to /project-details (the
+ * "My Programs" section of the app) so the user can fill in the missing
+ * Program Description, Documents, and Partnerships fields it lists.
  */
 export function ProgramAssociationStep({
   selectedProgramId,
@@ -112,6 +116,18 @@ export function ProgramAssociationStep({
                                   <li key={item}>{item}</li>
                                 ))}
                               </ul>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate("/project-details");
+                                }}
+                                className="mt-3 bg-amber-600 hover:bg-amber-700 text-white gap-1.5"
+                              >
+                                Improve your program
+                                <ArrowRight className="size-3.5" />
+                              </Button>
                             </div>
                           </div>
                         </div>
