@@ -116,6 +116,14 @@ export function EligibilityWorkflowPanel({
 
   const handleCheckEligibility = () => {
     setIsSubmitting(true);
+    // Re-fire once the loader has actually painted in place of the (much
+    // taller) Policy Info form — the initial scroll above is computed
+    // against the pre-swap layout, and a second pass after paint guards
+    // against the browser's own scroll-anchoring adjusting scrollTop out
+    // from under it once that content collapses.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => onAnchorScroll?.());
+    });
     submitTimeoutRef.current = setTimeout(() => {
       setIsSubmitting(false);
       setShowReport(true);
