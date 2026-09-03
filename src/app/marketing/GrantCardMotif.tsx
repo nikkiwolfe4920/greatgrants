@@ -1,4 +1,5 @@
-import { DISPLAY, BODY } from "./design";
+import { LogoMark } from "../components/LogoMark";
+import { BODY } from "./design";
 
 /**
  * The homepage hero's motif: concentric circles with dark "grant cards"
@@ -40,21 +41,21 @@ const CARDS: FloatingCard[] = [
     title: "Research Opportunities in Space and Earth Sciences",
     agency: "National Aeronautics and Space Administration",
     edge: ["#f97066", "#fdb022"],
-    style: { top: "4%", right: "-2%", width: "58%" },
+    style: { top: "3%", right: "-2%", width: "62%" },
   },
   {
     amount: "$500,000",
     title: "Faith-Based Community Development Grants",
     agency: "U.S. Department of Health and Human Services",
     edge: ["#5fe9d0", "#15b79e"],
-    style: { top: "46%", left: "-6%", width: "42%" },
+    style: { top: "45%", left: "-8%", width: "46%" },
   },
   {
     amount: "$200,000",
     title: "Fellowship Programs at Independent Research Institutions",
     agency: "National Endowment for the Humanities",
     edge: ["#b692f6", "#f670c7"],
-    style: { bottom: "2%", right: "8%", width: "47%" },
+    style: { bottom: "1%", right: "6%", width: "54%" },
   },
 ];
 
@@ -91,20 +92,23 @@ function Card({ card }: { card: FloatingCard }) {
         className="absolute inset-y-0 right-0 w-[6px]"
         style={{ backgroundImage: `linear-gradient(180deg, ${card.edge[0]}, ${card.edge[1]})` }}
       />
-      <div className="px-3 py-2.5 pr-4">
+      <div className="px-3.5 py-3 pr-5">
         <p
-          className="text-[13px] leading-[18px] font-normal text-[#f7f7f7]"
+          className="text-[15px] leading-[20px] font-normal text-[#f7f7f7]"
           style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
         >
           {card.amount}
         </p>
         <p
-          className="mt-1.5 line-clamp-2 text-[11px] leading-[15px] font-medium text-[#f7f7f7]"
+          className="mt-2 line-clamp-2 text-[13px] leading-[18px] font-medium text-[#f7f7f7]"
           style={BODY}
         >
           {card.title}
         </p>
-        <p className="mt-2 truncate text-[9px] leading-[12px] text-[#94979c]" style={BODY}>
+        {/* Wraps rather than truncating: at the larger type size the longer
+            agency names no longer fit one line, and a clipped funder name is
+            exactly the detail that makes these read as filler. */}
+        <p className="mt-2.5 line-clamp-2 text-[11px] leading-[15px] text-[#94979c]" style={BODY}>
           {card.agency}
         </p>
       </div>
@@ -120,13 +124,12 @@ export function GrantCardMotif() {
       <div className="absolute inset-[16%] rounded-full bg-[#f9fafb]" />
       <div className="absolute inset-[32%] rounded-full bg-[#f2f4f7]" />
 
-      {/* Centre mark. The homepage puts a portrait here; a monogram keeps the
-          composition without shipping a stock photo of a person who has
-          nothing to do with this product. */}
-      <div className="absolute inset-[38%] flex items-center justify-center rounded-full bg-[#125d56] shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.12)]">
-        <span className="text-[clamp(20px,4.2vw,34px)] leading-none text-white" style={DISPLAY}>
-          GG
-        </span>
+      {/* Centre mark. The homepage puts a portrait here; the brand's own nib
+          symbol keeps the composition without shipping a stock photo of a
+          person who has nothing to do with this product. White circle, lifted
+          off the concentric rings by a drop shadow. */}
+      <div className="absolute inset-[38%] flex items-center justify-center rounded-full bg-white shadow-[0px_12px_16px_-4px_rgba(16,24,40,0.12),0px_4px_6px_-2px_rgba(16,24,40,0.06)]">
+        <LogoMark className="h-[42%] w-auto text-[#101828]" />
       </div>
 
       {GHOSTS.map((style, i) => (
