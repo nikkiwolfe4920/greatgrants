@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import {
+  LayoutDashboard,
   Search,
   FolderOpen,
   Building2,
@@ -27,6 +28,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Logo } from "./Logo";
 import { useReadinessScore } from "../contexts/ReadinessScoreContext";
+import { useCreditUsage } from "@/hooks/useCreditUsage";
 
 interface Section {
   id: string;
@@ -86,6 +88,9 @@ export function SharedSidebar() {
   const [selectedOrg, setSelectedOrg] = useState("UptownArts Coalition");
   const [applicationsExpanded, setApplicationsExpanded] = useState(false);
   const { orgProfileItemsRemaining } = useReadinessScore();
+  // Credits are shared with the Dashboard's Plan & credits card — one record,
+  // rendered in two places, so the numbers can never disagree.
+  const { applications: applicationCredits, resetDate } = useCreditUsage();
   const [expandedApp, setExpandedApp] = useState<string>("1");
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [isLoadingOrganization, setIsLoadingOrganization] = useState(false);
@@ -190,6 +195,28 @@ export function SharedSidebar() {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-3 flex flex-col min-h-0">
         <ul className="space-y-0.5 flex-1">
+
+          {/* Dashboard — the app's home */}
+          <li>
+            <button
+              onClick={() => navigate("/")}
+              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
+                isActive("/")
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+              style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isActive("/") ? 600 : 400, fontSize: '14px' }}
+              aria-current={isActive("/") ? "page" : undefined}
+            >
+              <LayoutDashboard className="w-4 h-4 shrink-0" />
+              <span className="flex-1 truncate">Dashboard</span>
+            </button>
+          </li>
+
+          {/* Divider */}
+          <li className="py-1.5">
+            <div className="border-t border-gray-100" />
+          </li>
 
           {/* 1. Organization Profile */}
           {isOrgProfileComplete ? (
@@ -427,23 +454,29 @@ export function SharedSidebar() {
           <div className="flex items-center gap-1.5 mb-2">
             <FileText className="w-3.5 h-3.5 text-[#101828] shrink-0" />
             <span className="text-[12px] font-semibold text-[#101828] leading-4 truncate" style={{ fontFamily: 'Cabin, sans-serif' }}>
-              3 Applications Generated
+              {applicationCredits.used} Application{applicationCredits.used === 1 ? '' : 's'} Generated
             </span>
           </div>
           <div className="w-full h-1.5 rounded-full bg-[#fef7c3] mb-2">
-            <div className="h-1.5 rounded-full bg-[#ca8504]" style={{ width: '31%' }} />
+            <div className="h-1.5 rounded-full bg-[#ca8504] transition-all duration-500" style={{ width: `${applicationCredits.percentUsed}%` }} />
           </div>
           <p className="text-[12px] font-semibold text-[#181d27] leading-4 mb-2" style={{ fontFamily: 'Cabin, sans-serif' }}>
-            0 remaining credits
+            {applicationCredits.isUnlimited
+              ? 'Unlimited credits'
+              : `${applicationCredits.remaining} remaining credit${applicationCredits.remaining === 1 ? '' : 's'}`}
           </p>
           <div className="border-t border-[#feee95] pt-2 flex items-center justify-between">
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3 text-[#4a5565] shrink-0" />
               <span className="text-[12px] text-[#4a5565] leading-4" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                Resets May 31st
+                Resets {resetDate}
               </span>
             </div>
-            <button className="text-[12px] font-semibold text-[#00786f] leading-4 hover:underline shrink-0" style={{ fontFamily: 'Cabin, sans-serif' }}>
+            <button
+              onClick={() => navigate("/settings")}
+              className="text-[12px] font-semibold text-[#00786f] leading-4 hover:underline shrink-0"
+              style={{ fontFamily: 'Cabin, sans-serif' }}
+            >
               Manage Plan
             </button>
           </div>

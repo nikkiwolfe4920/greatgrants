@@ -90,8 +90,10 @@ const PRIORITY_META: Record<
   },
 };
 
-// Mock AI coaching feedback, keyed by section. Only Mission & Vision (s1)
-// is wired up today; add more entries here to light up the module elsewhere.
+// Mock AI coaching feedback, keyed by section. Mission & Vision (s1) and
+// Narrative (s6) are wired up today; add more entries here to light up the
+// module elsewhere. Narrative is the section the Dashboard's coaching
+// notification links to, so it needs content for that link to pay off.
 const SUGGESTIONS_BY_SECTION: Record<string, Suggestion[]> = {
   s1: [
     {
@@ -142,6 +144,92 @@ const SUGGESTIONS_BY_SECTION: Record<string, Suggestion[]> = {
       title: "Tighten the second paragraph",
       description:
         "The vision paragraph runs long — trimming the repeated phrasing around \"financial barriers\" will improve readability.",
+    },
+  ],
+  s6: [
+    {
+      id: "nar-h1",
+      priority: "high",
+      title: "State the outcomes you'll be measured on",
+      description:
+        "The NOFO requires the narrative to name the outcomes this project will be evaluated against. The current draft describes activities but never commits to a result.",
+    },
+    {
+      id: "nar-h2",
+      priority: "high",
+      title: "Address the sustainability requirement",
+      description:
+        "Section IV asks how the program continues after the award period ends. There is no sustainability plan anywhere in the narrative.",
+    },
+    {
+      id: "nar-m1",
+      priority: "medium",
+      title: "Quantify the need you're responding to",
+      description:
+        "The need statement is descriptive but has no numbers. Reviewers score need statements on evidence, and a single local statistic would carry this paragraph.",
+    },
+    {
+      id: "nar-m2",
+      priority: "medium",
+      title: "Connect the narrative to your budget",
+      description:
+        "Three activities described here don't appear as line items in the Budget section. Reviewers cross-check the two, and mismatches read as unplanned.",
+    },
+    {
+      id: "nar-m3",
+      priority: "medium",
+      title: "Name who is accountable for delivery",
+      description:
+        "The narrative describes what will happen but not who does it. Naming roles from your Organization Profile makes the plan feel staffed rather than aspirational.",
+    },
+    {
+      id: "nar-m4",
+      priority: "medium",
+      title: "Use the funder's own terminology",
+      description:
+        "The NOFO says \"direct service hours\" where this draft says \"program time\". Matching the funder's language makes the response easier to score against the rubric.",
+    },
+    {
+      id: "nar-r1",
+      priority: "recommended",
+      title: "Open with the person, not the program",
+      description:
+        "A one-sentence account of a specific participant gives reviewers something concrete before the structural detail arrives.",
+    },
+    {
+      id: "nar-r2",
+      priority: "recommended",
+      title: "Break the third paragraph in two",
+      description:
+        "It currently carries both the implementation plan and the evaluation approach. Separating them makes each easier to find and score.",
+    },
+    {
+      id: "nar-r3",
+      priority: "recommended",
+      title: "Reference your past performance",
+      description:
+        "You've run a comparable program before. One sentence on that track record strengthens the case without lengthening the narrative much.",
+    },
+    {
+      id: "nar-r4",
+      priority: "recommended",
+      title: "Trim the repeated framing",
+      description:
+        "\"Underserved communities\" appears five times in four paragraphs. Varying it keeps the prose from reading as boilerplate.",
+    },
+    {
+      id: "nar-r5",
+      priority: "recommended",
+      title: "Add a timeline reference",
+      description:
+        "Pointing to the milestones already in Program Details helps reviewers see the narrative and the work plan as one document.",
+    },
+    {
+      id: "nar-r6",
+      priority: "recommended",
+      title: "Close on the outcome, not the ask",
+      description:
+        "The final paragraph ends on the funding request. Ending on what changes for participants leaves a stronger last impression.",
     },
   ],
 };
