@@ -10,6 +10,7 @@ import { OrganizationPage } from "./pages/OrganizationPage";
 import { OrganizationsPage } from "./pages/OrganizationsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SignInPage } from "./pages/SignInPage";
+import { MarketingPage } from "./pages/MarketingPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { OnboardingPage1 } from "./pages/OnboardingPage1";
 import { OnboardingPage2 } from "./pages/OnboardingPage2";
@@ -45,6 +46,12 @@ function LayoutWithProvider() {
 }
 
 const routes = [
+  {
+    // Public, shareable demo walkthrough — deliberately outside AppLayout so
+    // it renders its own marketing shell rather than the app sidebar.
+    path: "/marketing",
+    element: <MarketingPage />,
+  },
   {
     path: "/signin",
     element: <SignInPage />,
