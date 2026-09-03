@@ -9,11 +9,10 @@ import {
   CreditCard,
   Eye,
   Lock,
+  Maximize2,
   MonitorPlay,
   PhoneOff,
-  Maximize2,
   Play,
-  Sparkles,
   UserPlus,
 } from "lucide-react";
 import { Logo } from "../components/Logo";
@@ -23,11 +22,32 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "../components/ui/accordion";
+import { Dialog, DialogContent, DialogTitle } from "../components/ui/dialog";
+import { GrantCardMotif } from "../marketing/GrantCardMotif";
 import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "../components/ui/dialog";
+  BODY,
+  BODY_LG,
+  BODY_MD,
+  BODY_SM,
+  BTN_ON_DARK,
+  BTN_PRIMARY,
+  BTN_SECONDARY,
+  CONTAINER,
+  DARK_BAND,
+  DISPLAY,
+  EYEBROW,
+  H1,
+  H2,
+  H3_BODY,
+  H4_DISPLAY,
+  ICON_TILE,
+  IMAGE_CORNERS,
+  IMAGE_CORNERS_SM,
+  LEAD,
+  MICROCOPY,
+  NAV_LINK,
+  NAV_LINK_TEAL,
+} from "../marketing/design";
 import { useDemoMode } from "@/app/demo/useDemoMode";
 import {
   DEMO_PHASES,
@@ -40,45 +60,54 @@ import {
 /**
  * /marketing — the shareable interactive demo walkthrough.
  *
- * The strategy, because the layout only makes sense alongside it:
+ * ── Strategy ──────────────────────────────────────────────────────────────
  *
  * The visitor arriving here is a grant seeker who has been sold to before.
  * Their objection is not "I don't understand what this does", it is "I don't
  * believe it works". A feature list argues with that; a product they can
  * touch, right now, without a form, doesn't have to. So this page is not a
- * pitch with a demo attached — it is a *doorway into the real application*,
- * with just enough scaffolding around it that a stranger can find their way.
+ * pitch with a demo attached — it is a doorway into the real application,
+ * with just enough scaffolding that a stranger can find their way.
  *
  * Four moves, in order:
- *
- *   1. **Remove the cost of looking.** No account, no card, no call, and the
- *      tour's length is stated up front. Every reason to leave is answered
- *      before the first CTA.
- *   2. **Walk the real product, in the product's own order.** The seven stops
- *      follow the canonical Great Grants Process, so the demo teaches the
- *      workflow rather than a tour of screens. Each stop names the doubt a
+ *   1. Remove the cost of looking. No account, no card, no call, and the
+ *      tour's length stated up front.
+ *   2. Walk the real product in the product's own order. The seven stops
+ *      follow the canonical Great Grants Process, and each names the doubt a
  *      skeptic holds at that exact point and answers it on the spot — the
- *      objection handling is distributed through the tour instead of dumped
+ *      objection handling is distributed through the tour rather than dumped
  *      in an FAQ nobody reads.
- *   3. **Admit what the demo cannot do.** The honest-limits section is the
- *      highest-converting block on the page precisely because it doesn't sell:
- *      every limit named is a thing that requires their own account, so
- *      candor and the upsell point the same direction.
- *   4. **Close where the interest is.** Pricing leads with Free, and the
- *      create-account CTA is repeated in the nav, at every stop, on the demo
- *      banner inside the app, and at the close — so the decision is never
- *      more than one click from wherever conviction lands.
+ *   3. Admit what the demo cannot do. Every limit named requires their own
+ *      account, so candour and the upsell point the same direction.
+ *   4. Close where the interest is. Pricing leads with Free, and the
+ *      create-account CTA repeats in the nav, on every stop, on the in-app
+ *      demo banner, and at the close.
  *
- * Visual language is the marketing surface's, matched to the pricing page
- * (SubscribeEntryPage): Lustria for display headlines, Cabin for everything
- * else, teal-600 for every call to action, Untitled UI grays, 12px cards on
- * white. See DESIGN.md.
+ * ── Visual language ───────────────────────────────────────────────────────
+ *
+ * Every colour, type size, line height, radius, letter-spacing and section
+ * rhythm on this page comes from the greatgrants.ai homepage in Figma
+ * (AJQoDJAJZL2ItawgAfLYh3, node 14075:33275), read through the Figma MCP
+ * server and captured in src/app/marketing/design.ts. Notable pieces of that
+ * language, because they are the easy ones to lose in a later edit:
+ *
+ *   • Lustria regular for display, Cabin for everything else. Headings
+ *     #101828, body #475467, microcopy #94979c — none of which are the
+ *     application's greys.
+ *   • Display type runs at a 1.2 line-height ratio: 48/57.6 for H1, 36/43.2
+ *     for H2. Body runs at 1.5.
+ *   • 0.5px letter-spacing on every short run of Cabin — nav links, button
+ *     labels, eyebrows, microcopy — and none on long-form copy.
+ *   • The primary button is a #107569 fill inside a #0e9384 hairline, not a
+ *     flat teal block.
+ *   • Imagery is cornered on the diagonal: 64px on bottom-left and top-right,
+ *     square on the other two. It is the homepage's signature and it is
+ *     applied here to every product screenshot.
+ *   • Sections alternate white and #f9fafb with 96px of top padding, inside a
+ *     1200px container with 32px gutters.
  */
 
-const CABIN = { fontFamily: "Cabin, sans-serif" } as const;
-const LUSTRIA = { fontFamily: "Lustria, serif" } as const;
-
-/** The cost of looking, stated before we ask for anything. */
+/** The cost of looking, answered before we ask for a click. */
 const NO_COST_PROOFS = [
   { icon: UserPlus, label: "No account" },
   { icon: CreditCard, label: "No credit card" },
@@ -87,22 +116,22 @@ const NO_COST_PROOFS = [
 ];
 
 /** Why we lead with the product instead of a pitch. */
-const TRUST_CARDS = [
+const TRUST_ITEMS = [
   {
     icon: MonitorPlay,
-    title: "This is the product, not a video",
+    title: "This Is The Product, Not A Video",
     body:
       "Every screen in this walkthrough is the live application. You'll click the real sidebar, open real grant notices, and read the real coaching output — not a recorded click-through or a series of screenshots.",
   },
   {
     icon: Eye,
-    title: "The data belongs to a sample nonprofit",
+    title: "The Data Belongs To A Sample Nonprofit",
     body:
       "So you can see a populated workspace rather than an empty one. The organization, its programs and its applications are fictional; the funding opportunities you'll read are real published notices.",
   },
   {
     icon: Lock,
-    title: "Nothing you do here is saved",
+    title: "Nothing You Do Here Is Saved",
     body:
       "You can type, toggle, filter and generate freely. There's no account behind the demo, nothing is submitted to a funder, and closing the tab ends it. We don't ask for your email to let you in.",
   },
@@ -132,54 +161,41 @@ const DEMO_LIMITS = [
   },
 ];
 
+/**
+ * Pricing, in the homepage's own shape: two cards, the AI tier marked with
+ * the AI purple accent and a pill on its top border rather than teal.
+ */
 const PRICING_TIERS = [
   {
-    name: "Free",
+    name: "Unlimited Search & Discovery",
     price: "Free",
-    priceSuffix: "",
+    priceNote: "",
     forWho: "For organizations beginning their grant search and building readiness.",
     features: [
-      "5 free searches per month",
-      "5 saved grants",
-      "Readiness coaching",
+      "Unlimited Search",
+      "All Federal & State Grants",
+      "Federal Grant Readiness Coaching",
+      "Weekly Email Alerts",
+      "Unlimited Saved Grants",
       "Up to 5 seats",
     ],
-    cta: "Create an account",
-    recommended: false,
-    disabled: false,
+    featured: false,
+    badge: "",
   },
   {
-    name: "Unlimited Search & Discovery",
-    price: "$49.99",
-    priceSuffix: "/mo",
-    forWho: "For teams actively searching, saving, and prioritizing grant opportunities.",
-    features: [
-      "Everything in Free",
-      "Unlimited grant searches",
-      "Unlimited saved grants",
-      "Unlimited seats",
-      "AI Grant Writer included for a limited time",
-    ],
-    cta: "Create an account",
-    recommended: true,
-    disabled: false,
-  },
-  {
-    name: "AI Grant Writer",
+    name: "AI-Grant Writer Gold",
     price: "Coming Soon",
-    priceSuffix: "",
-    forWho:
-      "For organizations ready to generate and manage grant applications with AI-powered writing support.",
+    priceNote: "Up to 10 Applications Generated per month",
+    forWho: "Everything in Unlimited Search \u0026 Discovery\u00a0+",
     features: [
-      "Everything in Unlimited Search & Discovery",
-      "Up to 10 active applications",
-      "AI-assisted grant drafting",
-      "Application workspace",
-      "Submission-readiness support",
+      "10 AI-generated drafts per month",
+      "Auto-drafted grant responses in minutes",
+      "NOFO requirement analysis",
+      "Review, edit, and collaborate",
+      "AI-Application Coaching",
     ],
-    cta: "Coming Soon",
-    recommended: false,
-    disabled: true,
+    featured: true,
+    badge: "Free For A Limited Time",
   },
 ];
 
@@ -208,67 +224,45 @@ const FAQS = [
     q: "We already have a grant writer. Why would we need this?",
     a: "Most of what a grant writer's time goes to isn't writing — it's screening opportunities, chasing eligibility rules and re-typing the same forty organizational facts. This hands those hours back so the writing gets the attention it deserves.",
   },
-  {
-    q: "Can someone walk us through it instead?",
-    a: "Yes. A free 15-minute evaluation call covers grant fit and application strategy for your specific organization. Professional services start at $199 per application if you'd rather have help on a submission.",
-  },
 ];
 
+/* ── Imagery ───────────────────────────────────────────────────────────── */
+
 /**
- * A product screenshot in a browser-chrome frame.
- *
- * The chrome does real work rather than decoration: it tells a visitor at a
- * glance that they are looking at an application rather than an illustration,
- * and it gives every screenshot the same silhouette so a column of them reads
- * as one set. Framing matches the way the app frames photography — 12px
- * radius, hairline gray border, small shadow (see the grant overview image in
- * GrantDetailPage).
+ * A product screenshot under the homepage's corner treatment: radius-5xl on
+ * the bottom-left and top-right, square on the other two corners. The
+ * clipping container carries the same radii as the image, exactly as the
+ * design does it, so the crop and the frame agree.
  */
-function ScreenFrame({
+function ScreenImage({
   src,
   alt,
   onExpand,
   priority = false,
+  size = "sm",
 }: {
   src: string;
   alt: string;
   onExpand?: () => void;
   priority?: boolean;
+  size?: "sm" | "lg";
 }) {
-  const frame = (
-    <>
-      <div className="flex items-center gap-1.5 border-b border-gray-200 bg-gray-50 px-3 py-2">
-        <span className="size-2 rounded-full bg-gray-300" />
-        <span className="size-2 rounded-full bg-gray-300" />
-        <span className="size-2 rounded-full bg-gray-300" />
-        <span className="ml-2 truncate text-[11px] font-medium text-gray-400">
-          app.greatgrants.ai
-        </span>
-        {onExpand && (
-          <span className="ml-auto flex items-center gap-1 text-[11px] font-semibold text-gray-400 transition-colors group-hover/frame:text-teal-700">
-            <Maximize2 size={11} strokeWidth={2.5} />
-            Enlarge
-          </span>
-        )}
-      </div>
-      <img
-        src={src}
-        alt={alt}
-        width={1600}
-        height={1000}
-        loading={priority ? "eager" : "lazy"}
-        decoding="async"
-        className="block w-full"
-      />
-    </>
+  const corners = size === "lg" ? IMAGE_CORNERS : IMAGE_CORNERS_SM;
+
+  const image = (
+    <img
+      src={src}
+      alt={alt}
+      width={1600}
+      height={1000}
+      loading={priority ? "eager" : "lazy"}
+      decoding="async"
+      className={`block w-full ${corners}`}
+    />
   );
 
   if (!onExpand) {
-    return (
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        {frame}
-      </div>
-    );
+    return <div className={`overflow-hidden bg-[#f9fafb] ${corners}`}>{image}</div>;
   }
 
   return (
@@ -276,12 +270,21 @@ function ScreenFrame({
       type="button"
       onClick={onExpand}
       aria-label={`Enlarge screenshot: ${alt}`}
-      className="group/frame block w-full cursor-zoom-in overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
+      className={`group/frame relative block w-full cursor-zoom-in overflow-hidden bg-[#f9fafb] transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e9384] focus-visible:ring-offset-2 ${corners}`}
     >
-      {frame}
+      {image}
+      <span
+        className="pointer-events-none absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-[8px] bg-white/95 px-2.5 py-1.5 text-[12px] leading-[18px] font-semibold tracking-[0.5px] text-[#475467] opacity-0 shadow-[0px_1px_2px_rgba(16,24,40,0.1)] transition-opacity group-hover/frame:opacity-100"
+        style={BODY}
+      >
+        <Maximize2 size={12} strokeWidth={2.5} />
+        Enlarge
+      </span>
     </button>
   );
 }
+
+/* ── Tour ──────────────────────────────────────────────────────────────── */
 
 function TourStopCard({
   stop,
@@ -302,58 +305,44 @@ function TourStopCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.35 }}
-      className="flex flex-col rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+      className="flex flex-col"
+      style={BODY}
     >
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 text-teal-700">
-            <Icon size={18} strokeWidth={2} />
-          </span>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500" style={CABIN}>
+      {/* The screen itself, before any prose about it. */}
+      <ScreenImage src={stop.image} alt={stop.imageAlt} onExpand={() => onExpand(stop)} />
+
+      <div className="mt-6 flex items-start gap-4">
+        <div className={ICON_TILE}>
+          <Icon size={24} strokeWidth={1.75} className="text-[#475467]" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-3">
+            <p className="text-[12px] leading-[18px] font-semibold uppercase tracking-[0.5px] text-[#94979c]">
               Stop {stop.order} of {DEMO_STOPS.length}
             </p>
-            <h3 className="text-lg text-gray-900" style={LUSTRIA}>
-              {stop.title}
-            </h3>
+            {visited && (
+              <span className="inline-flex items-center gap-1 text-[12px] leading-[18px] font-semibold tracking-[0.5px] text-[#0e9384]">
+                <CircleCheck size={12} strokeWidth={2.5} />
+                Seen
+              </span>
+            )}
           </div>
+          <h3 className={`mt-1 ${H4_DISPLAY}`} style={DISPLAY}>
+            {stop.title}
+          </h3>
+          <p className={`mt-2 ${BODY_MD}`}>{stop.promise}</p>
         </div>
-
-        {visited && (
-          <span
-            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-700"
-            style={CABIN}
-          >
-            <CircleCheck size={12} strokeWidth={2.5} />
-            Seen
-          </span>
-        )}
       </div>
 
-      {/* The screen itself, before any prose about it. */}
-      <div className="mb-5">
-        <ScreenFrame
-          src={stop.image}
-          alt={stop.imageAlt}
-          onExpand={() => onExpand(stop)}
-        />
-      </div>
-
-      <p className="text-sm text-gray-600" style={CABIN}>
-        {stop.promise}
-      </p>
-
-      <div className="mt-5">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500" style={CABIN}>
+      <div className="mt-6">
+        <p className="mb-3 text-[12px] leading-[18px] font-semibold uppercase tracking-[0.5px] text-[#94979c]">
           What to look for
         </p>
-        <ul className="space-y-2">
+        <ul className="space-y-2.5">
           {stop.whatToLookFor.map((tip) => (
-            <li key={tip} className="flex items-start gap-2.5">
-              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-teal-600" />
-              <span className="text-sm text-gray-600" style={CABIN}>
-                {tip}
-              </span>
+            <li key={tip} className="flex items-start gap-3">
+              <Check size={16} strokeWidth={2.5} className="mt-1 shrink-0 text-[#0e9384]" />
+              <span className={BODY_MD}>{tip}</span>
             </li>
           ))}
         </ul>
@@ -361,117 +350,63 @@ function TourStopCard({
 
       {/* The doubt a skeptic holds at exactly this point in the arc, answered
           here rather than deferred to an FAQ. */}
-      <div className="mt-5 mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <p className="text-sm font-semibold text-gray-900" style={CABIN}>
+      <div className="mt-6 border-l-2 border-[#0e9384] pl-4">
+        <p className="text-[16px] leading-[24px] font-semibold text-[#101828]">
           “{stop.objection}”
         </p>
-        <p className="mt-1.5 text-sm text-gray-600" style={CABIN}>
-          {stop.answer}
-        </p>
+        <p className={`mt-1.5 ${BODY_MD}`}>{stop.answer}</p>
       </div>
 
-      <button
-        onClick={() => onOpen(stop)}
-        className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-lg border border-teal-600 bg-white px-4 py-2.5 pt-2.5 text-sm font-semibold text-teal-700 transition-colors hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-        style={CABIN}
-      >
-        Open this screen
-        <ArrowRight size={16} strokeWidth={2} />
-      </button>
+      <div className="mt-auto pt-7">
+        <button onClick={() => onOpen(stop)} className={BTN_SECONDARY} style={BODY}>
+          Open this screen
+          <ArrowRight size={16} strokeWidth={2} />
+        </button>
+      </div>
     </motion.article>
   );
 }
 
 /**
- * The whole walkthrough, listed in the hero.
+ * The whole walkthrough as a jump strip.
  *
- * A stranger deciding whether to click "start" is really asking how long this
- * will take and whether they'll be trapped in it. Showing all seven stops up
- * front answers both — the tour is visibly finite, it's ordered, and any stop
- * can be opened directly, so nobody has to sit through screens they don't
- * care about to reach the one they do.
+ * A stranger deciding whether to start is really asking how long this will
+ * take and whether they'll be trapped in it. Listing all seven stops answers
+ * both — the tour is visibly finite, it's ordered, and any stop opens
+ * directly, so nobody sits through screens they don't care about.
  */
-function TourManifest({
+function TourJumpStrip({
   visitedStopIds,
   onOpen,
-  onStart,
-  startLabel,
 }: {
   visitedStopIds: string[];
   onOpen: (stop: DemoStop) => void;
-  onStart: () => void;
-  startLabel: string;
 }) {
   return (
-    <motion.aside
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, delay: 0.12 }}
-      className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg"
-    >
-      <div className="mb-5 flex items-baseline justify-between gap-3 border-b border-gray-100 pb-4">
-        <p className="text-lg text-gray-900" style={LUSTRIA}>
-          The walkthrough
-        </p>
-        <p className="shrink-0 text-xs font-semibold uppercase tracking-wide text-gray-500">
-          {DEMO_STOPS.length} screens · ~6 min
-        </p>
-      </div>
-
-      <div className="space-y-5">
-        {DEMO_PHASES.map((phase) => (
-          <div key={phase.id}>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-teal-700">
-              {phase.label}
-            </p>
-            <ul className="space-y-1">
-              {stopsForPhase(phase.id).map((stop) => {
-                const Icon = stop.icon;
-                const seen = visitedStopIds.includes(stop.id);
-                return (
-                  <li key={stop.id}>
-                    <button
-                      onClick={() => onOpen(stop)}
-                      className="group flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1"
-                    >
-                      <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-200 bg-gray-50 text-gray-500 transition-colors group-hover:border-teal-200 group-hover:bg-white group-hover:text-teal-700">
-                        <Icon size={14} strokeWidth={2} />
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800">
-                        {stop.order}. {stop.navLabel}
-                      </span>
-                      {seen ? (
-                        <CircleCheck
-                          size={14}
-                          strokeWidth={2.5}
-                          className="shrink-0 text-teal-600"
-                        />
-                      ) : (
-                        <ArrowRight
-                          size={14}
-                          strokeWidth={2}
-                          className="shrink-0 text-gray-300 transition-colors group-hover:text-teal-600"
-                        />
-                      )}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
-      </div>
-
-      <button
-        onClick={onStart}
-        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-      >
-        <Play size={15} strokeWidth={2.5} />
-        {startLabel}
-      </button>
-    </motion.aside>
+    <div className="flex flex-wrap items-center gap-2" style={BODY}>
+      {DEMO_STOPS.map((stop) => {
+        const Icon = stop.icon;
+        const seen = visitedStopIds.includes(stop.id);
+        return (
+          <button
+            key={stop.id}
+            onClick={() => onOpen(stop)}
+            className="group inline-flex items-center gap-2 rounded-[8px] border border-[#d0d5dd] bg-white px-3 py-2 text-[14px] leading-[20px] font-normal tracking-[0.5px] text-[#475467] shadow-[0px_1px_1px_rgba(16,24,40,0.05)] transition-colors hover:border-[#0e9384] hover:text-[#101828] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e9384] focus-visible:ring-offset-2"
+          >
+            {seen ? (
+              <CircleCheck size={14} strokeWidth={2.5} className="text-[#0e9384]" />
+            ) : (
+              <Icon size={14} strokeWidth={2} className="text-[#94979c]" />
+            )}
+            {stop.order}. {stop.navLabel}
+          </button>
+        );
+      })}
+    </div>
   );
 }
+
+/* ── Page ──────────────────────────────────────────────────────────────── */
 
 export function MarketingPage() {
   const navigate = useNavigate();
@@ -479,14 +414,14 @@ export function MarketingPage() {
   const [expandedStop, setExpandedStop] = useState<DemoStop | null>(null);
 
   /**
-   * Where a returning visitor should pick up: the first stop they haven't
-   * opened yet. Someone who explored three screens and came back should not
-   * be sent to the beginning again.
+   * Where a returning visitor picks up: the first stop they haven't opened.
+   * Someone who explored three screens and came back should not be sent to
+   * the beginning again.
    */
-  const resumeStop = useMemo(() => {
-    const unseen = DEMO_STOPS.find((stop) => !visitedStopIds.includes(stop.id));
-    return unseen ?? null;
-  }, [visitedStopIds]);
+  const resumeStop = useMemo(
+    () => DEMO_STOPS.find((stop) => !visitedStopIds.includes(stop.id)) ?? null,
+    [visitedStopIds],
+  );
 
   const hasStarted = visitedCount > 0;
 
@@ -495,130 +430,117 @@ export function MarketingPage() {
     navigate(stop.path);
   };
 
-  const startTour = () => {
-    const target = resumeStop ?? FIRST_STOP;
-    openStop(target);
-  };
-
-  // A returning visitor is offered their place back rather than the top.
-  const startLabel =
-    hasStarted && resumeStop
-      ? `Resume at ${resumeStop.navLabel}`
-      : "Start the guided walkthrough";
-
+  const startTour = () => openStop(resumeStop ?? FIRST_STOP);
   const exploreFreely = () => {
     startDemo();
     navigate("/");
   };
-
   const createAccount = () => navigate("/subscribe/create-account");
 
+  const startLabel =
+    hasStarted && resumeStop ? `Resume At ${resumeStop.navLabel}` : "Start The Guided Walkthrough";
+
   return (
-    <div className="min-h-screen bg-white" style={CABIN}>
+    <div className="min-h-screen bg-white" style={BODY}>
       {/* ── Nav ─────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-          <Logo />
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              onClick={() => navigate("/signin")}
-              className="hidden rounded-lg px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 sm:inline-flex"
-            >
-              Sign in
+      <header
+        className="sticky top-0 z-50 h-[80px] backdrop-blur"
+        style={{
+          backgroundImage:
+            "linear-gradient(180deg, rgb(255,255,255) 0%, rgba(255,255,255,0.85) 100%)",
+        }}
+      >
+        <div className={`${CONTAINER} flex h-full items-center justify-between`}>
+          <button
+            onClick={() => navigate("/marketing")}
+            aria-label="Great Grants home"
+            className="min-w-0 shrink rounded-[8px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e9384]"
+          >
+            <Logo />
+          </button>
+
+          <nav className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <button onClick={createAccount} className={`hidden md:inline-flex ${NAV_LINK_TEAL}`}>
+              Sign Up
             </button>
-            <button
-              onClick={createAccount}
-              className="rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-            >
-              Create free account
+            <button onClick={() => navigate("/signin")} className={`hidden md:inline-flex ${NAV_LINK}`}>
+              Login
             </button>
-          </div>
+            {/* The full label is the design's; below the sm breakpoint it and
+                the logo cannot both fit a 390px viewport, so it shortens
+                rather than colliding. */}
+            <button onClick={createAccount} className={BTN_PRIMARY}>
+              <span className="hidden sm:inline">Create Your Free Account</span>
+              <span className="sm:hidden">Sign Up Free</span>
+            </button>
+          </nav>
         </div>
       </header>
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
-      <section className="border-b border-gray-100 bg-gradient-to-b from-teal-50/60 to-white">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-16">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45 }}
-          >
-            <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-teal-200 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-teal-700">
-              <Sparkles size={13} strokeWidth={2.5} />
-              Interactive demo
-            </span>
-
-            <h1
-              className="text-4xl leading-tight text-gray-900 sm:text-5xl"
-              style={LUSTRIA}
+      <section className="pb-[64px] pt-[48px] sm:pb-[96px] sm:pt-[64px]">
+        <div className={CONTAINER}>
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[minmax(0,631px)_minmax(0,505px)] lg:gap-16">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45 }}
             >
-              See the whole platform before you give us anything.
-            </h1>
+              <p className={EYEBROW}>Interactive Demo</p>
 
-            <p className="mt-5 max-w-2xl text-lg text-gray-600">
-              Most grant software asks you to book a call and take their word for it. Instead,
-              here is the actual product, loaded with a sample nonprofit's workspace. Walk the
-              seven screens that take an organization from “we need funding” to a submitted
-              application — then decide.
-            </p>
+              <h1 className={`mt-3 ${H1}`} style={DISPLAY}>
+                See the whole platform before you give us anything
+              </h1>
 
-            {/* Cost of looking, answered before we ask for a click. */}
-            <ul className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
-              {NO_COST_PROOFS.map(({ icon: Icon, label }) => (
-                <li key={label} className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <Icon size={15} strokeWidth={2} className="text-teal-600" />
-                  {label}
-                </li>
-              ))}
-            </ul>
+              <div className="h-6" />
 
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <button
-                onClick={startTour}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-teal-600 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-              >
-                <Play size={17} strokeWidth={2.5} />
-                {startLabel}
-              </button>
-              <button
-                onClick={exploreFreely}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-base font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-              >
-                Skip the tour, explore freely
-                <ArrowRight size={17} strokeWidth={2} />
-              </button>
-            </div>
-
-            {hasStarted && (
-              <p className="mt-4 text-sm text-gray-500">
-                You've seen {visitedCount} of {totalStops} screens so far.
+              <p className={`max-w-[560px] ${LEAD}`}>
+                Most grant software asks you to book a call and take their word for it. Instead,
+                here is the actual product, loaded with a sample nonprofit's workspace. Walk the
+                seven screens that take an organization from “we need funding” to a submitted
+                application — then decide.
               </p>
-            )}
 
-            {/* The one thing a visitor needs to know at the instant they
-                click, placed where they're already looking: the workspace is
-                a stand-in, the funding notices are not. Left unsaid, a
-                populated workspace reads as either fake or as somebody
-                else's private data — and both cost the click. */}
-            <div className="mt-8 flex items-start gap-3 rounded-xl border border-gray-200 bg-white/70 p-4">
-              <Eye size={16} strokeWidth={2} className="mt-0.5 shrink-0 text-teal-600" />
-              <p className="text-sm text-gray-600">
-                <span className="font-semibold text-gray-900">Before you click:</span> the
-                organization inside the demo is fictional, so you'll see a workspace already in
-                motion instead of an empty one. The funding opportunities in it are real
-                published notices.
+              <div className="h-8 sm:h-12" />
+
+              <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+                <button onClick={startTour} className={BTN_PRIMARY}>
+                  <Play size={16} strokeWidth={2.5} />
+                  {startLabel}
+                </button>
+                <button onClick={exploreFreely} className={BTN_SECONDARY}>
+                  Explore On My Own
+                  <ArrowRight size={16} strokeWidth={2} />
+                </button>
+              </div>
+
+              <p className={`mt-3 ${MICROCOPY}`}>
+                {hasStarted
+                  ? `${visitedCount} of ${totalStops} screens seen · No Credit Card Required`
+                  : "No Account, No Credit Card Required"}
               </p>
-            </div>
-          </motion.div>
 
-          <TourManifest
-            visitedStopIds={visitedStopIds}
-            onOpen={openStop}
-            onStart={startTour}
-            startLabel={startLabel}
-          />
+              <ul className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+                {NO_COST_PROOFS.map(({ icon: Icon, label }) => (
+                  <li
+                    key={label}
+                    className="flex items-center gap-2 text-[14px] leading-[20px] font-normal tracking-[0.5px] text-[#475467]"
+                  >
+                    <Icon size={15} strokeWidth={2} className="text-[#0e9384]" />
+                    {label}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.55, delay: 0.12 }}
+              className="hidden lg:block"
+            >
+              <GrantCardMotif />
+            </motion.div>
           </div>
 
           {/* The product itself, at the top of the page. A demo walkthrough
@@ -628,15 +550,16 @@ export function MarketingPage() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.2 }}
-            className="mt-14"
+            className="mt-16 sm:mt-20"
           >
-            <ScreenFrame
+            <ScreenImage
               src={FIRST_STOP.image}
               alt={FIRST_STOP.imageAlt}
+              size="lg"
               priority
               onExpand={() => setExpandedStop(FIRST_STOP)}
             />
-            <p className="mt-3 text-center text-xs text-gray-500">
+            <p className={`mt-4 text-center ${BODY_SM}`}>
               The dashboard, exactly as the demo opens it. Every screenshot on this page is a
               capture of the running application.
             </p>
@@ -644,97 +567,100 @@ export function MarketingPage() {
         </div>
       </section>
 
-      {/* ── Why we lead with the product ───────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-        <div className="mb-10 max-w-2xl">
-          <span className="mb-3 inline-block text-sm font-semibold text-teal-600">
-            Before you start
-          </span>
-          <h2 className="text-3xl text-gray-900" style={LUSTRIA}>
-            Three things worth knowing, so you can trust what you're looking at
-          </h2>
-        </div>
+      {/* ── Before you start ───────────────────────────────────────────── */}
+      <section className="bg-[#f9fafb] py-[64px] sm:py-[96px]">
+        <div className={CONTAINER}>
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
+            <div>
+              <p className={EYEBROW}>Before You Start</p>
+              <h2 className={`mt-3 ${H2}`} style={DISPLAY}>
+                Three things worth knowing, so you can trust what you're looking at
+              </h2>
+              <div className="h-4" />
+              <p className={`mt-4 max-w-[536px] ${BODY_LG}`}>
+                Nothing on this page is a mockup and nothing here is a trap. Here is exactly what
+                you are about to open.
+              </p>
+            </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {TRUST_CARDS.map(({ icon: Icon, title, body }) => (
-            <motion.div
-              key={title}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.35 }}
-              className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
-            >
-              <span className="mb-4 flex size-10 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 text-teal-700">
-                <Icon size={18} strokeWidth={2} />
-              </span>
-              <h3 className="mb-2 text-base font-semibold text-gray-900">{title}</h3>
-              <p className="text-sm text-gray-600">{body}</p>
-            </motion.div>
-          ))}
+            <div className="flex flex-col gap-8">
+              {TRUST_ITEMS.map(({ icon: Icon, title, body }) => (
+                <motion.div
+                  key={title}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.35 }}
+                  className="flex items-start gap-4"
+                >
+                  <div className={ICON_TILE}>
+                    <Icon size={24} strokeWidth={1.75} className="text-[#475467]" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className={H3_BODY}>{title}</h3>
+                    <p className={`mt-2 ${BODY_MD}`}>{body}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
       {/* ── The walkthrough ────────────────────────────────────────────── */}
-      <section className="border-y border-gray-100 bg-gray-50">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-          <div className="mb-12 max-w-2xl">
-            <span className="mb-3 inline-block text-sm font-semibold text-teal-600">
-              The walkthrough
-            </span>
-            <h2 className="text-3xl text-gray-900 sm:text-4xl" style={LUSTRIA}>
+      <section className="py-[64px] sm:py-[96px]">
+        <div className={CONTAINER}>
+          <div className="max-w-[720px]">
+            <p className={EYEBROW}>The Walkthrough</p>
+            <h2 className={`mt-3 ${H2}`} style={DISPLAY}>
               Seven screens, in the order you'd actually use them
             </h2>
-            <p className="mt-4 text-base text-gray-600">
+            <div className="h-4" />
+            <p className={`mt-4 ${BODY_LG}`}>
               Open any stop below and you're in the live application, with a tour rail across the
               top that tells you where you are and what to try. Wander off it whenever you like —
               the rail keeps your place, and one click brings you back.
             </p>
           </div>
 
-          <div className="space-y-14">
-            {DEMO_PHASES.map((phase, phaseIndex) => {
-              const stops = stopsForPhase(phase.id);
-              return (
-                <div key={phase.id}>
-                  <div className="mb-6 flex flex-col gap-1 border-l-2 border-teal-600 pl-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">
-                      Phase {phaseIndex + 1} — {phase.label}
-                    </p>
-                    <p className="text-base text-gray-700">{phase.summary}</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    {stops.map((stop) => (
-                      <TourStopCard
-                        key={stop.id}
-                        stop={stop}
-                        visited={visitedStopIds.includes(stop.id)}
-                        onOpen={openStop}
-                        onExpand={setExpandedStop}
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="mt-8">
+            <TourJumpStrip visitedStopIds={visitedStopIds} onOpen={openStop} />
           </div>
 
-          <div className="mt-12 flex flex-col items-start gap-4 rounded-xl border border-teal-200 bg-white p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-16 space-y-16 sm:space-y-20">
+            {DEMO_PHASES.map((phase, phaseIndex) => (
+              <div key={phase.id}>
+                <div className="mb-10 border-l-2 border-[#0e9384] pl-5">
+                  <p className={EYEBROW}>
+                    Phase {phaseIndex + 1} — {phase.label}
+                  </p>
+                  <p className={`mt-1 ${BODY_LG}`}>{phase.summary}</p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-x-16 gap-y-16 lg:grid-cols-2">
+                  {stopsForPhase(phase.id).map((stop) => (
+                    <TourStopCard
+                      key={stop.id}
+                      stop={stop}
+                      visited={visitedStopIds.includes(stop.id)}
+                      onOpen={openStop}
+                      onExpand={setExpandedStop}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-16 flex flex-col items-start gap-5 border-t border-[#f2f4f7] pt-10 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-base font-semibold text-gray-900">
-                Rather just start at the beginning?
-              </p>
-              <p className="mt-1 text-sm text-gray-600">
-                The guided tour opens {FIRST_STOP.title.toLowerCase()} and walks you forward from
-                there.
+              <h3 className={H3_BODY}>Rather just start at the beginning?</h3>
+              <p className={`mt-1 ${BODY_MD}`}>
+                The guided tour opens your dashboard and walks you forward from there.
               </p>
             </div>
-            <button
-              onClick={startTour}
-              className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-            >
-              <Play size={15} strokeWidth={2.5} />
+            <button onClick={startTour} className={BTN_PRIMARY}>
+              <Play size={16} strokeWidth={2.5} />
               {startLabel}
             </button>
           </div>
@@ -742,186 +668,193 @@ export function MarketingPage() {
       </section>
 
       {/* ── Honest limits ─────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-        <div className="mb-10 max-w-2xl">
-          <span className="mb-3 inline-block text-sm font-semibold text-teal-600">
-            What the demo can't show you
-          </span>
-          <h2 className="text-3xl text-gray-900 sm:text-4xl" style={LUSTRIA}>
-            Four things that only work once it's your organization
-          </h2>
-          <p className="mt-4 text-base text-gray-600">
-            The demo can show you every screen and every interaction. What it can't do is be about
-            you — and that difference is most of the value. Here's exactly what changes when the
-            profile is yours.
-          </p>
-        </div>
+      <section className="bg-[#f9fafb] py-[64px] sm:py-[96px]">
+        <div className={CONTAINER}>
+          <div className="max-w-[720px]">
+            <p className={EYEBROW}>What The Demo Can't Show You</p>
+            <h2 className={`mt-3 ${H2}`} style={DISPLAY}>
+              Four things that only work once it's your organization
+            </h2>
+            <div className="h-4" />
+            <p className={`mt-4 ${BODY_LG}`}>
+              The demo can show you every screen and every interaction. What it can't do is be
+              about you — and that difference is most of the value. Here's exactly what changes
+              when the profile is yours.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {DEMO_LIMITS.map(({ limit, why }) => (
-            <motion.div
-              key={limit}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.35 }}
-              className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
-            >
-              <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-teal-50 text-teal-700">
-                  <Lock size={12} strokeWidth={2.5} />
-                </span>
-                <div>
-                  <h3 className="text-base font-semibold text-gray-900">{limit}</h3>
-                  <p className="mt-1.5 text-sm text-gray-600">{why}</p>
+          <div className="mt-12 grid grid-cols-1 gap-x-16 gap-y-10 md:grid-cols-2">
+            {DEMO_LIMITS.map(({ limit, why }) => (
+              <motion.div
+                key={limit}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.35 }}
+                className="flex items-start gap-4"
+              >
+                <div className={ICON_TILE}>
+                  <Lock size={24} strokeWidth={1.75} className="text-[#475467]" />
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+                <div className="min-w-0">
+                  <h3 className={H3_BODY}>{limit}</h3>
+                  <p className={`mt-2 ${BODY_MD}`}>{why}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
 
-        <div className="mt-8 flex flex-col items-start gap-4 rounded-xl border border-gray-200 bg-gray-50 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-gray-600">
-            All four are on the free plan. Setting up takes about twenty minutes, once.
-          </p>
-          <button
-            onClick={createAccount}
-            className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-          >
-            Create your free account
-            <ArrowRight size={15} strokeWidth={2} />
-          </button>
+          <div className="mt-12 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className={BODY_MD}>
+              All four are on the free plan. Setting up takes about twenty minutes, once.
+            </p>
+            <button onClick={createAccount} className={BTN_PRIMARY}>
+              Create Your Free Account
+              <ArrowRight size={16} strokeWidth={2} />
+            </button>
+          </div>
         </div>
       </section>
 
       {/* ── Pricing ───────────────────────────────────────────────────── */}
-      <section className="border-y border-gray-100 bg-gray-50">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-          <div className="mb-12 max-w-2xl">
-            <span className="mb-3 inline-block text-sm font-semibold text-teal-600">Pricing</span>
-            <h2 className="text-3xl text-gray-900 sm:text-4xl" style={LUSTRIA}>
-              Start free. Upgrade only when the searching outgrows it.
+      <section className="py-[64px] sm:py-[96px]">
+        <div className={CONTAINER}>
+          <div className="mx-auto max-w-[720px] text-center">
+            <p className={EYEBROW}>Fair Pricing</p>
+            <h2 className={`mt-3 ${H2}`} style={DISPLAY}>
+              We offer value from your first search all the way to your last application
             </h2>
-            <p className="mt-4 text-base text-gray-600">
-              The free plan is the same product with a smaller allowance — not a countdown that
-              locks your work when it runs out.
+            <div className="h-4" />
+            <p className={`mt-4 ${BODY_LG}`}>
+              We combine federal compliance expertise with advanced generative AI to help your
+              team secure more funding with less effort.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="mx-auto mt-14 grid max-w-[860px] grid-cols-1 items-start gap-8 md:grid-cols-2">
             {PRICING_TIERS.map((tier) => (
               <div
                 key={tier.name}
-                className={`relative flex flex-col rounded-xl bg-white p-6 shadow-sm ${
-                  tier.recommended
-                    ? "border-2 border-teal-600"
-                    : "border border-gray-200"
+                className={`relative flex flex-col rounded-[12px] border bg-white p-8 ${
+                  tier.featured ? "border-[#9810fa] md:-mt-6 md:pb-12" : "border-[#e4e7ec]"
                 }`}
               >
-                {tier.recommended && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <span className="inline-block rounded-full bg-teal-600 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-                      Recommended
+                {tier.badge && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="inline-block whitespace-nowrap rounded-full bg-[#9810fa] px-3 py-1 text-[11px] leading-[16px] font-semibold tracking-[0.5px] text-white">
+                      {tier.badge}
                     </span>
                   </div>
                 )}
 
-                <div className={`mb-6 ${tier.recommended ? "mt-2" : ""}`}>
-                  <p className="mb-1 text-sm font-medium text-gray-500">{tier.name}</p>
-                  <p className="mb-3 text-4xl font-normal text-gray-900" style={LUSTRIA}>
+                <div className="text-center">
+                  <h3 className={H4_DISPLAY} style={DISPLAY}>
+                    {tier.name}
+                  </h3>
+                  <p className="mt-4 text-[36px] leading-[43.2px] font-bold text-[#101828]">
                     {tier.price}
-                    {tier.priceSuffix && (
-                      <span className="text-base font-normal text-gray-500">
-                        {tier.priceSuffix}
-                      </span>
-                    )}
                   </p>
-                  <p className="text-sm text-gray-500">{tier.forWho}</p>
+                  {tier.priceNote && (
+                    <p className="mt-2 text-[14px] leading-[20px] font-semibold text-[#101828]">
+                      {tier.priceNote}
+                    </p>
+                  )}
+                  <p className={`mx-auto mt-4 max-w-[280px] ${BODY_SM}`}>{tier.forWho}</p>
                 </div>
 
-                <ul className="mb-8 flex-1 space-y-3">
+                <ul className="mt-8 flex-1 space-y-3">
                   {tier.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-3">
-                      <Check
-                        className="mt-0.5 shrink-0 text-teal-600"
-                        size={16}
-                        strokeWidth={2.5}
-                      />
-                      <span className="text-sm text-gray-600">{feature}</span>
+                      <Check size={16} strokeWidth={2} className="mt-1 shrink-0 text-[#101828]" />
+                      <span className={BODY_SM}>{feature}</span>
                     </li>
                   ))}
                 </ul>
 
-                <button
-                  onClick={tier.disabled ? undefined : createAccount}
-                  disabled={tier.disabled}
-                  className={
-                    tier.disabled
-                      ? "w-full cursor-not-allowed rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-400"
-                      : "w-full rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-                  }
-                >
-                  {tier.cta}
+                <button onClick={createAccount} className={`mt-8 w-full ${BTN_PRIMARY}`}>
+                  Start for Free
+                  <ArrowRight size={15} strokeWidth={2} />
                 </button>
               </div>
             ))}
           </div>
 
-          <p className="mt-6 text-sm text-gray-500">
-            Prefer to talk it through? A free 15-minute evaluation call covers grant fit and
-            application strategy for your organization. Professional services start at $199 per
-            application.
-          </p>
+          {/* Dark brand band — the homepage's "need support?" treatment,
+              corners mirroring the imagery device. */}
+          <div className={`mt-16 overflow-hidden px-8 py-10 sm:px-12 sm:py-12 ${DARK_BAND}`}>
+            <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+              {/* The faint circle motif the band carries on the homepage. */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -right-24 -top-32 size-[380px] rounded-full bg-white/[0.04]"
+              />
+              <div className="relative max-w-[360px]">
+                <h2
+                  className="text-[30px] leading-[36px] font-normal text-white"
+                  style={DISPLAY}
+                >
+                  Need grant writing support?
+                </h2>
+              </div>
+              <div className="relative max-w-[480px]">
+                <p className="text-[16px] leading-[24px] font-normal text-[#c7f5ec]">
+                  Talk to our team of experienced grant writers who have been awarded hundreds of
+                  millions of dollars in federal grants over the last decade. Professional
+                  services start at $199 per application.
+                </p>
+                <button className={`mt-6 ${BTN_ON_DARK}`}>Book A Free Call</button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* ── Objections ────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
-        <div className="mb-8">
-          <span className="mb-3 inline-block text-sm font-semibold text-teal-600">
-            Straight answers
-          </span>
-          <h2 className="text-3xl text-gray-900 sm:text-4xl" style={LUSTRIA}>
-            The questions people ask before they sign up
-          </h2>
-        </div>
+      <section className="bg-[#f9fafb] py-[64px] sm:py-[96px]">
+        <div className={CONTAINER}>
+          <div className="mx-auto max-w-[768px]">
+            <div className="text-center">
+              <p className={EYEBROW}>Straight Answers</p>
+              <h2 className={`mt-3 ${H2}`} style={DISPLAY}>
+                The questions people ask before they sign up
+              </h2>
+            </div>
 
-        <Accordion type="single" collapsible className="rounded-xl border border-gray-200 bg-white px-5">
-          {FAQS.map(({ q, a }) => (
-            <AccordionItem key={q} value={q} className="border-gray-200">
-              <AccordionTrigger className="text-left text-base font-semibold text-gray-900 hover:no-underline">
-                {q}
-              </AccordionTrigger>
-              <AccordionContent className="text-sm text-gray-600">{a}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+            <Accordion type="single" collapsible className="mt-12">
+              {FAQS.map(({ q, a }) => (
+                <AccordionItem key={q} value={q} className="border-[#e4e7ec]">
+                  <AccordionTrigger className="py-5 text-left text-[18px] leading-[27px] font-semibold text-[#101828] hover:no-underline">
+                    {q}
+                  </AccordionTrigger>
+                  <AccordionContent className={`pb-6 ${BODY_MD}`}>{a}</AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </div>
       </section>
 
       {/* ── Close ─────────────────────────────────────────────────────── */}
-      <section className="border-t border-gray-100 bg-gradient-to-b from-white to-teal-50/70">
-        <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 sm:py-20">
-          <h2 className="text-3xl leading-tight text-gray-900 sm:text-4xl" style={LUSTRIA}>
-            You've seen it work. Now see it work on your grants.
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-base text-gray-600">
-            Create a free account and the same screens fill with your organization, your programs,
-            and opportunities scored against both. No card, and nothing to cancel.
-          </p>
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <button
-              onClick={createAccount}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-teal-600 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-            >
-              Create your free account
-              <ArrowRight size={17} strokeWidth={2} />
-            </button>
-            <button
-              onClick={startTour}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-base font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-            >
-              {hasStarted && resumeStop ? `Resume at ${resumeStop.navLabel}` : "Take the tour first"}
-            </button>
+      <section className="py-[64px] sm:py-[96px]">
+        <div className={CONTAINER}>
+          <div className="mx-auto max-w-[720px] text-center">
+            <h2 className={H2} style={DISPLAY}>
+              You've seen it work. Now see it work on your grants.
+            </h2>
+            <p className={`mx-auto mt-5 ${BODY_LG}`}>
+              Create a free account and the same screens fill with your organization, your
+              programs, and opportunities scored against both.
+            </p>
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <button onClick={createAccount} className={BTN_PRIMARY}>
+                Create Your Free Account
+                <ArrowRight size={16} strokeWidth={2} />
+              </button>
+              <button onClick={startTour} className={BTN_SECONDARY}>
+                {hasStarted && resumeStop ? startLabel : "Take The Tour First"}
+              </button>
+            </div>
+            <p className={`mt-3 ${MICROCOPY}`}>Unlimited Searches, No Credit Card Required</p>
           </div>
         </div>
       </section>
@@ -931,30 +864,33 @@ export function MarketingPage() {
         open={expandedStop !== null}
         onOpenChange={(open) => !open && setExpandedStop(null)}
       >
-        <DialogContent className="max-w-[min(1400px,calc(100vw-3rem))] gap-3 border-gray-200 p-4 sm:max-w-[min(1400px,calc(100vw-4rem))] sm:p-5">
+        <DialogContent className="max-w-[min(1400px,calc(100vw-3rem))] gap-4 rounded-[12px] border-[#e4e7ec] p-4 sm:max-w-[min(1400px,calc(100vw-4rem))] sm:p-5">
           {expandedStop && (
             <>
-              <DialogTitle className="pr-8 text-base text-gray-900" style={LUSTRIA}>
+              <DialogTitle
+                className="pr-8 text-[20px] leading-[24px] font-normal text-[#101828]"
+                style={DISPLAY}
+              >
                 Stop {expandedStop.order} — {expandedStop.title}
               </DialogTitle>
-              <div className="overflow-hidden rounded-lg border border-gray-200">
+              <div className={`overflow-hidden bg-[#f9fafb] ${IMAGE_CORNERS_SM}`}>
                 <img
                   src={expandedStop.image}
                   alt={expandedStop.imageAlt}
-                  className="block max-h-[72vh] w-full object-contain"
+                  className={`block max-h-[70vh] w-full object-contain ${IMAGE_CORNERS_SM}`}
                 />
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-gray-600">{expandedStop.promise}</p>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className={`max-w-[720px] ${BODY_MD}`}>{expandedStop.promise}</p>
                 <button
                   onClick={() => {
                     const target = expandedStop;
                     setExpandedStop(null);
                     openStop(target);
                   }}
-                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+                  className={`shrink-0 ${BTN_PRIMARY}`}
                 >
-                  Open this screen live
+                  Open This Screen Live
                   <ArrowRight size={15} strokeWidth={2} />
                 </button>
               </div>
@@ -964,10 +900,12 @@ export function MarketingPage() {
       </Dialog>
 
       {/* ── Footer ────────────────────────────────────────────────────── */}
-      <footer className="border-t border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <footer className="border-t border-[#e4e7ec] bg-white">
+        <div
+          className={`${CONTAINER} flex flex-col gap-5 py-10 sm:flex-row sm:items-center sm:justify-between`}
+        >
           <Logo />
-          <p className="max-w-xl text-xs text-gray-500">
+          <p className="max-w-[620px] text-[12px] leading-[18px] font-normal text-[#94979c]">
             Demo environment. The organization, programs and applications shown in this
             walkthrough are sample data for demonstration only. Nothing entered here is saved,
             and no application is submitted to any funder.
