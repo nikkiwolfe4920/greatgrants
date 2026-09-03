@@ -15,6 +15,8 @@ Complete design system documentation for the Great Grants application, aligned w
 - [Global Navigation (Left Sidebar)](#global-navigation-left-sidebar)
 - [Breadcrumbs](#breadcrumbs)
 - [Right Rail (Workflow Helper Panel)](#right-rail-workflow-helper-panel)
+- [Dashboard](#dashboard)
+- [Process Rail (The Great Grants Process)](#process-rail-the-great-grants-process)
 - [Search](#search)
 - [Toggle Settings Row](#toggle-settings-row)
 - [Program Weekly Alert](#program-weekly-alert)
@@ -496,13 +498,15 @@ export function AppLayout() {
 - **Width** — `lg:w-60` (240px) at desktop, `xl:w-64` (256px) at wide desktop, `shrink-0 h-screen sticky top-0`.
 - **Responsive collapse** — below the `lg` breakpoint, the fixed sidebar is replaced by a hamburger button (`fixed top-3 left-3`, `Menu` icon) that opens a slide-in drawer (`fixed inset-y-0 left-0 w-64`, `translate-x-0`/`-translate-x-full` transition) with a backdrop scrim (`bg-gray-900/40 backdrop-blur-[1px]`). The drawer closes on route change and on outside click.
 - **Layout order (top → bottom)** — Logo → primary nav list → auto-margin spacer → credits usage widget → user profile / org switcher. Each section is separated by `border-t border-gray-200`.
+- **First nav item is Dashboard** — `LayoutDashboard` icon, routes to `/`, followed by a `border-t border-gray-100` divider. It is the app's home and the only item above that divider; workspace items (Organization Profile, My Programs, Grant Search, All Applications, Watch List) sit below it.
 - **Active state** — `bg-gray-100 text-gray-900` with `font-semibold`. Inactive: `text-gray-700 hover:bg-gray-100`. Never use the teal brand color as a row background in the nav — teal is reserved for small accent indicators (active dots, underlines), not full-row fills.
 - **Icons** — every nav item leads with a 16px (`w-4 h-4`) Lucide icon, `shrink-0`.
 - **Typography** — Cabin, 14px; `font-weight: 600` when active, `400` otherwise.
 - **Counts & badges** — pill counters use `bg-gray-100 text-gray-600 text-xs font-semibold rounded-full px-2 py-0.5`. Don't color-code count badges by status inside the nav; save color coding for the "required items remaining" `AlertCircle` badge pattern.
 - **Collapsible nested groups** — e.g. All Applications → application → section — toggle with `ChevronRight`/`ChevronDown` and indent `ml-3`, then `ml-5` per depth level.
 - **Org switcher** — lives behind the user profile row at the bottom (avatar `w-8 h-8 rounded-full bg-[#E9EAEB]`) as a `DropdownMenu`, not a separate top-level nav item.
-- **Credits usage widget** — a distinct warm card (`bg-[#fffefa] rounded-lg p-3`) sitting directly above the user profile, showing generated-applications progress with a `bg-[#fef7c3]` track / `bg-[#ca8504]` fill bar. This widget is unique to the sidebar footer — don't reuse its palette elsewhere.
+- **Credits usage widget** — a distinct warm card (`bg-[#fffefa] rounded-lg p-3`) sitting directly above the user profile, showing generated-applications progress with a `bg-[#fef7c3]` track / `bg-[#ca8504]` fill bar. It reads its numbers from `useCreditUsage` (`src/hooks/useCreditUsage.ts`) — never hard-code the counts, or the nav and the Dashboard will drift apart.
+- **The warm credits palette is reserved for credit usage** — and is deliberately shared by exactly two surfaces: this widget and the Dashboard's `PlanCreditsCard`, which is its expanded form. Users should recognize them as the same feature. Don't introduce that palette anywhere that isn't about plan credits.
 
 ---
 
@@ -595,6 +599,47 @@ A contextual, collapsible panel docked to the right edge of the main content are
 - **Progress badge** — a pill with a gradient background communicating state: green gradient when 100% complete, amber/blue gradient at moderate progress, orange/red gradient at low progress.
 - **Default state** — open on first load for any page using this pattern.
 - **Recommended next step** — this pattern currently lives inline inside `OrganizationProfileForm.tsx`. New usages (e.g. an AI assistant rail) should extract a shared `WorkflowRail` component instead of copy-pasting the implementation.
+
+---
+
+## Dashboard
+
+The app's home (`/`, `src/app/pages/DashboardPage.tsx`). Its reading order is fixed and deliberate — orient, then act, then learn:
+
+1. **Welcome header** — greeting, nearest deadline, and a single "Your next step" card carrying the one action the user should take, derived from real progress rather than hard-coded.
+2. **Your workspace at a glance** (`FeatureSummaryGrid`) — one tile per product area, each showing live state.
+3. **The Great Grants Process** (`GreatGrantsProcess`) — how the product works and where the user is in it. See the next section.
+4. **Two columns** — work in flight (`ApplicationStatusList`, `RecommendedGrants`) beside a support rail (`PlanCreditsCard`, `AskGreatGrants`, `NotificationsPanel`).
+
+### Standards
+- **No page-local state duplication** — every module reads from `useDashboardState` (`src/app/components/dashboard/useDashboardState.ts`), `useCreditUsage`, or a shared module in `src/data/`. A number shown on the Dashboard must be the same number shown on the page it links to.
+- **Derive progress, don't hard-code it** — `useDashboardState` reads the localStorage keys the rest of the app already writes (`onboardingComplete`, `orgProfileItemsRemaining`, `publishedProjectsCount`, `recentlyViewedGrants`, `grantAlerts`, `assessmentUsage`) and re-syncs on the custom events those surfaces dispatch.
+- **Every tile and card ends in a destination** — a module that shows state without a way to act on it doesn't belong on the Dashboard.
+- **Deep-link to the work, not the index** — "Jump back in" resolves to the first unfinished section (`/application/:id/s/:sectionId`), never just `/applications`. Reopening an application only to hunt for your place is the friction the Dashboard exists to remove.
+- **Recommendations explain themselves** — each recommended grant states why it surfaced and which signals matched, above the fold, before it asks for a click. Stretch fits are labeled as stretch fits.
+- **Section widths** — page container `max-w-[1400px] mx-auto p-6 sm:p-8`; the two-column area is `xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)]` and stacks below `xl`.
+
+---
+
+## Process Rail (The Great Grants Process)
+
+`src/app/components/dashboard/GreatGrantsProcess.tsx`, with its copy in `src/data/greatGrantsProcess.ts`. The canonical visualization of the nine-step arc from onboarding to submission. This is the pattern to reuse for any future "explain a multi-step flow" surface.
+
+### Anatomy
+- **Header** — eyebrow (`How it works`), Lustria H2, one-line framing, a completion count, and a "Take the tour" play/pause control.
+- **Phase legend** — three cards (Set up / Discover / Write & submit) with per-phase completion counts. The card for the selected step's phase gets `border-gray-300 bg-gray-50`.
+- **The rail** — a `grid grid-cols-9` of circular nodes over a `min-w-[760px]` track inside an `overflow-x-auto` wrapper, so it scrolls rather than crushes on narrow screens.
+- **Detail panel** — `AnimatePresence mode="wait"` keyed on the selected step. Left column: phase chip, step count, status pill, title, promise, summary, and a "Why this step matters" card. Right column: "What you get" list, duration, a teal "You end up with" outcome block, and the step's CTA.
+- **Panel footer** — previous/next controls labeled with the adjacent step names plus a dot indicator.
+
+### Standards
+- **Content lives in the data layer** — steps are defined in `src/data/greatGrantsProcess.ts`, never inline in the component, so copy can be reviewed without touching layout and other surfaces can render the same canonical process.
+- **Every step earns its detail** — a step needs a promise, a summary, a why-it-matters, three concrete value bullets, a duration, an outcome, and a CTA. A step that can only offer a title and an icon isn't a step, it's a label.
+- **Segment-by-segment progress, never a single bar** — the rail draws one segment per gap, filled only when both endpoint steps are complete. Progress through this product genuinely isn't linear (a user can be drafting while their Organization Profile is incomplete), and a single continuous fill would have to either overstate or hide that.
+- **Three node states** — complete (`bg-teal-600` filled with a `Check`), current (white with a `border-teal-600` and a slow pulse ring), upcoming (white, `border-gray-300`, muted). Only one step is ever "current": the first incomplete one.
+- **Accessibility is not optional here** — the rail is a `role="tablist"` with roving `tabIndex`, arrow/Home/End key navigation, an `aria-controls` link to the `role="tabpanel"` detail panel, and an `sr-only` line per node giving its position and status.
+- **Respect `prefers-reduced-motion`** — via `useReducedMotion`. The auto-play tour never starts, the node pulse doesn't run, and panel transitions are dropped.
+- **The tour ends, it doesn't loop** — auto-play stops at the last step and pauses the instant the user takes over. A module that animates forever in the corner of the eye is a distraction, not a feature.
 
 ---
 

@@ -971,6 +971,13 @@ In a world older and more complete than ours they move finished and complete, gi
                   {3000 - narrativeText.length} characters left
                 </div>
               </div>
+
+              {/* AI Coaching Suggestions — Narrative carries the most coaching
+                  feedback of any section, and it's where the Dashboard's
+                  coaching notification links to. */}
+              <div className="mt-6">
+                <AICoachingModule applicationId={applicationId || '1'} sectionId={sectionId || 's6'} />
+              </div>
             </div>
           ) : sectionId === "s8" ? (
             <div>
