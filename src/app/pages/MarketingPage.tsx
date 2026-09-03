@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import {
@@ -11,6 +11,7 @@ import {
   Lock,
   MonitorPlay,
   PhoneOff,
+  Maximize2,
   Play,
   Sparkles,
   UserPlus,
@@ -22,6 +23,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "../components/ui/accordion";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "../components/ui/dialog";
 import { useDemoMode } from "@/app/demo/useDemoMode";
 import {
   DEMO_PHASES,
@@ -208,14 +214,85 @@ const FAQS = [
   },
 ];
 
+/**
+ * A product screenshot in a browser-chrome frame.
+ *
+ * The chrome does real work rather than decoration: it tells a visitor at a
+ * glance that they are looking at an application rather than an illustration,
+ * and it gives every screenshot the same silhouette so a column of them reads
+ * as one set. Framing matches the way the app frames photography — 12px
+ * radius, hairline gray border, small shadow (see the grant overview image in
+ * GrantDetailPage).
+ */
+function ScreenFrame({
+  src,
+  alt,
+  onExpand,
+  priority = false,
+}: {
+  src: string;
+  alt: string;
+  onExpand?: () => void;
+  priority?: boolean;
+}) {
+  const frame = (
+    <>
+      <div className="flex items-center gap-1.5 border-b border-gray-200 bg-gray-50 px-3 py-2">
+        <span className="size-2 rounded-full bg-gray-300" />
+        <span className="size-2 rounded-full bg-gray-300" />
+        <span className="size-2 rounded-full bg-gray-300" />
+        <span className="ml-2 truncate text-[11px] font-medium text-gray-400">
+          app.greatgrants.ai
+        </span>
+        {onExpand && (
+          <span className="ml-auto flex items-center gap-1 text-[11px] font-semibold text-gray-400 transition-colors group-hover/frame:text-teal-700">
+            <Maximize2 size={11} strokeWidth={2.5} />
+            Enlarge
+          </span>
+        )}
+      </div>
+      <img
+        src={src}
+        alt={alt}
+        width={1600}
+        height={1000}
+        loading={priority ? "eager" : "lazy"}
+        decoding="async"
+        className="block w-full"
+      />
+    </>
+  );
+
+  if (!onExpand) {
+    return (
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        {frame}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onExpand}
+      aria-label={`Enlarge screenshot: ${alt}`}
+      className="group/frame block w-full cursor-zoom-in overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
+    >
+      {frame}
+    </button>
+  );
+}
+
 function TourStopCard({
   stop,
   visited,
   onOpen,
+  onExpand,
 }: {
   stop: DemoStop;
   visited: boolean;
   onOpen: (stop: DemoStop) => void;
+  onExpand: (stop: DemoStop) => void;
 }) {
   const Icon = stop.icon;
 
@@ -251,6 +328,15 @@ function TourStopCard({
             Seen
           </span>
         )}
+      </div>
+
+      {/* The screen itself, before any prose about it. */}
+      <div className="mb-5">
+        <ScreenFrame
+          src={stop.image}
+          alt={stop.imageAlt}
+          onExpand={() => onExpand(stop)}
+        />
       </div>
 
       <p className="text-sm text-gray-600" style={CABIN}>
@@ -390,6 +476,7 @@ function TourManifest({
 export function MarketingPage() {
   const navigate = useNavigate();
   const { visitedStopIds, visitedCount, totalStops, startDemo } = useDemoMode();
+  const [expandedStop, setExpandedStop] = useState<DemoStop | null>(null);
 
   /**
    * Where a returning visitor should pick up: the first stop they haven't
@@ -451,7 +538,8 @@ export function MarketingPage() {
 
       {/* ── Hero ────────────────────────────────────────────────────────── */}
       <section className="border-b border-gray-100 bg-gradient-to-b from-teal-50/60 to-white">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-16">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-16">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -531,6 +619,28 @@ export function MarketingPage() {
             onStart={startTour}
             startLabel={startLabel}
           />
+          </div>
+
+          {/* The product itself, at the top of the page. A demo walkthrough
+              that describes screens without showing one asks a stranger to
+              take the first thing on trust. */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.2 }}
+            className="mt-14"
+          >
+            <ScreenFrame
+              src={FIRST_STOP.image}
+              alt={FIRST_STOP.imageAlt}
+              priority
+              onExpand={() => setExpandedStop(FIRST_STOP)}
+            />
+            <p className="mt-3 text-center text-xs text-gray-500">
+              The dashboard, exactly as the demo opens it. Every screenshot on this page is a
+              capture of the running application.
+            </p>
+          </motion.div>
         </div>
       </section>
 
@@ -601,6 +711,7 @@ export function MarketingPage() {
                         stop={stop}
                         visited={visitedStopIds.includes(stop.id)}
                         onOpen={openStop}
+                        onExpand={setExpandedStop}
                       />
                     ))}
                   </div>
@@ -814,6 +925,43 @@ export function MarketingPage() {
           </div>
         </div>
       </section>
+
+      {/* ── Screenshot lightbox ──────────────────────────────────────── */}
+      <Dialog
+        open={expandedStop !== null}
+        onOpenChange={(open) => !open && setExpandedStop(null)}
+      >
+        <DialogContent className="max-w-[min(1400px,calc(100vw-3rem))] gap-3 border-gray-200 p-4 sm:max-w-[min(1400px,calc(100vw-4rem))] sm:p-5">
+          {expandedStop && (
+            <>
+              <DialogTitle className="pr-8 text-base text-gray-900" style={LUSTRIA}>
+                Stop {expandedStop.order} — {expandedStop.title}
+              </DialogTitle>
+              <div className="overflow-hidden rounded-lg border border-gray-200">
+                <img
+                  src={expandedStop.image}
+                  alt={expandedStop.imageAlt}
+                  className="block max-h-[72vh] w-full object-contain"
+                />
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-gray-600">{expandedStop.promise}</p>
+                <button
+                  onClick={() => {
+                    const target = expandedStop;
+                    setExpandedStop(null);
+                    openStop(target);
+                  }}
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+                >
+                  Open this screen live
+                  <ArrowRight size={15} strokeWidth={2} />
+                </button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* ── Footer ────────────────────────────────────────────────────── */}
       <footer className="border-t border-gray-200 bg-white">

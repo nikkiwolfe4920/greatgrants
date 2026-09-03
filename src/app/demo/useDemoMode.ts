@@ -20,6 +20,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DEMO_STOPS } from "./demoTour";
+import { seedDemoWorkspace } from "./demoSeed";
 
 const STORAGE_KEY = "demoMode";
 const UPDATE_EVENT = "demoModeUpdated";
@@ -62,6 +63,10 @@ function writeRecord(next: DemoRecord) {
  * record on mount, so it is already correct when the app page paints.
  */
 export function enterDemoMode(stopId?: string) {
+  // Populate the sample workspace before the app page mounts, so no tour stop
+  // greets a prospect with an empty state. See demoSeed.ts.
+  seedDemoWorkspace();
+
   const current = readRecord();
   const visited = stopId && !current.visitedStopIds.includes(stopId)
     ? [...current.visitedStopIds, stopId]
