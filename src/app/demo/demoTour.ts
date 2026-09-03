@@ -31,6 +31,18 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+// One screenshot per stop, captured from the running application (the sample
+// workspace seeded by demoSeed.ts) rather than mocked up, so the imagery on
+// /marketing can never drift from what a visitor actually sees when they open
+// the screen. Re-capture after a UI change to keep them honest.
+import shotDashboard from "@/assets/demo/dashboard.jpg";
+import shotOrganization from "@/assets/demo/organization.jpg";
+import shotSearch from "@/assets/demo/search.jpg";
+import shotGrantDetail from "@/assets/demo/grant-detail.jpg";
+import shotEligibility from "@/assets/demo/eligibility.jpg";
+import shotApplications from "@/assets/demo/applications.jpg";
+import shotCoaching from "@/assets/demo/coaching.jpg";
+
 export type DemoPhaseId = "setup" | "discover" | "write";
 
 export interface DemoPhase {
@@ -60,6 +72,10 @@ export interface DemoStop {
   /** The honest answer to it. */
   answer: string;
   icon: LucideIcon;
+  /** Screenshot of this screen, captured from the running app. */
+  image: string;
+  /** Alt text describing what the screenshot shows. */
+  imageAlt: string;
 }
 
 export const DEMO_PHASES: DemoPhase[] = [
@@ -99,6 +115,9 @@ export const DEMO_STOPS: DemoStop[] = [
     answer:
       "Every tile reads from live state rather than a static template, so the page changes as your work does. It exists to answer one question — what do I do next — not to show you charts.",
     icon: LayoutDashboard,
+    image: shotDashboard,
+    imageAlt:
+      "The Great Grants dashboard: a next-best-action card, tiles for each part of the workspace, and the nine-step Great Grants Process with progress.",
   },
   {
     id: "organization",
@@ -118,6 +137,9 @@ export const DEMO_STOPS: DemoStop[] = [
     answer:
       "It is about twenty minutes, once. Funders ask for the same forty facts every cycle — this is the last time you type them. Search results and drafts both read from here, which is why we ask first.",
     icon: Building2,
+    image: shotOrganization,
+    imageAlt:
+      "The organization profile: fields for EIN, budget, leadership and service area, with required items flagged and completion tracked.",
   },
   {
     id: "search",
@@ -137,6 +159,9 @@ export const DEMO_STOPS: DemoStop[] = [
     answer:
       "The opportunities in this demo are real notices of funding opportunity, including the NASA ROSES solicitation. What's sample data is the organization looking at them — so the relevance scores are illustrative, and yours would be computed from your own profile.",
     icon: Search,
+    image: shotSearch,
+    imageAlt:
+      "Curated grant search showing thirteen matching opportunities, each with a project-fit and word-match score, alongside search insights and filters.",
   },
   {
     id: "grant-detail",
@@ -156,6 +181,9 @@ export const DEMO_STOPS: DemoStop[] = [
     answer:
       "You can — and the fortieth one takes as long as the first. This page exists so the decision to write or walk away takes ten minutes instead of an afternoon, and so nothing required gets missed.",
     icon: FileSearch,
+    image: shotGrantDetail,
+    imageAlt:
+      "A grant detail page showing award range, deadline, eligibility, difficulty rating and the funder's own documents.",
   },
   {
     id: "eligibility",
@@ -175,6 +203,9 @@ export const DEMO_STOPS: DemoStop[] = [
     answer:
       "Correct, and we don't claim otherwise. The assessment shows you the funder's stated requirements next to your own facts and names where you fall short. The judgment stays yours — you just get to make it before you spend forty hours.",
     icon: Target,
+    image: shotEligibility,
+    imageAlt:
+      "The eligibility assessment showing a plain-English verdict and a NOFO fit scorecard broken down by requirement.",
   },
   {
     id: "applications",
@@ -194,6 +225,9 @@ export const DEMO_STOPS: DemoStop[] = [
     answer:
       "Most teams do, and the spreadsheet doesn't know what the funder asked for. Here the checklist is built from the notice itself, so a missing attachment shows up as a blocker rather than as a rejection letter.",
     icon: FolderOpen,
+    image: shotApplications,
+    imageAlt:
+      "The applications workspace listing applications in flight with section-level completion and deadlines.",
   },
   {
     id: "coaching",
@@ -213,6 +247,9 @@ export const DEMO_STOPS: DemoStop[] = [
     answer:
       "Generic ones do. This drafts from your profile and your program against the funder's own notice, and the coaching flags anything that reads thin. It changes the job from writing to editing — you still sign your name to it.",
     icon: MessageSquareQuote,
+    image: shotCoaching,
+    imageAlt:
+      "An application section with the AI Coaching panel open, showing High and Medium impact notes each citing a NOFO requirement.",
   },
 ];
 
