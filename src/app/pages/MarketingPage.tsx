@@ -41,12 +41,10 @@ import {
   H3_BODY,
   H4_DISPLAY,
   ICON_TILE,
-  IMAGE_CORNERS,
   IMAGE_CORNERS_SM,
   LEAD,
   MICROCOPY,
   NAV_LINK,
-  NAV_LINK_TEAL,
 } from "../marketing/design";
 import { useDemoMode } from "@/app/demo/useDemoMode";
 import {
@@ -229,40 +227,38 @@ const FAQS = [
 /* ── Imagery ───────────────────────────────────────────────────────────── */
 
 /**
- * A product screenshot under the homepage's corner treatment: radius-5xl on
- * the bottom-left and top-right, square on the other two corners. The
+ * A product screenshot under the homepage's corner treatment: a large radius
+ * on the bottom-left and top-right, square on the other two corners. The
  * clipping container carries the same radii as the image, exactly as the
  * design does it, so the crop and the frame agree.
+ *
+ * Uses the card-scale radius throughout — the design's literal radius-5xl
+ * (64px) is sized for a 1136px-wide hero image and would swallow a third of
+ * a two-column card.
  */
 function ScreenImage({
   src,
   alt,
   onExpand,
-  priority = false,
-  size = "sm",
 }: {
   src: string;
   alt: string;
   onExpand?: () => void;
-  priority?: boolean;
-  size?: "sm" | "lg";
 }) {
-  const corners = size === "lg" ? IMAGE_CORNERS : IMAGE_CORNERS_SM;
-
   const image = (
     <img
       src={src}
       alt={alt}
       width={1600}
       height={1000}
-      loading={priority ? "eager" : "lazy"}
+      loading="lazy"
       decoding="async"
-      className={`block w-full ${corners}`}
+      className={`block w-full ${IMAGE_CORNERS_SM}`}
     />
   );
 
   if (!onExpand) {
-    return <div className={`overflow-hidden bg-[#f9fafb] ${corners}`}>{image}</div>;
+    return <div className={`overflow-hidden bg-[#f9fafb] ${IMAGE_CORNERS_SM}`}>{image}</div>;
   }
 
   return (
@@ -270,7 +266,7 @@ function ScreenImage({
       type="button"
       onClick={onExpand}
       aria-label={`Enlarge screenshot: ${alt}`}
-      className={`group/frame relative block w-full cursor-zoom-in overflow-hidden bg-[#f9fafb] transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e9384] focus-visible:ring-offset-2 ${corners}`}
+      className={`group/frame relative block w-full cursor-zoom-in overflow-hidden bg-[#f9fafb] transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e9384] focus-visible:ring-offset-2 ${IMAGE_CORNERS_SM}`}
     >
       {image}
       <span
@@ -460,9 +456,6 @@ export function MarketingPage() {
           </button>
 
           <nav className="flex shrink-0 items-center gap-1 sm:gap-2">
-            <button onClick={createAccount} className={`hidden md:inline-flex ${NAV_LINK_TEAL}`}>
-              Sign Up
-            </button>
             <button onClick={() => navigate("/signin")} className={`hidden md:inline-flex ${NAV_LINK}`}>
               Login
             </button>
@@ -537,33 +530,15 @@ export function MarketingPage() {
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.55, delay: 0.12 }}
-              className="hidden lg:block"
+              /* Shown from the tablet breakpoint up. With the hero screenshot
+                 removed this motif is the hero's only image, so it can no
+                 longer be desktop-only — but below 768px the floating cards
+                 have nowhere to sit without colliding. */
+              className="hidden md:block"
             >
               <GrantCardMotif />
             </motion.div>
           </div>
-
-          {/* The product itself, at the top of the page. A demo walkthrough
-              that describes screens without showing one asks a stranger to
-              take the first thing on trust. */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.2 }}
-            className="mt-16 sm:mt-20"
-          >
-            <ScreenImage
-              src={FIRST_STOP.image}
-              alt={FIRST_STOP.imageAlt}
-              size="lg"
-              priority
-              onExpand={() => setExpandedStop(FIRST_STOP)}
-            />
-            <p className={`mt-4 text-center ${BODY_SM}`}>
-              The dashboard, exactly as the demo opens it. Every screenshot on this page is a
-              capture of the running application.
-            </p>
-          </motion.div>
         </div>
       </section>
 
