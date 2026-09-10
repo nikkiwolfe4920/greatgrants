@@ -37,6 +37,12 @@ import {
 import { Badge } from "@/app/components/ui/badge";
 import { Checkbox } from "@/app/components/ui/checkbox";
 import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/app/components/ui/accordion";
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -96,6 +102,67 @@ function ConfirmedBadge() {
   );
 }
 
+/**
+ * Mock content for the "Helpful Tips" disclosure on each Financial Info and
+ * Policies & Compliance question — ported from the Figma readiness-tab
+ * designs (nodes 11898:29911 and 11898:30486), which show the tip collapsed
+ * directly under the question label and above its answer options. Keyed by
+ * the same field name each question already uses for data-field/highlight
+ * tracking, so a tip can't drift out of sync with its question.
+ */
+const HELPFUL_TIPS: Record<string, string> = {
+  orgRegistrationType:
+    "Your registration type determines which grants you're eligible for and what tax documentation funders will request. Most federal and foundation grants require 501(c)(3) status; churches often qualify automatically without filing for exemption, but many funders still ask for a group ruling letter or IRS determination letter either way.",
+  cfr200Compliant:
+    "2 CFR 200 (the Uniform Guidance) applies once your organization spends $750,000 or more in federal funds in a single fiscal year, triggering a Single Audit. Below that threshold you still need sound financial practices and documentation of how funds were used — \"Unsure\" is a normal answer if you haven't checked your total federal spending recently.",
+  financialSystemTracking:
+    "Funders want to see that you can isolate a grant's expenses from your general ledger and draw down federal funds without commingling them with other revenue. QuickBooks, Sage Intacct, and other fund-accounting systems can usually do this once class or grant tracking is turned on.",
+  timeEffortReporting:
+    "If any staff salaries will be charged to a federal award, you need a system for employees to certify how their time was actually split across funding sources — a simple monthly timesheet by grant or program is often enough to satisfy this requirement.",
+  indirectCostAgreement:
+    "A Negotiated Indirect Cost Rate Agreement (NICRA) lets you recover overhead costs like rent and administrative salaries. If you don't have one, nonprofits can elect the 10% de minimis rate on federal awards without further negotiation — most first-time applicants start there.",
+  costShareLiquidity:
+    "Some grants require you to contribute cash or in-kind resources (cost-share or match) toward the project. Reviewers look for evidence — a board-approved budget, a letter of commitment, or reserve funds — that you can actually cover your share, not just a promise to find it later.",
+  complianceTrackingSoftware:
+    "A shared calendar or spreadsheet tracking every grant's reporting deadlines counts here — you don't need dedicated compliance software. What matters to reviewers is that deadlines and requirements are tracked somewhere reliable, not left to memory.",
+  federalDataTracking:
+    "GPRA (Government Performance and Results Act) measures are the standardized outcome metrics many federal agencies require in performance reports. If your program already collects basic output data — people served, sessions delivered — you're most of the way there; it's usually the alignment to the funder's specific measures that needs attention.",
+  demographicDataCollection:
+    "Disaggregated data means breaking participant counts down by category — race, ethnicity, gender, age, disability status — rather than reporting one combined total. Many federal funders require this for equity reporting, so it's worth building into your intake form now rather than reconstructing it later.",
+  internalControlsDocs:
+    "Internal controls are the checks that prevent any one person from having unchecked control over money — dual signatures on checks, a second approver on expenses over a set threshold, regular bank reconciliations. A one-page written policy describing these is usually sufficient for a funder's review.",
+  procurementPolicies:
+    "Federal rules (2 CFR 200.318–200.327) require competitive bidding above certain dollar thresholds and a documented conflict-of-interest standard for anyone involved in purchasing decisions. A short written procurement policy covering both of these satisfies most funder requests.",
+  timeEffortPolicies:
+    "This is the written-policy counterpart to the time-and-effort question in Financial Info — it should describe how and how often staff certify time charged to grants, who reviews it, and how long records are retained.",
+  conflictOfInterestPolicies:
+    "A conflict-of-interest policy should require board members, staff, and consultants to disclose any financial or personal interest in organizational decisions, and describe what happens once one is disclosed. Most funders also expect a document retention schedule alongside it.",
+};
+
+/**
+ * HelpfulTip — the collapsed "Helpful Tips" disclosure that sits between a
+ * question's label and its answer options on the Financial Info and
+ * Policies & Compliance tabs (Figma nodes 11898:29911 / 11898:30486).
+ * Independent per question — expanding one has no effect on the others.
+ */
+function HelpfulTip({ tip }: { tip: string }) {
+  return (
+    <Accordion type="single" collapsible className="mb-3">
+      <AccordionItem value="tip" className="!border !border-gray-200 rounded-lg overflow-hidden">
+        <AccordionTrigger className="!rounded-none !gap-2 !px-4 !py-2.5 !bg-gray-100 hover:!bg-gray-200 hover:!no-underline !text-sm !font-medium !text-gray-700">
+          <span className="flex items-center gap-2">
+            <Info className="w-4 h-4 text-gray-500 shrink-0" />
+            Helpful Tips
+          </span>
+        </AccordionTrigger>
+        <AccordionContent className="!px-4 !pb-3 !pt-3 !text-sm !text-gray-600 !leading-relaxed bg-white border-t border-gray-200">
+          {tip}
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  );
+}
+
 function ReadinessScoringBanner({ requiresInputs = false }: { requiresInputs?: boolean }) {
   return (
     <div className="mb-6 rounded-lg border border-teal-200 bg-teal-50 p-4">
@@ -127,6 +194,12 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
   const [activeTab, setActiveTab] = useState('legal-info');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
+  // Transient "Saved" + green check confirmation shown right after an
+  // autosave completes (see the tab-row indicator below); it clears itself
+  // after a few seconds so the "Last saved {time}" timestamp can take over
+  // in the same spot — see handleAutoSave and savedConfirmationTimeoutRef.
+  const [showSavedConfirmation, setShowSavedConfirmation] = useState(false);
+  const savedConfirmationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const hasUnsavedChangesRef = useRef(false);
   // Right rail (profile-completion checklist) is always on — there is no
@@ -154,6 +227,9 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
     return () => {
       if (verificationTimeoutRef.current) {
         clearTimeout(verificationTimeoutRef.current);
+      }
+      if (savedConfirmationTimeoutRef.current) {
+        clearTimeout(savedConfirmationTimeoutRef.current);
       }
     };
   }, []);
@@ -387,6 +463,16 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
       setLastSaved(new Date());
       setIsAutoSaving(false);
       setHasUnsavedChanges(false);
+
+      // Show "Saved" + the green check for a few seconds, then let the
+      // indicator fall back to "Last saved {time}" in the same spot.
+      setShowSavedConfirmation(true);
+      if (savedConfirmationTimeoutRef.current) {
+        clearTimeout(savedConfirmationTimeoutRef.current);
+      }
+      savedConfirmationTimeoutRef.current = setTimeout(() => {
+        setShowSavedConfirmation(false);
+      }, 2500);
     }, 500);
   };
 
@@ -885,6 +971,67 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
 
   const checklistItems = getChecklistItems();
 
+  // Shared between the two TabsList layouts below (real page vs. locked
+  // demo) so the five triggers stay defined in exactly one place.
+  const tabTriggers = (
+    <>
+      <TabsTrigger
+        value="legal-info"
+        className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
+      >
+        Legal Info
+      </TabsTrigger>
+      <TabsTrigger
+        value="details"
+        className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
+      >
+        Details
+      </TabsTrigger>
+      <TabsTrigger
+        value="key-contacts"
+        className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
+      >
+        Key Contacts
+      </TabsTrigger>
+      <TabsTrigger
+        value="financial-info"
+        className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
+      >
+        Financial Info
+      </TabsTrigger>
+      <TabsTrigger
+        value="policies-compliance"
+        className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
+      >
+        Policies & Compliance
+      </TabsTrigger>
+    </>
+  );
+
+  // Autosave status, anchored to the tab row's right-hand corner on the
+  // locked /organization-demo walkthrough — replaces the "Save Progress"
+  // buttons there entirely (see demoLocked below): saves happen on their
+  // own, and this is the only place that says so. "Saved" + the green
+  // check is transient (see savedConfirmationTimeoutRef); once it clears,
+  // "Last saved {time}" takes over in the same spot.
+  const saveStatusIndicator = (
+    <div className="flex items-center gap-1.5 text-sm" style={{ fontFamily: 'Cabin, sans-serif' }}>
+      {isAutoSaving ? (
+        <>
+          <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+          <span className="text-gray-500">Saving...</span>
+        </>
+      ) : showSavedConfirmation ? (
+        <>
+          <CheckCircle2 className="w-4 h-4 text-green-600" />
+          <span className="font-medium text-green-600">Saved</span>
+        </>
+      ) : lastSaved ? (
+        <span className="text-gray-500">Last saved {formatTimeAgo(lastSaved)}</span>
+      ) : null}
+    </div>
+  );
+
   return (
     <div className="flex h-screen bg-white">
       {/* Left Sidebar */}
@@ -1005,36 +1152,44 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
               <p className="text-gray-600">The more you fill out, the faster applications get filled, and the smarter your grant matches become.</p>
             </div>
             
-            {/* Save Progress Button - Upper Right */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Clock className="w-4 h-4" />
-                {isAutoSaving ? (
-                  <span>Saving...</span>
-                ) : lastSaved ? (
-                  <span>Last saved {formatTimeAgo(lastSaved)}</span>
-                ) : (
-                  <span>No changes yet</span>
-                )}
+            {/* Save Progress Button - Upper Right. Hidden on the locked
+                /organization-demo walkthrough, which autosaves silently and
+                reports status next to the tabs instead — see
+                saveStatusIndicator and demoLocked below. */}
+            {!demoLocked && (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Clock className="w-4 h-4" />
+                  {isAutoSaving ? (
+                    <span>Saving...</span>
+                  ) : lastSaved ? (
+                    <span>Last saved {formatTimeAgo(lastSaved)}</span>
+                  ) : (
+                    <span>No changes yet</span>
+                  )}
+                </div>
+                <Button
+                  className="bg-teal-600 hover:bg-teal-700 text-white"
+                  onClick={handleAutoSave}
+                  disabled={isAutoSaving}
+                >
+                  {isAutoSaving ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <HardDrive className="w-4 h-4 mr-2" />
+                  )}
+                  Save Progress
+                </Button>
               </div>
-              <Button 
-                className="bg-teal-600 hover:bg-teal-700 text-white"
-                onClick={handleAutoSave}
-                disabled={isAutoSaving}
-              >
-                {isAutoSaving ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <HardDrive className="w-4 h-4 mr-2" />
-                )}
-                Save Progress
-              </Button>
-            </div>
+            )}
           </div>
 
           {/* Forces existing organizations that pre-date the Focus Areas
-              requirement to fill it in — hides itself once the minimum is met. */}
-          {focusAreas.length < FOCUS_AREA_MIN_SELECTIONS && (
+              requirement to fill it in — hides itself once the minimum is met.
+              Suppressed on the locked /organization-demo walkthrough, where
+              a viewer can't act on it anyway (Focus Areas lives on this same
+              Legal Info tab, so it isn't hiding anything unreachable). */}
+          {!demoLocked && focusAreas.length < FOCUS_AREA_MIN_SELECTIONS && (
             <FocusAreaRequiredBanner
               count={focusAreas.length}
               onAddFocusAreas={() => handleRailItemClick('focus-areas')}
@@ -1043,38 +1198,21 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="!bg-white !border-b !border-gray-200 !p-0 !h-auto !w-full !justify-start !rounded-none !inline-flex">
-              <TabsTrigger 
-                value="legal-info" 
-                className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
-              >
-                Legal Info
-              </TabsTrigger>
-              <TabsTrigger 
-                value="details"
-                className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
-              >
-                Details
-              </TabsTrigger>
-              <TabsTrigger
-                value="key-contacts"
-                className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
-              >
-                Key Contacts
-              </TabsTrigger>
-              <TabsTrigger 
-                value="financial-info"
-                className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
-              >
-                Financial Info
-              </TabsTrigger>
-              <TabsTrigger 
-                value="policies-compliance"
-                className="gap-2 !rounded-none !border-0 border-b-[3px] border-transparent data-[state=active]:!border-0 data-[state=active]:border-b-[3px] data-[state=active]:!border-b-teal-600 data-[state=active]:!text-teal-600 data-[state=active]:!bg-transparent data-[state=active]:!shadow-none !px-4 !pt-3 !pb-3 !bg-transparent !text-gray-600 hover:!text-gray-900 !shadow-none !flex-none"
-              >
-                Policies & Compliance
-              </TabsTrigger>
-            </TabsList>
+            {demoLocked ? (
+              // Locked demo: the autosave status sits in the tab row's
+              // right-hand corner instead of a Save Progress button — see
+              // saveStatusIndicator above.
+              <div className="flex items-center justify-between gap-4 border-b border-gray-200">
+                <TabsList className="!bg-white !p-0 !h-auto !justify-start !rounded-none !inline-flex !flex-1 !min-w-0">
+                  {tabTriggers}
+                </TabsList>
+                <div className="shrink-0 pb-2 pr-1">{saveStatusIndicator}</div>
+              </div>
+            ) : (
+              <TabsList className="!bg-white !border-b !border-gray-200 !p-0 !h-auto !w-full !justify-start !rounded-none !inline-flex">
+                {tabTriggers}
+              </TabsList>
+            )}
 
             {/* Legal Info Tab */}
             <TabsContent value="legal-info" className="space-y-6">
@@ -1700,6 +1838,7 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
                       </Label>
                       {financialInfo.orgRegistrationType !== '' && <ConfirmedBadge />}
                     </div>
+                    <HelpfulTip tip={HELPFUL_TIPS.orgRegistrationType} />
                     <Select value={financialInfo.orgRegistrationType} onValueChange={(value) => setFinancialInfo({ ...financialInfo, orgRegistrationType: value })}>
                       <SelectTrigger className="w-full border-gray-300 bg-white">
                         <SelectValue placeholder="Select organization type" />
@@ -1721,6 +1860,7 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
                       </Label>
                       {financialInfo.cfr200Compliant === 'yes' && <ConfirmedBadge />}
                     </div>
+                    <HelpfulTip tip={HELPFUL_TIPS.cfr200Compliant} />
                     <div className="flex flex-col gap-2">
                       {[
                         { value: 'yes', label: 'Yes', color: 'teal' },
@@ -1766,6 +1906,7 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
                       </Label>
                       {financialInfo.financialSystemTracking === 'yes' && <ConfirmedBadge />}
                     </div>
+                    <HelpfulTip tip={HELPFUL_TIPS.financialSystemTracking} />
                     <div className="flex flex-col gap-2">
                       {[
                         { value: 'yes', label: 'Yes', color: 'teal' },
@@ -1811,6 +1952,7 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
                       </Label>
                       {financialInfo.timeEffortReporting === 'yes' && <ConfirmedBadge />}
                     </div>
+                    <HelpfulTip tip={HELPFUL_TIPS.timeEffortReporting} />
                     <div className="flex flex-col gap-2">
                       {[
                         { value: 'yes', label: 'Yes', color: 'teal' },
@@ -1856,6 +1998,7 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
                       </Label>
                       {financialInfo.indirectCostAgreement.trim() !== '' && <ConfirmedBadge />}
                     </div>
+                    <HelpfulTip tip={HELPFUL_TIPS.indirectCostAgreement} />
                     <Input
                       id="indirectCostAgreement"
                       value={financialInfo.indirectCostAgreement}
@@ -1872,6 +2015,7 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
                       </Label>
                       {financialInfo.costShareLiquidity === 'yes' && <ConfirmedBadge />}
                     </div>
+                    <HelpfulTip tip={HELPFUL_TIPS.costShareLiquidity} />
                     <div className="flex flex-col gap-2">
                       {[
                         { value: 'yes', label: 'Yes', color: 'teal' },
@@ -1931,6 +2075,7 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
                       </Label>
                       {policiesCompliance.complianceTrackingSoftware === 'yes' && <ConfirmedBadge />}
                     </div>
+                    <HelpfulTip tip={HELPFUL_TIPS.complianceTrackingSoftware} />
                     <div className="flex flex-col gap-2">
                       {[
                         { value: 'yes', label: 'Yes', color: 'teal' },
@@ -1976,6 +2121,7 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
                       </Label>
                       {policiesCompliance.federalDataTracking === 'yes' && <ConfirmedBadge />}
                     </div>
+                    <HelpfulTip tip={HELPFUL_TIPS.federalDataTracking} />
                     <div className="flex flex-col gap-2">
                       {[
                         { value: 'yes', label: 'Yes', color: 'teal' },
@@ -2021,6 +2167,7 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
                       </Label>
                       {policiesCompliance.demographicDataCollection === 'yes' && <ConfirmedBadge />}
                     </div>
+                    <HelpfulTip tip={HELPFUL_TIPS.demographicDataCollection} />
                     <div className="flex flex-col gap-2">
                       {[
                         { value: 'yes', label: 'Yes', color: 'teal' },
@@ -2066,6 +2213,7 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
                       </Label>
                       {policiesCompliance.internalControlsDocs === 'yes' && <ConfirmedBadge />}
                     </div>
+                    <HelpfulTip tip={HELPFUL_TIPS.internalControlsDocs} />
                     <div className="flex flex-col gap-2">
                       {[
                         { value: 'yes', label: 'Yes', color: 'teal' },
@@ -2111,6 +2259,7 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
                       </Label>
                       {policiesCompliance.procurementPolicies === 'yes' && <ConfirmedBadge />}
                     </div>
+                    <HelpfulTip tip={HELPFUL_TIPS.procurementPolicies} />
                     <div className="flex flex-col gap-2">
                       {[
                         { value: 'yes', label: 'Yes', color: 'teal' },
@@ -2156,6 +2305,7 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
                       </Label>
                       {policiesCompliance.timeEffortPolicies === 'yes' && <ConfirmedBadge />}
                     </div>
+                    <HelpfulTip tip={HELPFUL_TIPS.timeEffortPolicies} />
                     <div className="flex flex-col gap-2">
                       {[
                         { value: 'yes', label: 'Yes', color: 'teal' },
@@ -2201,6 +2351,7 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
                       </Label>
                       {policiesCompliance.conflictOfInterestPolicies === 'yes' && <ConfirmedBadge />}
                     </div>
+                    <HelpfulTip tip={HELPFUL_TIPS.conflictOfInterestPolicies} />
                     <div className="flex flex-col gap-2">
                       {[
                         { value: 'yes', label: 'Yes', color: 'teal' },
@@ -2242,31 +2393,36 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
             </TabsContent>
           </Tabs>
 
-          {/* Save Progress Button - Lower Right */}
-          <div className="flex items-center justify-end gap-3 mt-8">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Clock className="w-4 h-4" />
-              {isAutoSaving ? (
-                <span>Saving...</span>
-              ) : lastSaved ? (
-                <span>Last saved {formatTimeAgo(lastSaved)}</span>
-              ) : (
-                <span>No changes yet</span>
-              )}
+          {/* Save Progress Button - Lower Right. Hidden on the locked
+              /organization-demo walkthrough — see the tab-row
+              saveStatusIndicator above, which is the only save status this
+              page shows. */}
+          {!demoLocked && (
+            <div className="flex items-center justify-end gap-3 mt-8">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Clock className="w-4 h-4" />
+                {isAutoSaving ? (
+                  <span>Saving...</span>
+                ) : lastSaved ? (
+                  <span>Last saved {formatTimeAgo(lastSaved)}</span>
+                ) : (
+                  <span>No changes yet</span>
+                )}
+              </div>
+              <Button
+                className="bg-teal-600 hover:bg-teal-700 text-white"
+                onClick={handleAutoSave}
+                disabled={isAutoSaving}
+              >
+                {isAutoSaving ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <HardDrive className="w-4 h-4 mr-2" />
+                )}
+                Save Progress
+              </Button>
             </div>
-            <Button 
-              className="bg-teal-600 hover:bg-teal-700 text-white"
-              onClick={handleAutoSave}
-              disabled={isAutoSaving}
-            >
-              {isAutoSaving ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <HardDrive className="w-4 h-4 mr-2" />
-              )}
-              Save Progress
-            </Button>
-          </div>
+          )}
 
         </div>
       </main>
