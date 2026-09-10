@@ -1,5 +1,4 @@
 import { OrganizationProfileForm } from "../components/OrganizationProfileForm";
-import { DemoOnlyBar } from "../components/demo/DemoOnlyBar";
 
 /**
  * OrganizationDemoPage — a locked-down duplicate of OrganizationPage for
@@ -7,15 +6,17 @@ import { DemoOnlyBar } from "../components/demo/DemoOnlyBar";
  * them wander off it.
  *
  * Three differences from the real /organization page:
- *   1. A white "demo" bar (DemoOnlyBar) is pinned above the page, replacing
- *      the Great Grants logo with a back arrow and stating plainly that
- *      this is a demo, not the live product.
+ *   1. A white "demo" bar (DemoOnlyBar) spans the full width of the screen
+ *      above both the global left nav and this page — see the
+ *      isLockedOrgDemo check in AppLayout — replacing the Great Grants logo
+ *      with a back arrow and stating plainly that this is a demo, not the
+ *      live product.
  *   2. The breadcrumb's Home and Settings crumbs are inert (see the
  *      `demoLocked` prop on OrganizationProfileForm) — there's no path back
  *      to Settings from here.
- *   3. SharedSidebar (the global left nav rendered by AppLayout) disables
- *      its own links while this route is active — see the isLockedNav
- *      check in SharedSidebar.tsx — so every way out of this page except
+ *   3. SharedSidebar (the global left nav) disables its own links while
+ *      this route is active — see the isLockedNav check in
+ *      SharedSidebar.tsx — so every way out of this page except
  *      DemoOnlyBar's back link is inert.
  *
  * Everything else — the tabs, the fields, autosave, and the right-hand
@@ -39,7 +40,6 @@ export function OrganizationDemoPage() {
           flex: 1 !important;
         }
       `}</style>
-      <DemoOnlyBar />
       <div className="organization-demo-wrapper">
         <OrganizationProfileForm onBack={() => {}} demoLocked />
       </div>

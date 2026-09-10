@@ -956,7 +956,7 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
                   <span
                     aria-disabled="true"
                     title="This is a locked demo — the breadcrumb can't navigate away"
-                    className="cursor-default"
+                    className="cursor-not-allowed"
                   >
                     <BreadcrumbHome />
                   </span>
@@ -974,7 +974,7 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
                   <span
                     aria-disabled="true"
                     title="This is a locked demo — the breadcrumb can't navigate away"
-                    className="text-sm font-semibold leading-5 text-[#717680] whitespace-nowrap cursor-default"
+                    className="text-sm font-semibold leading-5 text-[#717680] whitespace-nowrap cursor-not-allowed"
                     style={{ fontFamily: 'Cabin, sans-serif' }}
                   >
                     Settings
