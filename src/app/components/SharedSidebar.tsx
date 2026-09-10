@@ -105,6 +105,19 @@ export function SharedSidebar() {
   const isGrantDetailPage = location.pathname.startsWith("/grant/");
   const isWatchListPage = location.pathname === "/watch-list";
 
+  // /organization-demo is a locked walkthrough duplicate of /organization —
+  // every link in this sidebar (the main nav list, "Manage Plan", and the
+  // account dropdown with its Settings/sign-out/org-switch items) is
+  // disabled while it's active, so a viewer's only way off the page is the
+  // back link in DemoOnlyBar. See OrganizationDemoPage.
+  const isLockedNav = location.pathname === "/organization-demo";
+  const lockedNavProps = isLockedNav
+    ? {
+        "aria-disabled": true,
+        style: { pointerEvents: "none" as const },
+      }
+    : {};
+
   const isOrgProfileComplete = orgProfileItemsRemaining === 0;
   const hasPublishedPrograms = publishedProjectsCount >= 1;
 
@@ -193,7 +206,7 @@ export function SharedSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-3 flex flex-col min-h-0">
+      <nav className="flex-1 overflow-y-auto p-3 flex flex-col min-h-0" {...lockedNavProps}>
         <ul className="space-y-0.5 flex-1">
 
           {/* Dashboard — the app's home */}
@@ -449,7 +462,7 @@ export function SharedSidebar() {
       </nav>
 
       {/* Credits Usage Widget */}
-      <div className="px-3 pb-3 shrink-0">
+      <div className="px-3 pb-3 shrink-0" {...lockedNavProps}>
         <div className="bg-[#fffefa] rounded-lg p-3 w-full">
           <div className="flex items-center gap-1.5 mb-2">
             <FileText className="w-3.5 h-3.5 text-[#101828] shrink-0" />
@@ -484,7 +497,7 @@ export function SharedSidebar() {
       </div>
 
       {/* User Profile */}
-      <div className="px-3 pb-4 border-t border-gray-200 pt-3 shrink-0">
+      <div className="px-3 pb-4 border-t border-gray-200 pt-3 shrink-0" {...lockedNavProps}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2.5 w-full hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors">

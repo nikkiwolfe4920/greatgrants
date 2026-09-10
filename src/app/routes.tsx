@@ -7,6 +7,7 @@ import { GrantSearchPage } from "./pages/GrantSearchPage";
 import { GrantDetailPage } from "./pages/GrantDetailPage";
 import { WatchListPage } from "./pages/WatchListPage";
 import { OrganizationPage } from "./pages/OrganizationPage";
+import { OrganizationDemoPage } from "./pages/OrganizationDemoPage";
 import { OrganizationsPage } from "./pages/OrganizationsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SignInPage } from "./pages/SignInPage";
@@ -162,6 +163,12 @@ const routes = [
       {
         path: "organization",
         element: <OrganizationPage />,
+      },
+      {
+        // Locked walkthrough duplicate of /organization — see
+        // OrganizationDemoPage for what's different.
+        path: "organization-demo",
+        element: <OrganizationDemoPage />,
       },
       {
         path: "organizations",
