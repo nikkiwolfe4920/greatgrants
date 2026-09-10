@@ -4,6 +4,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { ApplicationsPage } from "./pages/ApplicationsPage";
 import { ApplicationSectionPage } from "./pages/ApplicationSectionPage";
 import { GrantSearchPage } from "./pages/GrantSearchPage";
+import { SearchDemoPage } from "./pages/SearchDemoPage";
 import { GrantDetailPage } from "./pages/GrantDetailPage";
 import { WatchListPage } from "./pages/WatchListPage";
 import { OrganizationPage } from "./pages/OrganizationPage";
@@ -141,6 +142,12 @@ const routes = [
       {
         path: "search",
         element: <GrantSearchPage />,
+      },
+      {
+        // Locked walkthrough duplicate of /search — see SearchDemoPage for
+        // what's different.
+        path: "search-demo",
+        element: <SearchDemoPage />,
       },
       {
         // Saved Grants has been merged into the Watch List — redirect any

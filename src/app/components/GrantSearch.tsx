@@ -612,8 +612,26 @@ const filterCategories: FilterOption[] = [
   }
 ];
 
-export function GrantSearch() {
+interface GrantSearchProps {
+  /**
+   * Renders the breadcrumb's Home crumb, every grant result (main list and
+   * Recently Viewed), and every button that would leave this page as inert
+   * — used by the locked /search-demo walkthrough (see SearchDemoPage) so a
+   * viewer can search, filter, sort and toggle Watch, but can't click
+   * through to anywhere else in the prototype.
+   */
+  demoLocked?: boolean;
+}
+
+export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
   const navigate = useNavigate();
+  // Every real navigation on this page goes through `go` instead of
+  // `navigate` directly, so locking the page is one flag rather than a
+  // scattered set of onClick guards.
+  const go = (path: string, options?: Parameters<typeof navigate>[1]) => {
+    if (!demoLocked) navigate(path, options);
+  };
+  const lockedCursor = demoLocked ? "cursor-not-allowed" : "";
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -937,11 +955,21 @@ export function GrantSearch() {
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/">
+            {demoLocked ? (
+              <span
+                aria-disabled="true"
+                title="This is a locked demo — the breadcrumb can't navigate away"
+                className="cursor-not-allowed"
+              >
                 <BreadcrumbHome />
-              </Link>
-            </BreadcrumbLink>
+              </span>
+            ) : (
+              <BreadcrumbLink asChild>
+                <Link to="/">
+                  <BreadcrumbHome />
+                </Link>
+              </BreadcrumbLink>
+            )}
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -982,8 +1010,9 @@ export function GrantSearch() {
               {publishedProjects.length === 0 ? (
                 // Call to Action when no programs
                 <button
-                  onClick={() => navigate("/project-details")}
-                  className="h-[52px] border-0 rounded-none pl-4 pr-3 min-w-[200px] flex items-center gap-2 hover:bg-teal-50 transition-colors group"
+                  onClick={() => go("/project-details")}
+                  className={`h-[52px] border-0 rounded-none pl-4 pr-3 min-w-[200px] flex items-center gap-2 hover:bg-teal-50 transition-colors group ${lockedCursor}`}
+                  {...(demoLocked ? { "aria-disabled": true } : {})}
                 >
                   <div className="flex items-center gap-2">
                     <Plus className="w-4 h-4 text-teal-600" />
@@ -1116,8 +1145,9 @@ export function GrantSearch() {
             <div className="flex items-center gap-2 flex-shrink-0">
               <Button
                 size="sm"
-                className="gap-1.5 bg-teal-600 hover:bg-teal-700 text-white w-full sm:w-auto"
-                onClick={() => navigate("/project-details")}
+                className={`gap-1.5 bg-teal-600 hover:bg-teal-700 text-white w-full sm:w-auto ${lockedCursor}`}
+                onClick={() => go("/project-details")}
+                {...(demoLocked ? { "aria-disabled": true } : {})}
               >
                 <Plus className="w-3.5 h-3.5" />
                 Create Program
@@ -1156,16 +1186,18 @@ export function GrantSearch() {
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <Button
-                    onClick={() => navigate("/project-details")}
-                    className="gap-2 bg-teal-600 hover:bg-teal-700 text-white w-full sm:w-auto"
+                    onClick={() => go("/project-details")}
+                    className={`gap-2 bg-teal-600 hover:bg-teal-700 text-white w-full sm:w-auto ${lockedCursor}`}
+                    {...(demoLocked ? { "aria-disabled": true } : {})}
                   >
                     <Plus className="w-4 h-4" />
                     Create a Program
                   </Button>
                   <Button
-                    onClick={() => navigate("/organization", { state: { highlightField: "org-website" } })}
+                    onClick={() => go("/organization", { state: { highlightField: "org-website" } })}
                     variant="outline"
-                    className="gap-2 w-full sm:w-auto"
+                    className={`gap-2 w-full sm:w-auto ${lockedCursor}`}
+                    {...(demoLocked ? { "aria-disabled": true } : {})}
                   >
                     <Globe className="w-4 h-4" />
                     Add Your Website
@@ -1434,10 +1466,11 @@ export function GrantSearch() {
               return (
                 <div
                   key={grant.id}
-                  onClick={() => navigate(`/grant/${grant.id}`)}
-                  className={`bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all group overflow-hidden cursor-pointer ${
-                    viewMode === "list" ? "flex" : ""
-                  }`}
+                  onClick={() => go(`/grant/${grant.id}`)}
+                  className={`bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all group overflow-hidden ${
+                    demoLocked ? "cursor-not-allowed" : "cursor-pointer"
+                  } ${viewMode === "list" ? "flex" : ""}`}
+                  {...(demoLocked ? { "aria-disabled": true } : {})}
                 >
                   {/* Grant Image */}
                   {grant.image && (
@@ -1656,19 +1689,32 @@ export function GrantSearch() {
                   <Clock className="w-5 h-5 text-teal-600" />
                   <h3 className="font-semibold text-gray-900">Recently Viewed</h3>
                 </div>
-                <Link
-                  to="/watch-list?tab=recent"
-                  className="text-xs text-teal-600 hover:text-teal-700 font-medium"
-                >
-                  More
-                </Link>
+                {demoLocked ? (
+                  <span
+                    aria-disabled="true"
+                    title="This is a locked demo — this link can't navigate away"
+                    className="text-xs text-teal-600 font-medium cursor-not-allowed"
+                  >
+                    More
+                  </span>
+                ) : (
+                  <Link
+                    to="/watch-list?tab=recent"
+                    className="text-xs text-teal-600 hover:text-teal-700 font-medium"
+                  >
+                    More
+                  </Link>
+                )}
               </div>
               <div className="space-y-3">
                 {recentlyViewed.map((grant) => (
                   <div
                     key={grant.id}
-                    onClick={() => navigate(`/grant/${grant.id}`)}
-                    className="p-3 border border-gray-200 rounded-lg hover:border-teal-300 hover:bg-teal-50/50 cursor-pointer transition-all group"
+                    onClick={() => go(`/grant/${grant.id}`)}
+                    className={`p-3 border border-gray-200 rounded-lg hover:border-teal-300 hover:bg-teal-50/50 transition-all group ${
+                      demoLocked ? "cursor-not-allowed" : "cursor-pointer"
+                    }`}
+                    {...(demoLocked ? { "aria-disabled": true } : {})}
                   >
                     <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 mb-1.5 group-hover:text-teal-700 transition-colors">
                       {grant.title}

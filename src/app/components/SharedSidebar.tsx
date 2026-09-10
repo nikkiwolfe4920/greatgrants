@@ -28,6 +28,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Logo } from "./Logo";
 import { useReadinessScore } from "../contexts/ReadinessScoreContext";
+import { isLockedDemoRoute } from "../demo/lockedDemoRoutes";
 import { useCreditUsage } from "@/hooks/useCreditUsage";
 
 interface Section {
@@ -105,13 +106,14 @@ export function SharedSidebar() {
   const isGrantDetailPage = location.pathname.startsWith("/grant/");
   const isWatchListPage = location.pathname === "/watch-list";
 
-  // /organization-demo is a locked walkthrough duplicate of /organization —
+  // A locked walkthrough route (e.g. /organization-demo, /search-demo) —
   // every control in this sidebar stays visible and hoverable (so the
   // not-allowed cursor below actually shows up), but none of them go
   // anywhere: every onClick is wrapped in withLock, which no-ops instead of
-  // navigating/switching org while this route is active. The viewer's only
-  // way off the page is the back link in DemoOnlyBar. See OrganizationDemoPage.
-  const isLockedNav = location.pathname === "/organization-demo";
+  // navigating/switching org while one of these routes is active. The
+  // viewer's only way off the page is the back link in DemoOnlyBar. See
+  // lockedDemoRoutes.ts.
+  const isLockedNav = isLockedDemoRoute(location.pathname);
   const lockedCursor = isLockedNav ? "cursor-not-allowed" : "";
   const lockedAria = isLockedNav ? { "aria-disabled": true as const } : {};
   const withLock = (fn: () => void) => () => {
