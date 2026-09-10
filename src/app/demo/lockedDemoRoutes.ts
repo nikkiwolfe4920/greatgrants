@@ -8,7 +8,7 @@
  * one list here keeps them from drifting out of sync as more of these
  * walkthrough pages get added.
  */
-const LOCKED_DEMO_ROUTES = ["/organization-demo", "/search-demo"] as const;
+const LOCKED_DEMO_ROUTES = ["/organization-demo", "/search-demo", "/org-detail-demo"] as const;
 
 export function isLockedDemoRoute(pathname: string): boolean {
   return (LOCKED_DEMO_ROUTES as readonly string[]).includes(pathname);

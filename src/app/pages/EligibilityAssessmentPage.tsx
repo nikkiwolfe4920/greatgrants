@@ -164,9 +164,11 @@ interface CheckYourEligibilityCardProps {
   usedCount: number;
   limit: number;
   isExhausted: boolean;
+  /** Locked /org-detail-demo walkthrough — see EligibilityAssessmentPage. */
+  demoLocked?: boolean;
 }
 
-function CheckYourEligibilityCard({ onStart, usedCount, limit, isExhausted }: CheckYourEligibilityCardProps) {
+function CheckYourEligibilityCard({ onStart, usedCount, limit, isExhausted, demoLocked = false }: CheckYourEligibilityCardProps) {
   if (isExhausted) {
     return (
       <motion.div
@@ -191,12 +193,24 @@ function CheckYourEligibilityCard({ onStart, usedCount, limit, isExhausted }: Ch
                 {usedCount} of {limit}. Upgrade your plan to run more assessments — including this one.
               </p>
               <div className="flex items-center gap-3 mt-4">
-                <Button asChild className="bg-red-600 hover:bg-red-700 text-white gap-2">
-                  <Link to="/subscribe/upgrade-modal">
+                {demoLocked ? (
+                  <Button
+                    onClick={(e) => e.preventDefault()}
+                    aria-disabled="true"
+                    title="This is a locked demo — this button can't navigate away"
+                    className="bg-red-600 text-white gap-2 cursor-not-allowed hover:bg-red-600"
+                  >
                     Upgrade Plan
                     <ArrowRight className="size-4" />
-                  </Link>
-                </Button>
+                  </Button>
+                ) : (
+                  <Button asChild className="bg-red-600 hover:bg-red-700 text-white gap-2">
+                    <Link to="/subscribe/upgrade-modal">
+                      Upgrade Plan
+                      <ArrowRight className="size-4" />
+                    </Link>
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -232,7 +246,14 @@ function CheckYourEligibilityCard({ onStart, usedCount, limit, isExhausted }: Ch
 
         <div className="flex items-center justify-between gap-3 mt-6 flex-wrap">
           <div className="flex items-center gap-3">
-            <Button onClick={onStart} className="bg-[#9810fa] hover:bg-[#8710e0] text-white gap-2">
+            <Button
+              onClick={() => {
+                if (!demoLocked) onStart();
+              }}
+              aria-disabled={demoLocked || undefined}
+              title={demoLocked ? "This is a locked demo — the assessment doesn't run here" : undefined}
+              className={`bg-[#9810fa] text-white gap-2 ${demoLocked ? "cursor-not-allowed" : "hover:bg-[#8710e0]"}`}
+            >
               <Sparkles className="size-4" />
               Start Eligibility Assessment
               <ArrowRight className="size-4" />
@@ -255,7 +276,19 @@ function CheckYourEligibilityCard({ onStart, usedCount, limit, isExhausted }: Ch
  * Activities & Assessment" section (12791:40283 / 12683:25848) at its
  * center.
  */
-export function EligibilityAssessmentPage() {
+interface EligibilityAssessmentPageProps {
+  /**
+   * Renders every control that would navigate away from this page — the
+   * breadcrumb's Home crumb, the sticky header's back arrow, both "Start
+   * Application" buttons, "Upgrade Plan", "Start Eligibility Assessment",
+   * the two document rows, and the program website link — as inert, with
+   * the browser's native not-allowed (circle-slash) cursor on hover. Used
+   * by the locked /org-detail-demo walkthrough (see OrgDetailDemoPage).
+   */
+  demoLocked?: boolean;
+}
+
+export function EligibilityAssessmentPage({ demoLocked = false }: EligibilityAssessmentPageProps = {}) {
   const [isAssessing, setIsAssessing] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
   const [docsExpanded, setDocsExpanded] = useState(true);
@@ -326,7 +359,13 @@ export function EligibilityAssessmentPage() {
     setTimeout(() => setLinkCopied(false), 2000);
   };
 
-  const handleStartApplication = () => setShowApplicationLoading(true);
+  const handleStartApplication = () => {
+    // Starting an application redirects to /applications once the loading
+    // modal finishes (see ApplicationLoadingModal) — locked out on the
+    // /org-detail-demo walkthrough like every other way off this page.
+    if (demoLocked) return;
+    setShowApplicationLoading(true);
+  };
 
   const toggleWatch = () => {
     if (isAlertOn) {
@@ -356,24 +395,40 @@ export function EligibilityAssessmentPage() {
       />
 
       {/* Sticky condensed header — offset past the global sidebar (lg:w-60 / xl:w-64)
-          so it never draws over SharedSidebar while scrolling. */}
+          so it never draws over SharedSidebar while scrolling. On the locked
+          /org-detail-demo walkthrough it's also offset below DemoOnlyBar
+          (h-20 / 80px), which AppLayout pins above everything else on that
+          route — without this it would render at the literal viewport top,
+          overlapping the demo bar instead of sitting under it. */}
       <AnimatePresence>
         {isSticky && (
           <motion.div
             initial={{ y: -80, opacity: 0 }}
             animate={{ y: 0, opacity: 1, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] } }}
             exit={{ y: -80, opacity: 0, transition: { duration: 0.24, ease: [0.4, 0, 1, 1] } }}
-            className="fixed top-0 left-0 lg:left-60 xl:left-64 right-0 z-50 bg-white/97 backdrop-blur-md border-b border-gray-200/80 shadow-[0_1px_12px_rgba(0,0,0,0.07)]"
+            className={`fixed left-0 lg:left-60 xl:left-64 right-0 z-50 bg-white/97 backdrop-blur-md border-b border-gray-200/80 shadow-[0_1px_12px_rgba(0,0,0,0.07)] ${
+              demoLocked ? "top-20" : "top-0"
+            }`}
           >
             <div className="max-w-6xl mx-auto px-6 py-2.5">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <Link
-                    to="/"
-                    className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 p-1 -ml-1 rounded-md hover:bg-gray-100"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                  </Link>
+                  {demoLocked ? (
+                    <span
+                      aria-disabled="true"
+                      title="This is a locked demo — this link can't navigate away"
+                      className="text-gray-400 flex-shrink-0 p-1 -ml-1 rounded-md cursor-not-allowed"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                    </span>
+                  ) : (
+                    <Link
+                      to="/"
+                      className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 p-1 -ml-1 rounded-md hover:bg-gray-100"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                    </Link>
+                  )}
                   <div className="min-w-0 flex-1">
                     <h2 className="text-sm font-semibold text-gray-900 truncate leading-tight" style={{ fontFamily: "Cabin, sans-serif" }}>
                       {GRANT_TITLE}
@@ -403,7 +458,13 @@ export function EligibilityAssessmentPage() {
                     {linkCopied ? <Check className="w-3.5 h-3.5 mr-1.5 text-teal-600" /> : <Share2 className="w-3.5 h-3.5 mr-1.5" />}
                     {linkCopied ? "Copied" : "Share"}
                   </Button>
-                  <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white font-semibold h-8 text-xs px-4" onClick={handleStartApplication}>
+                  <Button
+                    size="sm"
+                    className={`bg-teal-600 text-white font-semibold h-8 text-xs px-4 ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
+                    onClick={handleStartApplication}
+                    aria-disabled={demoLocked || undefined}
+                    title={demoLocked ? "This is a locked demo — applications can't be started here" : undefined}
+                  >
                     Start Application
                     <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
                   </Button>
@@ -420,11 +481,21 @@ export function EligibilityAssessmentPage() {
           <Breadcrumb className="mb-5">
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link to="/">
+                {demoLocked ? (
+                  <span
+                    aria-disabled="true"
+                    title="This is a locked demo — the breadcrumb can't navigate away"
+                    className="cursor-not-allowed"
+                  >
                     <BreadcrumbHome />
-                  </Link>
-                </BreadcrumbLink>
+                  </span>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <Link to="/">
+                      <BreadcrumbHome />
+                    </Link>
+                  </BreadcrumbLink>
+                )}
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
@@ -467,7 +538,12 @@ export function EligibilityAssessmentPage() {
                   {linkCopied ? <Check className="w-4 h-4 text-teal-600" /> : <Share2 className="w-4 h-4" />}
                   {linkCopied ? "Copied" : "Share"}
                 </Button>
-                <Button onClick={handleStartApplication} className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
+                <Button
+                  onClick={handleStartApplication}
+                  className={`bg-teal-600 text-white gap-1.5 ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
+                  aria-disabled={demoLocked || undefined}
+                  title={demoLocked ? "This is a locked demo — applications can't be started here" : undefined}
+                >
                   Start Application
                   <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -550,7 +626,14 @@ export function EligibilityAssessmentPage() {
                     >
                       <div className="border-t border-gray-100 px-3 py-3 space-y-2">
                         {DOCUMENTS.map((doc) => (
-                          <div key={doc.name} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer">
+                          <div
+                            key={doc.name}
+                            aria-disabled={demoLocked || undefined}
+                            title={demoLocked ? "This is a locked demo — documents can't be opened here" : undefined}
+                            className={`flex items-center gap-3 p-3 rounded-lg border border-gray-200 transition-colors ${
+                              demoLocked ? "cursor-not-allowed" : "hover:border-gray-300 hover:bg-gray-50 cursor-pointer"
+                            }`}
+                          >
                             <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#fef2f2" }}>
                               <FileText className="w-5 h-5 text-red-500" />
                             </div>
@@ -666,6 +749,7 @@ export function EligibilityAssessmentPage() {
                     usedCount={usedCount}
                     limit={limit}
                     isExhausted={isExhausted}
+                    demoLocked={demoLocked}
                   />
                 )}
               </AnimatePresence>
@@ -765,9 +849,20 @@ export function EligibilityAssessmentPage() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Website</p>
-                      <a href="https://www.state.gov/ghsd" className="text-base text-teal-700 hover:underline mt-0.5 block" style={{ fontFamily: "Cabin, sans-serif" }}>
-                        Visit program website
-                      </a>
+                      {demoLocked ? (
+                        <span
+                          aria-disabled="true"
+                          title="This is a locked demo — external links can't be followed here"
+                          className="text-base text-teal-700 mt-0.5 block cursor-not-allowed"
+                          style={{ fontFamily: "Cabin, sans-serif" }}
+                        >
+                          Visit program website
+                        </span>
+                      ) : (
+                        <a href="https://www.state.gov/ghsd" className="text-base text-teal-700 hover:underline mt-0.5 block" style={{ fontFamily: "Cabin, sans-serif" }}>
+                          Visit program website
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
