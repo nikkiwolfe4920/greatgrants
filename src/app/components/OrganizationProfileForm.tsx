@@ -1309,6 +1309,16 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
                         }`}
                       />
                     </div>
+                    {/* Demo-only hint: the UEI verification above is mocked
+                        against this one hardcoded value (see
+                        handleLegalInfoChange), so a viewer walking through
+                        /organization-demo has no real SAM.gov UEI to type
+                        and see it actually verify. */}
+                    {demoLocked && (
+                      <p className="text-xs text-gray-500 mt-1.5">
+                        To verify in demo: 123456789012
+                      </p>
+                    )}
                     {ueiVerificationStatus === 'failed' && (
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
