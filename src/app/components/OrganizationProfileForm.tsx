@@ -77,6 +77,14 @@ interface BoardMember {
 interface OrganizationProfileFormProps {
   onBack: () => void;
   onNavigate?: (view: "home" | "grants" | "organizations") => void;
+  /**
+   * Renders the breadcrumb's Home and Settings crumbs as inert text instead
+   * of links. Used by the locked /organization-demo walkthrough
+   * (see OrganizationDemoPage) so a viewer can't use the breadcrumb to leave
+   * the page — only the current "Organization" crumb stays, and it was
+   * already non-interactive.
+   */
+  demoLocked?: boolean;
 }
 
 function ConfirmedBadge() {
@@ -111,7 +119,7 @@ function ReadinessScoringBanner({ requiresInputs = false }: { requiresInputs?: b
   );
 }
 
-export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProfileFormProps) {
+export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false }: OrganizationProfileFormProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { setScore, setOrgProfileItemsRemaining } = useReadinessScore();
@@ -944,17 +952,38 @@ export function OrganizationProfileForm({ onBack, onNavigate }: OrganizationProf
           <Breadcrumb className="mb-6">
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link to="/">
+                {demoLocked ? (
+                  <span
+                    aria-disabled="true"
+                    title="This is a locked demo — the breadcrumb can't navigate away"
+                    className="cursor-default"
+                  >
                     <BreadcrumbHome />
-                  </Link>
-                </BreadcrumbLink>
+                  </span>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <Link to="/">
+                      <BreadcrumbHome />
+                    </Link>
+                  </BreadcrumbLink>
+                )}
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link to="/settings">Settings</Link>
-                </BreadcrumbLink>
+                {demoLocked ? (
+                  <span
+                    aria-disabled="true"
+                    title="This is a locked demo — the breadcrumb can't navigate away"
+                    className="text-sm font-semibold leading-5 text-[#717680] whitespace-nowrap cursor-default"
+                    style={{ fontFamily: 'Cabin, sans-serif' }}
+                  >
+                    Settings
+                  </span>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <Link to="/settings">Settings</Link>
+                  </BreadcrumbLink>
+                )}
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
