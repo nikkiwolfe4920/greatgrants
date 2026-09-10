@@ -106,17 +106,17 @@ export function SharedSidebar() {
   const isWatchListPage = location.pathname === "/watch-list";
 
   // /organization-demo is a locked walkthrough duplicate of /organization —
-  // every link in this sidebar (the main nav list, "Manage Plan", and the
-  // account dropdown with its Settings/sign-out/org-switch items) is
-  // disabled while it's active, so a viewer's only way off the page is the
-  // back link in DemoOnlyBar. See OrganizationDemoPage.
+  // every control in this sidebar stays visible and hoverable (so the
+  // not-allowed cursor below actually shows up), but none of them go
+  // anywhere: every onClick is wrapped in withLock, which no-ops instead of
+  // navigating/switching org while this route is active. The viewer's only
+  // way off the page is the back link in DemoOnlyBar. See OrganizationDemoPage.
   const isLockedNav = location.pathname === "/organization-demo";
-  const lockedNavProps = isLockedNav
-    ? {
-        "aria-disabled": true,
-        style: { pointerEvents: "none" as const },
-      }
-    : {};
+  const lockedCursor = isLockedNav ? "cursor-not-allowed" : "";
+  const lockedAria = isLockedNav ? { "aria-disabled": true as const } : {};
+  const withLock = (fn: () => void) => () => {
+    if (!isLockedNav) fn();
+  };
 
   const isOrgProfileComplete = orgProfileItemsRemaining === 0;
   const hasPublishedPrograms = publishedProjectsCount >= 1;
@@ -206,20 +206,21 @@ export function SharedSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-3 flex flex-col min-h-0" {...lockedNavProps}>
+      <nav className="flex-1 overflow-y-auto p-3 flex flex-col min-h-0">
         <ul className="space-y-0.5 flex-1">
 
           {/* Dashboard — the app's home */}
           <li>
             <button
-              onClick={() => navigate("/")}
-              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
+              onClick={withLock(() => navigate("/"))}
+              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${lockedCursor} ${
                 isActive("/")
                   ? "bg-gray-100 text-gray-900"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
               style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isActive("/") ? 600 : 400, fontSize: '14px' }}
               aria-current={isActive("/") ? "page" : undefined}
+              {...lockedAria}
             >
               <LayoutDashboard className="w-4 h-4 shrink-0" />
               <span className="flex-1 truncate">Dashboard</span>
@@ -235,13 +236,14 @@ export function SharedSidebar() {
           {isOrgProfileComplete ? (
             <li>
               <button
-                onClick={() => navigate("/organization")}
-                className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
+                onClick={withLock(() => navigate("/organization"))}
+                className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${lockedCursor} ${
                   isActive("/organization")
                     ? "bg-gray-100 text-gray-900"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
                 style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isActive("/organization") ? 600 : 400, fontSize: '14px' }}
+                {...lockedAria}
               >
                 <Building2 className="w-4 h-4 shrink-0" />
                 <span className="flex-1 truncate">Organization Profile</span>
@@ -250,10 +252,11 @@ export function SharedSidebar() {
           ) : (
             <li>
               <button
-                onClick={() => navigate("/organization")}
-                className={`w-full text-left rounded-lg transition-colors ${
+                onClick={withLock(() => navigate("/organization"))}
+                className={`w-full text-left rounded-lg transition-colors ${lockedCursor} ${
                   isActive("/organization") ? "bg-gray-100" : "hover:bg-gray-50"
                 }`}
+                {...lockedAria}
               >
                 <div className="flex items-center gap-2 px-3 py-2">
                   <Building2 className="w-4 h-4 text-gray-700 shrink-0" />
@@ -281,13 +284,14 @@ export function SharedSidebar() {
           {hasPublishedPrograms ? (
             <li>
               <button
-                onClick={() => navigate("/project-details")}
-                className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
+                onClick={withLock(() => navigate("/project-details"))}
+                className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${lockedCursor} ${
                   isActive("/project-details")
                     ? "bg-gray-100 text-gray-900"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
                 style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isActive("/project-details") ? 600 : 400, fontSize: '14px' }}
+                {...lockedAria}
               >
                 <FolderOpen className="w-4 h-4 shrink-0" />
                 <span className="flex-1 truncate">My Programs</span>
@@ -299,10 +303,11 @@ export function SharedSidebar() {
           ) : (
             <li>
               <button
-                onClick={() => navigate("/project-details")}
-                className={`w-full text-left rounded-md transition-colors ${
+                onClick={withLock(() => navigate("/project-details"))}
+                className={`w-full text-left rounded-md transition-colors ${lockedCursor} ${
                   isActive("/project-details") ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-100"
                 }`}
+                {...lockedAria}
               >
                 <div className="flex items-center gap-2 px-3 py-2">
                   <FolderOpen className="w-4 h-4 shrink-0" />
@@ -330,13 +335,14 @@ export function SharedSidebar() {
           {/* Grant Search */}
           <li>
             <button
-              onClick={() => navigate("/search")}
-              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
+              onClick={withLock(() => navigate("/search"))}
+              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${lockedCursor} ${
                 isActive("/search") || isGrantDetailPage
                   ? "bg-gray-100 text-gray-900"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
               style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isActive("/search") || isGrantDetailPage ? 600 : 400, fontSize: '14px' }}
+              {...lockedAria}
             >
               <Search className="w-4 h-4 shrink-0" />
               <span className="flex-1 truncate">Grant Search</span>
@@ -354,10 +360,11 @@ export function SharedSidebar() {
             >
               {/* Navigate label area */}
               <button
-                onClick={() => navigate("/applications")}
-                className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                onClick={withLock(() => navigate("/applications"))}
+                className={`flex items-center gap-2 flex-1 min-w-0 text-left ${lockedCursor}`}
                 style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isAllApplicationsActive ? 600 : 400, fontSize: '14px' }}
                 aria-label="Go to All Applications"
+                {...lockedAria}
               >
                 <FileText className="w-4 h-4 shrink-0" />
                 <span className="flex-1 truncate">All Applications</span>
@@ -373,10 +380,11 @@ export function SharedSidebar() {
 
               {/* Chevron toggle */}
               <button
-                onClick={() => setApplicationsExpanded(prev => !prev)}
-                className="p-0.5 rounded hover:bg-gray-200 transition-colors shrink-0"
+                onClick={withLock(() => setApplicationsExpanded(prev => !prev))}
+                className={`p-0.5 rounded hover:bg-gray-200 transition-colors shrink-0 ${lockedCursor}`}
                 aria-label={applicationsExpanded ? "Collapse applications" : "Expand applications"}
                 aria-expanded={applicationsExpanded}
+                {...lockedAria}
               >
                 {applicationsExpanded ? (
                   <ChevronDown className="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" />
@@ -392,12 +400,13 @@ export function SharedSidebar() {
                 {mockApplications.map((app) => (
                   <li key={app.id}>
                     <button
-                      onClick={() => setExpandedApp(expandedApp === app.id ? "" : app.id)}
-                      className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-sm rounded-md group ${
+                      onClick={withLock(() => setExpandedApp(expandedApp === app.id ? "" : app.id))}
+                      className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-sm rounded-md group ${lockedCursor} ${
                         location.search.includes(`applicationId=${app.id}`)
                           ? "bg-gray-100 text-gray-900"
                           : "text-gray-700 hover:bg-gray-50"
                       }`}
+                      {...lockedAria}
                     >
                       {expandedApp === app.id ? (
                         <ChevronDown className="w-3 h-3 shrink-0" />
@@ -414,12 +423,13 @@ export function SharedSidebar() {
                           return (
                             <li key={section.id}>
                               <button
-                                onClick={() => navigate(`/application/${app.id}/s/${section.id}`)}
-                                className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-xs rounded-md transition-colors ${
+                                onClick={withLock(() => navigate(`/application/${app.id}/s/${section.id}`))}
+                                className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-xs rounded-md transition-colors ${lockedCursor} ${
                                   isActiveSection
                                     ? "bg-gray-100 text-gray-900 font-medium"
                                     : "text-gray-600 hover:bg-gray-50"
                                 }`}
+                                {...lockedAria}
                               >
                                 {isActiveSection && (
                                   <span className="w-1.5 h-1.5 rounded-full bg-teal-600 shrink-0" />
@@ -440,11 +450,12 @@ export function SharedSidebar() {
           {/* Watch List */}
           <li>
             <button
-              onClick={() => navigate("/watch-list")}
-              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
+              onClick={withLock(() => navigate("/watch-list"))}
+              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${lockedCursor} ${
                 isWatchListPage ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-100"
               }`}
               style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isWatchListPage ? 600 : 400, fontSize: '14px' }}
+              {...lockedAria}
             >
               <Eye className="w-4 h-4 shrink-0" />
               <span className="flex-1 truncate">Watch List</span>
@@ -462,7 +473,7 @@ export function SharedSidebar() {
       </nav>
 
       {/* Credits Usage Widget */}
-      <div className="px-3 pb-3 shrink-0" {...lockedNavProps}>
+      <div className="px-3 pb-3 shrink-0">
         <div className="bg-[#fffefa] rounded-lg p-3 w-full">
           <div className="flex items-center gap-1.5 mb-2">
             <FileText className="w-3.5 h-3.5 text-[#101828] shrink-0" />
@@ -486,9 +497,10 @@ export function SharedSidebar() {
               </span>
             </div>
             <button
-              onClick={() => navigate("/settings")}
-              className="text-[12px] font-semibold text-[#00786f] leading-4 hover:underline shrink-0"
+              onClick={withLock(() => navigate("/settings"))}
+              className={`text-[12px] font-semibold text-[#00786f] leading-4 hover:underline shrink-0 ${lockedCursor}`}
               style={{ fontFamily: 'Cabin, sans-serif' }}
+              {...lockedAria}
             >
               Manage Plan
             </button>
@@ -497,7 +509,7 @@ export function SharedSidebar() {
       </div>
 
       {/* User Profile */}
-      <div className="px-3 pb-4 border-t border-gray-200 pt-3 shrink-0" {...lockedNavProps}>
+      <div className="px-3 pb-4 border-t border-gray-200 pt-3 shrink-0">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2.5 w-full hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors">
@@ -518,8 +530,9 @@ export function SharedSidebar() {
                 {organizations.map((org) => (
                   <button
                     key={org.id}
-                    onClick={() => handleOrganizationSwitch(org.name)}
-                    className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-gray-50 transition-colors group"
+                    onClick={withLock(() => handleOrganizationSwitch(org.name))}
+                    className={`flex items-center gap-3 w-full p-2 rounded-lg hover:bg-gray-50 transition-colors group ${lockedCursor}`}
+                    {...lockedAria}
                   >
                     <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
                       <span className="text-sm font-semibold text-gray-600">{org.initials}</span>
@@ -539,16 +552,16 @@ export function SharedSidebar() {
               </div>
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/settings")} className="gap-3 py-3 mx-2 rounded-lg">
+            <DropdownMenuItem onClick={withLock(() => navigate("/settings"))} className={`gap-3 py-3 mx-2 rounded-lg ${lockedCursor}`} {...lockedAria}>
               <Settings className="w-4 h-4 text-gray-500" />
               <div className="flex-1 text-sm font-medium">Account settings</div>
               <span className="text-xs text-gray-400 font-mono">⌘S</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/organizations")} className="gap-3 py-3 mx-2 rounded-lg">
+            <DropdownMenuItem onClick={withLock(() => navigate("/organizations"))} className={`gap-3 py-3 mx-2 rounded-lg ${lockedCursor}`} {...lockedAria}>
               <Building2 className="w-4 h-4 text-gray-500" />
               <div className="flex-1 text-sm font-medium">Organizations & Roles</div>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/signin")} className="gap-3 py-3 mx-2 mb-2 rounded-lg bg-gray-50">
+            <DropdownMenuItem onClick={withLock(() => navigate("/signin"))} className={`gap-3 py-3 mx-2 mb-2 rounded-lg bg-gray-50 ${lockedCursor}`} {...lockedAria}>
               <LogOut className="w-4 h-4 text-gray-500" />
               <div className="flex-1 text-sm font-medium">Sign out</div>
               <span className="text-xs text-gray-400 font-mono">⇧⌘Q</span>
@@ -576,17 +589,23 @@ export function SharedSidebar() {
         </div>
       )}
 
-      {/* Desktop sidebar — visible lg+ */}
-      <div className="hidden lg:flex lg:flex-col lg:w-60 xl:w-64 shrink-0 h-screen sticky top-0">
+      {/* Desktop sidebar — visible lg+. h-full (not h-screen) so it fits
+          whatever height its flex row is actually given — on most routes
+          that row is the full viewport, but on /organization-demo it's the
+          viewport minus DemoOnlyBar's height. See AppLayout. */}
+      <div className="hidden lg:flex lg:flex-col lg:w-60 xl:w-64 shrink-0 h-full">
         {sidebarContent}
       </div>
 
       {/* Tablet/mobile: hamburger button + overlay drawer */}
       <div className="lg:hidden">
-        {/* Hamburger toggle — fixed top-left */}
+        {/* Hamburger toggle — fixed top-left, nudged below DemoOnlyBar when
+            it's present so the two don't overlap. */}
         <button
           onClick={() => setMobileOpen(true)}
-          className="fixed top-3 left-3 z-40 p-2 rounded-md bg-white border border-gray-200 shadow-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+          className={`fixed left-3 z-40 p-2 rounded-md bg-white border border-gray-200 shadow-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors ${
+            isLockedNav ? "top-[92px]" : "top-3"
+          }`}
           aria-label="Open navigation"
         >
           <Menu className="w-5 h-5" />
