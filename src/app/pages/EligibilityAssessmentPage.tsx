@@ -549,15 +549,19 @@ export function EligibilityAssessmentPage({ demoLocked = false }: EligibilityAss
                 </Button>
               </div>
 
-              <Button variant="outline" size="sm" className="h-8 gap-1.5 border-teal-200 text-gray-700 hover:bg-teal-50">
-                <FolderPlus className="w-4 h-4 text-gray-500" />
-                Add Programs
-                {programLinked && (
-                  <span className="inline-flex size-5 items-center justify-center rounded-md bg-teal-600 text-xs font-medium text-white">
-                    1
-                  </span>
-                )}
-              </Button>
+              {/* Hidden on the locked /org-detail-demo walkthrough — see
+                  demoLocked below. */}
+              {!demoLocked && (
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 border-teal-200 text-gray-700 hover:bg-teal-50">
+                  <FolderPlus className="w-4 h-4 text-gray-500" />
+                  Add Programs
+                  {programLinked && (
+                    <span className="inline-flex size-5 items-center justify-center rounded-md bg-teal-600 text-xs font-medium text-white">
+                      1
+                    </span>
+                  )}
+                </Button>
+              )}
 
               {reportGeneratedAt && (
                 <div className="flex items-center gap-1.5 text-sm">
