@@ -4,11 +4,12 @@ import { useNavigate } from "react-router";
 const CABIN = { fontFamily: "Cabin, sans-serif" } as const;
 
 /**
- * DemoOnlyBar — the full-width header that sits above *everything* on
- * /organization-demo (both SharedSidebar and the page content — see the
- * isLockedOrgDemo check in AppLayout, which mounts this above the sidebar
- * rather than the page mounting it itself) so there's no mistaking that
- * what's underneath is a demo, not the live workspace.
+ * DemoOnlyBar — the full-width header that sits above *everything* on a
+ * locked walkthrough route (/organization-demo, /search-demo — see
+ * lockedDemoRoutes.ts), both SharedSidebar and the page content, so there's
+ * no mistaking that what's underneath is a demo, not the live workspace.
+ * AppLayout mounts it above the sidebar rather than the page mounting it
+ * itself, precisely so it can span that full width on every locked route.
  *
  * Ported from two pieces of the Figma "Header / Nav" component
  * (https://www.figma.com/design/AJQoDJAJZL2ItawgAfLYh3/Great-Grants-MVP?node-id=14398-21777):
