@@ -48,6 +48,25 @@ interface ApplicationRightRailProps {
   isExpanded: boolean;
   sections: Section[];
   allApplications?: Application[];
+  /**
+   * Starts the rail collapsed to just its floating tab instead of open.
+   * Used by the locked /applications-demo walkthrough (see
+   * ApplicationsDemoPage), which wants the workspace to open uncluttered
+   * and let the viewer choose to pull the rail out.
+   */
+  defaultCollapsed?: boolean;
+  /**
+   * Overrides the collapsed tab's label (normally "PROGRESS") — e.g.
+   * "Expert Help?" on /applications-demo, since that walkthrough only
+   * shows the "Need Expert Help?" card once the rail opens.
+   */
+  collapsedTabLabel?: string;
+  /**
+   * Hides the "Content Gaps to Address" card in the expanded detail view,
+   * leaving "Need Expert Help?" as the only (and therefore topmost) card.
+   * Used by /applications-demo.
+   */
+  hideContentGaps?: boolean;
 }
 
 type ApplicationStatus = 'in-progress' | 'ready-for-review' | 'in-review' | 'approved';
@@ -89,14 +108,17 @@ export function ApplicationRightRail({
   activeSection,
   isExpanded,
   sections,
-  allApplications = []
+  allApplications = [],
+  defaultCollapsed = false,
+  collapsedTabLabel,
+  hideContentGaps = false
 }: ApplicationRightRailProps) {
   const navigate = useNavigate();
   const [status, setStatus] = useState<ApplicationStatus>('in-progress');
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [completedGaps, setCompletedGaps] = useState<string[]>([]);
-  const [showRightRail, setShowRightRail] = useState(true);
+  const [showRightRail, setShowRightRail] = useState(!defaultCollapsed);
 
   // Load comments and status for active section
   useEffect(() => {
@@ -238,6 +260,8 @@ export function ApplicationRightRail({
     );
     label = 'PROGRESS';
   }
+
+  if (collapsedTabLabel) label = collapsedTabLabel;
 
   // Expand button (when rail is collapsed)
   if (!showRightRail) {
@@ -547,68 +571,72 @@ export function ApplicationRightRail({
             </div>
           </motion.div> */}
 
-          {/* Content Gaps Card */}
-          <motion.div
-            className="bg-white rounded-xl border border-gray-200 overflow-hidden"
-            layout
-            transition={{ duration: 0.3 }}
-          >
-            <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-amber-50/50 to-orange-50/50">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertCircle className="w-4 h-4 text-amber-600" />
-                <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                  Content Gaps to Address
-                </h3>
+          {/* Content Gaps Card — hidden on /applications-demo (see
+              hideContentGaps) so "Need Expert Help?" below is the only,
+              and therefore topmost, card in the expanded rail. */}
+          {!hideContentGaps && (
+            <motion.div
+              className="bg-white rounded-xl border border-gray-200 overflow-hidden"
+              layout
+              transition={{ duration: 0.3 }}
+            >
+              <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-amber-50/50 to-orange-50/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600" />
+                  <h3 className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                    Content Gaps to Address
+                  </h3>
+                </div>
+                <p className="text-xs text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                  Key areas that strengthen your application
+                </p>
               </div>
-              <p className="text-xs text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                Key areas that strengthen your application
-              </p>
-            </div>
 
-            <div className="p-4 space-y-3">
-              {CONTENT_GAPS.map((gap) => {
-                const GapIcon = gap.icon;
-                const isCompleted = completedGaps.includes(gap.id);
+              <div className="p-4 space-y-3">
+                {CONTENT_GAPS.map((gap) => {
+                  const GapIcon = gap.icon;
+                  const isCompleted = completedGaps.includes(gap.id);
 
-                return (
-                  <motion.div
-                    key={gap.id}
-                    layout
-                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                      isCompleted
-                        ? 'border-teal-200 bg-teal-50/50'
-                        : 'border-gray-200 hover:border-amber-300 hover:bg-amber-50/30'
-                    }`}
-                    onClick={() => toggleGapCompletion(gap.id)}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
-                        isCompleted ? 'bg-teal-600 border-teal-600' : 'border-gray-300'
-                      }`}>
-                        {isCompleted && <CheckCircle2 className="w-3 h-3 text-white" />}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <GapIcon className={`w-4 h-4 ${isCompleted ? 'text-teal-600' : 'text-gray-600'}`} />
-                          <h4 className={`text-xs font-semibold ${isCompleted ? 'text-teal-900 line-through' : 'text-gray-900'}`} style={{ fontFamily: 'Cabin, sans-serif' }}>
-                            {gap.title}
-                          </h4>
-                          {gap.importance === 'high' && !isCompleted && (
-                            <Badge className="bg-red-50 text-red-700 border-red-200 text-xs px-1.5 py-0">
-                              High
-                            </Badge>
-                          )}
+                  return (
+                    <motion.div
+                      key={gap.id}
+                      layout
+                      className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                        isCompleted
+                          ? 'border-teal-200 bg-teal-50/50'
+                          : 'border-gray-200 hover:border-amber-300 hover:bg-amber-50/30'
+                      }`}
+                      onClick={() => toggleGapCompletion(gap.id)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+                          isCompleted ? 'bg-teal-600 border-teal-600' : 'border-gray-300'
+                        }`}>
+                          {isCompleted && <CheckCircle2 className="w-3 h-3 text-white" />}
                         </div>
-                        <p className={`text-xs leading-relaxed ${isCompleted ? 'text-teal-700' : 'text-gray-600'}`} style={{ fontFamily: 'Cabin, sans-serif' }}>
-                          {gap.description}
-                        </p>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <GapIcon className={`w-4 h-4 ${isCompleted ? 'text-teal-600' : 'text-gray-600'}`} />
+                            <h4 className={`text-xs font-semibold ${isCompleted ? 'text-teal-900 line-through' : 'text-gray-900'}`} style={{ fontFamily: 'Cabin, sans-serif' }}>
+                              {gap.title}
+                            </h4>
+                            {gap.importance === 'high' && !isCompleted && (
+                              <Badge className="bg-red-50 text-red-700 border-red-200 text-xs px-1.5 py-0">
+                                High
+                              </Badge>
+                            )}
+                          </div>
+                          <p className={`text-xs leading-relaxed ${isCompleted ? 'text-teal-700' : 'text-gray-600'}`} style={{ fontFamily: 'Cabin, sans-serif' }}>
+                            {gap.description}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </motion.div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
 
           {/* Need Expert Help Card - Same style as Content Gaps */}
           <motion.div

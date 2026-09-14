@@ -50,7 +50,40 @@ import { MarkApplicationSubmittedModal } from "@/app/components/MarkApplicationS
 
 import { mockApplications, type Application, type Program, type Section } from "@/data/applications";
 
-export function ApplicationsPage() {
+interface ApplicationsPageProps {
+  /**
+   * Renders the breadcrumb's Home crumb inert (not-allowed cursor on
+   * hover, no navigation) and, together with `demoLockedApplicationId`,
+   * freezes one application's entire accordion card: its expand/collapse
+   * chevron, "..." menu, "Mark as submitted" checkbox, "Add Programs"
+   * button, and Preview/Export button all become inert too. Used by the
+   * locked /applications-demo walkthrough (see ApplicationsDemoPage). The
+   * global left nav disables itself separately via the existing
+   * isLockedDemoRoute check, same as every other locked demo route.
+   */
+  demoLocked?: boolean;
+  /**
+   * The application id whose entire accordion card stays frozen while
+   * `demoLocked` is set — see there. On /applications-demo this is "2"
+   * (the FY26 National Network Cooperative Agreement), which starts
+   * collapsed and must stay that way.
+   */
+  demoLockedApplicationId?: string;
+  /** Passed straight through to ApplicationRightRail — see there. */
+  rightRailDefaultCollapsed?: boolean;
+  /** Passed straight through to ApplicationRightRail — see there. */
+  rightRailCollapsedLabel?: string;
+  /** Passed straight through to ApplicationRightRail — see there. */
+  rightRailHideContentGaps?: boolean;
+}
+
+export function ApplicationsPage({
+  demoLocked = false,
+  demoLockedApplicationId,
+  rightRailDefaultCollapsed = false,
+  rightRailCollapsedLabel,
+  rightRailHideContentGaps = false,
+}: ApplicationsPageProps = {}) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [expandedApp, setExpandedApp] = useState<string>("1");
@@ -321,11 +354,21 @@ export function ApplicationsPage() {
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/">
+            {demoLocked ? (
+              <span
+                aria-disabled="true"
+                title="This is a locked demo — the breadcrumb can't navigate away"
+                className="cursor-not-allowed"
+              >
                 <BreadcrumbHome />
-              </Link>
-            </BreadcrumbLink>
+              </span>
+            ) : (
+              <BreadcrumbLink asChild>
+                <Link to="/">
+                  <BreadcrumbHome />
+                </Link>
+              </BreadcrumbLink>
+            )}
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -613,9 +656,12 @@ export function ApplicationsPage() {
         ) : (
           (currentView === "active" ? activeApplications : currentView === "submitted" ? submittedApplications : archivedApplications).map((app) => {
             const isExpanded = expandedApp === app.id;
-            
+            // See demoLockedApplicationId above — freezes this one
+            // application's entire accordion card on /applications-demo.
+            const isLockedAccordion = demoLocked && app.id === demoLockedApplicationId;
+
             return (
-              <div key={app.id} className="bg-white rounded-lg border border-gray-200 relative">
+              <div key={app.id} className={`bg-white rounded-lg border border-gray-200 relative ${isLockedAccordion ? "cursor-not-allowed" : ""}`}>
                 {/* Archive Loading Overlay */}
                 {archivingAppId === app.id && (
                   <motion.div
@@ -632,7 +678,7 @@ export function ApplicationsPage() {
                     </div>
                   </motion.div>
                 )}
-                
+
                 {/* Application Header */}
                 <div className="p-6 border-b border-gray-200">
                   <div className="flex items-start justify-between gap-4 mb-3">
@@ -650,6 +696,15 @@ export function ApplicationsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {/* More Menu */}
+                      {isLockedAccordion ? (
+                        <button
+                          aria-disabled="true"
+                          title="This is a locked demo — this application can't be changed here"
+                          className="p-1.5 rounded cursor-not-allowed"
+                        >
+                          <MoreVertical className="w-5 h-5 text-gray-300" />
+                        </button>
+                      ) : (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button className="p-1.5 hover:bg-gray-100 rounded transition-colors">
@@ -664,8 +719,8 @@ export function ApplicationsPage() {
                                 <span>Print</span>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => handleArchive(app.id)} 
+                              <DropdownMenuItem
+                                onClick={() => handleArchive(app.id)}
                                 className="gap-3 py-2.5 text-gray-700"
                               >
                                 <Archive className="w-4 h-4" />
@@ -679,8 +734,8 @@ export function ApplicationsPage() {
                                 <span>Unarchive</span>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => handleDelete(app.id)} 
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(app.id)}
                                 className="gap-3 py-2.5 text-red-600 focus:text-red-600"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -690,16 +745,22 @@ export function ApplicationsPage() {
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
-                      
+                      )}
+
                       {/* Expand/Collapse Button */}
                       <button
-                        onClick={() => setExpandedApp(isExpanded ? "" : app.id)}
-                        className="p-1 hover:bg-gray-100 rounded"
+                        onClick={() => {
+                          if (isLockedAccordion) return;
+                          setExpandedApp(isExpanded ? "" : app.id);
+                        }}
+                        aria-disabled={isLockedAccordion || undefined}
+                        title={isLockedAccordion ? "This is a locked demo — this application can't be expanded here" : undefined}
+                        className={`p-1 rounded ${isLockedAccordion ? "cursor-not-allowed" : "hover:bg-gray-100"}`}
                       >
                         {isExpanded ? (
-                          <ChevronUp className="w-5 h-5 text-gray-500" />
+                          <ChevronUp className={`w-5 h-5 ${isLockedAccordion ? "text-gray-300" : "text-gray-500"}`} />
                         ) : (
-                          <ChevronDown className="w-5 h-5 text-gray-500" />
+                          <ChevronDown className={`w-5 h-5 ${isLockedAccordion ? "text-gray-300" : "text-gray-500"}`} />
                         )}
                       </button>
                     </div>
@@ -738,6 +799,20 @@ export function ApplicationsPage() {
                             <Loader2 className="w-4 h-4 animate-spin" />
                             <span className="font-medium">Marking as submitted...</span>
                           </div>
+                        ) : isLockedAccordion ? (
+                          <span
+                            aria-disabled="true"
+                            title="This is a locked demo — this application can't be changed here"
+                            className="flex items-center gap-2 text-sm text-gray-400 cursor-not-allowed"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={false}
+                              disabled
+                              className="w-4 h-4 text-gray-300 border-gray-300 rounded cursor-not-allowed"
+                            />
+                            <span className="font-medium">Mark as submitted</span>
+                          </span>
                         ) : (
                           <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:text-gray-900 transition-colors">
                             <input
@@ -753,7 +828,22 @@ export function ApplicationsPage() {
                       
                       <div className="flex items-center gap-6">
                         {/* Add Programs Feature */}
-                        {publishedPrograms.length > 0 ? (
+                        {isLockedAccordion ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled
+                            aria-disabled="true"
+                            title="This is a locked demo — programs can't be changed here"
+                            className="gap-1.5 border-gray-200 text-gray-400 cursor-not-allowed"
+                          >
+                            <FolderOpen className="w-4 h-4 text-gray-300" />
+                            <span>Add Programs</span>
+                            <Badge className="ml-1 bg-gray-300 text-white text-xs px-1.5">
+                              1
+                            </Badge>
+                          </Button>
+                        ) : publishedPrograms.length > 0 ? (
                           <Popover>
                             <PopoverTrigger asChild>
                               <Button 
@@ -837,18 +927,32 @@ export function ApplicationsPage() {
                         )}
                         
                         {/* Export Button aligned to the right */}
-                        <Button
-                          onClick={() => {
-                            setSelectedAppForExport(app);
-                            setExportDialogOpen(true);
-                          }}
-                          variant={app.id === "2" ? "default" : "outline"}
-                          size="sm"
-                          className={app.id === "2" ? "bg-teal-600 hover:bg-teal-700 text-white" : "bg-white"}
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          Preview / Export
-                        </Button>
+                        {isLockedAccordion ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled
+                            aria-disabled="true"
+                            title="This is a locked demo — this application can't be changed here"
+                            className="bg-white text-gray-400 cursor-not-allowed"
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Preview / Export
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => {
+                              setSelectedAppForExport(app);
+                              setExportDialogOpen(true);
+                            }}
+                            variant={app.id === "2" ? "default" : "outline"}
+                            size="sm"
+                            className={app.id === "2" ? "bg-teal-600 hover:bg-teal-700 text-white" : "bg-white"}
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Preview / Export
+                          </Button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -986,6 +1090,9 @@ export function ApplicationsPage() {
             isExpanded={!!expandedApp}
             sections={currentExpandedApp?.sections || activeApplications[0].sections}
             allApplications={activeApplications}
+            defaultCollapsed={rightRailDefaultCollapsed}
+            collapsedTabLabel={rightRailCollapsedLabel}
+            hideContentGaps={rightRailHideContentGaps}
           />
         )}
       </div>
