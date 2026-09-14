@@ -39,6 +39,20 @@ interface EligibilityWorkflowPanelProps {
   onStartApplication?: () => void;
   /** Fires on every Continue / Check My Eligibility / step-1-Back so the page can scroll back up and anchor on the "Eligibility Assessment" heading. */
   onAnchorScroll?: () => void;
+  /**
+   * Disables every control in this workflow that would navigate away from
+   * the locked demo — currently just the two "Start Application" buttons
+   * inside the completed report. Used by the locked /eligibility-demo
+   * walkthrough (see EligibilityAssessmentPage).
+   */
+  demoLocked?: boolean;
+  /**
+   * Hides every "X of N assessments used" display in this workflow — the
+   * usage line/pill up top, Policy Info's "this will use assessment N of
+   * M" line, and the completed report's "Assessment complete" banner.
+   * Used by EligibilityDemoPage so the demo isn't capped at N runs.
+   */
+  hideAssessmentUsage?: boolean;
 }
 
 /**
@@ -54,6 +68,8 @@ export function EligibilityWorkflowPanel({
   onReportGenerated,
   onStartApplication,
   onAnchorScroll,
+  demoLocked = false,
+  hideAssessmentUsage = false,
 }: EligibilityWorkflowPanelProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [programId, setProgramId] = useState("");
@@ -137,18 +153,22 @@ export function EligibilityWorkflowPanel({
         passItems={eligibilityPassItems}
         onToggleActionItem={handleToggleActionItem}
         onStartApplication={() => onStartApplication?.()}
+        demoLocked={demoLocked}
+        hideAssessmentUsage={hideAssessmentUsage}
       />
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
-          Completing this assessment will use 1 of your plan's included assessments.
-        </p>
-        <AssessmentUsageMeter usedCount={usedCount} limit={limit} compact />
-      </div>
+      {!hideAssessmentUsage && (
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <p className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
+            Completing this assessment will use 1 of your plan's included assessments.
+          </p>
+          <AssessmentUsageMeter usedCount={usedCount} limit={limit} compact />
+        </div>
+      )}
 
       <StepperHeader steps={STEP_LABELS.map((s) => ({ label: s.label }))} currentStep={currentStep} />
 
@@ -165,6 +185,7 @@ export function EligibilityWorkflowPanel({
             setCurrentStep(2);
           }}
           canContinue={canContinueStep1}
+          demoLocked={demoLocked}
         />
       )}
 
@@ -177,6 +198,7 @@ export function EligibilityWorkflowPanel({
             onAnchorScroll?.();
             setCurrentStep(3);
           }}
+          demoLocked={demoLocked}
         />
       )}
 
@@ -199,6 +221,7 @@ export function EligibilityWorkflowPanel({
           onBack={() => setCurrentStep(3)}
           onCheckEligibility={handleCheckEligibility}
           isSubmitting={isSubmitting}
+          hideAssessmentUsage={hideAssessmentUsage}
         />
       )}
     </div>

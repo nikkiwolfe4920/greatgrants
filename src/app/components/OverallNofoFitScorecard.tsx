@@ -126,6 +126,8 @@ export interface OverallNofoFitScorecardProps {
   onStartApplication?: () => void;
   /** Swaps the CTA copy to the "all clear" variant once every action item is resolved. Defaults to false. */
   allActionsComplete?: boolean;
+  /** Disables the CTA's "Start Application" button with a not-allowed cursor — it would otherwise navigate off the locked demo. See EligibilityAssessmentPage. */
+  demoLocked?: boolean;
 }
 
 /**
@@ -166,6 +168,7 @@ export function OverallNofoFitScorecard({
   ],
   onStartApplication,
   allActionsComplete = false,
+  demoLocked = false,
 }: OverallNofoFitScorecardProps) {
   const statusStyles = STATUS_STYLES[status];
   const StatusIcon = statusStyles.Icon;
@@ -273,9 +276,13 @@ export function OverallNofoFitScorecard({
               </p>
             </div>
             <Button
-              onClick={onStartApplication}
+              onClick={() => {
+                if (!demoLocked) onStartApplication();
+              }}
               size="sm"
-              className="shrink-0 bg-teal-600 hover:bg-teal-700 text-white gap-1.5"
+              aria-disabled={demoLocked || undefined}
+              title={demoLocked ? "This is a locked demo — applications can't be started here" : undefined}
+              className={`shrink-0 bg-teal-600 text-white gap-1.5 ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
             >
               Start Application
               <ArrowRight className="size-3.5" />

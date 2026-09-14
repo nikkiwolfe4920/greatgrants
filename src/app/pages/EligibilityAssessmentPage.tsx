@@ -172,6 +172,13 @@ interface CheckYourEligibilityCardProps {
    * locked either way. See EligibilityAssessmentPage.
    */
   unlockEligibilityAssessment?: boolean;
+  /**
+   * Hides the "X of N assessments used" pill next to the Start button and
+   * ignores `isExhausted` entirely, so this card never shows the
+   * exhausted "Upgrade Plan" state — the demo isn't capped at N runs. See
+   * EligibilityAssessmentPage.
+   */
+  hideAssessmentUsage?: boolean;
 }
 
 function CheckYourEligibilityCard({
@@ -181,9 +188,10 @@ function CheckYourEligibilityCard({
   isExhausted,
   demoLocked = false,
   unlockEligibilityAssessment = false,
+  hideAssessmentUsage = false,
 }: CheckYourEligibilityCardProps) {
   const startLocked = demoLocked && !unlockEligibilityAssessment;
-  if (isExhausted) {
+  if (isExhausted && !hideAssessmentUsage) {
     return (
       <motion.div
         key="exhausted"
@@ -276,7 +284,7 @@ function CheckYourEligibilityCard({
               ~5 minutes • 5 steps
             </span>
           </div>
-          <AssessmentUsageMeter usedCount={usedCount} limit={limit} compact />
+          {!hideAssessmentUsage && <AssessmentUsageMeter usedCount={usedCount} limit={limit} compact />}
         </div>
       </div>
     </motion.div>
@@ -330,6 +338,16 @@ interface EligibilityAssessmentPageProps {
    * call just below — see there.
    */
   resetAssessmentUsageOnMount?: boolean;
+  /**
+   * Hides every "X of N assessments used" display in this page and the
+   * eligibility workflow beneath it — the entry card's pill, the
+   * workflow's own usage line, Policy Info's "this will use assessment N
+   * of M" line, and the completed report's "Assessment complete — marked
+   * as used" banner — and, together with `resetAssessmentUsageOnMount`,
+   * means the demo is never capped at ASSESSMENT_LIMIT runs. Used by
+   * EligibilityDemoPage.
+   */
+  hideAssessmentUsage?: boolean;
 }
 
 export function EligibilityAssessmentPage({
@@ -337,6 +355,7 @@ export function EligibilityAssessmentPage({
   unlockEligibilityAssessment = false,
   autoScrollToEligibility = false,
   resetAssessmentUsageOnMount = false,
+  hideAssessmentUsage = false,
 }: EligibilityAssessmentPageProps = {}) {
   const [isAssessing, setIsAssessing] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
@@ -816,6 +835,8 @@ export function EligibilityAssessmentPage({
                       onReportGenerated={setReportGeneratedAt}
                       onStartApplication={handleStartApplication}
                       onAnchorScroll={() => scrollToSection("eligibility-assessment")}
+                      demoLocked={demoLocked}
+                      hideAssessmentUsage={hideAssessmentUsage}
                     />
                   </motion.div>
                 ) : (
@@ -826,6 +847,7 @@ export function EligibilityAssessmentPage({
                     isExhausted={isExhausted}
                     demoLocked={demoLocked}
                     unlockEligibilityAssessment={unlockEligibilityAssessment}
+                    hideAssessmentUsage={hideAssessmentUsage}
                   />
                 )}
               </AnimatePresence>

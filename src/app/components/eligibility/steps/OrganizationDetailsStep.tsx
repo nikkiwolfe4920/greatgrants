@@ -9,6 +9,8 @@ interface OrganizationDetailsStepProps {
   onUpdateField: (key: string, value: string) => void;
   onBack: () => void;
   onContinue: () => void;
+  /** Disables the "Account Settings → Organization Profile" link with a not-allowed cursor — it would otherwise navigate off the locked demo. See EligibilityAssessmentPage. */
+  demoLocked?: boolean;
 }
 
 const GROUP_LABELS: Record<OrgDetailField["group"], string> = {
@@ -25,7 +27,13 @@ const GROUP_ORDER: OrgDetailField["group"][] = ["identity", "address", "financia
  * the "Missing Details" module promoted above the filled fields and its
  * inputs entered inline (no separate modal), per request.
  */
-export function OrganizationDetailsStep({ fields, onUpdateField, onBack, onContinue }: OrganizationDetailsStepProps) {
+export function OrganizationDetailsStep({
+  fields,
+  onUpdateField,
+  onBack,
+  onContinue,
+  demoLocked = false,
+}: OrganizationDetailsStepProps) {
   const missingFields = fields.filter((f) => !f.filled);
   const filledByGroup = GROUP_ORDER.map((group) => ({
     group,
@@ -98,9 +106,19 @@ export function OrganizationDetailsStep({ fields, onUpdateField, onBack, onConti
           <Info className="size-4 text-blue-700 shrink-0" />
           <p className="text-xs text-blue-700" style={{ fontFamily: "Cabin, sans-serif" }}>
             Need to update more details? Go to{" "}
-            <Link to="/organization" className="font-semibold hover:underline">
-              Account Settings → Organization Profile
-            </Link>
+            {demoLocked ? (
+              <span
+                aria-disabled="true"
+                title="This is a locked demo — this link can't navigate away"
+                className="font-semibold cursor-not-allowed"
+              >
+                Account Settings → Organization Profile
+              </span>
+            ) : (
+              <Link to="/organization" className="font-semibold hover:underline">
+                Account Settings → Organization Profile
+              </Link>
+            )}
             .
           </p>
         </div>
