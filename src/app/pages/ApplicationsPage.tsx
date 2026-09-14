@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router";
 import { motion } from "motion/react";
 import {
@@ -53,20 +53,34 @@ import { mockApplications, type Application, type Program, type Section } from "
 interface ApplicationsPageProps {
   /**
    * Renders the breadcrumb's Home crumb inert (not-allowed cursor on
-   * hover, no navigation) and, together with `demoLockedApplicationId`,
-   * freezes one application's entire accordion card: its expand/collapse
-   * chevron, "..." menu, "Mark as submitted" checkbox, "Add Programs"
-   * button, and Preview/Export button all become inert too. Used by the
-   * locked /applications-demo walkthrough (see ApplicationsDemoPage). The
-   * global left nav disables itself separately via the existing
-   * isLockedDemoRoute check, same as every other locked demo route.
+   * hover, no navigation) and, page-wide:
+   *   - relabels every "AI Enhanced" section badge to "AI Draft";
+   *   - shows every active application's "Add Programs" button with 1
+   *     program already added, disabled with a not-allowed cursor;
+   *   - disables every section's Start/Continue button (they'd otherwise
+   *     navigate off this page to /application/:id/s/:id);
+   *   - hides the Unlimited AI-Grant Writer upsell in
+   *     MarkApplicationSubmittedModal;
+   *   - keeps "Download Grants.gov Submission Package" in
+   *     ExportApplicationDialog disabled no matter the acknowledgement
+   *     checkbox.
+   * Together with `demoLockedApplicationId`, also freezes one
+   * application's entire accordion card: its expand/collapse chevron,
+   * "..." menu, and "Mark as submitted" checkbox become inert too (Add
+   * Programs and Preview/Export are already covered by the page-wide
+   * rule above). Used by the locked /applications-demo walkthrough (see
+   * ApplicationsDemoPage). The global left nav disables itself separately
+   * via the existing isLockedDemoRoute check, same as every other locked
+   * demo route.
    */
   demoLocked?: boolean;
   /**
    * The application id whose entire accordion card stays frozen while
    * `demoLocked` is set — see there. On /applications-demo this is "2"
    * (the FY26 National Network Cooperative Agreement), which starts
-   * collapsed and must stay that way.
+   * collapsed and must stay that way. Any application the viewer moves
+   * from Submitted to Active gets the same frozen treatment automatically
+   * — see movedToActiveIds below.
    */
   demoLockedApplicationId?: string;
   /** Passed straight through to ApplicationRightRail — see there. */
@@ -75,6 +89,15 @@ interface ApplicationsPageProps {
   rightRailCollapsedLabel?: string;
   /** Passed straight through to ApplicationRightRail — see there. */
   rightRailHideContentGaps?: boolean;
+  /**
+   * Scrolls the page's shared scroll container back to the top as soon as
+   * this page mounts. Without this, navigating here from another locked
+   * demo route (e.g. the forward arrow on /eligibility-demo, which
+   * auto-scrolls itself partway down the page) leaves that same scroll
+   * position in place, so /applications-demo can appear to load mid-page
+   * instead of at the top.
+   */
+  scrollToTopOnMount?: boolean;
 }
 
 export function ApplicationsPage({
@@ -83,6 +106,7 @@ export function ApplicationsPage({
   rightRailDefaultCollapsed = false,
   rightRailCollapsedLabel,
   rightRailHideContentGaps = false,
+  scrollToTopOnMount = false,
 }: ApplicationsPageProps = {}) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -101,11 +125,23 @@ export function ApplicationsPage({
   const [publishedPrograms, setPublishedPrograms] = useState<Program[]>([]);
   const [selectedPrograms, setSelectedPrograms] = useState<Record<string, string[]>>({});
   const [activeSection, setActiveSection] = useState<Section | null>(null);
+  // Applications the viewer has moved from Submitted back to Active while
+  // demoLocked — each gets the same frozen-accordion treatment as
+  // demoLockedApplicationId. See handleMoveToActive below.
+  const [movedToActiveIds, setMovedToActiveIds] = useState<string[]>([]);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  
+
   const newApplicationPending = searchParams.get("newApplication") === "pending";
   const pendingGrantId = searchParams.get("grantId");
-  
+
+  // See scrollToTopOnMount above — runs before paint so there's no visible
+  // flash of the previous page's scroll position.
+  useLayoutEffect(() => {
+    if (!scrollToTopOnMount) return;
+    document.querySelector("main")?.scrollTo({ top: 0 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrollToTopOnMount]);
+
   // Load published programs from localStorage
   useEffect(() => {
     try {
@@ -313,6 +349,12 @@ export function ApplicationsPage({
         }
         return app;
       }));
+      // Any grant moved from Submitted back to Active while demoLocked
+      // gets the same frozen-accordion treatment as
+      // demoLockedApplicationId, same as the FY26 Railroad application.
+      if (demoLocked) {
+        setMovedToActiveIds(prev => (prev.includes(appId) ? prev : [...prev, appId]));
+      }
       setMovingToActiveAppId(null);
     }, 1500);
   };
@@ -657,8 +699,11 @@ export function ApplicationsPage({
           (currentView === "active" ? activeApplications : currentView === "submitted" ? submittedApplications : archivedApplications).map((app) => {
             const isExpanded = expandedApp === app.id;
             // See demoLockedApplicationId above — freezes this one
-            // application's entire accordion card on /applications-demo.
-            const isLockedAccordion = demoLocked && app.id === demoLockedApplicationId;
+            // application's entire accordion card on /applications-demo,
+            // plus any grant moved from Submitted back to Active (see
+            // handleMoveToActive).
+            const isLockedAccordion =
+              demoLocked && (app.id === demoLockedApplicationId || movedToActiveIds.includes(app.id));
 
             return (
               <div key={app.id} className={`bg-white rounded-lg border border-gray-200 relative ${isLockedAccordion ? "cursor-not-allowed" : ""}`}>
@@ -827,8 +872,11 @@ export function ApplicationsPage({
                       </div>
                       
                       <div className="flex items-center gap-6">
-                        {/* Add Programs Feature */}
-                        {isLockedAccordion ? (
+                        {/* Add Programs Feature — on /applications-demo,
+                            every active application shows 1 program
+                            already added and is disabled, not just the
+                            frozen accordion. */}
+                        {demoLocked ? (
                           <Button
                             variant="outline"
                             size="sm"
@@ -1001,7 +1049,7 @@ export function ApplicationsPage({
                                 {section.aiEnhanced && (
                                   <Badge className="bg-gradient-to-r from-purple-50 to-indigo-50 text-purple-700 border-purple-300 hover:bg-purple-50">
                                     <Sparkles className="w-3.5 h-3.5 mr-1" />
-                                    AI Enhanced
+                                    {demoLocked ? "AI Draft" : "AI Enhanced"}
                                   </Badge>
                                 )}
                                 {getStatusBadge(actualStatus)}
@@ -1043,9 +1091,27 @@ export function ApplicationsPage({
                                 <Button variant="outline" className="bg-white">
                                   View
                                 </Button>
+                              ) : demoLocked ? (
+                                // Start/Continue would navigate off this
+                                // page to /application/:id/s/:id — inert
+                                // here, same as everything else that would
+                                // leave the locked demo.
+                                <Button
+                                  variant={actualStatus === "complete" || actualStatus === "in-progress" ? undefined : "outline"}
+                                  disabled
+                                  aria-disabled="true"
+                                  title="This is a locked demo — sections can't be opened here"
+                                  className={
+                                    actualStatus === "complete" || actualStatus === "in-progress"
+                                      ? "bg-teal-600 text-white cursor-not-allowed opacity-60"
+                                      : "bg-white text-gray-400 cursor-not-allowed"
+                                  }
+                                >
+                                  {actualStatus === "complete" || actualStatus === "in-progress" ? "Continue" : "Start"}
+                                </Button>
                               ) : (
                                 actualStatus === "complete" || actualStatus === "in-progress" ? (
-                                  <Button 
+                                  <Button
                                     className="bg-teal-600 hover:bg-teal-700 text-white"
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -1055,8 +1121,8 @@ export function ApplicationsPage({
                                     Continue
                                   </Button>
                                 ) : (
-                                  <Button 
-                                    variant="outline" 
+                                  <Button
+                                    variant="outline"
                                     className="bg-white"
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -1107,6 +1173,7 @@ export function ApplicationsPage({
           }}
           applicationTitle={selectedAppForExport.title}
           applicationId={selectedAppForExport.id}
+          demoLocked={demoLocked}
         />
       )}
 
@@ -1120,6 +1187,7 @@ export function ApplicationsPage({
           if (pendingSubmitAppId) handleMarkAsSubmitted(pendingSubmitAppId);
           setPendingSubmitAppId(null);
         }}
+        hideUpsell={demoLocked}
       />
     </div>
   );

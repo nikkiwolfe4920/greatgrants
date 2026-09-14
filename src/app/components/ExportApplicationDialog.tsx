@@ -20,6 +20,13 @@ interface ExportApplicationDialogProps {
   onClose: () => void;
   applicationTitle: string;
   applicationId: string;
+  /**
+   * Keeps "Download Grants.gov Submission Package" disabled with a
+   * not-allowed cursor no matter the acknowledgement checkbox below —
+   * checking it still doesn't make the button clickable. Used by the
+   * locked /applications-demo walkthrough (see ApplicationsPage).
+   */
+  demoLocked?: boolean;
 }
 
 interface UploadedFile {
@@ -51,7 +58,8 @@ export function ExportApplicationDialog({
   isOpen,
   onClose,
   applicationTitle,
-  applicationId
+  applicationId,
+  demoLocked = false
 }: ExportApplicationDialogProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -527,8 +535,10 @@ export function ExportApplicationDialog({
                         </label>
 
                         <Button
-                          onClick={handleExport}
-                          disabled={!acknowledgeChecked}
+                          onClick={demoLocked ? undefined : handleExport}
+                          disabled={demoLocked || !acknowledgeChecked}
+                          aria-disabled={demoLocked || !acknowledgeChecked || undefined}
+                          title={demoLocked ? "This is a locked demo — downloads aren't available here" : undefined}
                           className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Download className="w-5 h-5" />

@@ -25,6 +25,13 @@ interface MarkApplicationSubmittedModalProps {
   onOpenChange: (open: boolean) => void;
   /** "Mark as Submitted" — caller performs the actual status change. */
   onConfirm: () => void;
+  /**
+   * Hides the "Unlimited AI-Grant Writer" upsell card below, leaving just
+   * the base confirmation. Used by the locked /applications-demo
+   * walkthrough (see ApplicationsPage), which isn't the place to pitch a
+   * subscription upgrade.
+   */
+  hideUpsell?: boolean;
 }
 
 /**
@@ -38,6 +45,7 @@ export function MarkApplicationSubmittedModal({
   open,
   onOpenChange,
   onConfirm,
+  hideUpsell = false,
 }: MarkApplicationSubmittedModalProps) {
   const navigate = useNavigate();
 
@@ -61,41 +69,44 @@ export function MarkApplicationSubmittedModal({
             This application will be moved to the Submitted tab. You will only be able to view it in read-only mode.
           </p>
 
-          {/* Unlimited AI-Grant Writer upsell (Figma node 13449:9445) */}
-          <div className="rounded-xl border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <span
-                className="inline-flex items-center rounded-md bg-teal-600 px-2.5 py-0.5 text-xs font-semibold text-white"
+          {/* Unlimited AI-Grant Writer upsell (Figma node 13449:9445) —
+              hidden on the locked /applications-demo walkthrough. */}
+          {!hideUpsell && (
+            <div className="rounded-xl border border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span
+                  className="inline-flex items-center rounded-md bg-teal-600 px-2.5 py-0.5 text-xs font-semibold text-white"
+                  style={{ fontFamily: "Cabin, sans-serif" }}
+                >
+                  Unlock
+                </span>
+                <span className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
+                  <span className="text-lg font-bold text-gray-900">$XX.XX</span>/mo
+                </span>
+              </div>
+              <h3 className="text-base text-gray-900 mb-2" style={{ fontFamily: "Lustria, serif" }}>
+                Unlimited AI-Grant Writer
+              </h3>
+              <ul className="space-y-1.5 mb-3">
+                {UNLIMITED_FEATURES.map((feature) => (
+                  <li key={feature} className="flex items-center gap-2">
+                    <Check size={14} className="text-teal-600 shrink-0" strokeWidth={2.5} />
+                    <span className="text-xs text-gray-700" style={{ fontFamily: "Cabin, sans-serif" }}>
+                      {feature}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <button
+                onClick={handleUpgrade}
+                className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-700 transition-colors"
                 style={{ fontFamily: "Cabin, sans-serif" }}
               >
-                Unlock
-              </span>
-              <span className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
-                <span className="text-lg font-bold text-gray-900">$XX.XX</span>/mo
-              </span>
+                Get Started
+                <ArrowUpRight size={13} strokeWidth={2.5} />
+              </button>
             </div>
-            <h3 className="text-base text-gray-900 mb-2" style={{ fontFamily: "Lustria, serif" }}>
-              Unlimited AI-Grant Writer
-            </h3>
-            <ul className="space-y-1.5 mb-3">
-              {UNLIMITED_FEATURES.map((feature) => (
-                <li key={feature} className="flex items-center gap-2">
-                  <Check size={14} className="text-teal-600 shrink-0" strokeWidth={2.5} />
-                  <span className="text-xs text-gray-700" style={{ fontFamily: "Cabin, sans-serif" }}>
-                    {feature}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={handleUpgrade}
-              className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-700 transition-colors"
-              style={{ fontFamily: "Cabin, sans-serif" }}
-            >
-              Get Started
-              <ArrowUpRight size={13} strokeWidth={2.5} />
-            </button>
-          </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-3 pt-4 pb-6 px-6">
