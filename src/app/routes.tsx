@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router";
 import { AppLayout } from "./components/AppLayout";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ApplicationsPage } from "./pages/ApplicationsPage";
+import { ApplicationsDemoPage } from "./pages/ApplicationsDemoPage";
 import { ApplicationSectionPage } from "./pages/ApplicationSectionPage";
 import { GrantSearchPage } from "./pages/GrantSearchPage";
 import { SearchDemoPage } from "./pages/SearchDemoPage";
@@ -136,6 +137,13 @@ const routes = [
       {
         path: "applications",
         element: <ApplicationsPage />,
+      },
+      {
+        // Step 5 of the locked demo tour, reached from eligibility-demo's
+        // forward stepper arrow — see ApplicationsDemoPage for what's
+        // different from /applications.
+        path: "applications-demo",
+        element: <ApplicationsDemoPage />,
       },
       {
         path: "application/:applicationId/s/:sectionId",
