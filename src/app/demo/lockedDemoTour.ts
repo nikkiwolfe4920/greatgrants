@@ -1,4 +1,4 @@
-import { Building2, FileSearch, Search, type LucideIcon } from "lucide-react";
+import { Building2, FileSearch, Search, Target, type LucideIcon } from "lucide-react";
 
 /**
  * The locked-demo mini-tour shown in DemoOnlyBar's center — a "Step X of 6"
@@ -12,11 +12,11 @@ import { Building2, FileSearch, Search, type LucideIcon } from "lucide-react";
  * freely-clickable one — but carry their own step numbering (1-3 of an
  * eventual 6), so this is a separate list rather than a re-export.
  *
- * Only 3 of the eventual 6 steps exist yet. That's fine: getPreviousTourStep
+ * Only 4 of the eventual 6 steps exist yet. That's fine: getPreviousTourStep
  * / getNextTourStep return null past either end of this array, and
  * DemoOnlyBar disables whichever arrow gets a null — so /organization-demo
  * (step 1) has no back, and today's last step has no forward, with zero
- * special-casing. Appending steps 4-6 here is all a future page needs to
+ * special-casing. Appending steps 5-6 here is all a future page needs to
  * join the tour.
  */
 export interface LockedDemoTourStep {
@@ -57,6 +57,17 @@ export const LOCKED_DEMO_TOUR: LockedDemoTourStep[] = [
     description:
       "Everything a funder published, read for you: award range, eligibility, deadlines, required attachments and how hard this one really is.",
     icon: FileSearch,
+  },
+  {
+    // Same "eligibility" stop copy as demoTour.ts's public /marketing
+    // walkthrough (order 5 there) — see the note above this array.
+    path: "/eligibility-demo",
+    stepNumber: 4,
+    totalSteps: 6,
+    title: "The eligibility assessment",
+    description:
+      "A plain-English verdict on whether you can win this one, scored against every requirement the funder stated.",
+    icon: Target,
   },
 ];
 

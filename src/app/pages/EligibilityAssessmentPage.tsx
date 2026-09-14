@@ -166,9 +166,23 @@ interface CheckYourEligibilityCardProps {
   isExhausted: boolean;
   /** Locked /org-detail-demo walkthrough — see EligibilityAssessmentPage. */
   demoLocked?: boolean;
+  /**
+   * Carved out of `demoLocked` for the "Start Eligibility Assessment"
+   * button only — the exhausted-state "Upgrade Plan" button above stays
+   * locked either way. See EligibilityAssessmentPage.
+   */
+  unlockEligibilityAssessment?: boolean;
 }
 
-function CheckYourEligibilityCard({ onStart, usedCount, limit, isExhausted, demoLocked = false }: CheckYourEligibilityCardProps) {
+function CheckYourEligibilityCard({
+  onStart,
+  usedCount,
+  limit,
+  isExhausted,
+  demoLocked = false,
+  unlockEligibilityAssessment = false,
+}: CheckYourEligibilityCardProps) {
+  const startLocked = demoLocked && !unlockEligibilityAssessment;
   if (isExhausted) {
     return (
       <motion.div
@@ -248,11 +262,11 @@ function CheckYourEligibilityCard({ onStart, usedCount, limit, isExhausted, demo
           <div className="flex items-center gap-3">
             <Button
               onClick={() => {
-                if (!demoLocked) onStart();
+                if (!startLocked) onStart();
               }}
-              aria-disabled={demoLocked || undefined}
-              title={demoLocked ? "This is a locked demo — the assessment doesn't run here" : undefined}
-              className={`bg-[#9810fa] text-white gap-2 ${demoLocked ? "cursor-not-allowed" : "hover:bg-[#8710e0]"}`}
+              aria-disabled={startLocked || undefined}
+              title={startLocked ? "This is a locked demo — the assessment doesn't run here" : undefined}
+              className={`bg-[#9810fa] text-white gap-2 ${startLocked ? "cursor-not-allowed" : "hover:bg-[#8710e0]"}`}
             >
               <Sparkles className="size-4" />
               Start Eligibility Assessment
@@ -286,9 +300,31 @@ interface EligibilityAssessmentPageProps {
    * by the locked /org-detail-demo walkthrough (see OrgDetailDemoPage).
    */
   demoLocked?: boolean;
+  /**
+   * Carves out one exception to `demoLocked`: "Start Eligibility
+   * Assessment" stays live and the full 4-step workflow behind it runs
+   * normally, while every other locked-out control (nav, breadcrumb, back
+   * arrow, both "Start Application" buttons, documents, program link)
+   * stays inert. Used by the locked /eligibility-demo walkthrough (see
+   * EligibilityDemoPage) — step 4 of the tour exists specifically to let a
+   * viewer click through the assessment itself.
+   */
+  unlockEligibilityAssessment?: boolean;
+  /**
+   * Scrolls down to the "Eligibility Assessment" section as soon as this
+   * page mounts, instead of leaving the viewer at the top of the grant
+   * detail page. Used together with `unlockEligibilityAssessment` by
+   * EligibilityDemoPage, since the whole point of that walkthrough step is
+   * the assessment, not the overview above it.
+   */
+  autoScrollToEligibility?: boolean;
 }
 
-export function EligibilityAssessmentPage({ demoLocked = false }: EligibilityAssessmentPageProps = {}) {
+export function EligibilityAssessmentPage({
+  demoLocked = false,
+  unlockEligibilityAssessment = false,
+  autoScrollToEligibility = false,
+}: EligibilityAssessmentPageProps = {}) {
   const [isAssessing, setIsAssessing] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
   const [docsExpanded, setDocsExpanded] = useState(true);
@@ -352,6 +388,18 @@ export function EligibilityAssessmentPage({ demoLocked = false }: EligibilityAss
       scrollContainer.scrollTo({ top, behavior: "smooth" });
     }
   };
+
+  // EligibilityDemoPage (/eligibility-demo) opens straight into this
+  // section instead of leaving the viewer at the top of the grant. Deferred
+  // a tick so it runs after the page's own initial layout — scrolling
+  // against the pre-layout DOM on the same frame the component mounts can
+  // land short of the section.
+  useEffect(() => {
+    if (!autoScrollToEligibility) return;
+    const id = window.setTimeout(() => scrollToSection("eligibility-assessment"), 0);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoScrollToEligibility]);
 
   const handleShare = () => {
     navigator.clipboard?.writeText(window.location.href);
@@ -754,6 +802,7 @@ export function EligibilityAssessmentPage({ demoLocked = false }: EligibilityAss
                     limit={limit}
                     isExhausted={isExhausted}
                     demoLocked={demoLocked}
+                    unlockEligibilityAssessment={unlockEligibilityAssessment}
                   />
                 )}
               </AnimatePresence>
