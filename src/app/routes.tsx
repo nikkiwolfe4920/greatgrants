@@ -22,6 +22,7 @@ import { ProjectDetailsPage } from "./pages/ProjectDetailsPage";
 import { MyGrantReadiness } from "./pages/MyGrantReadiness.tsx";
 import { EligibilityAssessmentPage } from "./pages/EligibilityAssessmentPage";
 import { OrgDetailDemoPage } from "./pages/OrgDetailDemoPage";
+import { EligibilityDemoPage } from "./pages/EligibilityDemoPage";
 import { DesignSystemPage } from "./pages/DesignSystemPage";
 import { CopyPage } from "./pages/CopyPage";
 import { EmailsPage } from "./pages/EmailsPage";
@@ -173,6 +174,13 @@ const routes = [
         // OrgDetailDemoPage for what's different.
         path: "org-detail-demo",
         element: <OrgDetailDemoPage />,
+      },
+      {
+        // Step 4 of the locked demo tour, reached from org-detail-demo's
+        // forward stepper arrow — see EligibilityDemoPage for what's
+        // different from /eligibility-assessment.
+        path: "eligibility-demo",
+        element: <EligibilityDemoPage />,
       },
       {
         path: "organization",
