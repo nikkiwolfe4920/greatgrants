@@ -35,7 +35,7 @@ import { AssessmentUsageMeter } from "@/app/components/eligibility/AssessmentUsa
 import { ApplicationLoadingModal } from "@/app/components/ApplicationLoadingModal";
 import { StopWatchingDialog } from "@/app/components/StopWatchingDialog";
 import { useGrantAlerts } from "@/hooks/useGrantAlerts";
-import { useAssessmentUsage } from "@/hooks/useAssessmentUsage";
+import { useAssessmentUsage, resetAssessmentUsage } from "@/hooks/useAssessmentUsage";
 
 const GRANT_ID = "dfop0017890-child-protection";
 const GRANT_TITLE = "Advancing Global Health — Child Development, Care, and Protection Addendum";
@@ -318,12 +318,25 @@ interface EligibilityAssessmentPageProps {
    * the assessment, not the overview above it.
    */
   autoScrollToEligibility?: boolean;
+  /**
+   * Clears every recorded eligibility-assessment completion as soon as this
+   * page mounts, so `useAssessmentUsage` below always starts this page at 0
+   * of ASSESSMENT_LIMIT — the exhausted "You've used all N eligibility
+   * assessments" card can never be what a viewer lands on here, regardless
+   * of what was used up elsewhere in the demo (usage is tracked
+   * subscription-wide, not per grant). Used by EligibilityDemoPage, which
+   * pairs this with `unlockEligibilityAssessment` specifically so that
+   * button is guaranteed clickable. Must run before the `useAssessmentUsage`
+   * call just below — see there.
+   */
+  resetAssessmentUsageOnMount?: boolean;
 }
 
 export function EligibilityAssessmentPage({
   demoLocked = false,
   unlockEligibilityAssessment = false,
   autoScrollToEligibility = false,
+  resetAssessmentUsageOnMount = false,
 }: EligibilityAssessmentPageProps = {}) {
   const [isAssessing, setIsAssessing] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
@@ -340,6 +353,16 @@ export function EligibilityAssessmentPage({
   // consistent across every surface this opportunity appears.
   const { isGrantAlertEnabled, setAlertEnabled, removeAlert } = useGrantAlerts();
   const isAlertOn = isGrantAlertEnabled(GRANT_ID);
+
+  // Runs once per mount, before useAssessmentUsage's own first read below,
+  // so that read (and its lazy useState initializer) sees a freshly-cleared
+  // count rather than whatever was recorded earlier in the demo — no
+  // exhausted-then-reset flash. See resetAssessmentUsageOnMount above.
+  const hasResetUsageRef = useRef(false);
+  if (resetAssessmentUsageOnMount && !hasResetUsageRef.current) {
+    hasResetUsageRef.current = true;
+    resetAssessmentUsage();
+  }
 
   // Subscription-wide eligibility assessment usage — shown on the entry
   // card before starting and passed through to the workflow so it stays
