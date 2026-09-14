@@ -21,6 +21,8 @@ interface PolicyInfoStepProps {
   onBack: () => void;
   onCheckEligibility: () => void;
   isSubmitting: boolean;
+  /** Hides "This will use assessment N of M for this period." below the Check My Eligibility button. See EligibilityAssessmentPage. */
+  hideAssessmentUsage?: boolean;
 }
 
 /**
@@ -28,7 +30,14 @@ interface PolicyInfoStepProps {
  * chrome from Figma node 12683:28940; the seven questions reuse the exact
  * input pattern from /organization's Policies & Compliance tab.
  */
-export function PolicyInfoStep({ value, onChange, onBack, onCheckEligibility, isSubmitting }: PolicyInfoStepProps) {
+export function PolicyInfoStep({
+  value,
+  onChange,
+  onBack,
+  onCheckEligibility,
+  isSubmitting,
+  hideAssessmentUsage = false,
+}: PolicyInfoStepProps) {
   const set = <K extends keyof PolicyInfoState>(key: K, val: PolicyInfoState[K]) =>
     onChange({ ...value, [key]: val });
 
@@ -140,9 +149,11 @@ export function PolicyInfoStep({ value, onChange, onBack, onCheckEligibility, is
               {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
               Check My Eligibility
             </Button>
-            <p className="text-xs text-gray-400" style={{ fontFamily: "Cabin, sans-serif" }}>
-              This will use assessment {usedCount + 1} of {limit} for this period.
-            </p>
+            {!hideAssessmentUsage && (
+              <p className="text-xs text-gray-400" style={{ fontFamily: "Cabin, sans-serif" }}>
+                This will use assessment {usedCount + 1} of {limit} for this period.
+              </p>
+            )}
           </div>
         </div>
       </div>

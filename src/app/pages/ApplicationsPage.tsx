@@ -53,7 +53,9 @@ import { mockApplications, type Application, type Program, type Section } from "
 interface ApplicationsPageProps {
   /**
    * Renders the breadcrumb's Home crumb inert (not-allowed cursor on
-   * hover, no navigation) and, page-wide:
+   * hover, no navigation) and, page-wide, on every accordion:
+   *   - removes the "..." (More Menu) button next to the expand/collapse
+   *     chevron entirely;
    *   - relabels every "AI Enhanced" section badge to "AI Draft";
    *   - shows every active application's "Add Programs" button with 1
    *     program already added, disabled with a not-allowed cursor;
@@ -65,9 +67,9 @@ interface ApplicationsPageProps {
    *     ExportApplicationDialog disabled no matter the acknowledgement
    *     checkbox.
    * Together with `demoLockedApplicationId`, also freezes one
-   * application's entire accordion card: its expand/collapse chevron,
-   * "..." menu, and "Mark as submitted" checkbox become inert too (Add
-   * Programs and Preview/Export are already covered by the page-wide
+   * application's entire accordion card: its expand/collapse chevron and
+   * "Mark as submitted" checkbox become inert too (the "..." menu, Add
+   * Programs, and Preview/Export are already covered by the page-wide
    * rule above). Used by the locked /applications-demo walkthrough (see
    * ApplicationsDemoPage). The global left nav disables itself separately
    * via the existing isLockedDemoRoute check, same as every other locked
@@ -740,16 +742,10 @@ export function ApplicationsPage({
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {/* More Menu */}
-                      {isLockedAccordion ? (
-                        <button
-                          aria-disabled="true"
-                          title="This is a locked demo — this application can't be changed here"
-                          className="p-1.5 rounded cursor-not-allowed"
-                        >
-                          <MoreVertical className="w-5 h-5 text-gray-300" />
-                        </button>
-                      ) : (
+                      {/* More Menu — removed entirely on /applications-demo,
+                          next to every accordion's chevron, not just the
+                          frozen one. */}
+                      {!demoLocked && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button className="p-1.5 hover:bg-gray-100 rounded transition-colors">

@@ -99,6 +99,15 @@ interface EligibilityReportProps {
   passItems: PassItem[];
   onToggleActionItem: (id: string) => void;
   onStartApplication: () => void;
+  /**
+   * Disables the "Start Application" button in the "Ready when you are"
+   * banner below (and the matching one inside OverallNofoFitScorecard)
+   * with a not-allowed cursor — it would otherwise navigate off the
+   * locked demo. See EligibilityAssessmentPage.
+   */
+  demoLocked?: boolean;
+  /** Hides the "Assessment complete — marked as used" banner below. See EligibilityAssessmentPage. */
+  hideAssessmentUsage?: boolean;
 }
 
 /**
@@ -112,7 +121,14 @@ interface EligibilityReportProps {
  * always renders at the bottom, regardless of how many action items are
  * checked off, so there's always a path into the application.
  */
-export function EligibilityReport({ actionItems, passItems, onToggleActionItem, onStartApplication }: EligibilityReportProps) {
+export function EligibilityReport({
+  actionItems,
+  passItems,
+  onToggleActionItem,
+  onStartApplication,
+  demoLocked = false,
+  hideAssessmentUsage = false,
+}: EligibilityReportProps) {
   const completedCount = actionItems.filter((item) => item.completed).length;
   const totalCount = actionItems.length;
   const percent = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
@@ -127,26 +143,28 @@ export function EligibilityReport({ actionItems, passItems, onToggleActionItem, 
 
   return (
     <div className="space-y-5">
-      <div
-        className={`rounded-xl border p-4 flex items-center justify-between gap-4 flex-wrap ${
-          isExhausted ? "bg-amber-50 border-amber-200" : "bg-teal-50 border-teal-200"
-        }`}
-      >
-        <div className="flex items-center gap-3">
-          <CheckCircle2 className={`size-5 shrink-0 ${isExhausted ? "text-amber-600" : "text-teal-600"}`} />
-          <div>
-            <p className="text-sm font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-              Assessment complete — marked as used
-            </p>
-            <p className="text-xs text-gray-600 mt-0.5" style={{ fontFamily: "Cabin, sans-serif" }}>
-              {isExhausted
-                ? `That was your last one — all ${limit} assessments included in your plan are now used.`
-                : `${usedCount} of ${limit} assessments used this period.`}
-            </p>
+      {!hideAssessmentUsage && (
+        <div
+          className={`rounded-xl border p-4 flex items-center justify-between gap-4 flex-wrap ${
+            isExhausted ? "bg-amber-50 border-amber-200" : "bg-teal-50 border-teal-200"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className={`size-5 shrink-0 ${isExhausted ? "text-amber-600" : "text-teal-600"}`} />
+            <div>
+              <p className="text-sm font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                Assessment complete — marked as used
+              </p>
+              <p className="text-xs text-gray-600 mt-0.5" style={{ fontFamily: "Cabin, sans-serif" }}>
+                {isExhausted
+                  ? `That was your last one — all ${limit} assessments included in your plan are now used.`
+                  : `${usedCount} of ${limit} assessments used this period.`}
+              </p>
+            </div>
           </div>
+          <AssessmentUsageMeter usedCount={usedCount} limit={limit} compact />
         </div>
-        <AssessmentUsageMeter usedCount={usedCount} limit={limit} compact />
-      </div>
+      )}
 
       <OverallNofoFitScorecard
         showScore={false}
@@ -155,6 +173,7 @@ export function EligibilityReport({ actionItems, passItems, onToggleActionItem, 
         nextSteps={[]}
         onStartApplication={onStartApplication}
         allActionsComplete={isAllComplete}
+        demoLocked={demoLocked}
       />
 
       <Accordion type="single" defaultValue="action-items" collapsible className="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -225,7 +244,14 @@ export function EligibilityReport({ actionItems, passItems, onToggleActionItem, 
               </>
             )}
           </p>
-          <Button onClick={onStartApplication} className="mt-4 bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
+          <Button
+            onClick={() => {
+              if (!demoLocked) onStartApplication();
+            }}
+            aria-disabled={demoLocked || undefined}
+            title={demoLocked ? "This is a locked demo — applications can't be started here" : undefined}
+            className={`mt-4 bg-teal-600 text-white gap-1.5 ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
+          >
             Start Application
             <ArrowRight className="size-4" />
           </Button>

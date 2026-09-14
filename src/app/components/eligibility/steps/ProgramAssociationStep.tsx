@@ -12,6 +12,13 @@ interface ProgramAssociationStepProps {
   onBack: () => void;
   onContinue: () => void;
   canContinue: boolean;
+  /**
+   * Disables "Improve Program" (which would navigate to /project-details)
+   * and "I would like to create a new program" (which opens
+   * CreateProgramDialog) with a not-allowed cursor. Selecting a program
+   * and Continuing stay live. See EligibilityAssessmentPage.
+   */
+  demoLocked?: boolean;
 }
 
 /**
@@ -27,6 +34,7 @@ export function ProgramAssociationStep({
   onBack,
   onContinue,
   canContinue,
+  demoLocked = false,
 }: ProgramAssociationStepProps) {
   const navigate = useNavigate();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -116,9 +124,13 @@ export function ProgramAssociationStep({
                           </div>
                         </div>
                         <Button
-                          onClick={handleImproveProgram}
+                          onClick={() => {
+                            if (!demoLocked) handleImproveProgram();
+                          }}
                           size="sm"
-                          className="mt-3 bg-teal-600 hover:bg-teal-700 text-white gap-1.5"
+                          aria-disabled={demoLocked || undefined}
+                          title={demoLocked ? "This is a locked demo — this button can't navigate away" : undefined}
+                          className={`mt-3 bg-teal-600 text-white gap-1.5 ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
                         >
                           Improve Program
                           <ArrowRight className="size-4" />
@@ -133,8 +145,14 @@ export function ProgramAssociationStep({
 
           <button
             type="button"
-            onClick={() => setShowCreateDialog(true)}
-            className="w-full text-left rounded-lg border-2 border-dashed border-gray-200 hover:border-gray-300 p-[18px] flex items-center gap-3 transition-colors"
+            onClick={() => {
+              if (!demoLocked) setShowCreateDialog(true);
+            }}
+            aria-disabled={demoLocked || undefined}
+            title={demoLocked ? "This is a locked demo — programs can't be created here" : undefined}
+            className={`w-full text-left rounded-lg border-2 border-dashed border-gray-200 p-[18px] flex items-center gap-3 transition-colors ${
+              demoLocked ? "cursor-not-allowed" : "hover:border-gray-300"
+            }`}
           >
             <FolderPlus className="size-4 text-gray-500 shrink-0" />
             <span className="text-sm text-gray-600" style={{ fontFamily: "Cabin, sans-serif" }}>
