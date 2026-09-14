@@ -41,6 +41,25 @@ function readAssessmentUsage(): AssessmentCompletionRecord[] {
   }
 }
 
+/**
+ * Clears every recorded assessment completion, putting usage back to 0 of
+ * ASSESSMENT_LIMIT. Exported as a plain function (rather than only a hook
+ * callback) so a page can call it during its own render — before any
+ * useAssessmentUsage() elsewhere on the same page does its initial
+ * localStorage read — and land on a guaranteed-fresh count with no
+ * exhausted-then-reset flash. Used by EligibilityDemoPage so the locked
+ * /eligibility-demo walkthrough step never opens onto the exhausted card
+ * because of usage recorded earlier in the session.
+ */
+export function resetAssessmentUsage(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Storage unavailable (private browsing, etc.) — nothing to reset.
+  }
+  window.dispatchEvent(new Event(UPDATE_EVENT));
+}
+
 export function useAssessmentUsage() {
   const [records, setRecords] = useState<AssessmentCompletionRecord[]>(() => readAssessmentUsage());
 

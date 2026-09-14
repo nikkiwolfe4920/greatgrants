@@ -27,10 +27,24 @@ import { EligibilityAssessmentPage } from "./EligibilityAssessmentPage";
  *   3. `autoScrollToEligibility` scrolls straight down to that section on
  *      mount, so the viewer lands on the assessment rather than the top of
  *      the grant overview.
+ *   4. `resetAssessmentUsageOnMount` clears every recorded assessment
+ *      completion the moment this page mounts, so a viewer who used up
+ *      assessments earlier in the demo (or on a previous visit — usage is
+ *      tracked subscription-wide, not per grant) never lands on the
+ *      exhausted "You've used all 3 eligibility assessments" card here.
+ *      Every navigation to /eligibility-demo starts the counter fresh at 0
+ *      of 3, guaranteeing "Start Eligibility Assessment" is clickable.
  *
  * Everything else — Watch, Share, the "On This Page" scroll nav — is the
  * same live EligibilityAssessmentPage the real page renders, untouched.
  */
 export function EligibilityDemoPage() {
-  return <EligibilityAssessmentPage demoLocked unlockEligibilityAssessment autoScrollToEligibility />;
+  return (
+    <EligibilityAssessmentPage
+      demoLocked
+      unlockEligibilityAssessment
+      autoScrollToEligibility
+      resetAssessmentUsageOnMount
+    />
+  );
 }
