@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
+import { Switch } from "@/app/components/ui/switch";
 import {
   Accordion,
   AccordionContent,
@@ -130,6 +131,30 @@ function RichTextToolbar() {
   );
 }
 
+/** The standard four-color Google "G" mark, for the Connect Google button. */
+function GoogleLogo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
+      <path
+        fill="#FFC107"
+        d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12 c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24 c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"
+      />
+      <path
+        fill="#FF3D00"
+        d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039 l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"
+      />
+      <path
+        fill="#4CAF50"
+        d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36 c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"
+      />
+      <path
+        fill="#1976D2"
+        d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571 c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"
+      />
+    </svg>
+  );
+}
+
 interface SmartFieldProps {
   /** Anchor id the left nav's section list scrolls to — pass on the first field of each of the six sections. */
   anchorId?: string;
@@ -140,6 +165,8 @@ interface SmartFieldProps {
   richText?: boolean;
   maxLength?: number;
   defaultValue?: string;
+  /** Overrides the placeholder shown in an empty field — e.g. Milestone Schedule's example task list, which the Figma design shows as ghost placeholder text rather than a typed-in value. */
+  placeholder?: string;
   /** Starts this field in the purple "AI Draft" state. Defaults to false (a plain field). */
   aiDraft?: boolean;
   /** Mock coaching copy shown above the input while this field is still an AI Draft. */
@@ -169,6 +196,7 @@ function SmartField({
   richText = false,
   maxLength = 600,
   defaultValue = "",
+  placeholder,
   aiDraft = false,
   coachingTip,
 }: SmartFieldProps) {
@@ -229,10 +257,10 @@ function SmartField({
       {richText ? (
         <div>
           <RichTextToolbar />
-          <textarea rows={5} placeholder="Write something..." className={fieldClassName} {...sharedProps} />
+          <textarea rows={5} placeholder={placeholder ?? "Write something..."} className={fieldClassName} {...sharedProps} />
         </div>
       ) : (
-        <input type="text" className={fieldClassName} {...sharedProps} />
+        <input type="text" placeholder={placeholder} className={fieldClassName} {...sharedProps} />
       )}
 
       {isDraftActive && (
@@ -347,19 +375,25 @@ function RadioGroupField({
   );
 }
 
-function CertificationCheckbox({ title, description }: { title: string; description: string }) {
+/**
+ * A certification item — the Figma design uses a toggle switch here, not a
+ * checkbox, defaulting on. Matches shadcn's Switch (already used elsewhere
+ * in the app), which is the same 36x20px track / 16px thumb Figma shows.
+ */
+function CertificationToggle({ title, description }: { title: string; description: string }) {
+  const [checked, setChecked] = useState(true);
   return (
-    <label className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-      <input type="checkbox" className="mt-0.5 w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-2 focus:ring-teal-500" />
-      <span>
+    <div className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg">
+      <Switch checked={checked} onCheckedChange={setChecked} className="mt-0.5 shrink-0" />
+      <div>
         <span className="block text-sm font-semibold text-gray-900" style={CABIN}>
           {title}
         </span>
         <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed" style={CABIN}>
           {description}
         </span>
-      </span>
-    </label>
+      </div>
+    </div>
   );
 }
 
@@ -486,7 +520,7 @@ function UploadField({
               title="This is a locked demo — cloud imports aren't available here"
               className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg cursor-not-allowed text-left"
             >
-              <div className="w-6 h-6 shrink-0 rounded-full border border-gray-300" />
+              <GoogleLogo className="w-6 h-6 shrink-0 opacity-50" />
               <span>
                 <span className="block text-sm font-semibold text-gray-400" style={CABIN}>
                   Connect Google
@@ -546,9 +580,11 @@ function UploadField({
 }
 
 // ---------------------------------------------------------------------------
-// Application Resources — right-hand panel. Gray background, open by
-// default but collapsible, and NOT sticky: it scrolls in the normal
-// document flow along with the rest of the page.
+// Application Resources — right-hand panel. Gray background spanning the
+// full viewport height, open by default but collapsible, and sticky so the
+// Documents module stays in view as the page scrolls (matching the Figma
+// sidebar frame, which runs the full height of the page behind a much
+// shorter content block pinned near the top).
 // ---------------------------------------------------------------------------
 
 function ApplicationResourcesPanel() {
@@ -556,7 +592,7 @@ function ApplicationResourcesPanel() {
 
   if (!expanded) {
     return (
-      <div className="w-full lg:w-12 shrink-0 flex lg:justify-center">
+      <div className="w-full lg:w-12 shrink-0 lg:sticky lg:top-6 flex lg:justify-center">
         <button
           onClick={() => setExpanded(true)}
           className="flex items-center gap-2 lg:flex-col lg:h-40 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors"
@@ -572,7 +608,7 @@ function ApplicationResourcesPanel() {
   }
 
   return (
-    <aside className="w-full lg:w-[320px] shrink-0 relative">
+    <aside className="w-full lg:w-[320px] shrink-0 relative lg:sticky lg:top-0 lg:h-screen bg-gray-50">
       <button
         onClick={() => setExpanded(false)}
         className="hidden lg:flex absolute top-5 -left-4 z-10 w-8 h-8 bg-white rounded-full border-2 border-gray-200 shadow-sm items-center justify-center hover:border-gray-300 transition-colors"
@@ -580,60 +616,61 @@ function ApplicationResourcesPanel() {
       >
         <X className="w-4 h-4 text-gray-500" />
       </button>
-      <div className="bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
-        <div className="px-5 py-4">
-          <h3 className="text-base font-semibold text-gray-900" style={CABIN}>
-            Application Resources
-          </h3>
+      <div className="pt-5 px-5 lg:px-4">
+        <h3 className="text-base font-semibold text-gray-900" style={CABIN}>
+          Application Resources
+        </h3>
+      </div>
+
+      <div className="px-5 lg:px-4 pt-4 space-y-3">
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div
+            aria-disabled="true"
+            title="This is a locked demo — this panel can't be collapsed here"
+            className="w-full px-4 py-3 flex items-center justify-between gap-2 cursor-not-allowed"
+          >
+            <span className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-semibold text-gray-900" style={CABIN}>
+                Documents
+              </span>
+              <span className="text-sm text-gray-400" style={CABIN}>
+                (1)
+              </span>
+            </span>
+            <ChevronDown className="w-4 h-4 text-gray-300 rotate-180" />
+          </div>
+          <div className="border-t border-gray-100 p-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+                <FileText className="w-4.5 h-4.5 text-red-500" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate" style={CABIN}>
+                  Notice of Funding Opportunity
+                </p>
+                <p className="text-xs text-gray-500" style={CABIN}>
+                  PDF Document • 104 KB
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              aria-disabled="true"
+              title="This is a locked demo — documents can't be opened here"
+              className="border-gray-300 bg-white text-gray-300 cursor-not-allowed shrink-0"
+            >
+              View
+            </Button>
+          </div>
         </div>
 
-        <div className="px-4 pb-4 space-y-3">
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div
-              aria-disabled="true"
-              title="This is a locked demo — this panel can't be collapsed here"
-              className="w-full px-4 py-3 flex items-center justify-between gap-2 cursor-not-allowed"
-            >
-              <span className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-gray-500" />
-                <span className="text-sm font-semibold text-gray-900" style={CABIN}>
-                  Documents
-                </span>
-                <span className="text-sm text-gray-400" style={CABIN}>
-                  (1)
-                </span>
-              </span>
-              <ChevronDown className="w-4 h-4 text-gray-300" />
-            </div>
-            <div className="border-t border-gray-100 p-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
-                  <FileText className="w-4.5 h-4.5 text-red-500" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate" style={CABIN}>
-                    Notice of Funding Opportunity
-                  </p>
-                  <p className="text-xs text-gray-500" style={CABIN}>
-                    PDF Document • 104 KB
-                  </p>
-                </div>
-              </div>
-              <span
-                aria-disabled="true"
-                title="This is a locked demo — documents can't be opened here"
-                className="text-sm font-medium text-gray-300 cursor-not-allowed shrink-0"
-                style={CABIN}
-              >
-                View
-              </span>
-            </div>
-          </div>
-
+        <div className="flex justify-center">
           <button
             aria-disabled="true"
             title="This is a locked demo — this link can't navigate away"
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 bg-white rounded-lg text-sm font-medium text-gray-300 cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-200 bg-white rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed"
             style={CABIN}
           >
             Grant Opportunity Overview
@@ -649,7 +686,7 @@ function ApplicationResourcesPanel() {
 // Page
 // ---------------------------------------------------------------------------
 
-const GRANT_TITLE = "Administration for Community Living (ACL) - Assistive Technology Alternative Financing Program";
+const GRANT_TITLE = "National Oceanic and Atmospheric Administration (NOAA) – Alaska Marine Education and Training Mini-Grant Program";
 
 const APPLICANT_NAME_TIP =
   "Use the exact legal name on file with the IRS and SAM.gov — a mismatch here is one of the most common reasons a Statement of Interest gets kicked back for correction.";
@@ -702,19 +739,20 @@ export function GrantWritingDemoPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      {/* Header — title/description on the left; a compact (not full-width)
-          right-aligned cluster with the last-saved timestamp and the
-          Preview & Export button, matching the Figma layout. */}
-      <div className="flex items-start justify-between gap-8 flex-wrap pb-6 border-b border-gray-100">
-        <div className="min-w-0 max-w-2xl">
+      {/* Header — title/description constrained to a narrower column on the
+          left (not stretched full-width), with a compact right-aligned
+          cluster for the last-saved timestamp and the Preview & Export
+          button, matching the Figma layout's ~54/46 column split. */}
+      <div className="flex items-center justify-between gap-8 flex-wrap pb-6 border-b border-gray-100">
+        <div className="min-w-0 max-w-md">
           <h1 className="text-3xl text-gray-900 mb-3" style={{ fontFamily: "Lustria, serif" }}>
             {GRANT_TITLE}
           </h1>
           <p className="text-sm text-gray-500" style={CABIN}>
-            Complete all required sections below. Every AI Draft is a starting point — edit it, or accept it as-is.
+            Complete all required assessment criteria below. Each section shows the point value assigned.
           </p>
         </div>
-        <div className="flex items-center gap-4 shrink-0 pt-1">
+        <div className="flex items-center gap-4 shrink-0">
           <div className="flex items-center gap-1.5 text-sm text-gray-500 whitespace-nowrap" style={CABIN}>
             <Clock className="w-4 h-4" />
             Last saved 45 days ago
@@ -732,13 +770,14 @@ export function GrantWritingDemoPage() {
         </div>
       </div>
 
-      {/* Programs row */}
+      {/* Programs row — "My Program" is a plain teal link-styled chip, not
+          a filled gray badge. */}
       <div className="flex items-center gap-2 py-4 border-b border-gray-100 mb-8 text-sm" style={CABIN}>
         <span className="text-gray-500">Programs:</span>
         <span
           aria-disabled="true"
           title="This is a locked demo — this link can't navigate away"
-          className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-gray-700 cursor-not-allowed"
+          className="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-teal-700 cursor-not-allowed"
         >
           My Program
         </span>
@@ -751,8 +790,8 @@ export function GrantWritingDemoPage() {
           {/* 1. Cover Page & Project Abstract                              */}
           {/* ============================================================ */}
           <div id="cover-page" className="scroll-mt-8">
-            <SectionHeading>Cover Page &amp; Project Abstract</SectionHeading>
             <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
+              <SectionHeading>Cover Page &amp; Project Abstract</SectionHeading>
               <SmartField
                 label="Applicant Name"
                 required
@@ -851,8 +890,8 @@ export function GrantWritingDemoPage() {
           {/* 2. Project Narrative                                          */}
           {/* ============================================================ */}
           <div id="project-narrative" className="scroll-mt-8">
-            <SectionHeading>Project Narrative</SectionHeading>
             <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
+              <SectionHeading>Project Narrative</SectionHeading>
               <SmartField
                 label="Project Goals and Objectives"
                 required
@@ -870,7 +909,7 @@ export function GrantWritingDemoPage() {
                 required
                 richText
                 helperText="Provide a clear timeline showing when each major task will be completed."
-                defaultValue={"Task 1: [Description] – Month 1-3\nTask 2: [Description] – Month 4-6\nTask 3: [Description] – Month 7-12"}
+                placeholder={"Task 1: [Description] – Month 1-3\nTask 2: [Description] – Month 4-6\nTask 3: [Description] – Month 7-12"}
               />
               <SmartField
                 label="Benefits or Results Expected"
@@ -891,8 +930,8 @@ export function GrantWritingDemoPage() {
           {/* 3. Budget Narrative — ends with the generic Documents upload  */}
           {/* ============================================================ */}
           <div id="budget-narrative" className="scroll-mt-8">
-            <SectionHeading>Budget Narrative</SectionHeading>
             <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
+              <SectionHeading>Budget Narrative</SectionHeading>
               <SmartField
                 label="Budget by Cost Category"
                 required
@@ -928,8 +967,8 @@ export function GrantWritingDemoPage() {
           {/* 4. Attachments                                                */}
           {/* ============================================================ */}
           <div id="attachments" className="scroll-mt-8">
-            <SectionHeading>Attachments</SectionHeading>
             <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <SectionHeading>Attachments</SectionHeading>
               <UploadField
                 label="Attachments (Combined PDF)"
                 required
@@ -942,8 +981,8 @@ export function GrantWritingDemoPage() {
           {/* 5. Federal Application Forms                                  */}
           {/* ============================================================ */}
           <div id="federal-forms" className="scroll-mt-8">
-            <SectionHeading>Federal Application Forms</SectionHeading>
             <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
+              <SectionHeading>Federal Application Forms</SectionHeading>
               <SmartField
                 label="Unique Entity Identifier (UEI)"
                 required
@@ -993,8 +1032,8 @@ export function GrantWritingDemoPage() {
           {/* 6. Applicant Eligibility & Certifications                     */}
           {/* ============================================================ */}
           <div id="eligibility-certs" className="scroll-mt-8">
-            <SectionHeading>Applicant Eligibility &amp; Certifications</SectionHeading>
             <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
+              <SectionHeading>Applicant Eligibility &amp; Certifications</SectionHeading>
               <SelectField
                 label="Applicant Type"
                 required
@@ -1009,7 +1048,7 @@ export function GrantWritingDemoPage() {
                 options={["Yes – the project will be conducted within Alaska", "No – the project will not be conducted within Alaska"]}
                 defaultValue="Yes – the project will be conducted within Alaska"
               />
-              <CertificationCheckbox
+              <CertificationToggle
                 title="Certification: Only one application submitted per applicant"
                 description="Only one application per individual or organization will be accepted for this opportunity."
               />
@@ -1019,7 +1058,7 @@ export function GrantWritingDemoPage() {
                 helperText="You must be registered in SAM.gov and have an active registration to receive an award."
                 options={["Yes – registered and active in SAM.gov", "In progress – registration submitted but not yet completed", "No – not yet registered"]}
               />
-              <CertificationCheckbox
+              <CertificationToggle
                 title="Certification: Applicant is NOT a Federal agency"
                 description="Federal agencies and their employees, as well as Federally-funded R&D centers, are not eligible applicants."
               />
