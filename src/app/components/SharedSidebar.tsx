@@ -77,6 +77,19 @@ const mockApplications: Application[] = [
 
 const activeApplicationsCount = mockApplications.length;
 
+// /grant-writing-demo (step 6) renders application "1" as one long,
+// single-page grant application matching the Figma "Grant Writing" screen,
+// not the generic nine-section taxonomy above — its own six sections, each
+// scrolled to by id — see isGrantWritingDemo below.
+const GRANT_WRITING_DEMO_SECTIONS: Section[] = [
+  { id: "cover-page", name: "Cover Page & Project Abstract" },
+  { id: "project-narrative", name: "Project Narrative" },
+  { id: "budget-narrative", name: "Budget Narrative" },
+  { id: "attachments", name: "Attachments" },
+  { id: "federal-forms", name: "Federal Application Forms" },
+  { id: "eligibility-certs", name: "Applicant Eligibility & Certifications" },
+];
+
 const organizations = [
   { id: "1", name: "Great Grants Foundation", initials: "GG" },
   { id: "2", name: "Community Impact Fund", initials: "CI" },
@@ -438,7 +451,7 @@ export function SharedSidebar() {
 
                     {expandedApp === app.id && (
                       <ul className="ml-5 mt-0.5 space-y-0.5">
-                        {app.sections.map((section) => {
+                        {(isGrantWritingDemo ? GRANT_WRITING_DEMO_SECTIONS : app.sections).map((section) => {
                           const isActiveSection = location.pathname === `/application/${app.id}/s/${section.id}`;
                           // The one exception to "everything in this sidebar
                           // is locked" on /grant-writing-demo: these section
