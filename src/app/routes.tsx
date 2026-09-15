@@ -3,6 +3,7 @@ import { AppLayout } from "./components/AppLayout";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ApplicationsPage } from "./pages/ApplicationsPage";
 import { ApplicationsDemoPage } from "./pages/ApplicationsDemoPage";
+import { GrantWritingDemoPage } from "./pages/GrantWritingDemoPage";
 import { ApplicationSectionPage } from "./pages/ApplicationSectionPage";
 import { GrantSearchPage } from "./pages/GrantSearchPage";
 import { SearchDemoPage } from "./pages/SearchDemoPage";
@@ -144,6 +145,14 @@ const routes = [
         // different from /applications.
         path: "applications-demo",
         element: <ApplicationsDemoPage />,
+      },
+      {
+        // Step 6 (final step) of the locked demo tour, reached from
+        // applications-demo's forward stepper arrow — see
+        // GrantWritingDemoPage for what this single-page layout is doing
+        // differently from /application/:id/s/:id.
+        path: "grant-writing-demo",
+        element: <GrantWritingDemoPage />,
       },
       {
         path: "application/:applicationId/s/:sectionId",

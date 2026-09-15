@@ -1,4 +1,4 @@
-import { Building2, FileSearch, FolderOpen, Search, Target, type LucideIcon } from "lucide-react";
+import { Building2, FileSearch, FolderOpen, MessageSquareQuote, Search, Target, type LucideIcon } from "lucide-react";
 
 /**
  * The locked-demo mini-tour shown in DemoOnlyBar's center — a "Step X of 6"
@@ -12,12 +12,10 @@ import { Building2, FileSearch, FolderOpen, Search, Target, type LucideIcon } fr
  * freely-clickable one — but carry their own step numbering (1-3 of an
  * eventual 6), so this is a separate list rather than a re-export.
  *
- * Only 5 of the eventual 6 steps exist yet. That's fine: getPreviousTourStep
- * / getNextTourStep return null past either end of this array, and
- * DemoOnlyBar disables whichever arrow gets a null — so /organization-demo
- * (step 1) has no back, and today's last step has no forward, with zero
- * special-casing. Appending step 6 here is all a future page needs to join
- * the tour.
+ * All 6 steps now exist. getPreviousTourStep / getNextTourStep return null
+ * past either end of this array, and DemoOnlyBar disables whichever arrow
+ * gets a null — so /organization-demo (step 1) has no back, and
+ * /grant-writing-demo (step 6) has no forward, with zero special-casing.
  */
 export interface LockedDemoTourStep {
   /** The locked route this step lives on — see lockedDemoRoutes.ts. */
@@ -79,6 +77,17 @@ export const LOCKED_DEMO_TOUR: LockedDemoTourStep[] = [
     description:
       "Every application in flight, tracked down to the section, with deadlines and completion you can see at a glance.",
     icon: FolderOpen,
+  },
+  {
+    // Same "coaching" stop copy as demoTour.ts's public /marketing
+    // walkthrough (order 7 there) — see the note above this array.
+    path: "/grant-writing-demo",
+    stepNumber: 6,
+    totalSteps: 6,
+    title: "AI Drafting and Coaching",
+    description:
+      "A real first draft of every section, plus an expert reviewer sitting with you as you edit it.",
+    icon: MessageSquareQuote,
   },
 ];
 

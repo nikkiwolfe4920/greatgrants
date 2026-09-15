@@ -105,6 +105,10 @@ export function SharedSidebar() {
   const isApplicationSectionPage = location.pathname.startsWith("/application/");
   const isGrantDetailPage = location.pathname.startsWith("/grant/");
   const isWatchListPage = location.pathname === "/watch-list";
+  // /grant-writing-demo (step 6 of the locked tour) is a single scrollable
+  // page showing every section of one application at once, rather than one
+  // route per section — see the isGrantWritingDemo uses below.
+  const isGrantWritingDemo = location.pathname === "/grant-writing-demo";
 
   // A locked walkthrough route (e.g. /organization-demo, /search-demo) —
   // every control in this sidebar stays visible and hoverable (so the
@@ -123,12 +127,19 @@ export function SharedSidebar() {
   const isOrgProfileComplete = orgProfileItemsRemaining === 0;
   const hasPublishedPrograms = publishedProjectsCount >= 1;
 
-  // Auto-expand applications when on related pages
+  // Auto-expand applications when on related pages. On /grant-writing-demo
+  // this also force-opens application "1" itself (expandedApp already
+  // defaults to "1"), since that's the one application whose sections this
+  // page renders — see isGrantWritingDemo below for why its own toggle
+  // stays locked instead of just defaulting open.
   useEffect(() => {
-    if (isApplicationsPage || isApplicationSectionPage) {
+    if (isApplicationsPage || isApplicationSectionPage || isGrantWritingDemo) {
       setApplicationsExpanded(true);
     }
-  }, [isApplicationsPage, isApplicationSectionPage]);
+    if (isGrantWritingDemo) {
+      setExpandedApp("1");
+    }
+  }, [isApplicationsPage, isApplicationSectionPage, isGrantWritingDemo]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -429,16 +440,27 @@ export function SharedSidebar() {
                       <ul className="ml-5 mt-0.5 space-y-0.5">
                         {app.sections.map((section) => {
                           const isActiveSection = location.pathname === `/application/${app.id}/s/${section.id}`;
+                          // The one exception to "everything in this sidebar
+                          // is locked" on /grant-writing-demo: these section
+                          // items stay live, scrolling the single-page
+                          // layout to that section's heading (id={section.id}
+                          // — see GrantWritingDemoPage) instead of navigating
+                          // to a separate /application/:id/s/:id route.
+                          const handleSectionClick = isGrantWritingDemo
+                            ? () => document.getElementById(section.id)?.scrollIntoView({ behavior: "smooth", block: "start" })
+                            : withLock(() => navigate(`/application/${app.id}/s/${section.id}`));
                           return (
                             <li key={section.id}>
                               <button
-                                onClick={withLock(() => navigate(`/application/${app.id}/s/${section.id}`))}
-                                className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-xs rounded-md transition-colors ${lockedCursor} ${
+                                onClick={handleSectionClick}
+                                className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-xs rounded-md transition-colors ${
+                                  isGrantWritingDemo ? "" : lockedCursor
+                                } ${
                                   isActiveSection
                                     ? "bg-gray-100 text-gray-900 font-medium"
                                     : "text-gray-600 hover:bg-gray-50"
                                 }`}
-                                {...lockedAria}
+                                {...(isGrantWritingDemo ? {} : lockedAria)}
                               >
                                 {isActiveSection && (
                                   <span className="w-1.5 h-1.5 rounded-full bg-teal-600 shrink-0" />
