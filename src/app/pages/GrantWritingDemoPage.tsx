@@ -264,18 +264,20 @@ function SmartField({
       )}
 
       {isDraftActive && (
-        <label className="flex items-center gap-2 mt-2 cursor-pointer w-fit">
-          <input
-            type="checkbox"
-            onChange={(e) => {
-              if (e.target.checked) setIsDraftActive(false);
-            }}
-            className="w-4 h-4 rounded border-gray-300 focus:ring-2 focus:ring-purple-500"
-          />
-          <span className="text-sm text-[#8B5CF6] font-medium" style={CABIN}>
-            Accept AI Recommendation
-          </span>
-        </label>
+        <div className="flex justify-end">
+          <label className="flex items-center gap-2 mt-2 cursor-pointer w-fit">
+            <input
+              type="checkbox"
+              onChange={(e) => {
+                if (e.target.checked) setIsDraftActive(false);
+              }}
+              className="w-4 h-4 rounded border-gray-300 focus:ring-2 focus:ring-purple-500"
+            />
+            <span className="text-sm text-[#8B5CF6] font-medium" style={CABIN}>
+              Accept AI Recommendation
+            </span>
+          </label>
+        </div>
       )}
     </div>
   );
@@ -590,92 +592,97 @@ function UploadField({
 function ApplicationResourcesPanel() {
   const [expanded, setExpanded] = useState(true);
 
+  // Collapsed: a floating vertical tab pinned to the right edge — the same
+  // UI pattern as ApplicationRightRail's collapsed state on
+  // /applications-demo, just defaulting to expanded here instead of
+  // collapsed (see the `expanded` initial state above).
   if (!expanded) {
     return (
-      <div className="w-full lg:w-12 shrink-0 lg:sticky lg:top-6 flex lg:justify-center">
-        <button
-          onClick={() => setExpanded(true)}
-          className="flex items-center gap-2 lg:flex-col lg:h-40 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors"
-          title="Show Application Resources"
-        >
-          <FileText className="w-4 h-4 shrink-0" />
-          <span className="text-xs font-semibold lg:[writing-mode:vertical-rl]" style={CABIN}>
-            Resources
-          </span>
-        </button>
-      </div>
+      <button
+        onClick={() => setExpanded(true)}
+        className="fixed right-0 top-1/3 z-20 flex flex-col items-center gap-2 text-white px-3 py-4 rounded-l-xl shadow-xl hover:shadow-2xl transition-all bg-gray-500 hover:bg-gray-600"
+        title="Show Application Resources"
+      >
+        <FileText className="w-5 h-5" />
+        <span className="text-xs font-semibold tracking-wider [writing-mode:vertical-rl]" style={CABIN}>
+          Resources
+        </span>
+      </button>
     );
   }
 
   return (
-    <aside className="w-full lg:w-[320px] shrink-0 relative lg:sticky lg:top-0 lg:h-screen bg-gray-50">
+    <aside className="w-full lg:w-[320px] shrink-0 relative lg:sticky lg:top-0 lg:h-screen bg-[#F9FAFB] border-l border-gray-200 overflow-hidden">
       <button
         onClick={() => setExpanded(false)}
-        className="hidden lg:flex absolute top-5 -left-4 z-10 w-8 h-8 bg-white rounded-full border-2 border-gray-200 shadow-sm items-center justify-center hover:border-gray-300 transition-colors"
+        className="hidden lg:flex absolute top-6 -left-4 z-10 w-8 h-8 bg-white rounded-full border-2 border-gray-200 shadow-lg items-center justify-center hover:border-gray-300 transition-colors"
         title="Collapse Application Resources"
       >
         <X className="w-4 h-4 text-gray-500" />
       </button>
-      <div className="pt-5 px-5 lg:px-4">
-        <h3 className="text-base font-semibold text-gray-900" style={CABIN}>
-          Application Resources
-        </h3>
-      </div>
 
-      <div className="px-5 lg:px-4 pt-4 space-y-3">
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <div
-            aria-disabled="true"
-            title="This is a locked demo — this panel can't be collapsed here"
-            className="w-full px-4 py-3 flex items-center justify-between gap-2 cursor-not-allowed"
-          >
-            <span className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-semibold text-gray-900" style={CABIN}>
-                Documents
-              </span>
-              <span className="text-sm text-gray-400" style={CABIN}>
-                (1)
-              </span>
-            </span>
-            <ChevronDown className="w-4 h-4 text-gray-300 rotate-180" />
-          </div>
-          <div className="border-t border-gray-100 p-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
-                <FileText className="w-4.5 h-4.5 text-red-500" />
+      <div className="overflow-y-auto h-full">
+        <div className="p-6">
+          <h3 className="text-base font-semibold text-gray-900 mb-4" style={CABIN}>
+            Application Resources
+          </h3>
+
+          <div className="space-y-3">
+            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <div
+                aria-disabled="true"
+                title="This is a locked demo — this panel can't be collapsed here"
+                className="w-full px-4 py-3 flex items-center justify-between gap-2 cursor-not-allowed"
+              >
+                <span className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm font-semibold text-gray-900" style={CABIN}>
+                    Documents
+                  </span>
+                  <span className="text-sm text-gray-400" style={CABIN}>
+                    (1)
+                  </span>
+                </span>
+                <ChevronDown className="w-4 h-4 text-gray-300 rotate-180" />
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate" style={CABIN}>
-                  Notice of Funding Opportunity
-                </p>
-                <p className="text-xs text-gray-500" style={CABIN}>
-                  PDF Document • 104 KB
-                </p>
+              <div className="border-t border-gray-100 p-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+                    <FileText className="w-4.5 h-4.5 text-red-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate" style={CABIN}>
+                      Notice of Funding Opportunity
+                    </p>
+                    <p className="text-xs text-gray-500" style={CABIN}>
+                      PDF Document • 104 KB
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-disabled="true"
+                  title="This is a locked demo — documents can't be opened here"
+                  className="border-gray-300 bg-white text-gray-300 cursor-not-allowed shrink-0"
+                >
+                  View
+                </Button>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              aria-disabled="true"
-              title="This is a locked demo — documents can't be opened here"
-              className="border-gray-300 bg-white text-gray-300 cursor-not-allowed shrink-0"
-            >
-              View
-            </Button>
-          </div>
-        </div>
 
-        <div className="flex justify-center">
-          <button
-            aria-disabled="true"
-            title="This is a locked demo — this link can't navigate away"
-            className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-200 bg-white rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed"
-            style={CABIN}
-          >
-            Grant Opportunity Overview
-            <ExternalLink className="w-4 h-4" />
-          </button>
+            <div className="flex justify-center">
+              <button
+                aria-disabled="true"
+                title="This is a locked demo — this link can't navigate away"
+                className="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-200 bg-white rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed"
+                style={CABIN}
+              >
+                Grant Opportunity Overview
+                <ExternalLink className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </aside>
@@ -706,6 +713,14 @@ const PI_EMAIL_TIP =
 export function GrantWritingDemoPage() {
   return (
     <div className="max-w-[1400px] mx-auto px-8 py-8">
+      {/* Outer flex row wraps the ENTIRE page (breadcrumb through the
+          section cards), not just the section cards, so the resources
+          panel sits alongside from the very top of the page — same
+          structural pattern as ApplicationRightRail on /applications-demo
+          (ApplicationsPage's own outer `flex gap-6` wraps its whole page
+          this way), just defaulting to open instead of collapsed. */}
+      <div className="flex gap-8 items-start flex-col lg:flex-row">
+        <div className="flex-1 min-w-0">
       {/* Breadcrumb — Home is inert like every locked demo page. "Applications"
           is a middle crumb here (not the current page), so unlike
           BreadcrumbPage's teal "current page" styling, it renders as plain
@@ -783,9 +798,7 @@ export function GrantWritingDemoPage() {
         </span>
       </div>
 
-      {/* Body: sections + resources panel */}
-      <div className="flex gap-8 items-start flex-col lg:flex-row">
-        <div className="flex-1 min-w-0 space-y-8">
+      <div className="space-y-8">
           {/* ============================================================ */}
           {/* 1. Cover Page & Project Abstract                              */}
           {/* ============================================================ */}
@@ -798,7 +811,7 @@ export function GrantWritingDemoPage() {
                 aiDraft
                 coachingTip={APPLICANT_NAME_TIP}
                 helperText="Enter the full legal name of the applicant entity as registered with the IRS."
-                defaultValue="Nikki's Org"
+                defaultValue="Olivia Elizabeth Rhye"
               />
               <SmartField
                 label="Funding Opportunity Title"
@@ -1071,6 +1084,7 @@ export function GrantWritingDemoPage() {
               />
             </div>
           </div>
+        </div>
         </div>
 
         <ApplicationResourcesPanel />
