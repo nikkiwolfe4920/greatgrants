@@ -221,7 +221,11 @@ export function SharedSidebar() {
     return () => document.removeEventListener("mousedown", handler);
   }, [mobileOpen]);
 
-  const isAllApplicationsActive = isApplicationsPage || isApplicationSectionPage;
+  // /grant-writing-demo renders application "1", so All Applications counts
+  // as active there too — matching the highlighted state it already gets on
+  // /applications and /application/:id/s/:id, on top of the auto-expand
+  // (isGrantWritingDemo) effect below that opens its child section list.
+  const isAllApplicationsActive = isApplicationsPage || isApplicationSectionPage || isGrantWritingDemo;
 
   const sidebarContent = (
     <aside
