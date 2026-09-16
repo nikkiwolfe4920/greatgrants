@@ -155,19 +155,19 @@ export function SharedSidebar() {
   const isOrgProfileComplete = orgProfileItemsRemaining === 0;
   const hasPublishedPrograms = publishedProjectsCount >= 1;
 
-  // Auto-expand applications when on related pages. On /grant-writing-demo
-  // this also force-opens application "1" itself (expandedApp already
-  // defaults to "1"), since that's the one application whose sections this
-  // page renders — see isGrantWritingDemo below for why its own toggle
-  // stays locked instead of just defaulting open.
+  // Auto-expand All Applications on related pages, including its locked-tour
+  // stand-in /applications-demo. On every other locked demo route
+  // (/organization-demo, /search-demo, /org-detail-demo, /eligibility-demo,
+  // /grant-writing-demo) it stays collapsed instead — isLockedNav is true on
+  // /applications-demo too, so excluding isApplicationsDemoPage keeps that
+  // one page expanded while collapsing the rest.
   useEffect(() => {
-    if (isApplicationsPage || isApplicationSectionPage || isApplicationsDemoPage || isGrantWritingDemo) {
+    if (isApplicationsPage || isApplicationSectionPage || isApplicationsDemoPage) {
       setApplicationsExpanded(true);
+    } else if (isLockedNav) {
+      setApplicationsExpanded(false);
     }
-    if (isGrantWritingDemo) {
-      setExpandedApp("1");
-    }
-  }, [isApplicationsPage, isApplicationSectionPage, isApplicationsDemoPage, isGrantWritingDemo]);
+  }, [isApplicationsPage, isApplicationSectionPage, isApplicationsDemoPage, isLockedNav]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -226,12 +226,11 @@ export function SharedSidebar() {
     return () => document.removeEventListener("mousedown", handler);
   }, [mobileOpen]);
 
-  // /applications-demo and /grant-writing-demo render the same All
-  // Applications workspace (application "1"), so All Applications counts as
-  // active there too — matching the highlighted state it already gets on
-  // /applications and /application/:id/s/:id, on top of the auto-expand
-  // effect above that opens its child section list.
-  const isAllApplicationsActive = isApplicationsPage || isApplicationSectionPage || isApplicationsDemoPage || isGrantWritingDemo;
+  // /applications-demo is the only locked demo route where All Applications
+  // stays expanded (see the auto-expand effect above), so it's the only one
+  // that gets the same highlighted state /applications and
+  // /application/:id/s/:id already get.
+  const isAllApplicationsActive = isApplicationsPage || isApplicationSectionPage || isApplicationsDemoPage;
 
   const sidebarContent = (
     <aside
