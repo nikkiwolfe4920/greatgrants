@@ -116,11 +116,6 @@ export function SharedSidebar() {
   const isActive = (path: string) => location.pathname === path;
   const isApplicationsPage = location.pathname === "/applications";
   const isApplicationSectionPage = location.pathname.startsWith("/application/");
-  // /applications-demo (step 5 of the locked tour) is the All Applications
-  // nav item's own redirect target while a locked demo route is active —
-  // see demoNavOverride below — so it needs the same auto-expand treatment
-  // as the real /applications page.
-  const isApplicationsDemoPage = location.pathname === "/applications-demo";
   const isGrantDetailPage = location.pathname.startsWith("/grant/");
   const isWatchListPage = location.pathname === "/watch-list";
   // /grant-writing-demo (step 6 of the locked tour) is a single scrollable
@@ -155,16 +150,15 @@ export function SharedSidebar() {
   const isOrgProfileComplete = orgProfileItemsRemaining === 0;
   const hasPublishedPrograms = publishedProjectsCount >= 1;
 
-  // Auto-expand All Applications on related pages, including its locked-tour
-  // stand-in /applications-demo and /grant-writing-demo (whose own sub-list —
-  // see GRANT_WRITING_DEMO_SECTIONS below — smooth-scrolls the single-page
-  // layout instead of navigating). On every other locked demo route
-  // (/organization-demo, /search-demo, /org-detail-demo, /eligibility-demo)
-  // it stays collapsed instead — isLockedNav is true on those two pages too,
-  // so excluding them from that branch keeps them expanded while collapsing
-  // the rest.
+  // Auto-expand All Applications on related pages, including /grant-writing-
+  // demo (whose own sub-list — see GRANT_WRITING_DEMO_SECTIONS below —
+  // smooth-scrolls the single-page layout instead of navigating). On every
+  // other locked demo route, including its own redirect target
+  // /applications-demo, it stays collapsed instead — isLockedNav is true on
+  // /grant-writing-demo too, so excluding it from that branch keeps it
+  // expanded while collapsing the rest.
   useEffect(() => {
-    if (isApplicationsPage || isApplicationSectionPage || isApplicationsDemoPage || isGrantWritingDemo) {
+    if (isApplicationsPage || isApplicationSectionPage || isGrantWritingDemo) {
       setApplicationsExpanded(true);
     } else if (isLockedNav) {
       setApplicationsExpanded(false);
@@ -172,7 +166,7 @@ export function SharedSidebar() {
     if (isGrantWritingDemo) {
       setExpandedApp("1");
     }
-  }, [isApplicationsPage, isApplicationSectionPage, isApplicationsDemoPage, isGrantWritingDemo, isLockedNav]);
+  }, [isApplicationsPage, isApplicationSectionPage, isGrantWritingDemo, isLockedNav]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -231,11 +225,11 @@ export function SharedSidebar() {
     return () => document.removeEventListener("mousedown", handler);
   }, [mobileOpen]);
 
-  // /applications-demo and /grant-writing-demo are the locked demo routes
-  // where All Applications stays expanded (see the auto-expand effect
-  // above), so they're the ones that get the same highlighted state
-  // /applications and /application/:id/s/:id already get.
-  const isAllApplicationsActive = isApplicationsPage || isApplicationSectionPage || isApplicationsDemoPage || isGrantWritingDemo;
+  // /grant-writing-demo is the only locked demo route where All Applications
+  // stays expanded (see the auto-expand effect above), so it's the only one
+  // that gets the same highlighted state /applications and
+  // /application/:id/s/:id already get.
+  const isAllApplicationsActive = isApplicationsPage || isApplicationSectionPage || isGrantWritingDemo;
 
   const sidebarContent = (
     <aside
