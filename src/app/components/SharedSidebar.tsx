@@ -287,7 +287,7 @@ export function SharedSidebar() {
           {isOrgProfileComplete ? (
             <li>
               <button
-                onClick={demoNavOverride("/org-detail-demo", "/organization")}
+                onClick={demoNavOverride("/organization-demo", "/organization")}
                 className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
                   isActive("/organization")
                     ? "bg-gray-100 text-gray-900"
@@ -302,7 +302,7 @@ export function SharedSidebar() {
           ) : (
             <li>
               <button
-                onClick={demoNavOverride("/org-detail-demo", "/organization")}
+                onClick={demoNavOverride("/organization-demo", "/organization")}
                 className={`w-full text-left rounded-lg transition-colors ${
                   isActive("/organization") ? "bg-gray-100" : "hover:bg-gray-50"
                 }`}
