@@ -116,6 +116,11 @@ export function SharedSidebar() {
   const isActive = (path: string) => location.pathname === path;
   const isApplicationsPage = location.pathname === "/applications";
   const isApplicationSectionPage = location.pathname.startsWith("/application/");
+  // /applications-demo (step 5 of the locked tour) is the All Applications
+  // nav item's own redirect target while a locked demo route is active —
+  // see demoNavOverride below — so it needs the same auto-expand treatment
+  // as the real /applications page.
+  const isApplicationsDemoPage = location.pathname === "/applications-demo";
   const isGrantDetailPage = location.pathname.startsWith("/grant/");
   const isWatchListPage = location.pathname === "/watch-list";
   // /grant-writing-demo (step 6 of the locked tour) is a single scrollable
@@ -156,13 +161,13 @@ export function SharedSidebar() {
   // page renders — see isGrantWritingDemo below for why its own toggle
   // stays locked instead of just defaulting open.
   useEffect(() => {
-    if (isApplicationsPage || isApplicationSectionPage || isGrantWritingDemo) {
+    if (isApplicationsPage || isApplicationSectionPage || isApplicationsDemoPage || isGrantWritingDemo) {
       setApplicationsExpanded(true);
     }
     if (isGrantWritingDemo) {
       setExpandedApp("1");
     }
-  }, [isApplicationsPage, isApplicationSectionPage, isGrantWritingDemo]);
+  }, [isApplicationsPage, isApplicationSectionPage, isApplicationsDemoPage, isGrantWritingDemo]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -221,11 +226,12 @@ export function SharedSidebar() {
     return () => document.removeEventListener("mousedown", handler);
   }, [mobileOpen]);
 
-  // /grant-writing-demo renders application "1", so All Applications counts
-  // as active there too — matching the highlighted state it already gets on
+  // /applications-demo and /grant-writing-demo render the same All
+  // Applications workspace (application "1"), so All Applications counts as
+  // active there too — matching the highlighted state it already gets on
   // /applications and /application/:id/s/:id, on top of the auto-expand
-  // (isGrantWritingDemo) effect below that opens its child section list.
-  const isAllApplicationsActive = isApplicationsPage || isApplicationSectionPage || isGrantWritingDemo;
+  // effect above that opens its child section list.
+  const isAllApplicationsActive = isApplicationsPage || isApplicationSectionPage || isApplicationsDemoPage || isGrantWritingDemo;
 
   const sidebarContent = (
     <aside
