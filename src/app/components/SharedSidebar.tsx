@@ -137,6 +137,16 @@ export function SharedSidebar() {
     if (!isLockedNav) fn();
   };
 
+  // Organization Profile, Grant Search, and All Applications stay clickable
+  // even while a locked demo route is active — routing to that item's own
+  // locked-tour page instead of the real screen — while every other nav
+  // item (My Programs, Watch List, the avatar menu) stays inert via
+  // withLock above. Off a locked route this is identical to a normal
+  // navigate() to realPath.
+  const demoNavOverride = (demoPath: string, realPath: string) => () => {
+    navigate(isLockedNav ? demoPath : realPath);
+  };
+
   const isOrgProfileComplete = orgProfileItemsRemaining === 0;
   const hasPublishedPrograms = publishedProjectsCount >= 1;
 
@@ -269,14 +279,13 @@ export function SharedSidebar() {
           {isOrgProfileComplete ? (
             <li>
               <button
-                onClick={withLock(() => navigate("/organization"))}
-                className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${lockedCursor} ${
+                onClick={demoNavOverride("/org-detail-demo", "/organization")}
+                className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
                   isActive("/organization")
                     ? "bg-gray-100 text-gray-900"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
                 style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isActive("/organization") ? 600 : 400, fontSize: '14px' }}
-                {...lockedAria}
               >
                 <Building2 className="w-4 h-4 shrink-0" />
                 <span className="flex-1 truncate">Organization Profile</span>
@@ -285,11 +294,10 @@ export function SharedSidebar() {
           ) : (
             <li>
               <button
-                onClick={withLock(() => navigate("/organization"))}
-                className={`w-full text-left rounded-lg transition-colors ${lockedCursor} ${
+                onClick={demoNavOverride("/org-detail-demo", "/organization")}
+                className={`w-full text-left rounded-lg transition-colors ${
                   isActive("/organization") ? "bg-gray-100" : "hover:bg-gray-50"
                 }`}
-                {...lockedAria}
               >
                 <div className="flex items-center gap-2 px-3 py-2">
                   <Building2 className="w-4 h-4 text-gray-700 shrink-0" />
@@ -368,14 +376,13 @@ export function SharedSidebar() {
           {/* Grant Search */}
           <li>
             <button
-              onClick={withLock(() => navigate("/search"))}
-              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${lockedCursor} ${
+              onClick={demoNavOverride("/search-demo", "/search")}
+              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
                 isActive("/search") || isGrantDetailPage
                   ? "bg-gray-100 text-gray-900"
                   : "text-gray-700 hover:bg-gray-100"
               }`}
               style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isActive("/search") || isGrantDetailPage ? 600 : 400, fontSize: '14px' }}
-              {...lockedAria}
             >
               <Search className="w-4 h-4 shrink-0" />
               <span className="flex-1 truncate">Grant Search</span>
@@ -393,11 +400,10 @@ export function SharedSidebar() {
             >
               {/* Navigate label area */}
               <button
-                onClick={withLock(() => navigate("/applications"))}
-                className={`flex items-center gap-2 flex-1 min-w-0 text-left ${lockedCursor}`}
+                onClick={demoNavOverride("/applications-demo", "/applications")}
+                className="flex items-center gap-2 flex-1 min-w-0 text-left"
                 style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isAllApplicationsActive ? 600 : 400, fontSize: '14px' }}
                 aria-label="Go to All Applications"
-                {...lockedAria}
               >
                 <FileText className="w-4 h-4 shrink-0" />
                 <span className="flex-1 truncate">All Applications</span>
