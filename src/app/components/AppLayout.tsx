@@ -2,6 +2,7 @@ import { Outlet, useLocation } from "react-router";
 import { SharedSidebar } from "./SharedSidebar";
 import { DemoBanner } from "./demo/DemoBanner";
 import { DemoOnlyBar } from "./demo/DemoOnlyBar";
+import { LockedTourDock } from "./demo/LockedTourDock";
 import { isLockedDemoRoute } from "../demo/lockedDemoRoutes";
 
 export function AppLayout() {
@@ -24,6 +25,11 @@ export function AppLayout() {
           <Outlet />
         </main>
       </div>
+      {/* Fixed-position, viewport-anchored — mounted here rather than inside
+          DemoOnlyBar or the page, since "bottom-center of the screen" is a
+          layout position, not part of either's own flow. No-ops (returns
+          null) off the locked tour, so it's safe to always mount. */}
+      <LockedTourDock />
     </div>
   );
 }
