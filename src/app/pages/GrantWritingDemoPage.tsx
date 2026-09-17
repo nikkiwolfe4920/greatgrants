@@ -695,20 +695,16 @@ function ApplicationResourcesPanel() {
 
 const GRANT_TITLE = "National Oceanic and Atmospheric Administration (NOAA) – Alaska Marine Education and Training Mini-Grant Program";
 
-const APPLICANT_NAME_TIP =
-  "Use the exact legal name on file with the IRS and SAM.gov — a mismatch here is one of the most common reasons a Statement of Interest gets kicked back for correction.";
-const FUNDING_TITLE_TIP =
-  "Copy the NOFO's title exactly, including the year and any addendum name — funders' intake systems often match on this string verbatim.";
-const FUNDING_NUMBER_TIP =
-  "This is the opportunity number printed on the NOFO itself, not your own internal tracking number — double check it against grants.gov before submitting.";
-const PROJECT_TITLE_TIP =
-  "Keep this to one line a reviewer can scan in a list of forty other applications — specific enough to be memorable, short enough to fit a table cell.";
-const DURATION_TIP =
-  "Confirm your proposed start date falls within the NOFO's allowed project period — starting outside that window is an easy, avoidable rejection reason.";
-const PI_NAME_TIP =
-  "This should be whoever will actually answer the funder's technical questions during review, not necessarily your executive director.";
-const PI_EMAIL_TIP =
-  "Use an email you check daily during the review period — funders often give a narrow window to respond to clarification requests.";
+const PROJECT_GOALS_TIP =
+  "Lead with the single outcome a reviewer will remember, then break it into 2-4 measurable objectives — reviewers score objectives higher when each one has a number attached (a count, a percentage, a date) rather than a vague verb like 'improve' or 'increase awareness.'";
+const PROJECT_ACTIVITIES_TIP =
+  "Group activities into phases tied to your milestone schedule so a reviewer can trace cause and effect — who does what, in what order, and why that sequence gets you to the stated goal. Vague activity lists ('conduct outreach,' 'provide training') read as unplanned; naming the method (field expeditions, curriculum co-design, data collection protocol) signals you've actually built the program.";
+const MILESTONE_SCHEDULE_TIP =
+  "A funder reads this table looking for realism, not ambition — build in a buffer month before your showcase or final report so a single delayed permit or weather-canceled expedition doesn't cascade into a missed deadline. Every milestone should map to something you claimed in Project Activities.";
+const BENEFITS_RESULTS_TIP =
+  "Separate who benefits (students, schools, the community, the funder) from how you'll know (the specific measure for each). Reviewers weight this section heavily when it names a mechanism for measuring results, not just a hoped-for feeling like 'increased awareness.'";
+const PROJECT_MANAGEMENT_TIP =
+  "Name a single accountable person for each major responsibility (budget, curriculum, evaluation, school coordination) rather than describing roles in the abstract — reviewers use this section to judge whether the team can actually execute the activities described above, not just whether the org chart looks reasonable.";
 
 export function GrantWritingDemoPage() {
   return (
@@ -808,24 +804,18 @@ export function GrantWritingDemoPage() {
               <SmartField
                 label="Applicant Name"
                 required
-                aiDraft
-                coachingTip={APPLICANT_NAME_TIP}
                 helperText="Enter the full legal name of the applicant entity as registered with the IRS."
                 defaultValue="Olivia Elizabeth Rhye"
               />
               <SmartField
                 label="Funding Opportunity Title"
                 required
-                aiDraft
-                coachingTip={FUNDING_TITLE_TIP}
                 helperText="Enter the exact title as listed in the NOFO: '2026 Alaska Marine Education and Training Mini-Grant'."
                 defaultValue="2026 Alaska Marine Education and Training Mini-Grant"
               />
               <SmartField
                 label="Funding Opportunity Number"
                 required
-                aiDraft
-                coachingTip={FUNDING_NUMBER_TIP}
                 helperText="Enter the Funding Opportunity Number exactly as listed on grants.gov."
                 defaultValue="NOAA-NMFS-AK-2026-33268"
               />
@@ -838,32 +828,24 @@ export function GrantWritingDemoPage() {
               <SmartField
                 label="Program/Project Title"
                 required
-                aiDraft
-                coachingTip={PROJECT_TITLE_TIP}
                 helperText="Provide a concise, descriptive title for your proposed project."
                 defaultValue="Expanding Access to Assistive Technology Financing"
               />
               <SmartField
                 label="Program/Project Duration"
                 required
-                aiDraft
-                coachingTip={DURATION_TIP}
                 helperText="Projects may begin no earlier than September 1, 2026."
                 defaultValue="September 1, 2026 - August 31, 2027"
               />
               <SmartField
                 label="Principal Investigator / Project Manager Name"
                 required
-                aiDraft
-                coachingTip={PI_NAME_TIP}
                 helperText="The PI/PM is the lead technical contact. This person will be listed on all correspondence."
                 defaultValue="Nikki Wolfe"
               />
               <SmartField
                 label="Principal Investigator / Project Manager Email"
                 required
-                aiDraft
-                coachingTip={PI_EMAIL_TIP}
                 helperText="Email address for the PI/PM."
                 defaultValue="nikki@email.com"
               />
@@ -909,32 +891,47 @@ export function GrantWritingDemoPage() {
                 label="Project Goals and Objectives"
                 required
                 richText
+                aiDraft
+                coachingTip={PROJECT_GOALS_TIP}
                 helperText="State the overarching project goal clearly. Explain how it aligns with the funder's priorities."
+                defaultValue="The primary goal of this project is to expand marine science literacy among Alaska Native and rural coastal communities by delivering hands-on, place-based STEM training to underserved students in grades 6-12. This objective directly aligns with NOAA's mission to build a stronger, more diverse pipeline of ocean and coastal stewards. Specific objectives include: (1) training 150 students annually in marine ecosystem monitoring techniques, (2) partnering with 5 rural school districts to embed marine curricula into existing science courses, and (3) increasing student-reported interest in ocean science careers by 25% as measured by pre/post surveys."
               />
               <SmartField
                 label="Project Activities and Plans"
                 required
                 richText
+                aiDraft
+                coachingTip={PROJECT_ACTIVITIES_TIP}
                 helperText="Describe all activities in detail. Explain the methods and approach you'll use."
+                defaultValue="Activities will be organized into three phases. Phase 1 (Months 1-3): recruit and train 4 part-time marine educators, finalize curriculum materials with our academic partner, and establish equipment loan agreements with participating schools. Phase 2 (Months 4-9): deliver in-classroom marine science units and lead six multi-day field expeditions to coastal monitoring sites, where students collect water quality and species-count data alongside NOAA scientists. Phase 3 (Months 10-12): host a regional student showcase where participants present findings to community members and local fisheries managers, and compile a program report documenting lessons learned for future cohorts."
               />
               <SmartField
                 label="Milestone Schedule"
                 required
                 richText
+                aiDraft
+                coachingTip={MILESTONE_SCHEDULE_TIP}
                 helperText="Provide a clear timeline showing when each major task will be completed."
                 placeholder={"Task 1: [Description] – Month 1-3\nTask 2: [Description] – Month 4-6\nTask 3: [Description] – Month 7-12"}
+                defaultValue={"Month 1-2: Finalize partnerships with participating school districts and hire program staff.\nMonth 3: Complete educator training and curriculum adaptation.\nMonth 4-6: Launch in-classroom instruction; complete first two field expeditions.\nMonth 7-9: Complete remaining field expeditions; begin mid-year data collection review.\nMonth 10: Host regional student showcase event.\nMonth 11: Compile student outcome data and program metrics.\nMonth 12: Submit final program report and disseminate lessons learned to partner districts."}
               />
               <SmartField
                 label="Benefits or Results Expected"
                 required
                 richText
+                aiDraft
+                coachingTip={BENEFITS_RESULTS_TIP}
                 helperText="Describe the anticipated outcomes and benefits. Identify who benefits and how."
+                defaultValue="Students participating in this program are expected to demonstrate measurable gains in marine science content knowledge and increased interest in ocean-related careers, tracked through pre/post assessments administered each cohort. Partner school districts will gain a reusable, place-based marine curriculum they can continue offering after the grant period ends. The broader Alaska coastal community benefits from a growing pool of environmentally literate young people equipped to participate in local fisheries and habitat-management decisions. NOAA benefits from progress toward its workforce-diversity goals, with outcome data shared back to the agency to inform future mini-grant investments in the region."
               />
               <SmartField
                 label="Project Management"
                 required
                 richText
+                aiDraft
+                coachingTip={PROJECT_MANAGEMENT_TIP}
                 helperText="Identify the lead organization/individual and the roles of any partners involved."
+                defaultValue="Coastal Alaska Marine Institute will serve as the lead organization, with Nikki Wolfe (Principal Investigator/Project Manager) responsible for overall program direction, budget oversight, and reporting to NOAA. A part-time Program Coordinator will manage day-to-day scheduling and educator supervision. Curriculum design and evaluation will be conducted in partnership with the University of Alaska Fairbanks Marine Advisory Program, which will provide technical review of instructional materials and lead the pre/post assessment analysis. Participating school districts will designate a single point of contact responsible for coordinating classroom access, transportation for field expeditions, and parental consent."
               />
             </div>
           </div>
