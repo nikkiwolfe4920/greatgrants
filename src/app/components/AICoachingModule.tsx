@@ -94,7 +94,70 @@ const PRIORITY_META: Record<
 // Narrative (s6) are wired up today; add more entries here to light up the
 // module elsewhere. Narrative is the section the Dashboard's coaching
 // notification links to, so it needs content for that link to pay off.
+// "project-narrative-demo" backs the /grant-writing-demo page's Project
+// Narrative section, keyed to that page's mock NOAA Alaska Marine
+// mini-grant content (Project Goals and Objectives, Project Activities and
+// Plans, Milestone Schedule, Benefits or Results Expected, and Project
+// Management).
 const SUGGESTIONS_BY_SECTION: Record<string, Suggestion[]> = {
+  "project-narrative-demo": [
+    {
+      id: "gwd-h1",
+      priority: "high",
+      title: "Name your evaluation methodology",
+      description:
+        "Project Goals and Objectives commits to a 25% increase in student-reported career interest, but no field in this section says how that will be measured. The NOFO requires a named evaluation method, not just a target.",
+    },
+    {
+      id: "gwd-h2",
+      priority: "high",
+      title: "Address the sustainability requirement",
+      description:
+        "Section IV of the NOFO asks how the program continues after the 12-month award period ends. Project Management describes staffing and partners during the grant but says nothing about what happens to educator positions or curriculum access afterward.",
+    },
+    {
+      id: "gwd-m1",
+      priority: "medium",
+      title: "Reconcile the two timelines",
+      description:
+        "Project Activities and Plans breaks the project into three phases (Months 1-3, 4-9, 10-12), but Milestone Schedule uses a different month breakdown (1-2, 3, 4-6, 7-9, 10, 11, 12). Align the two so a reviewer isn't left reconciling them by hand.",
+    },
+    {
+      id: "gwd-m2",
+      priority: "medium",
+      title: "Quantify the community-level benefit",
+      description:
+        "Benefits or Results Expected describes a \"growing pool of environmentally literate young people\" without a number. Reviewers score community-level benefits higher when they're sized, even roughly, the way the student-training numbers already are.",
+    },
+    {
+      id: "gwd-m3",
+      priority: "medium",
+      title: "Clarify the partner's role in evaluation",
+      description:
+        "Project Management names the University of Alaska Fairbanks Marine Advisory Program as leading the pre/post assessment analysis, but doesn't say who at your organization signs off on those results before they're reported to NOAA.",
+    },
+    {
+      id: "gwd-r1",
+      priority: "recommended",
+      title: "Reference past program performance",
+      description:
+        "If Coastal Alaska Marine Institute has run a comparable cohort before, one sentence citing that track record in Project Goals and Objectives would strengthen the case without adding much length.",
+    },
+    {
+      id: "gwd-r2",
+      priority: "recommended",
+      title: "Add a weather contingency to the schedule",
+      description:
+        "Milestone Schedule's field-expedition months carry real weather risk in coastal Alaska. A one-line contingency note would reassure reviewers the 12-month timeline is realistic.",
+    },
+    {
+      id: "gwd-r3",
+      priority: "recommended",
+      title: "Lead Benefits or Results Expected with the funder",
+      description:
+        "This section currently lists students first and NOAA's benefit last. Opening with what the funder gains can align more tightly with how reviewers score funder-relevance.",
+    },
+  ],
   s1: [
     {
       id: "mv-h1",
