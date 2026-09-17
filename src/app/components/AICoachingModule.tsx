@@ -8,7 +8,7 @@ import {
   Lightbulb,
   CheckCircle2,
   Check,
-  Lock,
+  RotateCw,
 } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "./ui/tooltip";
 import { cn } from "./ui/utils";
@@ -38,10 +38,15 @@ interface AICoachingModuleProps {
   sectionId: string;
 }
 
-// Most active suggestion cards ever shown for a given priority tier at once.
-// Additional lower-priority feedback is held back and revealed as the
-// visible items are resolved — see `unresolved.slice(0, MAX_VISIBLE)` below.
-const MAX_VISIBLE = 5;
+// Default visible caps: 2 High/Medium Impact suggestions (whichever ranks
+// highest — 2 High, 1 High + 1 Medium, or 2 Medium) plus 1 Recommended
+// Enhancement. "Show More Suggestions" reveals the next batch of each pool;
+// resolving a visible suggestion slides the next-highest-priority held-back
+// one into view automatically, same as before.
+const DEFAULT_IMPACT_VISIBLE = 2;
+const DEFAULT_RECOMMENDED_VISIBLE = 1;
+const REVEAL_BATCH_IMPACT = 2;
+const REVEAL_BATCH_RECOMMENDED = 1;
 
 const PRIORITY_ORDER: Record<Priority, number> = {
   high: 0,
@@ -94,68 +99,188 @@ const PRIORITY_META: Record<
 // Narrative (s6) are wired up today; add more entries here to light up the
 // module elsewhere. Narrative is the section the Dashboard's coaching
 // notification links to, so it needs content for that link to pay off.
-// "project-narrative-demo" backs the /grant-writing-demo page's Project
-// Narrative section, keyed to that page's mock NOAA Alaska Marine
-// mini-grant content (Project Goals and Objectives, Project Activities and
-// Plans, Milestone Schedule, Benefits or Results Expected, and Project
-// Management).
+// The "project-narrative-demo-*" keys back the /grant-writing-demo page's
+// Project Narrative section — one module per field (Project Goals and
+// Objectives, Project Activities and Plans, Milestone Schedule, Benefits
+// or Results Expected, and Project Management), each keyed to that
+// field's own mock NOAA Alaska Marine mini-grant content.
 const SUGGESTIONS_BY_SECTION: Record<string, Suggestion[]> = {
-  "project-narrative-demo": [
+  "project-narrative-demo-goals": [
     {
-      id: "gwd-h1",
+      id: "gwd-goals-h1",
       priority: "high",
-      title: "Name your evaluation methodology",
+      title: "Commit to a named evaluation method",
       description:
-        "Project Goals and Objectives commits to a 25% increase in student-reported career interest, but no field in this section says how that will be measured. The NOFO requires a named evaluation method, not just a target.",
+        "This section commits to a 25% increase in student-reported career interest, but doesn't say how that will be measured. The NOFO requires a named evaluation method — a survey instrument and timing — not just a target.",
     },
     {
-      id: "gwd-h2",
-      priority: "high",
-      title: "Address the sustainability requirement",
-      description:
-        "Section IV of the NOFO asks how the program continues after the 12-month award period ends. Project Management describes staffing and partners during the grant but says nothing about what happens to educator positions or curriculum access afterward.",
-    },
-    {
-      id: "gwd-m1",
+      id: "gwd-goals-m1",
       priority: "medium",
-      title: "Reconcile the two timelines",
+      title: "Anchor the training count to a baseline",
       description:
-        "Project Activities and Plans breaks the project into three phases (Months 1-3, 4-9, 10-12), but Milestone Schedule uses a different month breakdown (1-2, 3, 4-6, 7-9, 10, 11, 12). Align the two so a reviewer isn't left reconciling them by hand.",
+        "\"Training 150 students annually\" has no prior-year comparison point. A baseline (last year's count, or zero if this is new) helps reviewers see the size of the gain.",
     },
     {
-      id: "gwd-m2",
+      id: "gwd-goals-m2",
+      priority: "medium",
+      title: "Tie the goal to the NOFO's specific priority area",
+      description:
+        "This names \"ocean and coastal stewards\" broadly but doesn't cite the exact priority area listed in the funding opportunity. Matching that language helps reviewers score alignment.",
+    },
+    {
+      id: "gwd-goals-r1",
+      priority: "recommended",
+      title: "Reference prior program performance",
+      description:
+        "If Coastal Alaska Marine Institute has run a comparable cohort before, one sentence citing that track record here would strengthen the case without adding much length.",
+    },
+    {
+      id: "gwd-goals-r2",
+      priority: "recommended",
+      title: "Open with a specific student outcome",
+      description:
+        "Leading with a single student's story before the structural detail gives reviewers something concrete before the numbers arrive.",
+    },
+  ],
+  "project-narrative-demo-activities": [
+    {
+      id: "gwd-act-h1",
+      priority: "high",
+      title: "Name who leads each phase",
+      description:
+        "Three phases are described here, but no one is named as responsible for any of them. Reviewers look for a named owner behind each phase, not just a task list.",
+    },
+    {
+      id: "gwd-act-h2",
+      priority: "high",
+      title: "Name the specific data-collection protocol",
+      description:
+        "\"Collect water quality and species-count data\" doesn't name a specific, citable protocol. Without one, reviewers can't verify the methodology is sound.",
+    },
+    {
+      id: "gwd-act-m1",
+      priority: "medium",
+      title: "Reconcile this phase breakdown with Milestone Schedule",
+      description:
+        "This section breaks the project into three phases (Months 1-3, 4-9, 10-12), but Milestone Schedule uses a different month breakdown. Align the two so a reviewer isn't left reconciling them by hand.",
+    },
+    {
+      id: "gwd-act-r1",
+      priority: "recommended",
+      title: "Add a weather contingency for field expeditions",
+      description:
+        "The field-expedition months carry real weather risk in coastal Alaska. A one-line contingency note would reassure reviewers the plan is realistic.",
+    },
+    {
+      id: "gwd-act-r2",
+      priority: "recommended",
+      title: "Quantify the equipment loan agreements",
+      description:
+        "Naming how many devices or instruments are covered by the equipment loan agreements would make this activity easier to verify and budget against.",
+    },
+  ],
+  "project-narrative-demo-milestones": [
+    {
+      id: "gwd-mile-h1",
+      priority: "high",
+      title: "Build in a schedule buffer before the final report",
+      description:
+        "There's no buffer month before the showcase or final report. A single delayed permit or weather-canceled expedition would cascade into a missed deadline.",
+    },
+    {
+      id: "gwd-mile-m1",
+      priority: "medium",
+      title: "Add a mid-year progress checkpoint",
+      description:
+        "The schedule jumps from Month 7-9 straight to the Month 10 showcase with no interim review. A mid-year checkpoint gives you (and NOAA) an earlier signal if something's off track.",
+    },
+    {
+      id: "gwd-mile-m2",
+      priority: "medium",
+      title: "Match this table's months to Project Activities' phases",
+      description:
+        "Project Activities and Plans breaks the project into three broader phases that don't line up with this month-by-month breakdown. Reviewers cross-check the two.",
+    },
+    {
+      id: "gwd-mile-r1",
+      priority: "recommended",
+      title: "Name who signs off on each milestone",
+      description:
+        "Attaching an owner to each milestone — not just a date — makes the schedule read as staffed rather than aspirational.",
+    },
+    {
+      id: "gwd-mile-r2",
+      priority: "recommended",
+      title: "Tie milestones to NOAA's reporting cadence",
+      description:
+        "Referencing your required quarterly report dates alongside program milestones shows the schedule was built around the award's actual reporting obligations.",
+    },
+  ],
+  "project-narrative-demo-benefits": [
+    {
+      id: "gwd-ben-m1",
       priority: "medium",
       title: "Quantify the community-level benefit",
       description:
-        "Benefits or Results Expected describes a \"growing pool of environmentally literate young people\" without a number. Reviewers score community-level benefits higher when they're sized, even roughly, the way the student-training numbers already are.",
+        "\"A growing pool of environmentally literate young people\" has no number attached. Reviewers score community-level benefits higher when they're sized, even roughly, the way the student-training numbers already are.",
     },
     {
-      id: "gwd-m3",
+      id: "gwd-ben-m2",
+      priority: "medium",
+      title: "Name the specific assessment instrument",
+      description:
+        "This mentions pre/post assessments but not which instrument or what score counts as a meaningful gain. Naming it makes the claim verifiable.",
+    },
+    {
+      id: "gwd-ben-r1",
+      priority: "recommended",
+      title: "Lead with the funder's benefit, not last",
+      description:
+        "This section lists students first and NOAA's benefit last. Opening with what the funder gains can align more tightly with how reviewers score funder-relevance.",
+    },
+    {
+      id: "gwd-ben-r2",
+      priority: "recommended",
+      title: "Add a one-year-out benefit statement",
+      description:
+        "Naming one benefit that's still visible a year after the award period ends would reinforce that this isn't a one-time activity.",
+    },
+  ],
+  "project-narrative-demo-management": [
+    {
+      id: "gwd-mgmt-h1",
+      priority: "high",
+      title: "Address the sustainability requirement",
+      description:
+        "Section IV of the NOFO asks how the program continues after the 12-month award period ends. This section describes staffing and partners during the grant but says nothing about what happens to educator positions or curriculum access afterward.",
+    },
+    {
+      id: "gwd-mgmt-m1",
       priority: "medium",
       title: "Clarify the partner's role in evaluation",
       description:
-        "Project Management names the University of Alaska Fairbanks Marine Advisory Program as leading the pre/post assessment analysis, but doesn't say who at your organization signs off on those results before they're reported to NOAA.",
+        "The University of Alaska Fairbanks Marine Advisory Program is named as leading the pre/post assessment analysis, but this doesn't say who at your organization signs off on those results before they're reported to NOAA.",
     },
     {
-      id: "gwd-r1",
-      priority: "recommended",
-      title: "Reference past program performance",
+      id: "gwd-mgmt-m2",
+      priority: "medium",
+      title: "Name a decision-making process for disagreements",
       description:
-        "If Coastal Alaska Marine Institute has run a comparable cohort before, one sentence citing that track record in Project Goals and Objectives would strengthen the case without adding much length.",
+        "With a lead organization and an academic partner both involved, there's no stated process for resolving a disagreement between them on curriculum or evaluation calls.",
     },
     {
-      id: "gwd-r2",
+      id: "gwd-mgmt-r1",
       priority: "recommended",
-      title: "Add a weather contingency to the schedule",
+      title: "Name a backup for the Program Coordinator role",
       description:
-        "Milestone Schedule's field-expedition months carry real weather risk in coastal Alaska. A one-line contingency note would reassure reviewers the 12-month timeline is realistic.",
+        "A single part-time Program Coordinator is a single point of failure for day-to-day scheduling. Naming a backup shows continuity planning.",
     },
     {
-      id: "gwd-r3",
+      id: "gwd-mgmt-r2",
       priority: "recommended",
-      title: "Lead Benefits or Results Expected with the funder",
+      title: "Reference your organization's past grants-management experience",
       description:
-        "This section currently lists students first and NOAA's benefit last. Opening with what the funder gains can align more tightly with how reviewers score funder-relevance.",
+        "One sentence on prior federal awards successfully managed and closed out would reassure reviewers on administrative capacity.",
     },
   ],
   s1: [
@@ -482,8 +607,9 @@ export function AICoachingModule({ applicationId, sectionId }: AICoachingModuleP
   const suggestions = SUGGESTIONS_BY_SECTION[sectionId];
   const storageKey = `app-${applicationId}-section-${sectionId}-coaching-resolved`;
 
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<Set<string>>(new Set());
+  const [revealBatches, setRevealBatches] = useState(0);
 
   useEffect(() => {
     const saved = localStorage.getItem(storageKey);
@@ -520,11 +646,21 @@ export function AICoachingModule({ applicationId, sectionId }: AICoachingModuleP
   const unresolved = sorted.filter((s) => !resolvedIds.has(s.id));
   const resolved = sorted.filter((s) => resolvedIds.has(s.id));
 
-  // Priority-ordered cap: the top MAX_VISIBLE unresolved items are shown as
-  // active cards. Resolving one drops it out of `unresolved`, which slides
+  const unresolvedImpact = unresolved.filter((s) => s.priority !== "recommended");
+  const unresolvedRecommended = unresolved.filter((s) => s.priority === "recommended");
+
+  // Two independent priority-ordered caps: High/Medium Impact suggestions
+  // and Recommended Enhancements each get their own visible cap, so a pile
+  // of Recommended feedback never crowds out the Impact tiers (or vice
+  // versa). Resolving a visible item drops it out of its pool, which slides
   // the next-highest-priority held-back suggestion into view automatically.
-  const visibleActive = unresolved.slice(0, MAX_VISIBLE);
-  const hiddenCount = Math.max(0, unresolved.length - MAX_VISIBLE);
+  // "Show More Suggestions" raises both caps by one reveal batch.
+  const impactCap = DEFAULT_IMPACT_VISIBLE + revealBatches * REVEAL_BATCH_IMPACT;
+  const recommendedCap = DEFAULT_RECOMMENDED_VISIBLE + revealBatches * REVEAL_BATCH_RECOMMENDED;
+
+  const visibleActive = [...unresolvedImpact.slice(0, impactCap), ...unresolvedRecommended.slice(0, recommendedCap)];
+  const hiddenCount =
+    Math.max(0, unresolvedImpact.length - impactCap) + Math.max(0, unresolvedRecommended.length - recommendedCap);
 
   const byPriority = (list: Suggestion[], p: Priority) => list.filter((s) => s.priority === p);
 
@@ -595,17 +731,32 @@ export function AICoachingModule({ applicationId, sectionId }: AICoachingModuleP
             onToggle={toggleResolved}
           />
 
-          {hiddenCount > 0 && (
-            <div className="flex items-center gap-2 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3.5 py-2.5">
-              <Lock className="h-3.5 w-3.5 flex-shrink-0 text-gray-400" aria-hidden="true" />
-              <p className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
-                <span className="font-semibold text-gray-600">
-                  {hiddenCount} more suggestion{hiddenCount === 1 ? "" : "s"}
-                </span>{" "}
-                available once you address {visibleActive.length === 1 ? "this one" : "these"}.
+          {/* Always shown at the bottom of the expanded module — copy and
+              the "Show More Suggestions" action switch off once every
+              suggestion has been revealed. */}
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-3">
+            {hiddenCount > 0 ? (
+              <>
+                <p className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
+                  Additional suggestions were ranked lower in impact and confidence. Addressing them can strengthen
+                  this answer, but won't necessarily make your application more competitive.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setRevealBatches((n) => n + 1)}
+                  className="flex shrink-0 items-center gap-1.5 text-xs font-semibold text-purple-700 transition-colors hover:text-purple-800"
+                  style={{ fontFamily: "Cabin, sans-serif" }}
+                >
+                  <RotateCw className="h-3.5 w-3.5" aria-hidden="true" />
+                  Show More Suggestions
+                </button>
+              </>
+            ) : (
+              <p className="text-xs text-gray-400" style={{ fontFamily: "Cabin, sans-serif" }}>
+                There are no more suggestions available right now.
               </p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
     </div>
