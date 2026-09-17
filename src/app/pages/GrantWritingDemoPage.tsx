@@ -171,6 +171,14 @@ interface SmartFieldProps {
   aiDraft?: boolean;
   /** Mock coaching copy shown above the input while this field is still an AI Draft. */
   coachingTip?: string;
+  /**
+   * Shows only the purple border for the AI Draft state — no "AI Draft"
+   * badge, Coaching tip, or "Accept AI Recommendation" checkbox. Used for
+   * fields that are pre-filled with mock AI-drafted data but don't need the
+   * full coaching treatment (e.g. a name or amount field). The border still
+   * graduates away on the same edit-then-blur rule as the full treatment.
+   */
+  aiDraftBorderOnly?: boolean;
 }
 
 /**
@@ -178,10 +186,12 @@ interface SmartFieldProps {
  * for:
  *   - A field that starts as an "AI Draft" gets a 2px purple border, an "AI
  *     Draft" badge next to its label, a Coaching tip above the input, and an
- *     "Accept AI Recommendation" checkbox below it.
+ *     "Accept AI Recommendation" checkbox below it — unless
+ *     `aiDraftBorderOnly` is set, in which case only the purple border
+ *     appears.
  *   - Editing that field's value and then clicking away (blur) "graduates"
- *     it — the purple border, badge, tip, and checkbox all disappear, for
- *     good.
+ *     it — the purple border, and (unless border-only) the badge, tip, and
+ *     checkbox all disappear, for good.
  *   - Checking "Accept AI Recommendation" without editing graduates it the
  *     same way, keeping the drafted value as-is.
  *   - Once a field isn't purple (whether it started plain or already
@@ -199,6 +209,7 @@ function SmartField({
   placeholder,
   aiDraft = false,
   coachingTip,
+  aiDraftBorderOnly = false,
 }: SmartFieldProps) {
   const [value, setValue] = useState(defaultValue);
   const [isDraftActive, setIsDraftActive] = useState(aiDraft);
@@ -240,7 +251,7 @@ function SmartField({
         <label className="text-sm font-semibold text-gray-900" style={CABIN}>
           {label} {required && <span className="text-red-600">*</span>}
         </label>
-        {isDraftActive && (
+        {isDraftActive && !aiDraftBorderOnly && (
           <Badge className="bg-gradient-to-r from-purple-50 to-indigo-50 text-purple-700 border-purple-300 hover:bg-purple-50">
             <Sparkles className="w-3.5 h-3.5 mr-1" />
             AI Draft
@@ -252,7 +263,7 @@ function SmartField({
           {helperText}
         </p>
       )}
-      {isDraftActive && coachingTip && <CoachingTip tip={coachingTip} />}
+      {isDraftActive && !aiDraftBorderOnly && coachingTip && <CoachingTip tip={coachingTip} />}
 
       {richText ? (
         <div>
@@ -263,7 +274,7 @@ function SmartField({
         <input type="text" placeholder={placeholder} className={fieldClassName} {...sharedProps} />
       )}
 
-      {isDraftActive && (
+      {isDraftActive && !aiDraftBorderOnly && (
         <div className="flex justify-end">
           <label className="flex items-center gap-2 mt-2 cursor-pointer w-fit">
             <input
@@ -804,48 +815,64 @@ export function GrantWritingDemoPage() {
               <SmartField
                 label="Applicant Name"
                 required
+                aiDraft
+                aiDraftBorderOnly
                 helperText="Enter the full legal name of the applicant entity as registered with the IRS."
                 defaultValue="Olivia Elizabeth Rhye"
               />
               <SmartField
                 label="Funding Opportunity Title"
                 required
+                aiDraft
+                aiDraftBorderOnly
                 helperText="Enter the exact title as listed in the NOFO: '2026 Alaska Marine Education and Training Mini-Grant'."
                 defaultValue="2026 Alaska Marine Education and Training Mini-Grant"
               />
               <SmartField
                 label="Funding Opportunity Number"
                 required
+                aiDraft
+                aiDraftBorderOnly
                 helperText="Enter the Funding Opportunity Number exactly as listed on grants.gov."
                 defaultValue="NOAA-NMFS-AK-2026-33268"
               />
               <SmartField
                 label="Assistance Listing Number (CFDA Number)"
                 required
+                aiDraft
+                aiDraftBorderOnly
                 helperText="Enter the Assistance Listing Number: 11.455."
                 defaultValue="11.455"
               />
               <SmartField
                 label="Program/Project Title"
                 required
+                aiDraft
+                aiDraftBorderOnly
                 helperText="Provide a concise, descriptive title for your proposed project."
                 defaultValue="Expanding Access to Assistive Technology Financing"
               />
               <SmartField
                 label="Program/Project Duration"
                 required
+                aiDraft
+                aiDraftBorderOnly
                 helperText="Projects may begin no earlier than September 1, 2026."
                 defaultValue="September 1, 2026 - August 31, 2027"
               />
               <SmartField
                 label="Principal Investigator / Project Manager Name"
                 required
+                aiDraft
+                aiDraftBorderOnly
                 helperText="The PI/PM is the lead technical contact. This person will be listed on all correspondence."
                 defaultValue="Nikki Wolfe"
               />
               <SmartField
                 label="Principal Investigator / Project Manager Email"
                 required
+                aiDraft
+                aiDraftBorderOnly
                 helperText="Email address for the PI/PM."
                 defaultValue="nikki@email.com"
               />
@@ -863,6 +890,8 @@ export function GrantWritingDemoPage() {
               <SmartField
                 label="Program/Project Proposal Total Amount Requested"
                 required
+                aiDraft
+                aiDraftBorderOnly
                 helperText="Enter the total amount of federal funding requested for this project period."
                 defaultValue="$50,000.00"
               />
@@ -963,7 +992,6 @@ export function GrantWritingDemoPage() {
                   "De minimis rate of 15% of Modified Total Direct Costs",
                   "No indirect costs claimed",
                 ]}
-                defaultValue="De minimis rate of 15% of Modified Total Direct Costs"
               />
               <SmartField
                 label="Negotiated Indirect Cost Rate (%)"
@@ -1007,6 +1035,8 @@ export function GrantWritingDemoPage() {
               <SmartField
                 label="Congressional District"
                 required
+                aiDraft
+                aiDraftBorderOnly
                 helperText="Enter in the format: [State Abbreviation]-[three digit district number]."
                 defaultValue="AK-001"
               />
