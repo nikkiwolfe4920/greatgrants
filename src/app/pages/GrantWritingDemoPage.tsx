@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  Info,
   Sparkles,
   Upload,
   FileText,
@@ -24,12 +23,6 @@ import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import { Switch } from "@/app/components/ui/switch";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/app/components/ui/accordion";
-import {
   Breadcrumb,
   BreadcrumbList,
   BreadcrumbItem,
@@ -37,6 +30,7 @@ import {
   BreadcrumbSeparator,
   BreadcrumbHome,
 } from "@/app/components/ui/breadcrumb";
+import { AICoachingModule } from "@/app/components/AICoachingModule";
 
 /**
  * GrantWritingDemoPage — /grant-writing-demo, step 6 of 6 in the locked demo
@@ -60,31 +54,6 @@ import {
 // ---------------------------------------------------------------------------
 
 const CABIN = { fontFamily: "Cabin, sans-serif" } as const;
-
-/**
- * "Coaching" tip — the /organization Financial Info tab's collapsed
- * "Helpful Tips" disclosure (OrganizationProfileForm.tsx's local
- * `HelpfulTip`), reused verbatim except for the label, positioned the same
- * way: between a field's label and its input. Default collapsed; mock copy
- * only, since this is a demo.
- */
-function CoachingTip({ tip }: { tip: string }) {
-  return (
-    <Accordion type="single" collapsible className="mb-3">
-      <AccordionItem value="tip" className="!border !border-gray-200 rounded-lg overflow-hidden">
-        <AccordionTrigger className="!rounded-none !gap-2 !px-4 !py-2.5 !bg-gray-100 hover:!bg-gray-200 hover:!no-underline !text-sm !font-medium !text-gray-700">
-          <span className="flex items-center gap-2">
-            <Info className="w-4 h-4 text-gray-500 shrink-0" />
-            Coaching
-          </span>
-        </AccordionTrigger>
-        <AccordionContent className="!px-4 !pb-3 !pt-3 !text-sm !text-gray-600 !leading-relaxed bg-white border-t border-gray-200">
-          {tip}
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
-  );
-}
 
 /** Decorative rich-text toolbar — same controls as ApplicationSectionPage's Mission & Vision editor, non-functional (this is a demo). */
 function RichTextToolbar() {
@@ -169,14 +138,12 @@ interface SmartFieldProps {
   placeholder?: string;
   /** Starts this field in the purple "AI Draft" state. Defaults to false (a plain field). */
   aiDraft?: boolean;
-  /** Mock coaching copy shown above the input while this field is still an AI Draft. */
-  coachingTip?: string;
   /**
    * Shows only the purple border for the AI Draft state — no "AI Draft"
-   * badge, Coaching tip, or "Accept AI Recommendation" checkbox. Used for
-   * fields that are pre-filled with mock AI-drafted data but don't need the
-   * full coaching treatment (e.g. a name or amount field). The border still
-   * graduates away on the same edit-then-blur rule as the full treatment.
+   * badge or "Accept AI Recommendation" checkbox. Used for fields that are
+   * pre-filled with mock AI-drafted data but don't need the full treatment
+   * (e.g. a name or amount field). The border still graduates away on the
+   * same edit-then-blur rule as the full treatment.
    */
   aiDraftBorderOnly?: boolean;
 }
@@ -184,13 +151,12 @@ interface SmartFieldProps {
 /**
  * One field, covering every border/state rule this walkthrough step calls
  * for:
- *   - A field that starts as an "AI Draft" gets a 2px purple border, an "AI
- *     Draft" badge next to its label, a Coaching tip above the input, and an
- *     "Accept AI Recommendation" checkbox below it — unless
- *     `aiDraftBorderOnly` is set, in which case only the purple border
- *     appears.
+ *   - A field that starts as an "AI Draft" gets a 2px purple border and an
+ *     "AI Draft" badge next to its label, plus an "Accept AI Recommendation"
+ *     checkbox below it — unless `aiDraftBorderOnly` is set, in which case
+ *     only the purple border appears.
  *   - Editing that field's value and then clicking away (blur) "graduates"
- *     it — the purple border, and (unless border-only) the badge, tip, and
+ *     it — the purple border, and (unless border-only) the badge and
  *     checkbox all disappear, for good.
  *   - Checking "Accept AI Recommendation" without editing graduates it the
  *     same way, keeping the drafted value as-is.
@@ -208,7 +174,6 @@ function SmartField({
   defaultValue = "",
   placeholder,
   aiDraft = false,
-  coachingTip,
   aiDraftBorderOnly = false,
 }: SmartFieldProps) {
   const [value, setValue] = useState(defaultValue);
@@ -263,8 +228,6 @@ function SmartField({
           {helperText}
         </p>
       )}
-      {isDraftActive && !aiDraftBorderOnly && coachingTip && <CoachingTip tip={coachingTip} />}
-
       {richText ? (
         <div>
           <RichTextToolbar />
@@ -706,17 +669,6 @@ function ApplicationResourcesPanel() {
 
 const GRANT_TITLE = "National Oceanic and Atmospheric Administration (NOAA) – Alaska Marine Education and Training Mini-Grant Program";
 
-const PROJECT_GOALS_TIP =
-  "Lead with the single outcome a reviewer will remember, then break it into 2-4 measurable objectives — reviewers score objectives higher when each one has a number attached (a count, a percentage, a date) rather than a vague verb like 'improve' or 'increase awareness.'";
-const PROJECT_ACTIVITIES_TIP =
-  "Group activities into phases tied to your milestone schedule so a reviewer can trace cause and effect — who does what, in what order, and why that sequence gets you to the stated goal. Vague activity lists ('conduct outreach,' 'provide training') read as unplanned; naming the method (field expeditions, curriculum co-design, data collection protocol) signals you've actually built the program.";
-const MILESTONE_SCHEDULE_TIP =
-  "A funder reads this table looking for realism, not ambition — build in a buffer month before your showcase or final report so a single delayed permit or weather-canceled expedition doesn't cascade into a missed deadline. Every milestone should map to something you claimed in Project Activities.";
-const BENEFITS_RESULTS_TIP =
-  "Separate who benefits (students, schools, the community, the funder) from how you'll know (the specific measure for each). Reviewers weight this section heavily when it names a mechanism for measuring results, not just a hoped-for feeling like 'increased awareness.'";
-const PROJECT_MANAGEMENT_TIP =
-  "Name a single accountable person for each major responsibility (budget, curriculum, evaluation, school coordination) rather than describing roles in the abstract — reviewers use this section to judge whether the team can actually execute the activities described above, not just whether the org chart looks reasonable.";
-
 export function GrantWritingDemoPage() {
   return (
     <div className="max-w-[1400px] mx-auto px-8 py-8">
@@ -916,12 +868,19 @@ export function GrantWritingDemoPage() {
           <div id="project-narrative" className="scroll-mt-8">
             <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
               <SectionHeading>Project Narrative</SectionHeading>
+
+              {/* AI Coaching Suggestions — same AICoachingModule used on
+                  /application/:id/s/:id (e.g. Mission & Vision at s1),
+                  reused here rather than the old per-field Coaching
+                  accordions, with mock feedback keyed to this page's
+                  NOAA Alaska Marine mini-grant narrative content. */}
+              <AICoachingModule applicationId="grant-writing-demo" sectionId="project-narrative-demo" />
+
               <SmartField
                 label="Project Goals and Objectives"
                 required
                 richText
                 aiDraft
-                coachingTip={PROJECT_GOALS_TIP}
                 helperText="State the overarching project goal clearly. Explain how it aligns with the funder's priorities."
                 defaultValue="The primary goal of this project is to expand marine science literacy among Alaska Native and rural coastal communities by delivering hands-on, place-based STEM training to underserved students in grades 6-12. This objective directly aligns with NOAA's mission to build a stronger, more diverse pipeline of ocean and coastal stewards. Specific objectives include: (1) training 150 students annually in marine ecosystem monitoring techniques, (2) partnering with 5 rural school districts to embed marine curricula into existing science courses, and (3) increasing student-reported interest in ocean science careers by 25% as measured by pre/post surveys."
               />
@@ -930,7 +889,6 @@ export function GrantWritingDemoPage() {
                 required
                 richText
                 aiDraft
-                coachingTip={PROJECT_ACTIVITIES_TIP}
                 helperText="Describe all activities in detail. Explain the methods and approach you'll use."
                 defaultValue="Activities will be organized into three phases. Phase 1 (Months 1-3): recruit and train 4 part-time marine educators, finalize curriculum materials with our academic partner, and establish equipment loan agreements with participating schools. Phase 2 (Months 4-9): deliver in-classroom marine science units and lead six multi-day field expeditions to coastal monitoring sites, where students collect water quality and species-count data alongside NOAA scientists. Phase 3 (Months 10-12): host a regional student showcase where participants present findings to community members and local fisheries managers, and compile a program report documenting lessons learned for future cohorts."
               />
@@ -939,7 +897,6 @@ export function GrantWritingDemoPage() {
                 required
                 richText
                 aiDraft
-                coachingTip={MILESTONE_SCHEDULE_TIP}
                 helperText="Provide a clear timeline showing when each major task will be completed."
                 placeholder={"Task 1: [Description] – Month 1-3\nTask 2: [Description] – Month 4-6\nTask 3: [Description] – Month 7-12"}
                 defaultValue={"Month 1-2: Finalize partnerships with participating school districts and hire program staff.\nMonth 3: Complete educator training and curriculum adaptation.\nMonth 4-6: Launch in-classroom instruction; complete first two field expeditions.\nMonth 7-9: Complete remaining field expeditions; begin mid-year data collection review.\nMonth 10: Host regional student showcase event.\nMonth 11: Compile student outcome data and program metrics.\nMonth 12: Submit final program report and disseminate lessons learned to partner districts."}
@@ -949,7 +906,6 @@ export function GrantWritingDemoPage() {
                 required
                 richText
                 aiDraft
-                coachingTip={BENEFITS_RESULTS_TIP}
                 helperText="Describe the anticipated outcomes and benefits. Identify who benefits and how."
                 defaultValue="Students participating in this program are expected to demonstrate measurable gains in marine science content knowledge and increased interest in ocean-related careers, tracked through pre/post assessments administered each cohort. Partner school districts will gain a reusable, place-based marine curriculum they can continue offering after the grant period ends. The broader Alaska coastal community benefits from a growing pool of environmentally literate young people equipped to participate in local fisheries and habitat-management decisions. NOAA benefits from progress toward its workforce-diversity goals, with outcome data shared back to the agency to inform future mini-grant investments in the region."
               />
@@ -958,7 +914,6 @@ export function GrantWritingDemoPage() {
                 required
                 richText
                 aiDraft
-                coachingTip={PROJECT_MANAGEMENT_TIP}
                 helperText="Identify the lead organization/individual and the roles of any partners involved."
                 defaultValue="Coastal Alaska Marine Institute will serve as the lead organization, with Nikki Wolfe (Principal Investigator/Project Manager) responsible for overall program direction, budget oversight, and reporting to NOAA. A part-time Program Coordinator will manage day-to-day scheduling and educator supervision. Curriculum design and evaluation will be conducted in partnership with the University of Alaska Fairbanks Marine Advisory Program, which will provide technical review of instructional materials and lead the pre/post assessment analysis. Participating school districts will designate a single point of contact responsible for coordinating classroom access, transportation for field expeditions, and parental consent."
               />
