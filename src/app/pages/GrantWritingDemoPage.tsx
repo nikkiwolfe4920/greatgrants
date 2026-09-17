@@ -146,6 +146,12 @@ interface SmartFieldProps {
    * same edit-then-blur rule as the full treatment.
    */
   aiDraftBorderOnly?: boolean;
+  /**
+   * AI Coaching module rendered directly under this field's header and
+   * helper text, above the input — independent of the AI Draft state (it
+   * doesn't disappear when the field graduates).
+   */
+  coachingModule?: React.ReactNode;
 }
 
 /**
@@ -175,6 +181,7 @@ function SmartField({
   placeholder,
   aiDraft = false,
   aiDraftBorderOnly = false,
+  coachingModule,
 }: SmartFieldProps) {
   const [value, setValue] = useState(defaultValue);
   const [isDraftActive, setIsDraftActive] = useState(aiDraft);
@@ -228,6 +235,7 @@ function SmartField({
           {helperText}
         </p>
       )}
+      {coachingModule}
       {richText ? (
         <div>
           <RichTextToolbar />
@@ -869,13 +877,12 @@ export function GrantWritingDemoPage() {
             <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
               <SectionHeading>Project Narrative</SectionHeading>
 
-              {/* AI Coaching Suggestions — same AICoachingModule used on
-                  /application/:id/s/:id (e.g. Mission & Vision at s1),
-                  reused here rather than the old per-field Coaching
-                  accordions, with mock feedback keyed to this page's
-                  NOAA Alaska Marine mini-grant narrative content. */}
-              <AICoachingModule applicationId="grant-writing-demo" sectionId="project-narrative-demo" />
-
+              {/* Each field below carries its own AI Coaching module,
+                  rendered directly under its header/helper text via
+                  SmartField's `coachingModule` slot — the same
+                  AICoachingModule component used on /application/:id/s/:id
+                  (e.g. Mission & Vision at s1), with mock feedback keyed to
+                  that field's NOAA Alaska Marine mini-grant content. */}
               <SmartField
                 label="Project Goals and Objectives"
                 required
@@ -883,6 +890,7 @@ export function GrantWritingDemoPage() {
                 aiDraft
                 helperText="State the overarching project goal clearly. Explain how it aligns with the funder's priorities."
                 defaultValue="The primary goal of this project is to expand marine science literacy among Alaska Native and rural coastal communities by delivering hands-on, place-based STEM training to underserved students in grades 6-12. This objective directly aligns with NOAA's mission to build a stronger, more diverse pipeline of ocean and coastal stewards. Specific objectives include: (1) training 150 students annually in marine ecosystem monitoring techniques, (2) partnering with 5 rural school districts to embed marine curricula into existing science courses, and (3) increasing student-reported interest in ocean science careers by 25% as measured by pre/post surveys."
+                coachingModule={<AICoachingModule applicationId="grant-writing-demo" sectionId="project-narrative-demo-goals" />}
               />
               <SmartField
                 label="Project Activities and Plans"
@@ -891,6 +899,7 @@ export function GrantWritingDemoPage() {
                 aiDraft
                 helperText="Describe all activities in detail. Explain the methods and approach you'll use."
                 defaultValue="Activities will be organized into three phases. Phase 1 (Months 1-3): recruit and train 4 part-time marine educators, finalize curriculum materials with our academic partner, and establish equipment loan agreements with participating schools. Phase 2 (Months 4-9): deliver in-classroom marine science units and lead six multi-day field expeditions to coastal monitoring sites, where students collect water quality and species-count data alongside NOAA scientists. Phase 3 (Months 10-12): host a regional student showcase where participants present findings to community members and local fisheries managers, and compile a program report documenting lessons learned for future cohorts."
+                coachingModule={<AICoachingModule applicationId="grant-writing-demo" sectionId="project-narrative-demo-activities" />}
               />
               <SmartField
                 label="Milestone Schedule"
@@ -900,6 +909,7 @@ export function GrantWritingDemoPage() {
                 helperText="Provide a clear timeline showing when each major task will be completed."
                 placeholder={"Task 1: [Description] – Month 1-3\nTask 2: [Description] – Month 4-6\nTask 3: [Description] – Month 7-12"}
                 defaultValue={"Month 1-2: Finalize partnerships with participating school districts and hire program staff.\nMonth 3: Complete educator training and curriculum adaptation.\nMonth 4-6: Launch in-classroom instruction; complete first two field expeditions.\nMonth 7-9: Complete remaining field expeditions; begin mid-year data collection review.\nMonth 10: Host regional student showcase event.\nMonth 11: Compile student outcome data and program metrics.\nMonth 12: Submit final program report and disseminate lessons learned to partner districts."}
+                coachingModule={<AICoachingModule applicationId="grant-writing-demo" sectionId="project-narrative-demo-milestones" />}
               />
               <SmartField
                 label="Benefits or Results Expected"
@@ -908,6 +918,7 @@ export function GrantWritingDemoPage() {
                 aiDraft
                 helperText="Describe the anticipated outcomes and benefits. Identify who benefits and how."
                 defaultValue="Students participating in this program are expected to demonstrate measurable gains in marine science content knowledge and increased interest in ocean-related careers, tracked through pre/post assessments administered each cohort. Partner school districts will gain a reusable, place-based marine curriculum they can continue offering after the grant period ends. The broader Alaska coastal community benefits from a growing pool of environmentally literate young people equipped to participate in local fisheries and habitat-management decisions. NOAA benefits from progress toward its workforce-diversity goals, with outcome data shared back to the agency to inform future mini-grant investments in the region."
+                coachingModule={<AICoachingModule applicationId="grant-writing-demo" sectionId="project-narrative-demo-benefits" />}
               />
               <SmartField
                 label="Project Management"
@@ -916,6 +927,7 @@ export function GrantWritingDemoPage() {
                 aiDraft
                 helperText="Identify the lead organization/individual and the roles of any partners involved."
                 defaultValue="Coastal Alaska Marine Institute will serve as the lead organization, with Nikki Wolfe (Principal Investigator/Project Manager) responsible for overall program direction, budget oversight, and reporting to NOAA. A part-time Program Coordinator will manage day-to-day scheduling and educator supervision. Curriculum design and evaluation will be conducted in partnership with the University of Alaska Fairbanks Marine Advisory Program, which will provide technical review of instructional materials and lead the pre/post assessment analysis. Participating school districts will designate a single point of contact responsible for coordinating classroom access, transportation for field expeditions, and parental consent."
+                coachingModule={<AICoachingModule applicationId="grant-writing-demo" sectionId="project-narrative-demo-management" />}
               />
             </div>
           </div>
