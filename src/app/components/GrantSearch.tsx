@@ -28,7 +28,9 @@ import {
   Eye,
   DollarSign,
   Info,
-  AlertTriangle
+  AlertTriangle,
+  ThumbsDown,
+  Undo2
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
@@ -67,6 +69,7 @@ import { Switch } from "./ui/switch";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { StopWatchingDialog } from "./StopWatchingDialog";
 import { useGrantAlerts } from "@/hooks/useGrantAlerts";
+import { useDismissedGrants } from "@/hooks/useDismissedGrants";
 
 interface Grant {
   id: string;
@@ -642,8 +645,12 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
   const [publishedProjects, setPublishedProjects] = useState<Array<{ id: string; title: string; isNationalProgram?: boolean }>>([]);
   const [nationalProgramActive, setNationalProgramActive] = useState(false);
   const lastAutoAppliedProjectRef = useRef<string | null>(null);
-  // Watch is the only grant-tracking action on this page — see useGrantAlerts.
+  // Watch is the other grant-tracking action on this page — see useGrantAlerts.
   const { isGrantAlertEnabled, setAlertEnabled, removeAlert } = useGrantAlerts();
+  // "Not Relevant" — see useDismissedGrants. Dismissing never deletes a grant,
+  // it only deprioritizes it (sorted to the bottom, see filteredGrants below).
+  const { isGrantDismissed, isCategoryHidden, dismissedCategories, dismissGrant, restoreGrant, hideCategory, unhideCategory } =
+    useDismissedGrants();
   const [recentlyViewed, setRecentlyViewed] = useState<Grant[]>([]);
   const [hasWebsite, setHasWebsite] = useState(false);
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
@@ -813,6 +820,18 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
     setGrantToStopWatching(null);
   };
 
+  // "Not Relevant" is instant and non-destructive — no confirmation, just an
+  // undoable toast (see useDismissedGrants), the same low-friction pattern as
+  // turning Watch on.
+  const toggleDismiss = (e: React.MouseEvent, grant: Grant) => {
+    e.stopPropagation();
+    if (isGrantDismissed(grant.id)) {
+      restoreGrant(grant.id, { grantTitle: grant.title });
+    } else {
+      dismissGrant(grant, "not-relevant");
+    }
+  };
+
   const formatTimeAgo = (timestamp: number) => {
     const now = Date.now();
     const diff = now - timestamp;
@@ -876,6 +895,14 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
 
   const filteredGrants = mockGrants
     .filter(grant => {
+      // Known-ineligible categories the user has explicitly chosen to hide
+      // (see useDismissedGrants.hideCategory) are prevented from appearing
+      // at all, not just deprioritized — the pill in the results header is
+      // how they stay obtainable again.
+      if (isCategoryHidden(grant.category)) {
+        return false;
+      }
+
       // Apply advanced filters
       if (advancedFilters.length > 0) {
         const hasCategory = advancedFilters.filter(f => f.id.startsWith('category-'));
@@ -917,6 +944,12 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
       return true;
     })
     .sort((a, b) => {
+      // Grants marked "Not Relevant" are deprioritized to the bottom of
+      // every sort order — demoted, never removed (see useDismissedGrants).
+      const aDismissed = isGrantDismissed(a.id);
+      const bDismissed = isGrantDismissed(b.id);
+      if (aDismissed !== bDismissed) return aDismissed ? 1 : -1;
+
       let comparison = 0;
       switch (sortBy) {
         case "relevance":
@@ -1338,6 +1371,30 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
               )}
             </div>
 
+            {/* Hidden Category Pills — categories the user explicitly chose to
+                stop seeing (see useDismissedGrants.hideCategory). Kept visible
+                and removable here so a hidden category is never a dead end. */}
+            {dismissedCategories.length > 0 && (
+              <div className="flex items-center gap-2 flex-wrap mb-3">
+                <span className="text-xs text-gray-500 flex items-center gap-1">
+                  <ThumbsDown className="w-3 h-3" />
+                  Hiding:
+                </span>
+                {dismissedCategories.map(category => (
+                  <Badge key={category} className="gap-1.5 pr-1 py-1.5 text-sm bg-red-50 text-red-700 border-red-200">
+                    <span className="font-medium">{category}</span>
+                    <button
+                      onClick={() => unhideCategory(category)}
+                      className="hover:bg-black/10 rounded-full p-0.5 transition-colors"
+                      aria-label={`Show ${category} grants again`}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+
             {/* Results Count & Actions */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -1463,24 +1520,25 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
               // Merge with recently viewed data if exists
               const recentGrant = recentlyViewed.find(g => g.id === grant.id);
               const grantWithTimestamp = recentGrant ? { ...grant, lastViewed: recentGrant.lastViewed } : grant;
+              const dismissed = isGrantDismissed(grant.id);
               return (
                 <div
                   key={grant.id}
                   onClick={() => go(`/grant/${grant.id}`)}
                   className={`bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all group overflow-hidden ${
                     demoLocked ? "cursor-not-allowed" : "cursor-pointer"
-                  } ${viewMode === "list" ? "flex" : ""}`}
+                  } ${viewMode === "list" ? "flex" : ""} ${dismissed ? "opacity-60 hover:opacity-100" : ""}`}
                   {...(demoLocked ? { "aria-disabled": true } : {})}
                 >
                   {/* Grant Image */}
                   {grant.image && (
                     <div className={`relative overflow-hidden bg-gray-100 flex-shrink-0 ${
-                      viewMode === "grid" 
-                        ? "h-48 w-full" 
+                      viewMode === "grid"
+                        ? "h-48 w-full"
                         : "w-32 self-stretch"
                     }`}>
-                      <ImageWithFallback 
-                        src={grant.image} 
+                      <ImageWithFallback
+                        src={grant.image}
                         alt={grant.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -1592,9 +1650,16 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
                         >
                           {grant.status}
                         </Badge>
+                        {dismissed && (
+                          <Badge className="text-xs bg-gray-100 text-gray-600 border-gray-200">
+                            <ThumbsDown className="w-3 h-3 mr-1" />
+                            Not Relevant
+                          </Badge>
+                        )}
                       </div>
 
-                      {/* Watch is the only grant-tracking action here — see useGrantAlerts. */}
+                      {/* Watch and Not Relevant are the grant-tracking actions here —
+                          see useGrantAlerts and useDismissedGrants. */}
                       <div className={`flex gap-1.5 ${viewMode === "grid" ? "flex-col items-end" : "items-center"}`}>
                         {grantWithTimestamp.lastViewed && (
                           <span className="text-xs text-gray-500">
@@ -1602,6 +1667,73 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
                           </span>
                         )}
                         <div className="flex items-center gap-2 flex-wrap justify-end">
+                          {dismissed ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => toggleDismiss(e, grant)}
+                              className="gap-1.5 border-gray-200 hover:border-teal-200 hover:bg-teal-50"
+                            >
+                              <Undo2 className="w-3.5 h-3.5" />
+                              Restore
+                            </Button>
+                          ) : (
+                            <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => toggleDismiss(e, grant)}
+                                    className="gap-1.5 rounded-r-none border-r-0 border-gray-200 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                                    aria-label="Not relevant — move this grant down in results"
+                                  >
+                                    <ThumbsDown className="w-3.5 h-3.5" />
+                                    Not Relevant
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" sideOffset={4}>
+                                  <p className="text-sm">We'll move this down in your results. It's never deleted.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="rounded-l-none px-1.5 border-gray-200 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                                    aria-label="More not-relevant options"
+                                  >
+                                    <ChevronDown className="w-3.5 h-3.5" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-64">
+                                  <DropdownMenuItem onClick={(e: React.MouseEvent) => toggleDismiss(e, grant)}>
+                                    <ThumbsDown className="w-4 h-4 mr-2" />
+                                    Not relevant to me
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={(e: React.MouseEvent) => {
+                                      e.stopPropagation();
+                                      dismissGrant(grant, "not-eligible");
+                                    }}
+                                  >
+                                    <ThumbsDown className="w-4 h-4 mr-2" />
+                                    Not eligible for us
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={(e: React.MouseEvent) => {
+                                      e.stopPropagation();
+                                      hideCategory(grant.category);
+                                    }}
+                                  >
+                                    <X className="w-4 h-4 mr-2" />
+                                    Hide all "{grant.category}" grants
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          )}
                           <Button
                             variant="outline"
                             size="sm"

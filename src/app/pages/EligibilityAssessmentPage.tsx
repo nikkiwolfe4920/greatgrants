@@ -18,6 +18,8 @@ import {
   Check,
   Sparkles,
   AlertTriangle,
+  ThumbsDown,
+  Undo2,
 } from "lucide-react";
 import { Badge } from "@/app/components/ui/badge";
 import {
@@ -35,6 +37,7 @@ import { AssessmentUsageMeter } from "@/app/components/eligibility/AssessmentUsa
 import { ApplicationLoadingModal } from "@/app/components/ApplicationLoadingModal";
 import { StopWatchingDialog } from "@/app/components/StopWatchingDialog";
 import { useGrantAlerts } from "@/hooks/useGrantAlerts";
+import { useDismissedGrants } from "@/hooks/useDismissedGrants";
 import { useAssessmentUsage, resetAssessmentUsage } from "@/hooks/useAssessmentUsage";
 
 const GRANT_ID = "dfop0017890-child-protection";
@@ -373,6 +376,12 @@ export function EligibilityAssessmentPage({
   const { isGrantAlertEnabled, setAlertEnabled, removeAlert } = useGrantAlerts();
   const isAlertOn = isGrantAlertEnabled(GRANT_ID);
 
+  // "Not Relevant" — see useDismissedGrants. Marking this grant not relevant
+  // here deprioritizes it everywhere it appears in Grant Search, without
+  // ever deleting it — the button flips to "Restore" and stays reversible.
+  const { isGrantDismissed, dismissGrant, restoreGrant } = useDismissedGrants();
+  const isDismissed = isGrantDismissed(GRANT_ID);
+
   // Runs once per mount, before useAssessmentUsage's own first read below,
   // so that read (and its lazy useState initializer) sees a freshly-cleared
   // count rather than whatever was recorded earlier in the demo — no
@@ -473,6 +482,14 @@ export function EligibilityAssessmentPage({
     setStopWatchingDialogOpen(false);
   };
 
+  const toggleDismiss = () => {
+    if (isDismissed) {
+      restoreGrant(GRANT_ID, { grantTitle: GRANT_TITLE });
+    } else {
+      dismissGrant({ id: GRANT_ID, title: GRANT_TITLE, category: GRANT_RECORD.category }, "not-relevant");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <ApplicationLoadingModal isOpen={showApplicationLoading} grantTitle={GRANT_TITLE} grantId={GRANT_ID} />
@@ -535,6 +552,15 @@ export function EligibilityAssessmentPage({
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={toggleDismiss}
+                    className={`gap-1.5 h-8 text-xs ${isDismissed ? "border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100" : "border-gray-200 hover:border-red-200 hover:bg-red-50 hover:text-red-700"}`}
+                  >
+                    {isDismissed ? <Undo2 className="w-3.5 h-3.5" /> : <ThumbsDown className="w-3.5 h-3.5" />}
+                    {isDismissed ? "Restore" : "Not Relevant"}
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -620,6 +646,14 @@ export function EligibilityAssessmentPage({
 
             <div className="flex flex-col items-end gap-3 shrink-0">
               <div className="flex items-center gap-3 flex-wrap justify-end">
+                <Button
+                  variant="outline"
+                  onClick={toggleDismiss}
+                  className={`gap-1.5 ${isDismissed ? "border-gray-200 bg-gray-50 text-gray-600" : "hover:border-red-200 hover:bg-red-50 hover:text-red-700"}`}
+                >
+                  {isDismissed ? <Undo2 className="w-4 h-4" /> : <ThumbsDown className="w-4 h-4" />}
+                  {isDismissed ? "Restore" : "Not Relevant"}
+                </Button>
                 <Button variant="outline" onClick={toggleWatch} className={`gap-1.5 ${isAlertOn ? "border-teal-200 bg-teal-50 text-teal-700" : ""}`}>
                   <Eye className="w-4 h-4" />
                   {isAlertOn ? "Watching" : "Watch"}
