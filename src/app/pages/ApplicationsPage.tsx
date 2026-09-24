@@ -47,8 +47,10 @@ import {
 import { ExportApplicationDialog } from "@/app/components/ExportApplicationDialog";
 import { ApplicationRightRail } from "@/app/components/ApplicationRightRail";
 import { MarkApplicationSubmittedModal } from "@/app/components/MarkApplicationSubmittedModal";
+import { SectionAssignmentControl } from "@/app/components/SectionAssignmentControl";
 
 import { mockApplications, type Application, type Program, type Section } from "@/data/applications";
+import { useSectionAssignments } from "@/hooks/useSectionAssignments";
 
 interface ApplicationsPageProps {
   /**
@@ -132,6 +134,10 @@ export function ApplicationsPage({
   // demoLockedApplicationId. See handleMoveToActive below.
   const [movedToActiveIds, setMovedToActiveIds] = useState<string[]>([]);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Per-section "assigned to" + review status + last-saved state, shared
+  // with /application/:id/s/:id via localStorage — see useSectionAssignments.
+  const { getAssignment, assignSection, setReviewStatus } = useSectionAssignments(applications);
 
   const newApplicationPending = searchParams.get("newApplication") === "pending";
   const pendingGrantId = searchParams.get("grantId");
@@ -1029,7 +1035,8 @@ export function ApplicationsPage({
                       {app.sections.map((section) => {
                         const actualStatus = getSectionStatus(section, app.id);
                         const fileCount = section.id === "s7" ? getUploadedFileCount(app.id, section.id) : 0;
-                        
+                        const assignment = getAssignment(app.id, section.id);
+
                         return (
                           <div
                             key={section.id}
@@ -1037,52 +1044,46 @@ export function ApplicationsPage({
                             data-section-id={section.id}
                             data-section-name={section.name}
                             data-section-status={actualStatus}
-                            className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0 scroll-mt-24"
+                            className="py-3 border-b border-gray-100 last:border-b-0 scroll-mt-24"
                           >
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-1">
-                                <h3 className="font-medium text-gray-900">{section.name}</h3>
-                                {section.aiEnhanced && (
-                                  <Badge className="bg-gradient-to-r from-purple-50 to-indigo-50 text-purple-700 border-purple-300 hover:bg-purple-50">
-                                    <Sparkles className="w-3.5 h-3.5 mr-1" />
-                                    {demoLocked ? "AI Draft" : "AI Enhanced"}
-                                  </Badge>
-                                )}
-                                {getStatusBadge(actualStatus)}
-                                {section.id === "s7" && fileCount > 0 && (
-                                  <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-gradient-to-r from-teal-50 to-blue-50 border border-teal-200">
-                                    <svg className="w-3.5 h-3.5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    <FileText className="w-3.5 h-3.5 text-teal-600" />
-                                    <span className="text-xs font-semibold text-teal-700">{fileCount}</span>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-6">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-1 flex-wrap">
+                                  <h3 className="font-medium text-gray-900">{section.name}</h3>
+                                  {section.aiEnhanced && (
+                                    <Badge className="bg-gradient-to-r from-purple-50 to-indigo-50 text-purple-700 border-purple-300 hover:bg-purple-50">
+                                      <Sparkles className="w-3.5 h-3.5 mr-1" />
+                                      {demoLocked ? "AI Draft" : "AI Enhanced"}
+                                    </Badge>
+                                  )}
+                                  {getStatusBadge(actualStatus)}
+                                  {section.id === "s7" && fileCount > 0 && (
+                                    <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-gradient-to-r from-teal-50 to-blue-50 border border-teal-200">
+                                      <svg className="w-3.5 h-3.5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                      </svg>
+                                      <FileText className="w-3.5 h-3.5 text-teal-600" />
+                                      <span className="text-xs font-semibold text-teal-700">{fileCount}</span>
+                                    </div>
+                                  )}
+                                </div>
                                 {section.points > 0 && (
                                   <p className="text-sm text-gray-500">{section.points} points</p>
                                 )}
-                                {/* Last Edited Info - HIDDEN */}
-                                {/* {section.lastEditedBy && section.lastEditedTime && (
-                                  <>
-                                    {section.points > 0 && <span className="text-gray-300">|</span>}
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-sm text-gray-500">Last Edited: {section.lastEditedBy} - {section.lastEditedTime}</span>
-                                      <div className="w-6 h-6 rounded-full bg-gray-300 overflow-hidden flex-shrink-0">
-                                        <img
-                                          src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop"
-                                          alt={section.lastEditedBy}
-                                          className="w-full h-full object-cover"
-                                        />
-                                      </div>
-                                    </div>
-                                  </>
-                                )} */}
                               </div>
+
+                              {/* Assignment flow — upper right corner of the section row: who it's assigned to and its review status. */}
+                              <SectionAssignmentControl
+                                size="compact"
+                                assigneeId={assignment.assigneeId}
+                                reviewStatus={assignment.reviewStatus}
+                                lastSavedAt={assignment.lastSavedAt}
+                                onAssign={(memberId) => assignSection(app.id, section.id, memberId)}
+                                onReviewStatusChange={(status) => setReviewStatus(app.id, section.id, status)}
+                              />
                             </div>
-                            
-                            <div className="flex items-center gap-2">
+
+                            <div className="flex items-center justify-end gap-2 mt-3">
                               {currentView === "archive" || app.applicationStatus === "submitted" ? (
                                 <Button variant="outline" className="bg-white">
                                   View

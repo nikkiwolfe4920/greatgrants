@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link as RouterLink } from "react-router";
 import { FileText, Sparkles, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Link, Image, Undo2, Clock, Download, ChevronDown, ExternalLink } from "lucide-react";
 import { Button } from "../components/ui/button";
@@ -6,6 +6,7 @@ import { Badge } from "../components/ui/badge";
 import { DocumentsSectionV2 } from "../components/DocumentsSectionV2";
 import { AICoachingModule } from "../components/AICoachingModule";
 import { ExportApplicationDialog } from "../components/ExportApplicationDialog";
+import { SectionAssignmentControl } from "../components/SectionAssignmentControl";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -16,6 +17,8 @@ import {
   BreadcrumbHome,
 } from "../components/ui/breadcrumb";
 import { mockApplications } from "@/data/applications";
+import { useSectionAssignments } from "@/hooks/useSectionAssignments";
+import type { SectionReviewStatus } from "@/lib/sectionAssignments";
 
 const CABIN = { fontFamily: "Cabin, sans-serif" } as const;
 
@@ -80,12 +83,14 @@ function RichTextToolbar() {
 function RichTextField({
   value,
   onChange,
+  onBlur,
   placeholder,
   maxLength,
   minHeight = "200px",
 }: {
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   placeholder: string;
   maxLength: number;
   minHeight?: string;
@@ -96,6 +101,7 @@ function RichTextField({
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
         placeholder={placeholder}
         className="w-full p-4 focus:outline-none resize-none"
         style={{ ...CABIN, fontSize: "14px", lineHeight: "1.6", minHeight }}
@@ -124,6 +130,14 @@ export function ApplicationSectionPage() {
 
   const currentApplication = mockApplications.find((app) => app.id === applicationId);
   const sections = currentApplication?.sections ?? [];
+
+  // Per-section "assigned to" + review status + last-saved state, shared
+  // with the /applications list via localStorage — see useSectionAssignments.
+  const assignmentApplications = useMemo(
+    () => (currentApplication ? [{ id: currentApplication.id, sections: currentApplication.sections }] : []),
+    [currentApplication],
+  );
+  const { getAssignment, assignSection, setReviewStatus, markSaved } = useSectionAssignments(assignmentApplications);
 
   // Scroll to the requested section whenever the URL's :sectionId changes
   // (sidebar section clicks navigate here with a new sectionId rather than
@@ -176,6 +190,7 @@ In a world older and more complete than ours they move finished and complete, gi
       setLastSavedContent(aiGeneratedText);
       setIsAcceptingAI(false);
       setShowAIBadge(false);
+      if (applicationId) markSaved(applicationId, "s1");
     }, 1500);
   };
 
@@ -194,6 +209,7 @@ In a world older and more complete than ours they move finished and complete, gi
       setLastEditTime(new Date());
       setShowUndoButton(true);
       setTimeout(() => setShowUndoButton(false), 10000);
+      if (applicationId) markSaved(applicationId, "s1");
     }
   };
 
@@ -225,6 +241,21 @@ In a world older and more complete than ours they move finished and complete, gi
   }
 
   const sectionPoints = (id: string) => sections.find((s) => s.id === id)?.points ?? 0;
+
+  // Wires a section id up to the shared assignment state — spread onto
+  // <SectionAssignmentControl> in every section header below.
+  const assignmentProps = (sectionId: string) => {
+    const record = getAssignment(currentApplication.id, sectionId);
+    return {
+      assigneeId: record.assigneeId,
+      reviewStatus: record.reviewStatus,
+      lastSavedAt: record.lastSavedAt,
+      onAssign: (memberId: string) => assignSection(currentApplication.id, sectionId, memberId),
+      onReviewStatusChange: (status: SectionReviewStatus) => setReviewStatus(currentApplication.id, sectionId, status),
+    };
+  };
+
+  const handleSectionSaved = (sectionId: string) => markSaved(currentApplication.id, sectionId);
 
   return (
     <div className="max-w-[1400px] mx-auto px-8 py-8">
@@ -282,16 +313,19 @@ In a world older and more complete than ours they move finished and complete, gi
             {/* s1. Mission & Vision                                          */}
             {/* ============================================================ */}
             <div id="s1" className="scroll-mt-8">
-              <div className="flex items-center gap-3 mb-4">
-                <h3 className="text-base text-gray-900" style={CABIN}>
-                  Mission &amp; Vision
-                </h3>
-                {showAIBadge && (
-                  <Badge className="bg-gradient-to-r from-purple-50 to-indigo-50 text-purple-700 border-purple-300 hover:bg-purple-50">
-                    <Sparkles className="w-3.5 h-3.5 mr-1" />
-                    AI Enhanced
-                  </Badge>
-                )}
+              <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-base text-gray-900" style={CABIN}>
+                    Mission &amp; Vision
+                  </h3>
+                  {showAIBadge && (
+                    <Badge className="bg-gradient-to-r from-purple-50 to-indigo-50 text-purple-700 border-purple-300 hover:bg-purple-50">
+                      <Sparkles className="w-3.5 h-3.5 mr-1" />
+                      AI Enhanced
+                    </Badge>
+                  )}
+                </div>
+                <SectionAssignmentControl {...assignmentProps("s1")} />
               </div>
 
               <AICoachingModule applicationId={applicationId || "1"} sectionId="s1" />
@@ -358,9 +392,12 @@ In a world older and more complete than ours they move finished and complete, gi
             {/* s2. Focus Area                                                */}
             {/* ============================================================ */}
             <div id="s2" className="scroll-mt-8">
-              <h3 className="text-base text-gray-900 mb-4" style={CABIN}>
-                Focus Area <span className="text-gray-600">({sectionPoints("s2")} points)</span> <span className="text-teal-600">*</span>
-              </h3>
+              <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
+                <h3 className="text-base text-gray-900" style={CABIN}>
+                  Focus Area <span className="text-gray-600">({sectionPoints("s2")} points)</span> <span className="text-teal-600">*</span>
+                </h3>
+                <SectionAssignmentControl {...assignmentProps("s2")} />
+              </div>
               <div className="bg-white border border-gray-200 rounded-lg p-6">
                 <div className="space-y-4">
                   {["Education", "Health", "Environment", "Community Development"].map((area) => (
@@ -374,6 +411,7 @@ In a world older and more complete than ours they move finished and complete, gi
                           } else {
                             setSelectedFocusAreas(selectedFocusAreas.filter((a) => a !== area));
                           }
+                          handleSectionSaved("s2");
                         }}
                         className="w-5 h-5 rounded border-gray-300 text-teal-600 focus:ring-2 focus:ring-teal-500 cursor-pointer"
                       />
@@ -390,12 +428,16 @@ In a world older and more complete than ours they move finished and complete, gi
             {/* s3. Program Details                                           */}
             {/* ============================================================ */}
             <div id="s3" className="scroll-mt-8">
-              <h3 className="text-base text-gray-900 mb-4" style={CABIN}>
-                Program Details <span className="text-gray-600">({sectionPoints("s3")} points)</span> <span className="text-teal-600">*</span>
-              </h3>
+              <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
+                <h3 className="text-base text-gray-900" style={CABIN}>
+                  Program Details <span className="text-gray-600">({sectionPoints("s3")} points)</span> <span className="text-teal-600">*</span>
+                </h3>
+                <SectionAssignmentControl {...assignmentProps("s3")} />
+              </div>
               <RichTextField
                 value={programDetailsText}
                 onChange={setProgramDetailsText}
+                onBlur={() => handleSectionSaved("s3")}
                 placeholder="Describe the program details..."
                 maxLength={2000}
               />
@@ -405,12 +447,16 @@ In a world older and more complete than ours they move finished and complete, gi
             {/* s4. Performance Metrics                                       */}
             {/* ============================================================ */}
             <div id="s4" className="scroll-mt-8">
-              <h3 className="text-base text-gray-900 mb-4" style={CABIN}>
-                Performance Metrics <span className="text-gray-600">({sectionPoints("s4")} points)</span> <span className="text-red-600">*</span>
-              </h3>
+              <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
+                <h3 className="text-base text-gray-900" style={CABIN}>
+                  Performance Metrics <span className="text-gray-600">({sectionPoints("s4")} points)</span> <span className="text-red-600">*</span>
+                </h3>
+                <SectionAssignmentControl {...assignmentProps("s4")} />
+              </div>
               <RichTextField
                 value={performanceMetricsText}
                 onChange={setPerformanceMetricsText}
+                onBlur={() => handleSectionSaved("s4")}
                 placeholder="Describe the performance metrics..."
                 maxLength={2000}
               />
@@ -420,14 +466,18 @@ In a world older and more complete than ours they move finished and complete, gi
             {/* s5. Budget                                                    */}
             {/* ============================================================ */}
             <div id="s5" className="scroll-mt-8">
-              <h3 className="text-base text-gray-900 mb-4" style={CABIN}>
-                Budget <span className="text-gray-600">({sectionPoints("s5")} points)</span>
-              </h3>
+              <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
+                <h3 className="text-base text-gray-900" style={CABIN}>
+                  Budget <span className="text-gray-600">({sectionPoints("s5")} points)</span>
+                </h3>
+                <SectionAssignmentControl {...assignmentProps("s5")} />
+              </div>
               <div className="bg-white border border-gray-200 rounded-lg p-6">
                 <input
                   type="text"
                   value={budgetAmount}
                   onChange={(e) => setBudgetAmount(e.target.value)}
+                  onBlur={() => handleSectionSaved("s5")}
                   placeholder="Enter budget amount..."
                   className="w-full p-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                   style={{ ...CABIN, fontSize: "14px" }}
@@ -439,12 +489,16 @@ In a world older and more complete than ours they move finished and complete, gi
             {/* s6. Narrative                                                 */}
             {/* ============================================================ */}
             <div id="s6" className="scroll-mt-8">
-              <h3 className="text-base text-gray-900 mb-4" style={CABIN}>
-                Narrative <span className="text-gray-600">({sectionPoints("s6")} points)</span>
-              </h3>
+              <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
+                <h3 className="text-base text-gray-900" style={CABIN}>
+                  Narrative <span className="text-gray-600">({sectionPoints("s6")} points)</span>
+                </h3>
+                <SectionAssignmentControl {...assignmentProps("s6")} />
+              </div>
               <RichTextField
                 value={narrativeText}
                 onChange={setNarrativeText}
+                onBlur={() => handleSectionSaved("s6")}
                 placeholder="Write your narrative..."
                 maxLength={3000}
               />
@@ -458,9 +512,12 @@ In a world older and more complete than ours they move finished and complete, gi
             {/* s7. Documents                                                 */}
             {/* ============================================================ */}
             <div id="s7" className="scroll-mt-8">
-              <h3 className="text-base text-gray-900 mb-4" style={CABIN}>
-                Documents
-              </h3>
+              <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
+                <h3 className="text-base text-gray-900" style={CABIN}>
+                  Documents
+                </h3>
+                <SectionAssignmentControl {...assignmentProps("s7")} />
+              </div>
               <DocumentsSectionV2 applicationId={applicationId || "1"} />
             </div>
 
@@ -468,15 +525,21 @@ In a world older and more complete than ours they move finished and complete, gi
             {/* s8. Compliance                                                */}
             {/* ============================================================ */}
             <div id="s8" className="scroll-mt-8">
-              <h3 className="text-base text-gray-900 mb-4" style={CABIN}>
-                Compliance <span className="text-red-600">*</span>
-              </h3>
+              <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
+                <h3 className="text-base text-gray-900" style={CABIN}>
+                  Compliance <span className="text-red-600">*</span>
+                </h3>
+                <SectionAssignmentControl {...assignmentProps("s8")} />
+              </div>
               <div className="bg-white border border-gray-200 rounded-lg p-6">
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={complianceChecked}
-                    onChange={(e) => setComplianceChecked(e.target.checked)}
+                    onChange={(e) => {
+                      setComplianceChecked(e.target.checked);
+                      handleSectionSaved("s8");
+                    }}
                     className="w-5 h-5 rounded border-gray-300 text-teal-600 focus:ring-2 focus:ring-teal-500"
                   />
                   <span className="text-base text-gray-700" style={CABIN}>
@@ -490,9 +553,12 @@ In a world older and more complete than ours they move finished and complete, gi
             {/* s9. Eligibility                                               */}
             {/* ============================================================ */}
             <div id="s9" className="scroll-mt-8">
-              <h3 className="text-base text-gray-900 mb-4" style={CABIN}>
-                Eligibility <span className="text-red-600">*</span>
-              </h3>
+              <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
+                <h3 className="text-base text-gray-900" style={CABIN}>
+                  Eligibility <span className="text-red-600">*</span>
+                </h3>
+                <SectionAssignmentControl {...assignmentProps("s9")} />
+              </div>
               <div className="bg-white border border-gray-200 rounded-lg p-6">
                 <div className="space-y-3">
                   {["Yes", "No"].map((option) => (
@@ -502,7 +568,10 @@ In a world older and more complete than ours they move finished and complete, gi
                         name="eligibility"
                         value={option}
                         checked={eligibilitySelection === option}
-                        onChange={(e) => setEligibilitySelection(e.target.value)}
+                        onChange={(e) => {
+                          setEligibilitySelection(e.target.value);
+                          handleSectionSaved("s9");
+                        }}
                         className="w-5 h-5 border-gray-300 text-teal-600 focus:ring-2 focus:ring-teal-500"
                       />
                       <span className="text-base text-gray-700" style={CABIN}>
