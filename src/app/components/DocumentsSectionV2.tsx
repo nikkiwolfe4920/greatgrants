@@ -12,8 +12,6 @@ interface UploadedFile {
 
 interface DocumentsSectionV2Props {
   applicationId: string;
-  /** Notified with the current file count whenever the uploaded list changes — lets a parent (e.g. a resources panel) show a live count without duplicating upload state. */
-  onFilesChange?: (count: number) => void;
 }
 
 const DOCUMENT_TYPES = [
@@ -28,7 +26,7 @@ const DOCUMENT_TYPES = [
 const ALLOWED_FORMATS = ["PDF", "DOCX", "XLSX", "CSV", "PNG", "JPG"];
 const MAX_FILE_SIZE = 50; // MB
 
-export function DocumentsSectionV2({ applicationId, onFilesChange }: DocumentsSectionV2Props) {
+export function DocumentsSectionV2({ applicationId }: DocumentsSectionV2Props) {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedDocumentType, setSelectedDocumentType] = useState<string>("");
@@ -48,7 +46,6 @@ export function DocumentsSectionV2({ applicationId, onFilesChange }: DocumentsSe
   useEffect(() => {
     const storageKey = `app-${applicationId}-documents`;
     localStorage.setItem(storageKey, JSON.stringify(uploadedFiles));
-    onFilesChange?.(uploadedFiles.length);
   }, [uploadedFiles, applicationId]);
 
   const getFileType = (fileName: string): "pdf" | "excel" | "image" | "csv" => {

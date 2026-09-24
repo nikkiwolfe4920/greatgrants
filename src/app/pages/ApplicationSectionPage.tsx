@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useParams, Link as RouterLink } from "react-router";
-import { FileText, Sparkles, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Link, Image, Undo2, Clock, Download, ChevronDown, Eye } from "lucide-react";
+import { useParams, useNavigate, Link as RouterLink } from "react-router";
+import { FileText, Sparkles, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Link, Image, Undo2, Clock, Download, ChevronDown, ExternalLink } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { DocumentsSectionV2 } from "../components/DocumentsSectionV2";
@@ -18,6 +18,95 @@ import {
 import { mockApplications } from "@/data/applications";
 
 const CABIN = { fontFamily: "Cabin, sans-serif" } as const;
+
+/** Decorative formatting toolbar shared by every rich-text field (Mission & Vision, Program Details, Performance Metrics, Narrative). */
+function RichTextToolbar() {
+  return (
+    <div className="border-b border-gray-200 bg-gray-50 px-4 py-3 flex items-center gap-4 flex-wrap">
+      <select className="px-3 py-1.5 border border-gray-300 rounded text-sm bg-white" style={CABIN}>
+        <option>Inter</option>
+        <option>Arial</option>
+        <option>Helvetica</option>
+      </select>
+      <select className="px-3 py-1.5 border border-gray-300 rounded text-sm bg-white" style={CABIN}>
+        <option>16px</option>
+        <option>14px</option>
+        <option>18px</option>
+        <option>20px</option>
+      </select>
+      <div className="w-px h-6 bg-gray-300" />
+      <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Bold">
+        <Bold className="w-4 h-4 text-gray-700" />
+      </button>
+      <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Italic">
+        <Italic className="w-4 h-4 text-gray-700" />
+      </button>
+      <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Underline">
+        <Underline className="w-4 h-4 text-gray-700" />
+      </button>
+      <div className="w-px h-6 bg-gray-300" />
+      <button className="flex items-center gap-1.5 px-2 py-1.5 hover:bg-gray-200 rounded transition-colors">
+        <div className="w-4 h-4 rounded-full bg-gray-900 border border-gray-300" />
+      </button>
+      <div className="w-px h-6 bg-gray-300" />
+      <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Align Left">
+        <AlignLeft className="w-4 h-4 text-gray-700" />
+      </button>
+      <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Align Center">
+        <AlignCenter className="w-4 h-4 text-gray-700" />
+      </button>
+      <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Align Right">
+        <AlignRight className="w-4 h-4 text-gray-700" />
+      </button>
+      <div className="w-px h-6 bg-gray-300" />
+      <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Bullet List">
+        <List className="w-4 h-4 text-gray-700" />
+      </button>
+      <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Numbered List">
+        <ListOrdered className="w-4 h-4 text-gray-700" />
+      </button>
+      <div className="w-px h-6 bg-gray-300" />
+      <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Insert Link">
+        <Link className="w-4 h-4 text-gray-700" />
+      </button>
+      <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Insert Image">
+        <Image className="w-4 h-4 text-gray-700" />
+      </button>
+    </div>
+  );
+}
+
+/** A textarea with the shared RichTextToolbar above it and a "characters left" footer below — used by Program Details, Performance Metrics, and Narrative. */
+function RichTextField({
+  value,
+  onChange,
+  placeholder,
+  maxLength,
+  minHeight = "200px",
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  maxLength: number;
+  minHeight?: string;
+}) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+      <RichTextToolbar />
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full p-4 focus:outline-none resize-none"
+        style={{ ...CABIN, fontSize: "14px", lineHeight: "1.6", minHeight }}
+        maxLength={maxLength}
+      />
+      <div className="px-4 py-3 border-t border-gray-200 bg-gray-50 text-sm text-gray-500" style={CABIN}>
+        {maxLength - value.length} characters left
+      </div>
+    </div>
+  );
+}
 
 /**
  * ApplicationSectionPage — /application/:applicationId/s/:sectionId, mirroring
@@ -46,7 +135,6 @@ export function ApplicationSectionPage() {
   }, [sectionId]);
 
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const [documentCount, setDocumentCount] = useState(0);
 
   // ---------------------------------------------------------------------
   // Section field state
@@ -209,58 +297,7 @@ In a world older and more complete than ours they move finished and complete, gi
               <AICoachingModule applicationId={applicationId || "1"} sectionId="s1" />
 
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-4">
-                {/* Toolbar */}
-                <div className="border-b border-gray-200 bg-gray-50 px-4 py-3 flex items-center gap-4 flex-wrap">
-                  <select className="px-3 py-1.5 border border-gray-300 rounded text-sm bg-white" style={CABIN}>
-                    <option>Inter</option>
-                    <option>Arial</option>
-                    <option>Helvetica</option>
-                  </select>
-                  <select className="px-3 py-1.5 border border-gray-300 rounded text-sm bg-white" style={CABIN}>
-                    <option>16px</option>
-                    <option>14px</option>
-                    <option>18px</option>
-                    <option>20px</option>
-                  </select>
-                  <div className="w-px h-6 bg-gray-300" />
-                  <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Bold">
-                    <Bold className="w-4 h-4 text-gray-700" />
-                  </button>
-                  <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Italic">
-                    <Italic className="w-4 h-4 text-gray-700" />
-                  </button>
-                  <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Underline">
-                    <Underline className="w-4 h-4 text-gray-700" />
-                  </button>
-                  <div className="w-px h-6 bg-gray-300" />
-                  <button className="flex items-center gap-1.5 px-2 py-1.5 hover:bg-gray-200 rounded transition-colors">
-                    <div className="w-4 h-4 rounded-full bg-gray-900 border border-gray-300" />
-                  </button>
-                  <div className="w-px h-6 bg-gray-300" />
-                  <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Align Left">
-                    <AlignLeft className="w-4 h-4 text-gray-700" />
-                  </button>
-                  <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Align Center">
-                    <AlignCenter className="w-4 h-4 text-gray-700" />
-                  </button>
-                  <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Align Right">
-                    <AlignRight className="w-4 h-4 text-gray-700" />
-                  </button>
-                  <div className="w-px h-6 bg-gray-300" />
-                  <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Bullet List">
-                    <List className="w-4 h-4 text-gray-700" />
-                  </button>
-                  <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Numbered List">
-                    <ListOrdered className="w-4 h-4 text-gray-700" />
-                  </button>
-                  <div className="w-px h-6 bg-gray-300" />
-                  <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Insert Link">
-                    <Link className="w-4 h-4 text-gray-700" />
-                  </button>
-                  <button className="p-1.5 hover:bg-gray-200 rounded transition-colors" title="Insert Image">
-                    <Image className="w-4 h-4 text-gray-700" />
-                  </button>
-                </div>
+                <RichTextToolbar />
 
                 {/* Text Area with AI Accept overlay */}
                 <div className="relative">
@@ -356,19 +393,12 @@ In a world older and more complete than ours they move finished and complete, gi
               <h3 className="text-base text-gray-900 mb-4" style={CABIN}>
                 Program Details <span className="text-gray-600">({sectionPoints("s3")} points)</span> <span className="text-teal-600">*</span>
               </h3>
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <textarea
-                  value={programDetailsText}
-                  onChange={(e) => setProgramDetailsText(e.target.value)}
-                  placeholder="Describe the program details..."
-                  className="w-full min-h-[200px] p-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-none"
-                  style={{ ...CABIN, fontSize: "14px", lineHeight: "1.6" }}
-                  maxLength={2000}
-                />
-                <div className="mt-3 text-sm text-gray-500" style={CABIN}>
-                  {2000 - programDetailsText.length} characters left
-                </div>
-              </div>
+              <RichTextField
+                value={programDetailsText}
+                onChange={setProgramDetailsText}
+                placeholder="Describe the program details..."
+                maxLength={2000}
+              />
             </div>
 
             {/* ============================================================ */}
@@ -378,19 +408,12 @@ In a world older and more complete than ours they move finished and complete, gi
               <h3 className="text-base text-gray-900 mb-4" style={CABIN}>
                 Performance Metrics <span className="text-gray-600">({sectionPoints("s4")} points)</span> <span className="text-red-600">*</span>
               </h3>
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <textarea
-                  value={performanceMetricsText}
-                  onChange={(e) => setPerformanceMetricsText(e.target.value)}
-                  placeholder="Describe the performance metrics..."
-                  className="w-full min-h-[200px] p-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-none"
-                  style={{ ...CABIN, fontSize: "14px", lineHeight: "1.6" }}
-                  maxLength={2000}
-                />
-                <div className="mt-3 text-sm text-gray-500" style={CABIN}>
-                  {2000 - performanceMetricsText.length} characters left
-                </div>
-              </div>
+              <RichTextField
+                value={performanceMetricsText}
+                onChange={setPerformanceMetricsText}
+                placeholder="Describe the performance metrics..."
+                maxLength={2000}
+              />
             </div>
 
             {/* ============================================================ */}
@@ -419,19 +442,12 @@ In a world older and more complete than ours they move finished and complete, gi
               <h3 className="text-base text-gray-900 mb-4" style={CABIN}>
                 Narrative <span className="text-gray-600">({sectionPoints("s6")} points)</span>
               </h3>
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <textarea
-                  value={narrativeText}
-                  onChange={(e) => setNarrativeText(e.target.value)}
-                  placeholder="Write your narrative..."
-                  className="w-full min-h-[200px] p-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-none"
-                  style={{ ...CABIN, fontSize: "14px", lineHeight: "1.6" }}
-                  maxLength={3000}
-                />
-                <div className="mt-3 text-sm text-gray-500" style={CABIN}>
-                  {3000 - narrativeText.length} characters left
-                </div>
-              </div>
+              <RichTextField
+                value={narrativeText}
+                onChange={setNarrativeText}
+                placeholder="Write your narrative..."
+                maxLength={3000}
+              />
 
               <div className="mt-6">
                 <AICoachingModule applicationId={applicationId || "1"} sectionId="s6" />
@@ -445,7 +461,7 @@ In a world older and more complete than ours they move finished and complete, gi
               <h3 className="text-base text-gray-900 mb-4" style={CABIN}>
                 Documents
               </h3>
-              <DocumentsSectionV2 applicationId={applicationId || "1"} onFilesChange={setDocumentCount} />
+              <DocumentsSectionV2 applicationId={applicationId || "1"} />
             </div>
 
             {/* ============================================================ */}
@@ -500,10 +516,7 @@ In a world older and more complete than ours they move finished and complete, gi
           </div>
         </div>
 
-        <ApplicationResourcesPanel
-          documentCount={documentCount}
-          onOpenExport={() => setExportDialogOpen(true)}
-        />
+        <ApplicationResourcesPanel onOpenExport={() => setExportDialogOpen(true)} />
       </div>
 
       <ExportApplicationDialog
@@ -517,25 +530,19 @@ In a world older and more complete than ours they move finished and complete, gi
 }
 
 // ---------------------------------------------------------------------------
-// Application Resources — right-hand panel, mirroring the layout GrantWriting
-// DemoPage uses (gray background, sticky, collapsible to a floating tab),
-// but with real, working controls since this isn't a locked demo: "View"
-// jumps to the live Documents section instead of being disabled, and the
-// document count reflects what's actually been uploaded there.
+// Application Resources — right-hand panel, mirroring GrantWritingDemoPage's
+// ApplicationResourcesPanel layout and content (gray background, sticky,
+// collapsible to a floating tab, a Documents card holding the funder's
+// Notice of Funding Opportunity, a Grant Opportunity Overview button), but
+// with real, working controls since this isn't a locked demo: "View" and
+// "Grant Opportunity Overview" both open Grant Search — this mock data has
+// no per-application grant record to deep-link to, so Grant Search is the
+// nearest real destination for "go look at the funding opportunity".
 // ---------------------------------------------------------------------------
 
-function ApplicationResourcesPanel({
-  documentCount,
-  onOpenExport,
-}: {
-  documentCount: number;
-  onOpenExport: () => void;
-}) {
+function ApplicationResourcesPanel({ onOpenExport }: { onOpenExport: () => void }) {
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(true);
-
-  const jumpToDocuments = () => {
-    document.getElementById("s7")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   if (!expanded) {
     return (
@@ -570,22 +577,50 @@ function ApplicationResourcesPanel({
 
           <div className="space-y-3">
             <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <button
-                onClick={jumpToDocuments}
-                className="w-full px-4 py-3 flex items-center justify-between gap-2 hover:bg-gray-50 transition-colors"
-              >
+              <div className="w-full px-4 py-3 flex items-center justify-between gap-2">
                 <span className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-gray-500" />
                   <span className="text-sm font-semibold text-gray-900" style={CABIN}>
                     Documents
                   </span>
                   <span className="text-sm text-gray-400" style={CABIN}>
-                    ({documentCount})
+                    (1)
                   </span>
                 </span>
-                <Eye className="w-4 h-4 text-gray-400" />
-              </button>
+              </div>
+              <div className="border-t border-gray-100 p-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+                    <FileText className="w-4.5 h-4.5 text-red-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate" style={CABIN}>
+                      Notice of Funding Opportunity
+                    </p>
+                    <p className="text-xs text-gray-500" style={CABIN}>
+                      PDF Document • 104 KB
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/search")}
+                  className="border-gray-300 bg-white text-gray-700 hover:bg-gray-50 shrink-0"
+                >
+                  View
+                </Button>
+              </div>
             </div>
+
+            <button
+              onClick={() => navigate("/search")}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 bg-white rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              style={CABIN}
+            >
+              Grant Opportunity Overview
+              <ExternalLink className="w-4 h-4" />
+            </button>
 
             <Button
               onClick={onOpenExport}
