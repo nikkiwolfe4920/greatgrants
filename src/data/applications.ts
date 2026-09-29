@@ -32,8 +32,6 @@ export interface Application {
   submittedDate?: string;
   /** The org program this application is associated with — shown on the accordion card. */
   programName: string;
-  /** Org member (see orgMembers.ts) this application belongs to — used by the /applications "View By" filter. */
-  ownerId: string;
 }
 
 export interface Program {
@@ -62,8 +60,7 @@ export const mockApplications: Application[] = [
       { id: "s9", name: "Eligibility", status: "not-started", points: 5 },
     ],
     applicationStatus: "active",
-    programName: "Elderly Tech Program",
-    ownerId: "lana-steiner"
+    programName: "Elderly Tech Program"
   },
   {
     id: "2",
@@ -84,8 +81,7 @@ export const mockApplications: Application[] = [
       { id: "s9", name: "Eligibility", status: "complete", points: 5 },
     ],
     applicationStatus: "active",
-    programName: "Accessible Transit Initiative",
-    ownerId: "demi-wilkinson"
+    programName: "Accessible Transit Initiative"
   },
   {
     id: "3",
@@ -107,8 +103,7 @@ export const mockApplications: Application[] = [
       { id: "s9", name: "Eligibility", status: "complete", points: 5 },
     ],
     applicationStatus: "submitted",
-    programName: "Community Rebuilding Program",
-    ownerId: "candice-wu"
+    programName: "Community Rebuilding Program"
   },
   {
     id: "4",
@@ -130,7 +125,6 @@ export const mockApplications: Application[] = [
       { id: "s9", name: "Eligibility", status: "complete", points: 5 },
     ],
     applicationStatus: "submitted",
-    programName: "Clean Communities Initiative",
-    ownerId: "drew-cano"
+    programName: "Clean Communities Initiative"
   }
 ];

@@ -1,7 +1,6 @@
-import { ChevronDown, Clock } from "lucide-react";
+import { Check, ChevronDown, Clock } from "lucide-react";
 import { cn } from "@/app/components/ui/utils";
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
-import { Checkbox } from "@/app/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +20,8 @@ const STATUS_TRIGGER_CLASSES: Record<SectionReviewStatus, string> = {
 
 interface SectionAssignmentControlProps {
   assigneeId: string;
-  reviewStatus: SectionReviewStatus;
+  /** null renders a blank, disabled status pill — used on /applications for sections that haven't been started yet. */
+  reviewStatus: SectionReviewStatus | null;
   lastSavedAt?: string | null;
   onAssign: (memberId: string) => void;
   onReviewStatusChange: (status: SectionReviewStatus) => void;
@@ -86,8 +86,7 @@ export function SectionAssignmentControl({
                 onClick={() => onAssign(member.id)}
                 className="gap-2.5 py-2"
               >
-                <Checkbox checked={member.id === assigneeId} className="pointer-events-none" />
-                <Avatar className="size-6">
+                <Avatar className="size-6 shrink-0">
                   <AvatarFallback
                     style={{ backgroundColor: member.avatarColor }}
                     className="text-[10px] font-semibold text-gray-700"
@@ -102,30 +101,41 @@ export function SectionAssignmentControl({
                   </div>
                   <div className="text-xs text-gray-400">{member.role}</div>
                 </div>
+                {member.id === assigneeId && <Check className="w-4 h-4 text-gray-900 shrink-0" />}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Select value={reviewStatus} onValueChange={(value) => onReviewStatusChange(value as SectionReviewStatus)}>
-          <SelectTrigger
-            size="sm"
+        {reviewStatus === null ? (
+          <div
+            title="Nothing to review yet — this section hasn't been started"
             className={cn(
-              "font-medium",
-              compact ? "h-7 w-[124px] text-xs" : "h-8 w-[136px] text-xs",
-              STATUS_TRIGGER_CLASSES[reviewStatus],
+              "rounded-md border border-gray-200 bg-white",
+              compact ? "h-7 w-[124px]" : "h-8 w-[136px]",
             )}
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent align="end">
-            {(Object.keys(REVIEW_STATUS_LABEL) as SectionReviewStatus[]).map((status) => (
-              <SelectItem key={status} value={status}>
-                {REVIEW_STATUS_LABEL[status]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          />
+        ) : (
+          <Select value={reviewStatus} onValueChange={(value) => onReviewStatusChange(value as SectionReviewStatus)}>
+            <SelectTrigger
+              size="sm"
+              className={cn(
+                "font-medium",
+                compact ? "h-7 w-[124px] text-xs" : "h-8 w-[136px] text-xs",
+                STATUS_TRIGGER_CLASSES[reviewStatus],
+              )}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="end">
+              {(Object.keys(REVIEW_STATUS_LABEL) as SectionReviewStatus[]).map((status) => (
+                <SelectItem key={status} value={status}>
+                  {REVIEW_STATUS_LABEL[status]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
     </div>
   );
 
