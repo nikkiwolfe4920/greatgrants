@@ -8,6 +8,7 @@ import {
   ArrowRight,
   ArrowLeft,
   Eye,
+  EyeOff,
   Share2,
   FolderPlus,
   CheckCircle2,
@@ -15,12 +16,13 @@ import {
   Download,
   ChevronDown,
   ChevronUp,
-  Check,
   Sparkles,
   AlertTriangle,
-  ThumbsDown,
-  Undo2,
+  MinusCircle,
+  PlusCircle,
+  MoreVertical,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/app/components/ui/badge";
 import {
   Breadcrumb,
@@ -32,6 +34,12 @@ import {
   BreadcrumbHome,
 } from "@/app/components/ui/breadcrumb";
 import { Button } from "@/app/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/app/components/ui/dropdown-menu";
 import { EligibilityWorkflowPanel } from "@/app/components/eligibility/EligibilityWorkflowPanel";
 import { AssessmentUsageMeter } from "@/app/components/eligibility/AssessmentUsageMeter";
 import { ApplicationLoadingModal } from "@/app/components/ApplicationLoadingModal";
@@ -363,7 +371,6 @@ export function EligibilityAssessmentPage({
   const [isAssessing, setIsAssessing] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
   const [docsExpanded, setDocsExpanded] = useState(true);
-  const [linkCopied, setLinkCopied] = useState(false);
   const [programLinked, setProgramLinked] = useState(false);
   const [reportGeneratedAt, setReportGeneratedAt] = useState<number | null>(null);
   const [showApplicationLoading, setShowApplicationLoading] = useState(false);
@@ -376,9 +383,9 @@ export function EligibilityAssessmentPage({
   const { isGrantAlertEnabled, setAlertEnabled, removeAlert } = useGrantAlerts();
   const isAlertOn = isGrantAlertEnabled(GRANT_ID);
 
-  // "Not Relevant" — see useDismissedGrants. Marking this grant not relevant
-  // here deprioritizes it everywhere it appears in Grant Search, without
-  // ever deleting it — the button flips to "Restore" and stays reversible.
+  // "Exclude" — see useDismissedGrants. Excluding this grant here
+  // deprioritizes it everywhere it appears in Grant Search, without ever
+  // deleting it — the menu item flips to "Include" and stays reversible.
   const { isGrantDismissed, dismissGrant, restoreGrant } = useDismissedGrants();
   const isDismissed = isGrantDismissed(GRANT_ID);
 
@@ -454,8 +461,10 @@ export function EligibilityAssessmentPage({
 
   const handleShare = () => {
     navigator.clipboard?.writeText(window.location.href);
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2000);
+    toast.success("Link copied", {
+      description: "The link to this grant is on your clipboard.",
+      duration: 3000,
+    });
   };
 
   const handleStartApplication = () => {
@@ -553,28 +562,6 @@ export function EligibilityAssessmentPage({
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleDismiss}
-                    className={`gap-1.5 h-8 text-xs ${isDismissed ? "border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100" : "border-gray-200 hover:border-red-200 hover:bg-red-50 hover:text-red-700"}`}
-                  >
-                    {isDismissed ? <Undo2 className="w-3.5 h-3.5" /> : <ThumbsDown className="w-3.5 h-3.5" />}
-                    {isDismissed ? "Restore" : "Not Relevant"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={toggleWatch}
-                    className={`gap-1.5 h-8 text-xs ${isAlertOn ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100" : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"}`}
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    {isAlertOn ? "Watching" : "Watch"}
-                  </Button>
-                  <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50 h-8 text-xs" onClick={handleShare}>
-                    {linkCopied ? <Check className="w-3.5 h-3.5 mr-1.5 text-teal-600" /> : <Share2 className="w-3.5 h-3.5 mr-1.5" />}
-                    {linkCopied ? "Copied" : "Share"}
-                  </Button>
-                  <Button
                     size="sm"
                     className={`bg-teal-600 text-white font-semibold h-8 text-xs px-4 ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
                     onClick={handleStartApplication}
@@ -584,6 +571,36 @@ export function EligibilityAssessmentPage({
                     Start Application
                     <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
                   </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 border-gray-200 text-gray-500 hover:bg-gray-50"
+                        aria-label="More actions"
+                      >
+                        <MoreVertical className="w-3.5 h-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuItem onClick={toggleDismiss}>
+                        {isDismissed ? (
+                          <PlusCircle className="w-4 h-4 mr-2" />
+                        ) : (
+                          <MinusCircle className="w-4 h-4 mr-2" />
+                        )}
+                        {isDismissed ? "Include" : "Exclude"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={toggleWatch}>
+                        {isAlertOn ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+                        {isAlertOn ? "Unwatch" : "Watch"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleShare}>
+                        <Share2 className="w-4 h-4 mr-2" />
+                        Share
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </div>
@@ -647,22 +664,6 @@ export function EligibilityAssessmentPage({
             <div className="flex flex-col items-end gap-3 shrink-0">
               <div className="flex items-center gap-3 flex-wrap justify-end">
                 <Button
-                  variant="outline"
-                  onClick={toggleDismiss}
-                  className={`gap-1.5 ${isDismissed ? "border-gray-200 bg-gray-50 text-gray-600" : "hover:border-red-200 hover:bg-red-50 hover:text-red-700"}`}
-                >
-                  {isDismissed ? <Undo2 className="w-4 h-4" /> : <ThumbsDown className="w-4 h-4" />}
-                  {isDismissed ? "Restore" : "Not Relevant"}
-                </Button>
-                <Button variant="outline" onClick={toggleWatch} className={`gap-1.5 ${isAlertOn ? "border-teal-200 bg-teal-50 text-teal-700" : ""}`}>
-                  <Eye className="w-4 h-4" />
-                  {isAlertOn ? "Watching" : "Watch"}
-                </Button>
-                <Button variant="outline" onClick={handleShare} className="gap-1.5">
-                  {linkCopied ? <Check className="w-4 h-4 text-teal-600" /> : <Share2 className="w-4 h-4" />}
-                  {linkCopied ? "Copied" : "Share"}
-                </Button>
-                <Button
                   onClick={handleStartApplication}
                   className={`bg-teal-600 text-white gap-1.5 ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
                   aria-disabled={demoLocked || undefined}
@@ -671,6 +672,36 @@ export function EligibilityAssessmentPage({
                   Start Application
                   <ArrowRight className="w-4 h-4" />
                 </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="border-gray-200 text-gray-500 hover:bg-gray-50"
+                      aria-label="More actions"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem onClick={toggleDismiss}>
+                      {isDismissed ? (
+                        <PlusCircle className="w-4 h-4 mr-2" />
+                      ) : (
+                        <MinusCircle className="w-4 h-4 mr-2" />
+                      )}
+                      {isDismissed ? "Include" : "Exclude"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={toggleWatch}>
+                      {isAlertOn ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+                      {isAlertOn ? "Unwatch" : "Watch"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleShare}>
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Share
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               {/* Hidden on the locked /org-detail-demo walkthrough — see

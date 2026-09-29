@@ -30,7 +30,8 @@ import {
   Info,
   AlertTriangle,
   ThumbsDown,
-  Undo2
+  MinusCircle,
+  PlusCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
@@ -647,9 +648,9 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
   const lastAutoAppliedProjectRef = useRef<string | null>(null);
   // Watch is the other grant-tracking action on this page — see useGrantAlerts.
   const { isGrantAlertEnabled, setAlertEnabled, removeAlert } = useGrantAlerts();
-  // "Not Relevant" — see useDismissedGrants. Dismissing never deletes a grant,
+  // "Exclude" — see useDismissedGrants. Excluding never deletes a grant,
   // it only deprioritizes it (sorted to the bottom, see filteredGrants below).
-  const { isGrantDismissed, isCategoryHidden, dismissedCategories, dismissGrant, restoreGrant, hideCategory, unhideCategory } =
+  const { isGrantDismissed, isCategoryHidden, dismissedCategories, dismissGrant, restoreGrant, unhideCategory } =
     useDismissedGrants();
   const [recentlyViewed, setRecentlyViewed] = useState<Grant[]>([]);
   const [hasWebsite, setHasWebsite] = useState(false);
@@ -820,7 +821,7 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
     setGrantToStopWatching(null);
   };
 
-  // "Not Relevant" is instant and non-destructive — no confirmation, just an
+  // "Exclude" is instant and non-destructive — no confirmation, just an
   // undoable toast (see useDismissedGrants), the same low-friction pattern as
   // turning Watch on.
   const toggleDismiss = (e: React.MouseEvent, grant: Grant) => {
@@ -944,8 +945,8 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
       return true;
     })
     .sort((a, b) => {
-      // Grants marked "Not Relevant" are deprioritized to the bottom of
-      // every sort order — demoted, never removed (see useDismissedGrants).
+      // Excluded grants are deprioritized to the bottom of every sort
+      // order — demoted, never removed (see useDismissedGrants).
       const aDismissed = isGrantDismissed(a.id);
       const bDismissed = isGrantDismissed(b.id);
       if (aDismissed !== bDismissed) return aDismissed ? 1 : -1;
@@ -1652,14 +1653,14 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
                         </Badge>
                         {dismissed && (
                           <Badge className="text-xs bg-gray-100 text-gray-600 border-gray-200">
-                            <ThumbsDown className="w-3 h-3 mr-1" />
-                            Not Relevant
+                            <MinusCircle className="w-3 h-3 mr-1" />
+                            Excluded
                           </Badge>
                         )}
                       </div>
 
-                      {/* Watch and Not Relevant are the grant-tracking actions here —
-                          see useGrantAlerts and useDismissedGrants. */}
+                      {/* Watch/Unwatch and Exclude/Include are the grant-tracking
+                          actions here — see useGrantAlerts and useDismissedGrants. */}
                       <div className={`flex gap-1.5 ${viewMode === "grid" ? "flex-col items-end" : "items-center"}`}>
                         {grantWithTimestamp.lastViewed && (
                           <span className="text-xs text-gray-500">
@@ -1667,73 +1668,39 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
                           </span>
                         )}
                         <div className="flex items-center gap-2 flex-wrap justify-end">
-                          {dismissed ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => toggleDismiss(e, grant)}
-                              className="gap-1.5 border-gray-200 hover:border-teal-200 hover:bg-teal-50"
-                            >
-                              <Undo2 className="w-3.5 h-3.5" />
-                              Restore
-                            </Button>
-                          ) : (
-                            <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => toggleDismiss(e, grant)}
-                                    className="gap-1.5 rounded-r-none border-r-0 border-gray-200 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
-                                    aria-label="Not relevant — move this grant down in results"
-                                  >
-                                    <ThumbsDown className="w-3.5 h-3.5" />
-                                    Not Relevant
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" sideOffset={4}>
-                                  <p className="text-sm">We'll move this down in your results. It's never deleted.</p>
-                                </TooltipContent>
-                              </Tooltip>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="rounded-l-none px-1.5 border-gray-200 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
-                                    aria-label="More not-relevant options"
-                                  >
-                                    <ChevronDown className="w-3.5 h-3.5" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-64">
-                                  <DropdownMenuItem onClick={(e: React.MouseEvent) => toggleDismiss(e, grant)}>
-                                    <ThumbsDown className="w-4 h-4 mr-2" />
-                                    Not relevant to me
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={(e: React.MouseEvent) => {
-                                      e.stopPropagation();
-                                      dismissGrant(grant, "not-eligible");
-                                    }}
-                                  >
-                                    <ThumbsDown className="w-4 h-4 mr-2" />
-                                    Not eligible for us
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={(e: React.MouseEvent) => {
-                                      e.stopPropagation();
-                                      hideCategory(grant.category);
-                                    }}
-                                  >
-                                    <X className="w-4 h-4 mr-2" />
-                                    Hide all "{grant.category}" grants
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          )}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => toggleDismiss(e, grant)}
+                                className={`gap-1.5 ${
+                                  dismissed
+                                    ? "border-gray-200 hover:border-teal-200 hover:bg-teal-50"
+                                    : "border-gray-200 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                                }`}
+                                aria-label={
+                                  dismissed
+                                    ? "Include — restore this grant to your results"
+                                    : "Exclude — move this grant down in results"
+                                }
+                              >
+                                {dismissed ? (
+                                  <PlusCircle className="w-3.5 h-3.5" />
+                                ) : (
+                                  <MinusCircle className="w-3.5 h-3.5" />
+                                )}
+                                {dismissed ? "Include" : "Exclude"}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" sideOffset={4}>
+                              <p className="text-sm">
+                                {dismissed
+                                  ? "Bring this grant back into your normal results."
+                                  : "We'll move this down in your results. It's never deleted."}
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
                           <Button
                             variant="outline"
                             size="sm"
@@ -1745,7 +1712,7 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
                             }`}
                           >
                             <Eye className="w-3.5 h-3.5" />
-                            {isGrantAlertEnabled(grant.id) ? "Watching" : "Watch"}
+                            {isGrantAlertEnabled(grant.id) ? "Unwatch" : "Watch"}
                           </Button>
                         </div>
                       </div>

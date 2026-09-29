@@ -105,7 +105,7 @@ export function useDismissedGrants() {
     if (options?.silent) return;
 
     const title = options?.grantTitle || removed?.title || "This grant";
-    toast.success("Restored to your results", {
+    toast.success("Included in your results", {
       description: `"${title}" is back in its normal spot.`,
       duration: 3500,
     });
@@ -133,7 +133,7 @@ export function useDismissedGrants() {
 
       if (options?.silent) return;
 
-      toast("Marked as not relevant", {
+      toast("Excluded from your results", {
         description: `We'll move "${grant.title}" down in your results. It's never deleted — undo anytime.`,
         action: {
           label: "Undo",
