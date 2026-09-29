@@ -10,7 +10,7 @@
 
 import { CURRENT_USER_ID } from "@/data/orgMembers";
 
-export type SectionReviewStatus = "editing" | "in-review" | "approved";
+export type SectionReviewStatus = "in-progress" | "approved";
 
 export interface SectionAssignmentRecord {
   assigneeId: string;
@@ -27,7 +27,7 @@ const STORAGE_KEY = "ggrants:section-assignments";
 export function defaultAssignmentRecord(seedLastSaved?: string | null): SectionAssignmentRecord {
   return {
     assigneeId: CURRENT_USER_ID,
-    reviewStatus: "editing",
+    reviewStatus: "in-progress",
     lastSavedAt: seedLastSaved ?? null,
   };
 }
@@ -50,8 +50,7 @@ export function saveAllAssignments(all: AllAssignments): void {
 }
 
 export const REVIEW_STATUS_LABEL: Record<SectionReviewStatus, string> = {
-  editing: "Editing",
-  "in-review": "In Review",
+  "in-progress": "In Progress",
   approved: "Approved",
 };
 

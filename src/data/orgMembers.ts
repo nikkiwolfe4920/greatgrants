@@ -5,21 +5,25 @@
  * "Assign to" picker feel real in the prototype.
  */
 
+export type OrgMemberRole = "Admin" | "Member" | "Consultant";
+
 export interface OrgMember {
   id: string;
   name: string;
   initials: string;
   /** Background color for the avatar fallback. */
   avatarColor: string;
+  /** Shown in small grey text under the member's name in the assignment/filter menus. */
+  role: OrgMemberRole;
 }
 
 export const orgMembers: OrgMember[] = [
-  { id: "olivia-rhye", name: "Olivia Rhye", initials: "OR", avatarColor: "#FEF3C7" },
-  { id: "phoenix-baker", name: "Phoenix Baker", initials: "PB", avatarColor: "#DBEAFE" },
-  { id: "lana-steiner", name: "Lana Steiner", initials: "LS", avatarColor: "#FCE7F3" },
-  { id: "demi-wilkinson", name: "Demi Wilkinson", initials: "DW", avatarColor: "#E0E7FF" },
-  { id: "candice-wu", name: "Candice Wu", initials: "CW", avatarColor: "#D1FAE5" },
-  { id: "drew-cano", name: "Drew Cano", initials: "DC", avatarColor: "#FFE4E6" },
+  { id: "olivia-rhye", name: "Olivia Rhye", initials: "OR", avatarColor: "#FEF3C7", role: "Admin" },
+  { id: "phoenix-baker", name: "Phoenix Baker", initials: "PB", avatarColor: "#DBEAFE", role: "Member" },
+  { id: "lana-steiner", name: "Lana Steiner", initials: "LS", avatarColor: "#FCE7F3", role: "Admin" },
+  { id: "demi-wilkinson", name: "Demi Wilkinson", initials: "DW", avatarColor: "#E0E7FF", role: "Member" },
+  { id: "candice-wu", name: "Candice Wu", initials: "CW", avatarColor: "#D1FAE5", role: "Consultant" },
+  { id: "drew-cano", name: "Drew Cano", initials: "DC", avatarColor: "#FFE4E6", role: "Consultant" },
 ];
 
 /**

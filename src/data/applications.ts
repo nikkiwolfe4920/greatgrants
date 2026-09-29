@@ -30,6 +30,10 @@ export interface Application {
   sections: Section[];
   applicationStatus: "active" | "submitted" | "archived";
   submittedDate?: string;
+  /** The org program this application is associated with — shown on the accordion card. */
+  programName: string;
+  /** Org member (see orgMembers.ts) this application belongs to — used by the /applications "View By" filter. */
+  ownerId: string;
 }
 
 export interface Program {
@@ -57,7 +61,9 @@ export const mockApplications: Application[] = [
       { id: "s8", name: "Compliance", status: "not-started", points: 10 },
       { id: "s9", name: "Eligibility", status: "not-started", points: 5 },
     ],
-    applicationStatus: "active"
+    applicationStatus: "active",
+    programName: "Elderly Tech Program",
+    ownerId: "lana-steiner"
   },
   {
     id: "2",
@@ -77,7 +83,9 @@ export const mockApplications: Application[] = [
       { id: "s8", name: "Compliance", status: "complete", points: 10 },
       { id: "s9", name: "Eligibility", status: "complete", points: 5 },
     ],
-    applicationStatus: "active"
+    applicationStatus: "active",
+    programName: "Accessible Transit Initiative",
+    ownerId: "demi-wilkinson"
   },
   {
     id: "3",
@@ -98,7 +106,9 @@ export const mockApplications: Application[] = [
       { id: "s8", name: "Compliance", status: "complete", points: 10 },
       { id: "s9", name: "Eligibility", status: "complete", points: 5 },
     ],
-    applicationStatus: "submitted"
+    applicationStatus: "submitted",
+    programName: "Community Rebuilding Program",
+    ownerId: "candice-wu"
   },
   {
     id: "4",
@@ -119,6 +129,8 @@ export const mockApplications: Application[] = [
       { id: "s8", name: "Compliance", status: "complete", points: 10 },
       { id: "s9", name: "Eligibility", status: "complete", points: 5 },
     ],
-    applicationStatus: "submitted"
+    applicationStatus: "submitted",
+    programName: "Clean Communities Initiative",
+    ownerId: "drew-cano"
   }
 ];

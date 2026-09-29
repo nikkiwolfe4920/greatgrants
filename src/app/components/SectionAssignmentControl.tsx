@@ -15,8 +15,7 @@ import { CURRENT_USER_ID, getOrgMember, orgMembers } from "@/data/orgMembers";
 import { formatRelativeTime, REVIEW_STATUS_LABEL, type SectionReviewStatus } from "@/lib/sectionAssignments";
 
 const STATUS_TRIGGER_CLASSES: Record<SectionReviewStatus, string> = {
-  editing: "border-gray-200 bg-white text-gray-700",
-  "in-review": "border-amber-200 bg-amber-50 text-amber-700",
+  "in-progress": "border-gray-200 bg-white text-gray-700",
   approved: "border-green-200 bg-green-50 text-green-700",
 };
 
@@ -45,9 +44,15 @@ export function SectionAssignmentControl({
   const assignee = getOrgMember(assigneeId);
   const compact = size === "compact";
 
-  return (
-    <div className={cn("flex flex-col items-end gap-1.5 shrink-0", className)}>
-      <div className="flex items-center gap-2">
+  const lastSaved = showLastSaved && (
+    <div className="flex items-center gap-1 text-xs text-gray-400 whitespace-nowrap">
+      <Clock className="w-3 h-3" />
+      Last saved {formatRelativeTime(lastSavedAt)}
+    </div>
+  );
+
+  const controlsRow = (
+    <div className="flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -90,10 +95,13 @@ export function SectionAssignmentControl({
                     {member.initials}
                   </AvatarFallback>
                 </Avatar>
-                <span className="flex-1 truncate">
-                  {member.name}
-                  {member.id === CURRENT_USER_ID && <span className="text-gray-400"> (you)</span>}
-                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="truncate">
+                    {member.name}
+                    {member.id === CURRENT_USER_ID && <span className="text-gray-400"> (you)</span>}
+                  </div>
+                  <div className="text-xs text-gray-400">{member.role}</div>
+                </div>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
@@ -104,7 +112,7 @@ export function SectionAssignmentControl({
             size="sm"
             className={cn(
               "font-medium",
-              compact ? "h-7 w-[104px] text-xs" : "h-8 w-[116px] text-xs",
+              compact ? "h-7 w-[124px] text-xs" : "h-8 w-[136px] text-xs",
               STATUS_TRIGGER_CLASSES[reviewStatus],
             )}
           >
@@ -118,13 +126,24 @@ export function SectionAssignmentControl({
             ))}
           </SelectContent>
         </Select>
-      </div>
+    </div>
+  );
 
-      {showLastSaved && (
-        <div className="flex items-center gap-1 text-xs text-gray-400 whitespace-nowrap">
-          <Clock className="w-3 h-3" />
-          Last saved {formatRelativeTime(lastSavedAt)}
-        </div>
+  return (
+    <div className={cn("flex flex-col items-end gap-1.5 shrink-0", className)}>
+      {/* On the full section header (/application/:id/s/:id) the last-saved
+          timestamp sits above the assign/status controls; the compact list
+          rows on /applications keep it below, under the row it annotates. */}
+      {size === "default" ? (
+        <>
+          {lastSaved}
+          {controlsRow}
+        </>
+      ) : (
+        <>
+          {controlsRow}
+          {lastSaved}
+        </>
       )}
     </div>
   );
