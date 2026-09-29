@@ -201,7 +201,7 @@ export function useGrantAlerts() {
     if (options?.silent) return;
 
     const title = options?.grantTitle || removed?.name?.replace(/ Alert$/, "") || "this grant";
-    toast("Stopped watching this grant", {
+    toast("Unwatched this grant", {
       description: `You won't receive alerts for "${title}" until you watch it again.`,
       duration: 4000,
     });
