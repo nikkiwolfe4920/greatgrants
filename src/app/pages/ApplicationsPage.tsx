@@ -212,13 +212,29 @@ export function ApplicationsPage({
     return 0;
   };
 
-  // Helper function to get section status based on uploaded files
+  // Whether the viewer has opened a not-started section via its Start
+  // button — see markSectionStarted, called right before navigating to
+  // /application/:id/s/:id below. Persisted so the section's badge and
+  // status select read "In Progress" instead of "Not Started" from then on.
+  const isSectionStarted = (appId: string, sectionId: string): boolean => {
+    return localStorage.getItem(`app-${appId}-section-${sectionId}-started`) === "true";
+  };
+
+  const markSectionStarted = (appId: string, sectionId: string) => {
+    localStorage.setItem(`app-${appId}-section-${sectionId}-started`, "true");
+  };
+
+  // Helper function to get section status based on uploaded files and
+  // whether the viewer has started a previously not-started section.
   const getSectionStatus = (section: Section, appId: string): "complete" | "not-started" | "in-progress" => {
     if (section.id === "s7") {
       const fileCount = getUploadedFileCount(appId, section.id);
       if (fileCount > 0) {
         return "in-progress";
       }
+    }
+    if (section.status === "not-started" && isSectionStarted(appId, section.id)) {
+      return "in-progress";
     }
     return section.status;
   };
@@ -1005,6 +1021,7 @@ export function ApplicationsPage({
                                     className="bg-white"
                                     onClick={(e) => {
                                       e.stopPropagation();
+                                      markSectionStarted(app.id, section.id);
                                       navigate(`/application/${app.id}/s/${section.id}`);
                                     }}
                                   >

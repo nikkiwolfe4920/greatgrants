@@ -32,10 +32,27 @@ export function defaultAssignmentRecord(seedLastSaved?: string | null): SectionA
   };
 }
 
+const VALID_REVIEW_STATUSES = new Set<SectionReviewStatus>(["in-progress", "approved"]);
+
 export function loadAllAssignments(): AllAssignments {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as AllAssignments) : {};
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as AllAssignments;
+    // A browser that stored assignments under the old three-status model
+    // ("editing" | "in-review" | "approved") would otherwise keep serving
+    // an unrecognized reviewStatus forever — coerce anything unrecognized
+    // back to "in-progress" so the status select never renders blank for a
+    // section it shouldn't.
+    for (const appId in parsed) {
+      for (const sectionId in parsed[appId]) {
+        const record = parsed[appId][sectionId];
+        if (!VALID_REVIEW_STATUSES.has(record.reviewStatus)) {
+          record.reviewStatus = "in-progress";
+        }
+      }
+    }
+    return parsed;
   } catch {
     return {};
   }

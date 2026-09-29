@@ -20,7 +20,7 @@ const STATUS_TRIGGER_CLASSES: Record<SectionReviewStatus, string> = {
 
 interface SectionAssignmentControlProps {
   assigneeId: string;
-  /** null renders a blank, disabled status pill — used on /applications for sections that haven't been started yet. */
+  /** null renders no status control at all — used on /applications for sections that haven't been started yet. */
   reviewStatus: SectionReviewStatus | null;
   lastSavedAt?: string | null;
   onAssign: (memberId: string) => void;
@@ -107,15 +107,7 @@ export function SectionAssignmentControl({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {reviewStatus === null ? (
-          <div
-            title="Nothing to review yet — this section hasn't been started"
-            className={cn(
-              "rounded-md border border-gray-200 bg-white",
-              compact ? "h-7 w-[124px]" : "h-8 w-[136px]",
-            )}
-          />
-        ) : (
+        {reviewStatus !== null && (
           <Select value={reviewStatus} onValueChange={(value) => onReviewStatusChange(value as SectionReviewStatus)}>
             <SelectTrigger
               size="sm"
