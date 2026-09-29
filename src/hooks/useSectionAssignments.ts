@@ -20,11 +20,6 @@ interface AssignableApplication {
  * Owns per-section "assigned to" + review status + last-saved state for one
  * or more applications, persisted to localStorage (see sectionAssignments.ts)
  * so it's shared between /applications and /application/:id/s/:id.
- *
- * Business rule: reassigning a section away from the current user
- * (Olivia Rhye) automatically moves it into "In Review" — see assignSection.
- * Reassigning it back doesn't force a status change, so an "Approved" status
- * set by the reviewer survives the handoff back to its owner.
  */
 export function useSectionAssignments(applications: AssignableApplication[]) {
   const [all, setAll] = useState<AllAssignments>(() => loadAllAssignments());
@@ -92,10 +87,6 @@ export function useSectionAssignments(applications: AssignableApplication[]) {
       updateRecord(applicationId, sectionId, (prev) => ({
         ...prev,
         assigneeId: memberId,
-        // Reassigning away from the owner kicks off a review cycle;
-        // reassigning back to the owner leaves the status alone so an
-        // "Approved" verdict survives the handoff.
-        reviewStatus: memberId === CURRENT_USER_ID ? prev.reviewStatus : "in-review",
       }));
 
       const member = getOrgMember(memberId);

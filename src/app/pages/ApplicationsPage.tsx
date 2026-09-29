@@ -7,7 +7,6 @@ import {
   ChevronDown,
   MoreVertical,
   Archive,
-  Printer,
   ArchiveRestore,
   Trash2,
   FileText,
@@ -17,9 +16,7 @@ import {
   Sparkles,
   ArrowRight,
   CheckCircle2,
-  FolderOpen,
-  Check,
-  Plus
+  Check
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
@@ -27,14 +24,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/app/components/ui/dropdown-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/app/components/ui/popover";
+import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -49,8 +43,9 @@ import { ApplicationRightRail } from "@/app/components/ApplicationRightRail";
 import { MarkApplicationSubmittedModal } from "@/app/components/MarkApplicationSubmittedModal";
 import { SectionAssignmentControl } from "@/app/components/SectionAssignmentControl";
 
-import { mockApplications, type Application, type Program, type Section } from "@/data/applications";
+import { mockApplications, type Application, type Section } from "@/data/applications";
 import { useSectionAssignments } from "@/hooks/useSectionAssignments";
+import { CURRENT_USER_ID, getOrgMember, orgMembers } from "@/data/orgMembers";
 
 interface ApplicationsPageProps {
   /**
@@ -59,8 +54,6 @@ interface ApplicationsPageProps {
    *   - removes the "..." (More Menu) button next to the expand/collapse
    *     chevron entirely;
    *   - relabels every "AI Enhanced" section badge to "AI Draft";
-   *   - shows every active application's "Add Programs" button with 1
-   *     program already added, disabled with a not-allowed cursor;
    *   - disables every section's Start/Continue button (they'd otherwise
    *     navigate off this page to /application/:id/s/:id);
    *   - hides the Unlimited AI-Grant Writer upsell in
@@ -70,9 +63,9 @@ interface ApplicationsPageProps {
    *     checkbox.
    * Together with `demoLockedApplicationId`, also freezes one
    * application's entire accordion card: its expand/collapse chevron and
-   * "Mark as submitted" checkbox become inert too (the "..." menu, Add
-   * Programs, and Preview/Export are already covered by the page-wide
-   * rule above). Used by the locked /applications-demo walkthrough (see
+   * "Mark as submitted" checkbox become inert too (the "..." menu and
+   * Preview/Export are already covered by the page-wide rule above). Used
+   * by the locked /applications-demo walkthrough (see
    * ApplicationsDemoPage). The global left nav disables itself separately
    * via the existing isLockedDemoRoute check, same as every other locked
    * demo route.
@@ -126,9 +119,10 @@ export function ApplicationsPage({
   const [pendingSubmitAppId, setPendingSubmitAppId] = useState<string | null>(null);
   const [movingToActiveAppId, setMovingToActiveAppId] = useState<string | null>(null);
   const [archivingAppId, setArchivingAppId] = useState<string | null>(null);
-  const [publishedPrograms, setPublishedPrograms] = useState<Program[]>([]);
-  const [selectedPrograms, setSelectedPrograms] = useState<Record<string, string[]>>({});
   const [activeSection, setActiveSection] = useState<Section | null>(null);
+  // "View By" filter — null shows every application, otherwise only those
+  // owned by the selected org member (see Application.ownerId).
+  const [viewByMemberId, setViewByMemberId] = useState<string | null>(null);
   // Applications the viewer has moved from Submitted back to Active while
   // demoLocked — each gets the same frozen-accordion treatment as
   // demoLockedApplicationId. See handleMoveToActive below.
@@ -149,26 +143,6 @@ export function ApplicationsPage({
     document.querySelector("main")?.scrollTo({ top: 0 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scrollToTopOnMount]);
-
-  // Load published programs from localStorage
-  useEffect(() => {
-    try {
-      const storedProjects = localStorage.getItem("projects");
-      if (storedProjects) {
-        const projects = JSON.parse(storedProjects);
-        const published = projects
-          .filter((p: any) => p.status === "published")
-          .map((p: any) => ({
-            id: p.id,
-            title: p.title,
-            summary: p.summary || "",
-          }));
-        setPublishedPrograms(published);
-      }
-    } catch (error) {
-      console.error("Failed to load programs:", error);
-    }
-  }, []);
 
   // Intersection Observer for tracking active section during scroll
   useEffect(() => {
@@ -221,21 +195,6 @@ export function ApplicationsPage({
       sectionRefs.current[sectionId] = el;
     };
   }, []);
-  
-  // Toggle program selection for an application
-  const toggleProgramSelection = (appId: string, programId: string) => {
-    setSelectedPrograms(prev => {
-      const current = prev[appId] || [];
-      const isSelected = current.includes(programId);
-      
-      return {
-        ...prev,
-        [appId]: isSelected
-          ? current.filter(id => id !== programId)
-          : [...current, programId]
-      };
-    });
-  };
 
   // Helper function to get uploaded file count from localStorage
   const getUploadedFileCount = (appId: string, sectionId: string): number => {
@@ -289,9 +248,10 @@ export function ApplicationsPage({
     return () => clearInterval(progressInterval);
   }, [newApplicationPending]);
 
-  const activeApplications = applications.filter(app => app.applicationStatus === "active" && !archivedApps.includes(app.id));
-  const submittedApplications = applications.filter(app => app.applicationStatus === "submitted" && !archivedApps.includes(app.id));
-  const archivedApplications = applications.filter(app => archivedApps.includes(app.id));
+  const matchesViewBy = (app: Application) => !viewByMemberId || app.ownerId === viewByMemberId;
+  const activeApplications = applications.filter(app => app.applicationStatus === "active" && !archivedApps.includes(app.id) && matchesViewBy(app));
+  const submittedApplications = applications.filter(app => app.applicationStatus === "submitted" && !archivedApps.includes(app.id) && matchesViewBy(app));
+  const archivedApplications = applications.filter(app => archivedApps.includes(app.id) && matchesViewBy(app));
   
   const handleArchive = (appId: string) => {
     setArchivingAppId(appId);
@@ -312,11 +272,6 @@ export function ApplicationsPage({
   const handleDelete = (appId: string) => {
     console.log("Delete application:", appId);
     setArchivedApps(archivedApps.filter(id => id !== appId));
-  };
-  
-  const handlePrint = (appId: string) => {
-    console.log("Print application:", appId);
-    window.print();
   };
   
   const handleMarkAsSubmitted = (appId: string) => {
@@ -429,7 +384,7 @@ export function ApplicationsPage({
 
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-start justify-between gap-4 mb-4">
           <div>
             <div className="mb-3">
               <FileText
@@ -448,55 +403,63 @@ export function ApplicationsPage({
                 : "View and manage archived applications"}
             </p>
           </div>
-          
-          {/* View Toggle */}
-          <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
-            <button
-              onClick={() => setCurrentView("active")}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                currentView === "active"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Active
-              {activeApplications.length > 0 && (
-                <Badge className="ml-2 bg-teal-600 text-white">
-                  {activeApplications.length}
-                </Badge>
-              )}
-            </button>
-            <button
-              onClick={() => setCurrentView("submitted")}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                currentView === "submitted"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              Submitted
-              {submittedApplications.length > 0 && (
-                <Badge className="ml-2 bg-gray-600 text-white">
-                  {submittedApplications.length}
-                </Badge>
-              )}
-            </button>
-            <button
-              onClick={() => setCurrentView("archive")}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                currentView === "archive"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              <Archive className="w-4 h-4 inline mr-1.5" />
-              Archive
-              {archivedApplications.length > 0 && (
-                <Badge className="ml-2 bg-gray-600 text-white">
-                  {archivedApplications.length}
-                </Badge>
-              )}
-            </button>
+
+          <div className="flex flex-col items-end gap-3">
+            {/* View Toggle */}
+            <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setCurrentView("active")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  currentView === "active"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Active
+                {activeApplications.length > 0 && (
+                  <Badge className="ml-2 bg-teal-600 text-white">
+                    {activeApplications.length}
+                  </Badge>
+                )}
+              </button>
+              <button
+                onClick={() => setCurrentView("submitted")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  currentView === "submitted"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Submitted
+                {submittedApplications.length > 0 && (
+                  <Badge className="ml-2 bg-gray-600 text-white">
+                    {submittedApplications.length}
+                  </Badge>
+                )}
+              </button>
+              <button
+                onClick={() => setCurrentView("archive")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  currentView === "archive"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <Archive className="w-4 h-4 inline mr-1.5" />
+                Archive
+                {archivedApplications.length > 0 && (
+                  <Badge className="ml-2 bg-gray-600 text-white">
+                    {archivedApplications.length}
+                  </Badge>
+                )}
+              </button>
+            </div>
+
+            {/* View By — filters the applications below to one org member's */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">View By:</span>
+              <ViewByFilter value={viewByMemberId} onChange={setViewByMemberId} />
+            </div>
           </div>
         </div>
       </div>
@@ -760,20 +723,13 @@ export function ApplicationsPage({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
                           {currentView === "active" ? (
-                            <>
-                              <DropdownMenuItem onClick={() => handlePrint(app.id)} className="gap-3 py-2.5">
-                                <Printer className="w-4 h-4" />
-                                <span>Print</span>
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => handleArchive(app.id)}
-                                className="gap-3 py-2.5 text-gray-700"
-                              >
-                                <Archive className="w-4 h-4" />
-                                <span>Archive</span>
-                              </DropdownMenuItem>
-                            </>
+                            <DropdownMenuItem
+                              onClick={() => handleArchive(app.id)}
+                              className="gap-3 py-2.5 text-gray-700"
+                            >
+                              <Archive className="w-4 h-4" />
+                              <span>Archive</span>
+                            </DropdownMenuItem>
                           ) : (
                             <>
                               <DropdownMenuItem onClick={() => handleUnarchive(app.id)} className="gap-3 py-2.5">
@@ -837,10 +793,21 @@ export function ApplicationsPage({
                     )}
                   </div>
                   
-                  {/* Status Change Checkbox */}
+                  {/* Status Change Row */}
                   {currentView === "active" && app.applicationStatus === "active" && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                      <div>
+                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between gap-4">
+                      {demoLocked ? (
+                        <span className="text-sm font-medium text-teal-600">{app.programName}</span>
+                      ) : (
+                        <Link
+                          to="/project-details"
+                          className="text-sm font-medium text-teal-600 hover:text-teal-700 hover:underline"
+                        >
+                          {app.programName}
+                        </Link>
+                      )}
+
+                      <div className="flex items-center gap-6">
                         {submittingAppId === app.id ? (
                           <div className="flex items-center gap-2 text-sm text-teal-700">
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -871,112 +838,8 @@ export function ApplicationsPage({
                             <span className="font-medium">Mark as submitted</span>
                           </label>
                         )}
-                      </div>
-                      
-                      <div className="flex items-center gap-6">
-                        {/* Add Programs Feature — on /applications-demo,
-                            every active application shows 1 program
-                            already added and is disabled, not just the
-                            frozen accordion. */}
-                        {demoLocked ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled
-                            aria-disabled="true"
-                            title="This is a locked demo — programs can't be changed here"
-                            className="gap-1.5 border-gray-200 text-gray-400 cursor-not-allowed"
-                          >
-                            <FolderOpen className="w-4 h-4 text-gray-300" />
-                            <span>Add Programs</span>
-                            <Badge className="ml-1 bg-gray-300 text-white text-xs px-1.5">
-                              1
-                            </Badge>
-                          </Button>
-                        ) : publishedPrograms.length > 0 ? (
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="gap-1.5 border-teal-200 hover:border-teal-300 hover:bg-teal-50"
-                              >
-                                <FolderOpen className="w-4 h-4 text-teal-600" />
-                                <span className="text-gray-700">Add Programs</span>
-                                {selectedPrograms[app.id]?.length > 0 && (
-                                  <Badge className="ml-1 bg-teal-600 hover:bg-teal-700 text-white text-xs px-1.5">
-                                    {selectedPrograms[app.id].length}
-                                  </Badge>
-                                )}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[420px]" align="end">
-                              <div className="space-y-4">
-                                <div>
-                                  <h4 className="font-semibold text-gray-900 mb-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                                    Add Programs to Application
-                                  </h4>
-                                  <p className="text-xs text-gray-600 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                                    Applying programs to your application makes the application process that much more seamless.
-                                  </p>
-                                </div>
-                                
-                                <div className="border-t border-gray-200 pt-3">
-                                  <p className="text-xs font-medium text-gray-700 mb-3 uppercase tracking-wide" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                                    Select Programs
-                                  </p>
-                                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                                    {publishedPrograms.map((program) => {
-                                      const isSelected = selectedPrograms[app.id]?.includes(program.id) || false;
-                                      
-                                      return (
-                                        <div
-                                          key={program.id}
-                                          onClick={() => toggleProgramSelection(app.id, program.id)}
-                                          className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 hover:border-teal-300 hover:bg-teal-50/50 cursor-pointer transition-all group"
-                                        >
-                                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${isSelected ? 'bg-teal-600 border-teal-600' : 'border-gray-300 group-hover:border-teal-400'}`}>
-                                            {isSelected && <Check className="w-3 h-3 text-white" />}
-                                          </div>
-                                          <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-gray-900 text-sm mb-1 line-clamp-1" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                                              {program.title}
-                                            </p>
-                                            {program.summary && (
-                                              <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                                                {program.summary}
-                                              </p>
-                                            )}
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                                
-                                {selectedPrograms[app.id]?.length > 0 && (
-                                  <div className="border-t border-gray-200 pt-3">
-                                    <p className="text-xs text-teal-700 bg-teal-50 rounded-lg p-2 border border-teal-200" style={{ fontFamily: 'Cabin, sans-serif' }}>
-                                      ✓ {selectedPrograms[app.id].length} {selectedPrograms[app.id].length === 1 ? 'program' : 'programs'} selected
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5 border-teal-200 hover:border-teal-300 hover:bg-teal-50"
-                            onClick={() => navigate('/project-details')}
-                          >
-                            <Plus className="w-4 h-4 text-teal-600" />
-                            <span className="text-gray-700">Add Program</span>
-                          </Button>
-                        )}
-                        
-                        {/* Export Button aligned to the right */}
+
+                        {/* Export Button */}
                         {isLockedAccordion ? (
                           <Button
                             variant="outline"
@@ -1187,5 +1050,78 @@ export function ApplicationsPage({
         hideUpsell={demoLocked}
       />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// "View By" filter — trigger + dropdown shown at the top of /applications,
+// mirroring the per-section "Assign to" picker in SectionAssignmentControl
+// (avatar + name, with role in light grey underneath). Defaults to "All
+// Members"; selecting a member filters the page's applications down to the
+// ones they own (see Application.ownerId and matchesViewBy above).
+// ---------------------------------------------------------------------------
+
+function ViewByFilter({ value, onChange }: { value: string | null; onChange: (memberId: string | null) => void }) {
+  const selectedMember = value ? getOrgMember(value) : null;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="flex items-center gap-2 rounded-full border border-gray-200 bg-white pl-1.5 pr-3 py-1 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+        >
+          {selectedMember ? (
+            <Avatar className="size-6">
+              <AvatarFallback
+                style={{ backgroundColor: selectedMember.avatarColor }}
+                className="text-[10px] font-semibold text-gray-700"
+              >
+                {selectedMember.initials}
+              </AvatarFallback>
+            </Avatar>
+          ) : (
+            <span className="flex items-center justify-center size-6 rounded-full bg-gray-100 text-[9px] font-semibold text-gray-500 shrink-0">
+              ALL
+            </span>
+          )}
+          <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
+            {selectedMember ? selectedMember.name : "All Members"}
+          </span>
+          <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuLabel>Assigned to</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => onChange(null)} className="gap-2.5 py-2">
+          <span className="flex items-center justify-center size-6 rounded-full bg-gray-100 text-[9px] font-semibold text-gray-500 shrink-0">
+            ALL
+          </span>
+          <span className="flex-1">All Members</span>
+          {!value && <Check className="w-4 h-4 text-gray-900 shrink-0" />}
+        </DropdownMenuItem>
+        {orgMembers.map((member) => (
+          <DropdownMenuItem key={member.id} onClick={() => onChange(member.id)} className="gap-2.5 py-2">
+            <Avatar className="size-6 shrink-0">
+              <AvatarFallback
+                style={{ backgroundColor: member.avatarColor }}
+                className="text-[10px] font-semibold text-gray-700"
+              >
+                {member.initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <div className="truncate">
+                {member.name}
+                {member.id === CURRENT_USER_ID && <span className="text-gray-400"> (you)</span>}
+              </div>
+              <div className="text-xs text-gray-400">{member.role}</div>
+            </div>
+            {value === member.id && <Check className="w-4 h-4 text-gray-900 shrink-0" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
