@@ -26,6 +26,7 @@ import {
   SearchX,
   FolderOpen,
   Eye,
+  EyeOff,
   DollarSign,
   Info,
   AlertTriangle,
@@ -1705,13 +1706,18 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
                             variant="outline"
                             size="sm"
                             onClick={(e) => toggleWatch(e, grant)}
-                            className={`gap-1.5 ${
+                            className="gap-1.5 border-gray-200 hover:border-teal-200 hover:bg-teal-50"
+                            aria-label={
                               isGrantAlertEnabled(grant.id)
-                                ? "border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100"
-                                : "border-gray-200 hover:border-teal-200 hover:bg-teal-50"
-                            }`}
+                                ? "Unwatch — stop getting alerts for this grant"
+                                : "Watch — get alerts about this grant"
+                            }
                           >
-                            <Eye className="w-3.5 h-3.5" />
+                            {isGrantAlertEnabled(grant.id) ? (
+                              <EyeOff className="w-3.5 h-3.5" />
+                            ) : (
+                              <Eye className="w-3.5 h-3.5" />
+                            )}
                             {isGrantAlertEnabled(grant.id) ? "Unwatch" : "Watch"}
                           </Button>
                         </div>
