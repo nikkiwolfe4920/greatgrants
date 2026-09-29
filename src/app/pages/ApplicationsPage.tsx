@@ -120,8 +120,9 @@ export function ApplicationsPage({
   const [movingToActiveAppId, setMovingToActiveAppId] = useState<string | null>(null);
   const [archivingAppId, setArchivingAppId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<Section | null>(null);
-  // "View By" filter — null shows every application, otherwise only those
-  // owned by the selected org member (see Application.ownerId).
+  // "View By" filter — null shows every section, otherwise every active
+  // application accordion still renders, but only the sections assigned to
+  // the selected org member (see assignment.assigneeId) are shown inside it.
   const [viewByMemberId, setViewByMemberId] = useState<string | null>(null);
   // Applications the viewer has moved from Submitted back to Active while
   // demoLocked — each gets the same frozen-accordion treatment as
@@ -222,6 +223,14 @@ export function ApplicationsPage({
     return section.status;
   };
 
+  // The sections of an application to render given the "View By" filter —
+  // every section when no member is selected, otherwise just the ones
+  // currently assigned to that member (see getAssignment/assignSection).
+  const visibleSections = (app: Application): Section[] => {
+    if (!viewByMemberId) return app.sections;
+    return app.sections.filter((section) => getAssignment(app.id, section.id).assigneeId === viewByMemberId);
+  };
+
   // Simulate progress for pending application
   useEffect(() => {
     if (!newApplicationPending) return;
@@ -248,10 +257,9 @@ export function ApplicationsPage({
     return () => clearInterval(progressInterval);
   }, [newApplicationPending]);
 
-  const matchesViewBy = (app: Application) => !viewByMemberId || app.ownerId === viewByMemberId;
-  const activeApplications = applications.filter(app => app.applicationStatus === "active" && !archivedApps.includes(app.id) && matchesViewBy(app));
-  const submittedApplications = applications.filter(app => app.applicationStatus === "submitted" && !archivedApps.includes(app.id) && matchesViewBy(app));
-  const archivedApplications = applications.filter(app => archivedApps.includes(app.id) && matchesViewBy(app));
+  const activeApplications = applications.filter(app => app.applicationStatus === "active" && !archivedApps.includes(app.id));
+  const submittedApplications = applications.filter(app => app.applicationStatus === "submitted" && !archivedApps.includes(app.id));
+  const archivedApplications = applications.filter(app => archivedApps.includes(app.id));
   
   const handleArchive = (appId: string) => {
     setArchivingAppId(appId);
@@ -382,9 +390,10 @@ export function ApplicationsPage({
         </BreadcrumbList>
       </Breadcrumb>
 
-      {/* Header */}
+      {/* Header — two rows, each split left/right, so the subtitle lines up
+          horizontally with the "View By" filter beneath the tabs. */}
       <div className="mb-8">
-        <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="flex items-start justify-between gap-4 mb-2">
           <div>
             <div className="mb-3">
               <FileText
@@ -392,74 +401,75 @@ export function ApplicationsPage({
                 strokeWidth={1.5}
               />
             </div>
-            <h1 className="text-2xl text-gray-900 mb-2" style={{ fontFamily: 'Lustria, serif', fontWeight: 600 }}>
+            <h1 className="text-2xl text-gray-900" style={{ fontFamily: 'Lustria, serif', fontWeight: 600 }}>
               {currentView === "active" ? "All Applications" : currentView === "submitted" ? "Submitted Applications" : "Archived Applications"}
             </h1>
-            <p className="text-gray-600 text-sm">
-              {currentView === "active"
-                ? "Manage your active grant applications"
-                : currentView === "submitted"
-                ? "View applications submitted for review"
-                : "View and manage archived applications"}
-            </p>
           </div>
 
-          <div className="flex flex-col items-end gap-3">
-            {/* View Toggle */}
-            <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
-              <button
-                onClick={() => setCurrentView("active")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  currentView === "active"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                Active
-                {activeApplications.length > 0 && (
-                  <Badge className="ml-2 bg-teal-600 text-white">
-                    {activeApplications.length}
-                  </Badge>
-                )}
-              </button>
-              <button
-                onClick={() => setCurrentView("submitted")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  currentView === "submitted"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                Submitted
-                {submittedApplications.length > 0 && (
-                  <Badge className="ml-2 bg-gray-600 text-white">
-                    {submittedApplications.length}
-                  </Badge>
-                )}
-              </button>
-              <button
-                onClick={() => setCurrentView("archive")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  currentView === "archive"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                <Archive className="w-4 h-4 inline mr-1.5" />
-                Archive
-                {archivedApplications.length > 0 && (
-                  <Badge className="ml-2 bg-gray-600 text-white">
-                    {archivedApplications.length}
-                  </Badge>
-                )}
-              </button>
-            </div>
+          {/* View Toggle */}
+          <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setCurrentView("active")}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentView === "active"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Active
+              {activeApplications.length > 0 && (
+                <Badge className="ml-2 bg-teal-600 text-white">
+                  {activeApplications.length}
+                </Badge>
+              )}
+            </button>
+            <button
+              onClick={() => setCurrentView("submitted")}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentView === "submitted"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Submitted
+              {submittedApplications.length > 0 && (
+                <Badge className="ml-2 bg-gray-600 text-white">
+                  {submittedApplications.length}
+                </Badge>
+              )}
+            </button>
+            <button
+              onClick={() => setCurrentView("archive")}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentView === "archive"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <Archive className="w-4 h-4 inline mr-1.5" />
+              Archive
+              {archivedApplications.length > 0 && (
+                <Badge className="ml-2 bg-gray-600 text-white">
+                  {archivedApplications.length}
+                </Badge>
+              )}
+            </button>
+          </div>
+        </div>
 
-            {/* View By — filters the applications below to one org member's */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">View By:</span>
-              <ViewByFilter value={viewByMemberId} onChange={setViewByMemberId} />
-            </div>
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-gray-600 text-sm">
+            {currentView === "active"
+              ? "Manage your active grant applications"
+              : currentView === "submitted"
+              ? "View applications submitted for review"
+              : "View and manage archived applications"}
+          </p>
+
+          {/* View By — every active application accordion still renders; this only filters which of its sections show (see visibleSections). */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">View By:</span>
+            <ViewByFilter value={viewByMemberId} onChange={setViewByMemberId} />
           </div>
         </div>
       </div>
@@ -891,11 +901,18 @@ export function ApplicationsPage({
                   )}
                 </div>
 
-                {/* Sections */}
+                {/* Sections — when a "View By" member is selected, only that
+                    person's assigned sections show; the accordion itself
+                    still renders for every application. */}
                 {isExpanded && (
                   <div className="p-6">
+                    {visibleSections(app).length === 0 ? (
+                      <p className="text-sm text-gray-500 text-center py-6">
+                        No sections assigned to {getOrgMember(viewByMemberId).name}.
+                      </p>
+                    ) : (
                     <div className="space-y-4">
-                      {app.sections.map((section) => {
+                      {visibleSections(app).map((section) => {
                         const actualStatus = getSectionStatus(section, app.id);
                         const fileCount = section.id === "s7" ? getUploadedFileCount(app.id, section.id) : 0;
                         const assignment = getAssignment(app.id, section.id);
@@ -935,11 +952,13 @@ export function ApplicationsPage({
                                 )}
                               </div>
 
-                              {/* Assignment flow — upper right corner of the section row: who it's assigned to and its review status. */}
+                              {/* Assignment flow — upper right corner of the section row: who it's assigned to and its review status.
+                                  A section that hasn't been started yet (badge reads "Not Started") shows a blank status pill rather
+                                  than defaulting to "In Progress". */}
                               <SectionAssignmentControl
                                 size="compact"
                                 assigneeId={assignment.assigneeId}
-                                reviewStatus={assignment.reviewStatus}
+                                reviewStatus={actualStatus === "not-started" ? null : assignment.reviewStatus}
                                 lastSavedAt={assignment.lastSavedAt}
                                 onAssign={(memberId) => assignSection(app.id, section.id, memberId)}
                                 onReviewStatusChange={(status) => setReviewStatus(app.id, section.id, status)}
@@ -998,6 +1017,7 @@ export function ApplicationsPage({
                         );
                       })}
                     </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1057,8 +1077,9 @@ export function ApplicationsPage({
 // "View By" filter — trigger + dropdown shown at the top of /applications,
 // mirroring the per-section "Assign to" picker in SectionAssignmentControl
 // (avatar + name, with role in light grey underneath). Defaults to "All
-// Members"; selecting a member filters the page's applications down to the
-// ones they own (see Application.ownerId and matchesViewBy above).
+// Members"; selecting a member doesn't hide any applications — it narrows
+// each expanded accordion down to just the sections assigned to that member
+// (see visibleSections above).
 // ---------------------------------------------------------------------------
 
 function ViewByFilter({ value, onChange }: { value: string | null; onChange: (memberId: string | null) => void }) {
