@@ -10,7 +10,6 @@ import {
   Eye,
   EyeOff,
   Share2,
-  FolderPlus,
   CheckCircle2,
   FileText,
   Download,
@@ -371,7 +370,6 @@ export function EligibilityAssessmentPage({
   const [isAssessing, setIsAssessing] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
   const [docsExpanded, setDocsExpanded] = useState(true);
-  const [programLinked, setProgramLinked] = useState(false);
   const [reportGeneratedAt, setReportGeneratedAt] = useState<number | null>(null);
   const [showApplicationLoading, setShowApplicationLoading] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
@@ -574,12 +572,12 @@ export function EligibilityAssessmentPage({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon"
-                        className="h-8 w-8 border-gray-200 text-gray-500 hover:bg-gray-50"
+                        className="h-8 w-8 text-gray-500 hover:text-gray-700"
                         aria-label="More actions"
                       >
-                        <MoreVertical className="w-3.5 h-3.5" />
+                        <MoreVertical className="w-5 h-5" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
@@ -675,12 +673,12 @@ export function EligibilityAssessmentPage({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="icon"
-                      className="border-gray-200 text-gray-500 hover:bg-gray-50"
+                      className="text-gray-500 hover:text-gray-700"
                       aria-label="More actions"
                     >
-                      <MoreVertical className="w-4 h-4" />
+                      <MoreVertical className="w-5 h-5" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
@@ -703,20 +701,6 @@ export function EligibilityAssessmentPage({
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-
-              {/* Hidden on the locked /org-detail-demo walkthrough — see
-                  demoLocked below. */}
-              {!demoLocked && (
-                <Button variant="outline" size="sm" className="h-8 gap-1.5 border-teal-200 text-gray-700 hover:bg-teal-50">
-                  <FolderPlus className="w-4 h-4 text-gray-500" />
-                  Add Programs
-                  {programLinked && (
-                    <span className="inline-flex size-5 items-center justify-center rounded-md bg-teal-600 text-xs font-medium text-white">
-                      1
-                    </span>
-                  )}
-                </Button>
-              )}
 
               {reportGeneratedAt && (
                 <div className="flex items-center gap-1.5 text-sm">
@@ -896,7 +880,6 @@ export function EligibilityAssessmentPage({
                       grantId={GRANT_ID}
                       grantTitle={GRANT_TITLE}
                       onExit={() => setIsAssessing(false)}
-                      onProgramLinked={setProgramLinked}
                       onReportGenerated={setReportGeneratedAt}
                       onStartApplication={handleStartApplication}
                       onAnchorScroll={() => scrollToSection("eligibility-assessment")}
