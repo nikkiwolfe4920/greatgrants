@@ -15,6 +15,7 @@ import { OrganizationsPage } from "./pages/OrganizationsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SignInPage } from "./pages/SignInPage";
 import { MarketingPage } from "./pages/MarketingPage";
+import { PublicPartnerOpenPage, PublicPartnerClosedPage } from "./pages/PublicPartnerCallPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { OnboardingPage1 } from "./pages/OnboardingPage1";
 import { OnboardingPage2 } from "./pages/OnboardingPage2";
@@ -58,6 +59,17 @@ const routes = [
     // it renders its own marketing shell rather than the app sidebar.
     path: "/marketing",
     element: <MarketingPage />,
+  },
+  {
+    // Public, shareable partner call pages (logged out) — no account needed
+    // to read the call or express interest. Deliberately outside
+    // LayoutWithProvider, same reasoning as /marketing.
+    path: "/publicpartner-open",
+    element: <PublicPartnerOpenPage />,
+  },
+  {
+    path: "/publicpartner-closed",
+    element: <PublicPartnerClosedPage />,
   },
   {
     path: "/signin",
