@@ -47,6 +47,11 @@ import { StopWatchingDialog } from "@/app/components/StopWatchingDialog";
 import { useGrantAlerts } from "@/hooks/useGrantAlerts";
 import { useDismissedGrants } from "@/hooks/useDismissedGrants";
 import { useAssessmentUsage, resetAssessmentUsage } from "@/hooks/useAssessmentUsage";
+import {
+  subRecipientCategories,
+  subRecipientRisks,
+  subRecipientOverallScore,
+} from "@/data/eligibilityAssessmentSubData";
 
 const GRANT_ID = "dfop0017890-child-protection";
 const GRANT_TITLE = "Advancing Global Health — Child Development, Care, and Protection Addendum";
@@ -427,6 +432,13 @@ interface EligibilityAssessmentPageProps {
    * EligibilityDemoPage.
    */
   hideAssessmentUsage?: boolean;
+  /**
+   * Opens straight into a completed eligibility report showing a below-70%
+   * NOFO fit, with "Request to Join" sub-recipient callouts in place of the
+   * "Start Application" CTAs — instead of the "Check Your Eligibility" entry
+   * card. Used by EligibilityAssessmentSubPage (/eligibility-assessment-sub).
+   */
+  subRecipientOutcome?: boolean;
 }
 
 export function EligibilityAssessmentPage({
@@ -435,8 +447,9 @@ export function EligibilityAssessmentPage({
   autoScrollToEligibility = false,
   resetAssessmentUsageOnMount = false,
   hideAssessmentUsage = false,
+  subRecipientOutcome = false,
 }: EligibilityAssessmentPageProps = {}) {
-  const [isAssessing, setIsAssessing] = useState(false);
+  const [isAssessing, setIsAssessing] = useState(subRecipientOutcome);
   const [activeSection, setActiveSection] = useState("overview");
   const [docsExpanded, setDocsExpanded] = useState(true);
   const [reportGeneratedAt, setReportGeneratedAt] = useState<number | null>(null);
@@ -550,6 +563,13 @@ export function EligibilityAssessmentPage({
   const handleRequestSubRecipient = () => {
     toast.success("Request sent", {
       description: "We've notified the prime recipient that you're interested in a sub-recipient role on this grant.",
+      duration: 3000,
+    });
+  };
+
+  const handleRequestToJoin = () => {
+    toast.success("Request sent", {
+      description: "We've notified prime applicants that you're interested in joining this opportunity as a sub-recipient.",
       duration: 3000,
     });
   };
@@ -964,6 +984,13 @@ export function EligibilityAssessmentPage({
                       onAnchorScroll={() => scrollToSection("eligibility-assessment")}
                       demoLocked={demoLocked}
                       hideAssessmentUsage={hideAssessmentUsage}
+                      startWithReport={subRecipientOutcome}
+                      reportCategories={subRecipientOutcome ? subRecipientCategories : undefined}
+                      reportRisks={subRecipientOutcome ? subRecipientRisks : undefined}
+                      showOverallScore={subRecipientOutcome}
+                      overallScore={subRecipientOutcome ? subRecipientOverallScore : undefined}
+                      reportStatus={subRecipientOutcome ? "caution" : undefined}
+                      onRequestToJoin={subRecipientOutcome ? handleRequestToJoin : undefined}
                     />
                   </motion.div>
                 ) : (

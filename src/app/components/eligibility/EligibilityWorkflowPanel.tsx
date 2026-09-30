@@ -7,6 +7,7 @@ import { FinancialInfoStep } from "@/app/components/eligibility/steps/FinancialI
 import { PolicyInfoStep } from "@/app/components/eligibility/steps/PolicyInfoStep";
 import { EligibilityLoader } from "@/app/components/eligibility/EligibilityLoader";
 import { EligibilityReport } from "@/app/components/eligibility/EligibilityReport";
+import type { FitCategory, GoStatus } from "@/app/components/OverallNofoFitScorecard";
 import { useAssessmentUsage } from "@/hooks/useAssessmentUsage";
 import {
   orgDetailFields,
@@ -53,6 +54,24 @@ interface EligibilityWorkflowPanelProps {
    * Used by EligibilityDemoPage so the demo isn't capped at N runs.
    */
   hideAssessmentUsage?: boolean;
+  /**
+   * Mounts straight into the completed report instead of Step 1 of the
+   * form, and skips marking an assessment as used for that initial report
+   * (it wasn't actually run) — used by EligibilityAssessmentSubPage to show
+   * a fixed below-70% outcome without spending the viewer's quota. A
+   * report reached normally afterwards (e.g. Retake) still records usage.
+   */
+  startWithReport?: boolean;
+  /** Category breakdown passed straight through to EligibilityReport. */
+  reportCategories?: FitCategory[];
+  /** Risks list passed straight through to EligibilityReport. */
+  reportRisks?: string[];
+  /** Shows the scorecard's numeric overall score + GO/Caution/No-Go badge. */
+  showOverallScore?: boolean;
+  overallScore?: number;
+  reportStatus?: GoStatus;
+  /** Swaps both "Start Application" CTAs in the report for SubRecipientCallout. See EligibilityReport. */
+  onRequestToJoin?: () => void;
 }
 
 /**
@@ -70,6 +89,13 @@ export function EligibilityWorkflowPanel({
   onAnchorScroll,
   demoLocked = false,
   hideAssessmentUsage = false,
+  startWithReport = false,
+  reportCategories,
+  reportRisks,
+  showOverallScore,
+  overallScore,
+  reportStatus,
+  onRequestToJoin,
 }: EligibilityWorkflowPanelProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [programId, setProgramId] = useState("");
@@ -77,10 +103,13 @@ export function EligibilityWorkflowPanel({
   const [financialInfo, setFinancialInfo] = useState<FinancialInfoState>(defaultFinancialInfo);
   const [policyInfo, setPolicyInfo] = useState<PolicyInfoState>(defaultPolicyInfo);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showReport, setShowReport] = useState(false);
+  const [showReport, setShowReport] = useState(startWithReport);
   const [actionItems, setActionItems] = useState<ActionItem[]>(eligibilityActionItems);
   const submitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { usedCount, limit, recordCompletion } = useAssessmentUsage();
+  // Only the initial `startWithReport` mount should skip recordCompletion —
+  // any report reached afterwards (retaking the assessment) is real usage.
+  const skipNextUsageRecordRef = useRef(startWithReport);
 
   useEffect(() => {
     return () => {
@@ -97,9 +126,14 @@ export function EligibilityWorkflowPanel({
   useEffect(() => {
     if (showReport) {
       onReportGenerated?.(Date.now());
-      // One full run through the workflow = one used assessment, marked the
-      // moment the report is generated so "completed" and "used" line up.
-      recordCompletion(grantId, grantTitle);
+      if (skipNextUsageRecordRef.current) {
+        skipNextUsageRecordRef.current = false;
+      } else {
+        // One full run through the workflow = one used assessment, marked
+        // the moment the report is generated so "completed" and "used"
+        // line up.
+        recordCompletion(grantId, grantTitle);
+      }
     }
   }, [showReport, onReportGenerated, recordCompletion, grantId, grantTitle]);
 
@@ -155,6 +189,12 @@ export function EligibilityWorkflowPanel({
         onStartApplication={() => onStartApplication?.()}
         demoLocked={demoLocked}
         hideAssessmentUsage={hideAssessmentUsage}
+        categories={reportCategories}
+        risks={reportRisks}
+        showScore={showOverallScore}
+        overallScore={overallScore}
+        status={reportStatus}
+        onRequestToJoin={onRequestToJoin}
       />
     );
   }

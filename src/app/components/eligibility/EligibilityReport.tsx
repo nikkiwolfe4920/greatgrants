@@ -6,8 +6,9 @@ import {
   AccordionTrigger,
 } from "@/app/components/ui/accordion";
 import { Button } from "@/app/components/ui/button";
-import { OverallNofoFitScorecard, type FitCategory } from "@/app/components/OverallNofoFitScorecard";
+import { OverallNofoFitScorecard, type FitCategory, type GoStatus } from "@/app/components/OverallNofoFitScorecard";
 import { AssessmentUsageMeter } from "@/app/components/eligibility/AssessmentUsageMeter";
+import { SubRecipientCallout } from "@/app/components/eligibility/SubRecipientCallout";
 import { useAssessmentUsage } from "@/hooks/useAssessmentUsage";
 import type { ActionItem, PassItem } from "@/data/eligibilityAssessmentData";
 
@@ -108,6 +109,21 @@ interface EligibilityReportProps {
   demoLocked?: boolean;
   /** Hides the "Assessment complete — marked as used" banner below. See EligibilityAssessmentPage. */
   hideAssessmentUsage?: boolean;
+  /** Category breakdown for the scorecard. Defaults to the standard BASE_CATEGORIES below. */
+  categories?: FitCategory[];
+  /** Risks list for the scorecard. Defaults to the standard BASE_RISKS below. */
+  risks?: string[];
+  /** Shows the scorecard's numeric overall score + GO/Caution/No-Go badge. Defaults to false (hidden), matching the standard report. */
+  showScore?: boolean;
+  overallScore?: number;
+  status?: GoStatus;
+  /**
+   * Swaps both "Start Application" CTAs (the scorecard footer and the
+   * bottom-of-report card) for the SubRecipientCallout instead — used by
+   * the /eligibility-assessment-sub below-70%-fit report, where nudging
+   * toward a prime application no longer fits the outcome.
+   */
+  onRequestToJoin?: () => void;
 }
 
 /**
@@ -128,6 +144,12 @@ export function EligibilityReport({
   onStartApplication,
   demoLocked = false,
   hideAssessmentUsage = false,
+  categories = BASE_CATEGORIES,
+  risks = BASE_RISKS,
+  showScore = false,
+  overallScore,
+  status,
+  onRequestToJoin,
 }: EligibilityReportProps) {
   const completedCount = actionItems.filter((item) => item.completed).length;
   const totalCount = actionItems.length;
@@ -167,13 +189,20 @@ export function EligibilityReport({
       )}
 
       <OverallNofoFitScorecard
-        showScore={false}
-        categories={isAllComplete ? BASE_CATEGORIES.map((c) => ({ ...c, score: 100 })) : BASE_CATEGORIES}
-        risks={isAllComplete ? [] : BASE_RISKS}
+        showScore={showScore}
+        overallScore={overallScore}
+        status={status}
+        categories={isAllComplete ? categories.map((c) => ({ ...c, score: 100 })) : categories}
+        risks={isAllComplete ? [] : risks}
         nextSteps={[]}
         onStartApplication={onStartApplication}
         allActionsComplete={isAllComplete}
         demoLocked={demoLocked}
+        ctaOverride={
+          onRequestToJoin ? (
+            <SubRecipientCallout layout="inline" onRequestToJoin={onRequestToJoin} demoLocked={demoLocked} />
+          ) : undefined
+        }
       />
 
       <Accordion type="single" defaultValue="action-items" collapsible className="bg-white border border-gray-200 rounded-xl overflow-hidden">
@@ -222,41 +251,45 @@ export function EligibilityReport({
       {/* "Ready to apply" CTA — Figma node 12827:38919. Always shown at the
           bottom of the report regardless of how many action items are
           checked off, so there's always a clear next step into the
-          application. */}
-      <div className="bg-teal-50 border border-teal-200 rounded-2xl p-6 flex items-start gap-4">
-        <div className="size-10 rounded-xl bg-teal-100 flex items-center justify-center shrink-0">
-          <CheckCircle2 className="size-5 text-teal-700" />
+          application. `onRequestToJoin` swaps this for SubRecipientCallout. */}
+      {onRequestToJoin ? (
+        <SubRecipientCallout layout="card" onRequestToJoin={onRequestToJoin} demoLocked={demoLocked} />
+      ) : (
+        <div className="bg-teal-50 border border-teal-200 rounded-2xl p-6 flex items-start gap-4">
+          <div className="size-10 rounded-xl bg-teal-100 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="size-5 text-teal-700" />
+          </div>
+          <div className="flex-1">
+            <p className="text-base text-gray-900" style={{ fontFamily: "Lustria, serif" }}>
+              {isAllComplete ? <>All clear — you&apos;re ready to apply</> : <>Ready when you are</>}
+            </p>
+            <p className="text-sm text-gray-600 mt-1 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
+              {isAllComplete ? (
+                <>
+                  Every action item is resolved and your NOFO fit is 100% with no outstanding risks. You&apos;re in
+                  strong shape to move forward with a full application.
+                </>
+              ) : (
+                <>
+                  You can start your application any time — keep closing out action items above to strengthen your
+                  NOFO fit along the way.
+                </>
+              )}
+            </p>
+            <Button
+              onClick={() => {
+                if (!demoLocked) onStartApplication();
+              }}
+              aria-disabled={demoLocked || undefined}
+              title={demoLocked ? "This is a locked demo — applications can't be started here" : undefined}
+              className={`mt-4 bg-teal-600 text-white gap-1.5 ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
+            >
+              Start Application
+              <ArrowRight className="size-4" />
+            </Button>
+          </div>
         </div>
-        <div className="flex-1">
-          <p className="text-base text-gray-900" style={{ fontFamily: "Lustria, serif" }}>
-            {isAllComplete ? <>All clear — you&apos;re ready to apply</> : <>Ready when you are</>}
-          </p>
-          <p className="text-sm text-gray-600 mt-1 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
-            {isAllComplete ? (
-              <>
-                Every action item is resolved and your NOFO fit is 100% with no outstanding risks. You&apos;re in
-                strong shape to move forward with a full application.
-              </>
-            ) : (
-              <>
-                You can start your application any time — keep closing out action items above to strengthen your
-                NOFO fit along the way.
-              </>
-            )}
-          </p>
-          <Button
-            onClick={() => {
-              if (!demoLocked) onStartApplication();
-            }}
-            aria-disabled={demoLocked || undefined}
-            title={demoLocked ? "This is a locked demo — applications can't be started here" : undefined}
-            className={`mt-4 bg-teal-600 text-white gap-1.5 ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
-          >
-            Start Application
-            <ArrowRight className="size-4" />
-          </Button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
