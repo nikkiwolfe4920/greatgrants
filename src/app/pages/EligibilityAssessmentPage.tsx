@@ -20,6 +20,7 @@ import {
   MinusCircle,
   PlusCircle,
   MoreVertical,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/app/components/ui/badge";
@@ -301,6 +302,74 @@ function CheckYourEligibilityCard({
   );
 }
 
+interface TakeActionButtonProps {
+  demoLocked: boolean;
+  size?: "sm";
+  className: string;
+  chevronClassName: string;
+  onStartEligibilityAssessment: () => void;
+  onStartAIDraft: () => void;
+  onRequestSubRecipient: () => void;
+}
+
+/**
+ * Replaces the old single "Start Application" button (Figma node
+ * 15004:44246) with a "Take Action" trigger that opens a menu of the three
+ * next steps a viewer can take on this grant (Figma node 15004:45130).
+ * Locked the same way "Start Application" was — fully inert, menu never
+ * opens — on the /org-detail-demo walkthrough (see EligibilityAssessmentPage
+ * `demoLocked`).
+ */
+function TakeActionButton({
+  demoLocked,
+  size,
+  className,
+  chevronClassName,
+  onStartEligibilityAssessment,
+  onStartAIDraft,
+  onRequestSubRecipient,
+}: TakeActionButtonProps) {
+  if (demoLocked) {
+    return (
+      <Button
+        size={size}
+        onClick={(e) => e.preventDefault()}
+        aria-disabled="true"
+        title="This is a locked demo — this button can't navigate away"
+        className={`${className} cursor-not-allowed`}
+      >
+        Take Action
+        <ChevronDown className={chevronClassName} />
+      </Button>
+    );
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size={size} className={`${className} hover:bg-teal-700`}>
+          Take Action
+          <ChevronDown className={chevronClassName} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuItem onClick={onStartEligibilityAssessment}>
+          <Sparkles className="w-4 h-4 mr-2 text-gray-500" />
+          Start Eligibility Assessment
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onStartAIDraft}>
+          <Sparkles className="w-4 h-4 mr-2 text-gray-500" />
+          Start AI Draft
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onRequestSubRecipient}>
+          <Users className="w-4 h-4 mr-2 text-gray-500" />
+          Request to be a Sub-recipient
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 /**
  * /eligibility-assessment — the full grant/opportunity detail page for the
  * "Advancing Global Health" NOFO's Child Development, Care, and Protection
@@ -311,8 +380,8 @@ function CheckYourEligibilityCard({
 interface EligibilityAssessmentPageProps {
   /**
    * Renders every control that would navigate away from this page — the
-   * breadcrumb's Home crumb, the sticky header's back arrow, both "Start
-   * Application" buttons, "Upgrade Plan", "Start Eligibility Assessment",
+   * breadcrumb's Home crumb, the sticky header's back arrow, both "Take
+   * Action" buttons, "Upgrade Plan", "Start Eligibility Assessment",
    * the two document rows, and the program website link — as inert, with
    * the browser's native not-allowed (circle-slash) cursor on hover. Used
    * by the locked /org-detail-demo walkthrough (see OrgDetailDemoPage).
@@ -322,7 +391,7 @@ interface EligibilityAssessmentPageProps {
    * Carves out one exception to `demoLocked`: "Start Eligibility
    * Assessment" stays live and the full 4-step workflow behind it runs
    * normally, while every other locked-out control (nav, breadcrumb, back
-   * arrow, both "Start Application" buttons, documents, program link)
+   * arrow, both "Take Action" buttons, documents, program link)
    * stays inert. Used by the locked /eligibility-demo walkthrough (see
    * EligibilityDemoPage) — step 4 of the tour exists specifically to let a
    * viewer click through the assessment itself.
@@ -473,6 +542,18 @@ export function EligibilityAssessmentPage({
     setShowApplicationLoading(true);
   };
 
+  const handleStartEligibilityAssessmentFromMenu = () => {
+    setIsAssessing(true);
+    scrollToSection("eligibility-assessment");
+  };
+
+  const handleRequestSubRecipient = () => {
+    toast.success("Request sent", {
+      description: "We've notified the prime recipient that you're interested in a sub-recipient role on this grant.",
+      duration: 3000,
+    });
+  };
+
   const toggleWatch = () => {
     if (isAlertOn) {
       // Turning Watch off is destructive (deletes the alert) — confirm first.
@@ -559,16 +640,15 @@ export function EligibilityAssessmentPage({
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-                  <Button
+                  <TakeActionButton
+                    demoLocked={demoLocked}
                     size="sm"
-                    className={`bg-teal-600 text-white font-semibold h-8 text-xs px-4 ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
-                    onClick={handleStartApplication}
-                    aria-disabled={demoLocked || undefined}
-                    title={demoLocked ? "This is a locked demo — applications can't be started here" : undefined}
-                  >
-                    Start Application
-                    <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-                  </Button>
+                    className="bg-teal-600 text-white font-semibold h-8 text-xs px-4"
+                    chevronClassName="w-3.5 h-3.5 ml-1.5"
+                    onStartEligibilityAssessment={handleStartEligibilityAssessmentFromMenu}
+                    onStartAIDraft={handleStartApplication}
+                    onRequestSubRecipient={handleRequestSubRecipient}
+                  />
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -661,15 +741,14 @@ export function EligibilityAssessmentPage({
 
             <div className="flex flex-col items-end gap-3 shrink-0">
               <div className="flex items-center gap-3 flex-wrap justify-end">
-                <Button
-                  onClick={handleStartApplication}
-                  className={`bg-teal-600 text-white gap-1.5 ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
-                  aria-disabled={demoLocked || undefined}
-                  title={demoLocked ? "This is a locked demo — applications can't be started here" : undefined}
-                >
-                  Start Application
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
+                <TakeActionButton
+                  demoLocked={demoLocked}
+                  className="bg-teal-600 text-white gap-1.5"
+                  chevronClassName="w-4 h-4"
+                  onStartEligibilityAssessment={handleStartEligibilityAssessmentFromMenu}
+                  onStartAIDraft={handleStartApplication}
+                  onRequestSubRecipient={handleRequestSubRecipient}
+                />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
