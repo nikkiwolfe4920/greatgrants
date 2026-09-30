@@ -23,6 +23,7 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import { ProjectDetailsPage } from "./pages/ProjectDetailsPage";
 import { MyGrantReadiness } from "./pages/MyGrantReadiness.tsx";
 import { EligibilityAssessmentPage } from "./pages/EligibilityAssessmentPage";
+import { EligibilityAssessmentSubPage } from "./pages/EligibilityAssessmentSubPage";
 import { OrgDetailDemoPage } from "./pages/OrgDetailDemoPage";
 import { EligibilityDemoPage } from "./pages/EligibilityDemoPage";
 import { DesignSystemPage } from "./pages/DesignSystemPage";
@@ -185,6 +186,12 @@ const routes = [
       {
         path: "eligibility-assessment",
         element: <EligibilityAssessmentPage />,
+      },
+      {
+        // Below-70%-fit variant of /eligibility-assessment — see
+        // EligibilityAssessmentSubPage.
+        path: "eligibility-assessment-sub",
+        element: <EligibilityAssessmentSubPage />,
       },
       {
         // Locked walkthrough duplicate of /eligibility-assessment — see

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Gauge, CheckCircle2, AlertTriangle, XCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 
-type GoStatus = "go" | "caution" | "no-go";
+export type GoStatus = "go" | "caution" | "no-go";
 
 const STATUS_STYLES: Record<
   GoStatus,
@@ -128,6 +128,12 @@ export interface OverallNofoFitScorecardProps {
   allActionsComplete?: boolean;
   /** Disables the CTA's "Start Application" button with a not-allowed cursor — it would otherwise navigate off the locked demo. See EligibilityAssessmentPage. */
   demoLocked?: boolean;
+  /**
+   * Replaces the default "ready to apply" CTA in this same footer slot with
+   * a different callout entirely (e.g. SubRecipientCallout on a below-70%
+   * fit report) — takes precedence over `onStartApplication` when set.
+   */
+  ctaOverride?: ReactNode;
 }
 
 /**
@@ -169,6 +175,7 @@ export function OverallNofoFitScorecard({
   onStartApplication,
   allActionsComplete = false,
   demoLocked = false,
+  ctaOverride,
 }: OverallNofoFitScorecardProps) {
   const statusStyles = STATUS_STYLES[status];
   const StatusIcon = statusStyles.Icon;
@@ -254,8 +261,9 @@ export function OverallNofoFitScorecard({
         {/* Ready-to-apply CTA — Figma node 12827:38919, folded into the card
             footer instead of stacked as its own duplicate card. Always
             rendered when a handler is provided, independent of the category
-            breakdown's scores, so there's always a way into the application. */}
-        {onStartApplication && (
+            breakdown's scores, so there's always a way into the application.
+            `ctaOverride` swaps this whole slot for a different callout. */}
+        {ctaOverride ?? (onStartApplication && (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3.5">
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-teal-100">
@@ -288,7 +296,7 @@ export function OverallNofoFitScorecard({
               <ArrowRight className="size-3.5" />
             </Button>
           </div>
-        )}
+        ))}
       </div>
     </div>
   );
