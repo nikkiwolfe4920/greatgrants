@@ -117,6 +117,20 @@ function formatAsCurrency(value: string): string {
 function GuestInterestHeader({ step, onBackToStep1 }: { step: Step; onBackToStep1: () => void }) {
   return (
     <header className="flex w-full flex-col bg-white">
+      {step === "proposal" && (
+        <div className="flex w-full justify-end border-b border-[#f2f4f7] bg-[#fafafa] px-6 py-2 sm:px-10">
+          <p className="text-xs text-[#535862]" style={{ fontFamily: "Cabin, sans-serif" }}>
+            Already have a Great Grants account?{" "}
+            <Link
+              to="/signin"
+              className="font-semibold text-[#0e9384] hover:text-[#107569] hover:underline"
+            >
+              Sign in
+            </Link>{" "}
+            to make this faster.
+          </p>
+        </div>
+      )}
       <div className="flex w-full items-center gap-4 border-b border-[#e9eaeb] px-6 py-4 sm:px-10">
         <Link to="/publicpartner-open" aria-label="Great Grants home" className="shrink-0">
           <Logo />
