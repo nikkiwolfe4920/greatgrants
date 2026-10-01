@@ -16,6 +16,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { SignInPage } from "./pages/SignInPage";
 import { MarketingPage } from "./pages/MarketingPage";
 import { PublicPartnerOpenPage, PublicPartnerClosedPage } from "./pages/PublicPartnerCallPage";
+import { PublicPartnerGuestInterestPage } from "./pages/PublicPartnerGuestInterestPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { OnboardingPage1 } from "./pages/OnboardingPage1";
 import { OnboardingPage2 } from "./pages/OnboardingPage2";
@@ -70,6 +71,13 @@ const routes = [
   {
     path: "/publicpartner-closed",
     element: <PublicPartnerClosedPage />,
+  },
+  {
+    // The logged-out "Express interest" flow reached from the Express
+    // interest card on /publicpartner-open — same reasoning as that route
+    // for living outside LayoutWithProvider.
+    path: "/publicpartner-open-guest",
+    element: <PublicPartnerGuestInterestPage />,
   },
   {
     path: "/signin",
