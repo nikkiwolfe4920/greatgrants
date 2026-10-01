@@ -1,27 +1,11 @@
-import { useState, type FormEvent } from "react";
-import { Link } from "react-router";
-import {
-  ArrowRight,
-  ChevronDown,
-  ChevronUp,
-  Download,
-  FileText,
-  Loader2,
-  Printer,
-} from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { ArrowRight, ChevronDown, ChevronUp, Download, FileText, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "../components/Logo";
 import { Button } from "../components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "../components/ui/dialog";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { Textarea } from "../components/ui/textarea";
+import { PARTNER_CALL } from "../../data/publicPartnerCall";
+import type { PartnerCallDocument } from "../../data/publicPartnerCall";
 
 /**
  * 7.4 Public Partner Call Page — the logged-out page a prime applicant shares
@@ -39,55 +23,6 @@ import { Textarea } from "../components/ui/textarea";
  *   /publicpartner-open   -> <PublicPartnerOpenPage />
  *   /publicpartner-closed -> <PublicPartnerClosedPage />
  */
-
-interface PartnerCallDocument {
-  name: string;
-  type: string;
-  size: string;
-}
-
-interface PartnerCallData {
-  title: string;
-  orgName: string;
-  orgInitials: string;
-  orgLocation: string;
-  orgRole: string;
-  aboutPartnership: string;
-  whatPartnerWillDo: string;
-  partnersNeeded: string;
-  estimatedSubaward: string;
-  periodOfPerformance: string;
-  funder: string;
-  program: string;
-  applicationDeadline: string;
-  awardRange: string;
-  documents: PartnerCallDocument[];
-  closesOn: string;
-}
-
-const PARTNER_CALL: PartnerCallData = {
-  title: "Nutrition education partner wanted for a federal food security grant",
-  orgName: "UptownArts Coalition",
-  orgInitials: "UA",
-  orgLocation: "Portland, OR",
-  orgRole: "Prime applicant",
-  aboutPartnership:
-    "UptownArts Coalition is applying to the ACL Assistive Technology Alternative Financing Program to expand the Community Food Security Initiative across Multnomah, Clackamas and Washington counties. We are looking for a nutrition education partner to deliver cooking and nutrition classes at weekly distribution sites.",
-  whatPartnerWillDo:
-    "Deliver cooking and nutrition classes at distribution sites, track attendance, and report outcomes quarterly to the prime applicant. You would operate as a sub-recipient under UptownArts Coalition’s award.",
-  partnersNeeded: "1",
-  estimatedSubaward: "$20,000 – $30,000",
-  periodOfPerformance: "12 months",
-  funder: "Administration for Community Living",
-  program: "Assistive Technology Alternative Financing",
-  applicationDeadline: "Nov 20, 2026",
-  awardRange: "$250,000 – $500,000",
-  documents: [
-    { name: "Notice of Funding Opportunity (APS)", type: "PDF Document", size: "2.4 MB" },
-    { name: "Funding Opportunity Announcement Addendum", type: "PDF Document", size: "1.1 MB" },
-  ],
-  closesOn: "Oct 30, 2026",
-};
 
 /* ── Shared bits ───────────────────────────────────────────────────────── */
 
@@ -304,104 +239,10 @@ function ClosedStateCard() {
   );
 }
 
-/* ── Express interest form dialog ─────────────────────────────────────── */
-
-function ExpressInterestDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setSubmitting(true);
-    // No backend behind this public preview — simulate the round trip so the
-    // flow reads the way it will once it's wired to a real endpoint.
-    window.setTimeout(() => {
-      setSubmitting(false);
-      setSubmitted(true);
-      toast.success("Your interest was sent to " + PARTNER_CALL.orgName);
-    }, 700);
-  };
-
-  const handleOpenChange = (next: boolean) => {
-    onOpenChange(next);
-    if (!next) {
-      // Reset once the close animation would have finished.
-      window.setTimeout(() => setSubmitted(false), 200);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-[480px]" style={{ fontFamily: "Cabin, sans-serif" }}>
-        {submitted ? (
-          <div className="flex flex-col items-center gap-3 py-6 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-[#ecfdf3]">
-              <ArrowRight className="size-5 rotate-[-45deg] text-[#067647]" />
-            </div>
-            <DialogTitle className="text-xl text-[#181d27]">You're on their list</DialogTitle>
-            <DialogDescription className="text-[#535862]">
-              {PARTNER_CALL.orgName} will review your response after {PARTNER_CALL.closesOn}. If
-              they select you, they'll reach out at the email you provided.
-            </DialogDescription>
-            <Button
-              onClick={() => handleOpenChange(false)}
-              className="mt-2 bg-[#0e9384] font-semibold text-white hover:bg-[#107569]"
-            >
-              Done
-            </Button>
-          </div>
-        ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle className="text-xl text-[#181d27]">Express interest</DialogTitle>
-              <DialogDescription className="text-[#535862]">
-                Tell {PARTNER_CALL.orgName} about your organization. No account needed.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="org-name">Organization name</Label>
-                <Input id="org-name" required placeholder="Your organization" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="contact-email">Contact email</Label>
-                <Input id="contact-email" type="email" required placeholder="you@organization.org" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="message">What would you deliver?</Label>
-                <Textarea
-                  id="message"
-                  required
-                  rows={4}
-                  placeholder="Describe your organization's experience and what you'd bring to this partnership."
-                />
-              </div>
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="h-11 w-full bg-[#0e9384] font-semibold text-white hover:bg-[#107569]"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    Sending
-                  </>
-                ) : (
-                  "Send interest"
-                )}
-              </Button>
-            </form>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 /* ── Page shell ────────────────────────────────────────────────────────── */
 
 function PublicPartnerCallPage({ open }: { open: boolean }) {
-  const [interestOpen, setInterestOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: "Cabin, sans-serif" }}>
@@ -489,7 +330,7 @@ function PublicPartnerCallPage({ open }: { open: boolean }) {
           {/* Right rail */}
           <div className="w-full shrink-0 lg:sticky lg:top-6 lg:w-[380px] print:hidden">
             {open ? (
-              <ExpressInterestCard onExpressInterest={() => setInterestOpen(true)} />
+              <ExpressInterestCard onExpressInterest={() => navigate("/publicpartner-open-guest")} />
             ) : (
               <ClosedStateCard />
             )}
@@ -505,8 +346,6 @@ function PublicPartnerCallPage({ open }: { open: boolean }) {
           </p>
         </div>
       </footer>
-
-      <ExpressInterestDialog open={interestOpen} onOpenChange={setInterestOpen} />
     </div>
   );
 }
