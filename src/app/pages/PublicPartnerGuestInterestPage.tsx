@@ -480,6 +480,17 @@ export function PublicPartnerGuestInterestPage() {
               }
               summaryLine={`${PARTNER_CALL.roleName} · Estimated budget ${formatAsCurrency(formData.estimatedBudget)}`}
               cta={{ label: "Explore Great Grants", to: "/marketing" }}
+              upsell={{
+                heading: "Don't stop at one opportunity",
+                body: `A free Great Grants account keeps you ahead of the next ${PARTNER_CALL.roleName.toLowerCase()} role — not just this one.`,
+                benefits: [
+                  `Get matched automatically to grants like ${PARTNER_CALL.orgName}'s, scored against your org's own focus areas`,
+                  "Track every response and deadline for every partner call in one dashboard",
+                  "Build your organization profile once and reuse it on every application",
+                  `Get notified the moment funders like the ${PARTNER_CALL.funder} publish new opportunities`,
+                ],
+                primaryCta: { label: "Create your free account", to: "/subscribe-entry" },
+              }}
             />
           )}
         </div>
