@@ -4,6 +4,9 @@ import { ArrowRight, Monitor, Smartphone } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { GrantAlertSimilarGrantsEmail } from "../components/emails/GrantAlertSimilarGrantsEmail";
 import { WeeklyAlertDigestEmail } from "../components/emails/WeeklyAlertDigestEmail";
+import { PartnerInvitationEmail } from "../components/emails/PartnerInvitationEmail";
+import { PartnerSelectedEmail } from "../components/emails/PartnerSelectedEmail";
+import { PartnerNotSelectedEmail } from "../components/emails/PartnerNotSelectedEmail";
 
 type Viewport = "desktop" | "mobile";
 
@@ -77,6 +80,55 @@ export function EmailsPage() {
           }
         >
           <WeeklyAlertDigestEmail />
+        </EmailPreviewSection>
+
+        <h2 className="mb-1 mt-16 text-xl font-semibold text-gray-900">Partner invitations</h2>
+        <p className="mb-6 max-w-2xl text-sm leading-5 text-gray-500">
+          Sent as part of the partner-call flow on{" "}
+          <Link to="/publicpartner-open" className="font-medium text-teal-600 hover:underline">
+            /publicpartner-open
+          </Link>
+          : an org is invited directly to a role, then told whether it was selected.
+        </p>
+
+        <EmailPreviewSection
+          viewport={viewport}
+          title="Partner invitation (to sub-recipient)"
+          description={
+            <>
+              Figma node 15494:25670 &mdash; sent when a prime applicant invites an org directly to
+              join their application as a sub-recipient for a named role, with no account required
+              to review or accept.
+            </>
+          }
+        >
+          <PartnerInvitationEmail />
+        </EmailPreviewSection>
+
+        <EmailPreviewSection
+          viewport={viewport}
+          title="You were selected"
+          description={
+            <>
+              Figma node 15494:25731 &mdash; sent when the prime applicant chooses this org as the
+              sub-recipient for the role after the invitation above.
+            </>
+          }
+        >
+          <PartnerSelectedEmail />
+        </EmailPreviewSection>
+
+        <EmailPreviewSection
+          viewport={viewport}
+          title="Not selected"
+          description={
+            <>
+              Figma node 15494:25766 &mdash; sent to the other orgs that responded to the prime&rsquo;s
+              open Partner Call once the role has been filled by someone else.
+            </>
+          }
+        >
+          <PartnerNotSelectedEmail />
         </EmailPreviewSection>
 
         <div className="mt-4 flex items-center gap-1 text-sm text-gray-500">
