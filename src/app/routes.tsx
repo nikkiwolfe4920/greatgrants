@@ -17,6 +17,7 @@ import { SignInPage } from "./pages/SignInPage";
 import { MarketingPage } from "./pages/MarketingPage";
 import { PublicPartnerOpenPage, PublicPartnerClosedPage } from "./pages/PublicPartnerCallPage";
 import { PublicPartnerGuestInterestPage } from "./pages/PublicPartnerGuestInterestPage";
+import { PublicPartnerMemberInterestPage } from "./pages/PublicPartnerMemberInterestPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { OnboardingPage1 } from "./pages/OnboardingPage1";
 import { OnboardingPage2 } from "./pages/OnboardingPage2";
@@ -78,6 +79,13 @@ const routes = [
     // for living outside LayoutWithProvider.
     path: "/publicpartner-open-guest",
     element: <PublicPartnerGuestInterestPage />,
+  },
+  {
+    // The signed-in sub-recipient's "Express interest" flow — same shell as
+    // the guest flow, but org/UEI/contact are already on file and the form
+    // can pre-fill from one of the member's existing programs.
+    path: "/publicpartner-open-member",
+    element: <PublicPartnerMemberInterestPage />,
   },
   {
     path: "/signin",

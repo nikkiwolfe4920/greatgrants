@@ -1,13 +1,22 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { AlertCircle, ArrowRight, Check } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Logo } from "../components/Logo";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
+import { Field } from "../components/ExpressInterestField";
+import { ExpressInterestSuccess } from "../components/ExpressInterestSuccess";
 import { PARTNER_CALL } from "../../data/publicPartnerCall";
+import {
+  formatAsCurrency,
+  validateContactEmail,
+  validateContactName,
+  validateEstimatedBudget,
+  validatePeopleServed,
+  validateProgramDescription,
+} from "../../lib/expressInterestValidation";
 
 /**
  * 7.5 Guest Interest flow — the logged-out, 2-step "Express interest" form
@@ -59,10 +68,12 @@ const REQUIRED_FIELDS: FieldName[] = [
 
 const EIN_PATTERN = /^\d{2}-\d{7}$/;
 const UEI_PATTERN = /^[A-Za-z0-9]{12}$/;
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Field-level validation — keeps the rules next to the data shape instead
- * of scattered across each input's onBlur handler. */
+ * of scattered across each input's onBlur handler. The fields this flow
+ * shares with the signed-in member flow (program description, budget,
+ * people served, contact name/email) call the same validators from
+ * src/lib/expressInterestValidation so the rules can't drift between them. */
 function validateField(name: FieldName, value: string): string | undefined {
   const trimmed = value.trim();
   switch (name) {
@@ -75,21 +86,15 @@ function validateField(name: FieldName, value: string): string | undefined {
       }
       return undefined;
     case "contactName":
-      return trimmed ? undefined : "Enter a contact name.";
+      return validateContactName(value);
     case "contactEmail":
-      if (!trimmed) return "Enter a contact email.";
-      return EMAIL_PATTERN.test(trimmed) ? undefined : "Enter a valid email address, like you@organization.org.";
+      return validateContactEmail(value);
     case "programDescription":
-      if (!trimmed) return "Describe what your organization would deliver.";
-      return trimmed.length >= 20 ? undefined : "Add a bit more detail — a sentence or two about what you'd deliver.";
-    case "estimatedBudget": {
-      if (!trimmed) return "Enter an estimated budget.";
-      const numeric = Number(trimmed.replace(/[^0-9.]/g, ""));
-      return numeric > 0 ? undefined : "Enter a dollar amount, like 26,000.";
-    }
+      return validateProgramDescription(value);
+    case "estimatedBudget":
+      return validateEstimatedBudget(value);
     case "peopleServed":
-      if (!trimmed) return undefined;
-      return /^[\d,]+$/.test(trimmed) ? undefined : "Enter a whole number.";
+      return validatePeopleServed(value);
     case "relevantExperience":
       return undefined;
     default:
@@ -104,12 +109,6 @@ function computeErrors(data: ProposalFormData): Partial<Record<FieldName, string
     if (message) errors[key] = message;
   });
   return errors;
-}
-
-function formatAsCurrency(value: string): string {
-  const numeric = Number(value.replace(/[^0-9.]/g, ""));
-  if (!numeric || Number.isNaN(numeric)) return value;
-  return `$${numeric.toLocaleString()}`;
 }
 
 /* ── Shared bits ───────────────────────────────────────────────────────── */
@@ -164,58 +163,6 @@ function GuestInterestHeader({ step, onBackToStep1 }: { step: Step; onBackToStep
         </div>
       )}
     </header>
-  );
-}
-
-function RequiredMark() {
-  return <span className="text-[#d92d20]">*</span>;
-}
-
-function Field({
-  id,
-  label,
-  required,
-  helperText,
-  error,
-  children,
-}: {
-  id: string;
-  label: string;
-  required?: boolean;
-  helperText?: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex w-full flex-col gap-1.5">
-      <Label
-        htmlFor={id}
-        className="gap-0.5 text-sm font-medium text-[#414651]"
-        style={{ fontFamily: "Cabin, sans-serif" }}
-      >
-        {label}
-        {required && <RequiredMark />}
-      </Label>
-      {children}
-      {error ? (
-        <p
-          id={`${id}-error`}
-          className="flex items-start gap-1 text-xs text-[#d92d20]"
-          style={{ fontFamily: "Cabin, sans-serif" }}
-        >
-          <AlertCircle className="size-3.5 shrink-0 translate-y-px" />
-          {error}
-        </p>
-      ) : helperText ? (
-        <p
-          id={`${id}-helper`}
-          className="text-xs text-[#535862]"
-          style={{ fontFamily: "Cabin, sans-serif" }}
-        >
-          {helperText}
-        </p>
-      ) : null}
-    </div>
   );
 }
 
@@ -460,50 +407,6 @@ function DataSharingStep({
   );
 }
 
-/* ── Success — node 15494:25655 ───────────────────────────────────────── */
-
-function SuccessStep({ contactEmail, estimatedBudget }: { contactEmail: string; estimatedBudget: string }) {
-  return (
-    <div className="flex w-full flex-col items-center gap-4 rounded-xl border border-[#e9eaeb] bg-white px-7 py-12 text-center">
-      <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[#dcfae6]">
-        <Check className="size-7 text-[#079455]" strokeWidth={2.5} />
-      </div>
-      <h1
-        className="max-w-[520px] text-[28px] leading-9 text-[#181d27]"
-        style={{ fontFamily: "Lustria, serif" }}
-      >
-        You're on their list
-      </h1>
-      <p
-        className="max-w-[520px] text-base leading-6 text-[#414651]"
-        style={{ fontFamily: "Cabin, sans-serif" }}
-      >
-        They review responses after {PARTNER_CALL.closesOn}. If you’re selected, we’ll email{" "}
-        {contactEmail} with a link to create your free account and sign an MOU.
-      </p>
-      <div className="flex w-full flex-col gap-1 rounded-lg bg-[#f9fafb] px-4 py-3.5 text-left">
-        <p className="text-xs text-[#535862]" style={{ fontFamily: "Cabin, sans-serif" }}>
-          You responded to
-        </p>
-        <p
-          className="text-sm font-semibold text-[#181d27]"
-          style={{ fontFamily: "Cabin, sans-serif" }}
-        >
-          {PARTNER_CALL.roleName} · Estimated budget {formatAsCurrency(estimatedBudget)}
-        </p>
-      </div>
-      <Button
-        asChild
-        variant="outline"
-        className="h-11 border-[#d5d7da] font-semibold text-[#414651] shadow-xs hover:bg-[#fafafa]"
-        style={{ fontFamily: "Cabin, sans-serif" }}
-      >
-        <Link to="/marketing">Explore Great Grants</Link>
-      </Button>
-    </div>
-  );
-}
-
 /* ── Page shell ────────────────────────────────────────────────────────── */
 
 export function PublicPartnerGuestInterestPage() {
@@ -568,7 +471,16 @@ export function PublicPartnerGuestInterestPage() {
             <DataSharingStep submitting={submitting} onChoice={handleDataSharingChoice} />
           )}
           {step === "success" && (
-            <SuccessStep contactEmail={formData.contactEmail} estimatedBudget={formData.estimatedBudget} />
+            <ExpressInterestSuccess
+              bodyText={
+                <>
+                  They review responses after {PARTNER_CALL.closesOn}. If you’re selected, we’ll email{" "}
+                  {formData.contactEmail} with a link to create your free account and sign an MOU.
+                </>
+              }
+              summaryLine={`${PARTNER_CALL.roleName} · Estimated budget ${formatAsCurrency(formData.estimatedBudget)}`}
+              cta={{ label: "Explore Great Grants", to: "/marketing" }}
+            />
           )}
         </div>
       </main>
