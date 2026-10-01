@@ -458,7 +458,7 @@ function SuccessStep({ contactEmail, estimatedBudget }: { contactEmail: string; 
         className="max-w-[520px] text-[28px] leading-9 text-[#181d27]"
         style={{ fontFamily: "Lustria, serif" }}
       >
-        Your interest was sent to {PARTNER_CALL.orgName}
+        You're on their list
       </h1>
       <p
         className="max-w-[520px] text-base leading-6 text-[#414651]"
