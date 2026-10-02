@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router";
 import { AppLayout } from "./components/AppLayout";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ApplicationsPage } from "./pages/ApplicationsPage";
+import { ApplicationsPartnershipPage } from "./pages/ApplicationsPartnershipPage";
 import { ApplicationsDemoPage } from "./pages/ApplicationsDemoPage";
 import { GrantWritingDemoPage } from "./pages/GrantWritingDemoPage";
 import { ApplicationSectionPage } from "./pages/ApplicationSectionPage";
@@ -167,6 +168,14 @@ const routes = [
       {
         path: "applications",
         element: <ApplicationsPage />,
+      },
+      {
+        // Same accordion-list hierarchy as /applications, split into "My
+        // Active Grants" and "Active Partner Applications" — see
+        // ApplicationsPartnershipPage for why these live on a separate page
+        // instead of as a third tab.
+        path: "applications-partnership",
+        element: <ApplicationsPartnershipPage />,
       },
       {
         // Step 5 of the locked demo tour, reached from eligibility-demo's

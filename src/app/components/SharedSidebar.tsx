@@ -18,6 +18,7 @@ import {
   Loader2,
   Menu,
   X,
+  Users,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -118,6 +119,7 @@ export function SharedSidebar() {
   const isApplicationSectionPage = location.pathname.startsWith("/application/");
   const isGrantDetailPage = location.pathname.startsWith("/grant/");
   const isWatchListPage = location.pathname === "/watch-list";
+  const isApplicationsPartnershipPage = location.pathname === "/applications-partnership";
   // /grant-writing-demo (step 6 of the locked tour) is a single scrollable
   // page showing every section of one application at once, rather than one
   // route per section — see the isGrantWritingDemo uses below.
@@ -503,6 +505,23 @@ export function SharedSidebar() {
                 ))}
               </ul>
             )}
+          </li>
+
+          {/* Applications & Partnerships — same grant accordions as "All
+              Applications" above, plus a clearly separate "Active Partner
+              Applications" group for applications this org partners on. */}
+          <li>
+            <button
+              onClick={withLock(() => navigate("/applications-partnership"))}
+              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${lockedCursor} ${
+                isApplicationsPartnershipPage ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-100"
+              }`}
+              style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isApplicationsPartnershipPage ? 600 : 400, fontSize: '14px' }}
+              {...lockedAria}
+            >
+              <Users className="w-4 h-4 shrink-0" />
+              <span className="flex-1 truncate">Applications & Partnerships</span>
+            </button>
           </li>
 
           {/* Watch List */}
