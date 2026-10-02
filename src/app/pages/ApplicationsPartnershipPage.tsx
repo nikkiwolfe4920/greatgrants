@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate, Link } from "react-router";
+import { useNavigate, useSearchParams, Link } from "react-router";
 import { motion } from "motion/react";
 import {
   Calendar,
@@ -59,6 +59,7 @@ import { CURRENT_USER_ID, getOrgMember, orgMembers } from "@/data/orgMembers";
  */
 export function ApplicationsPartnershipPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [expandedApp, setExpandedApp] = useState<string>("1");
   const [expandedPartnerApp, setExpandedPartnerApp] = useState<string>("p1");
   const [currentView, setCurrentView] = useState<"active" | "submitted" | "archive">("active");
@@ -78,6 +79,19 @@ export function ApplicationsPartnershipPage() {
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const { getAssignment, assignSection, setReviewStatus } = useSectionAssignments(applications);
+
+  // Opened from the left nav's "Partnership" child item (see SharedSidebar)
+  // via ?partnerId=<id> — force the Active tab so the target accordion is
+  // actually on screen, expand it, and scroll it into view.
+  useEffect(() => {
+    const partnerId = searchParams.get("partnerId");
+    if (!partnerId) return;
+    setCurrentView("active");
+    setExpandedPartnerApp(partnerId);
+    requestAnimationFrame(() => {
+      document.getElementById(`partner-app-${partnerId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [searchParams]);
 
   // Intersection Observer for tracking active section during scroll
   useEffect(() => {
@@ -739,7 +753,11 @@ export function ApplicationsPartnershipPage() {
                     const nextDue = partnerApp.assignedSections[0];
 
                     return (
-                      <div key={partnerApp.id} className="bg-white rounded-lg border border-gray-200">
+                      <div
+                        key={partnerApp.id}
+                        id={`partner-app-${partnerApp.id}`}
+                        className="bg-white rounded-lg border border-gray-200 scroll-mt-6"
+                      >
                         {/* Partner Application Header */}
                         <div className="p-6 border-b border-gray-200">
                           <div className="flex items-start justify-between gap-4 mb-3">

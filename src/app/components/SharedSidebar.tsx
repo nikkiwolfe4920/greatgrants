@@ -18,7 +18,6 @@ import {
   Loader2,
   Menu,
   X,
-  Users,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -31,6 +30,7 @@ import { Logo } from "./Logo";
 import { useReadinessScore } from "../contexts/ReadinessScoreContext";
 import { isLockedDemoRoute } from "../demo/lockedDemoRoutes";
 import { useCreditUsage } from "@/hooks/useCreditUsage";
+import { mockPartnerApplications } from "@/data/partnerApplications";
 
 interface Section {
   id: string;
@@ -102,6 +102,12 @@ export function SharedSidebar() {
   const location = useLocation();
   const [selectedOrg, setSelectedOrg] = useState("UptownArts Coalition");
   const [applicationsExpanded, setApplicationsExpanded] = useState(false);
+  // Applications & Partnerships nav item — only ever rendered on
+  // /applications-partnership (see isApplicationsPartnershipPage below), so
+  // it can safely default to expanded rather than needing its own
+  // auto-expand effect.
+  const [partnershipNavExpanded, setPartnershipNavExpanded] = useState(true);
+  const [expandedPartnerNavId, setExpandedPartnerNavId] = useState<string>("");
   const { orgProfileItemsRemaining } = useReadinessScore();
   // Credits are shared with the Dashboard's Plan & credits card — one record,
   // rendered in two places, so the numbers can never disagree.
@@ -232,6 +238,72 @@ export function SharedSidebar() {
   // that gets the same highlighted state /applications and
   // /application/:id/s/:id already get.
   const isAllApplicationsActive = isApplicationsPage || isApplicationSectionPage || isGrantWritingDemo;
+
+  // The nested grant-applications list — identical markup/behavior whether
+  // it's rendered under "All Applications" (every page except
+  // /applications-partnership) or embedded under "Applications &
+  // Partnerships" (that page only), so the two can never drift apart.
+  const renderGrantNavList = () => (
+    <ul className="ml-3 mt-1 space-y-0.5">
+      {mockApplications.map((app) => (
+        <li key={app.id}>
+          <button
+            onClick={withLock(() => setExpandedApp(expandedApp === app.id ? "" : app.id))}
+            className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-sm rounded-md group ${lockedCursor} ${
+              location.search.includes(`applicationId=${app.id}`)
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-700 hover:bg-gray-50"
+            }`}
+            {...lockedAria}
+          >
+            {expandedApp === app.id ? (
+              <ChevronDown className="w-3 h-3 shrink-0" />
+            ) : (
+              <ChevronRight className="w-3 h-3 shrink-0" />
+            )}
+            <span className="truncate text-xs font-medium">{app.title}</span>
+          </button>
+
+          {expandedApp === app.id && (
+            <ul className="ml-5 mt-0.5 space-y-0.5">
+              {(isGrantWritingDemo ? GRANT_WRITING_DEMO_SECTIONS : app.sections).map((section) => {
+                const isActiveSection = location.pathname === `/application/${app.id}/s/${section.id}`;
+                // The one exception to "everything in this sidebar
+                // is locked" on /grant-writing-demo: these section
+                // items stay live, scrolling the single-page
+                // layout to that section's heading (id={section.id}
+                // — see GrantWritingDemoPage) instead of navigating
+                // to a separate /application/:id/s/:id route.
+                const handleSectionClick = isGrantWritingDemo
+                  ? () => document.getElementById(section.id)?.scrollIntoView({ behavior: "smooth", block: "start" })
+                  : withLock(() => navigate(`/application/${app.id}/s/${section.id}`));
+                return (
+                  <li key={section.id}>
+                    <button
+                      onClick={handleSectionClick}
+                      className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-xs rounded-md transition-colors ${
+                        isGrantWritingDemo ? "" : lockedCursor
+                      } ${
+                        isActiveSection
+                          ? "bg-gray-100 text-gray-900 font-medium"
+                          : "text-gray-600 hover:bg-gray-50"
+                      }`}
+                      {...(isGrantWritingDemo ? {} : lockedAria)}
+                    >
+                      {isActiveSection && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-teal-600 shrink-0" />
+                      )}
+                      <span className={isActiveSection ? "" : "ml-3.5"}>{section.name}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
 
   const sidebarContent = (
     <aside
@@ -399,130 +471,166 @@ export function SharedSidebar() {
             </button>
           </li>
 
-          {/* All Applications — collapsible with count badge + caret */}
-          <li>
-            <div
-              className={`flex items-center gap-2 px-3 py-2 w-full rounded-md transition-colors ${
-                isAllApplicationsActive
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              {/* Navigate label area */}
-              <button
-                onClick={demoNavOverride("/applications-demo", "/applications")}
-                className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isAllApplicationsActive ? 600 : 400, fontSize: '14px' }}
-                aria-label="Go to All Applications"
+          {/* All Applications — collapsible with count badge + caret. Hidden
+              on /applications-partnership, which shows "Applications &
+              Partnerships" (below) in this exact slot instead. */}
+          {!isApplicationsPartnershipPage && (
+            <li>
+              <div
+                className={`flex items-center gap-2 px-3 py-2 w-full rounded-md transition-colors ${
+                  isAllApplicationsActive
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
               >
-                <FileText className="w-4 h-4 shrink-0" />
-                <span className="flex-1 truncate">All Applications</span>
-              </button>
+                {/* Navigate label area */}
+                <button
+                  onClick={demoNavOverride("/applications-demo", "/applications")}
+                  className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                  style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isAllApplicationsActive ? 600 : 400, fontSize: '14px' }}
+                  aria-label="Go to All Applications"
+                >
+                  <FileText className="w-4 h-4 shrink-0" />
+                  <span className="flex-1 truncate">All Applications</span>
+                </button>
 
-              {/* Active count badge */}
-              <span
-                className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0 select-none"
-                title={`${activeApplicationsCount} active application${activeApplicationsCount !== 1 ? 's' : ''}`}
-              >
-                {activeApplicationsCount}
-              </span>
+                {/* Active count badge */}
+                <span
+                  className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0 select-none"
+                  title={`${activeApplicationsCount} active application${activeApplicationsCount !== 1 ? 's' : ''}`}
+                >
+                  {activeApplicationsCount}
+                </span>
 
-              {/* Chevron toggle */}
-              <button
-                onClick={withLock(() => setApplicationsExpanded(prev => !prev))}
-                className={`p-0.5 rounded hover:bg-gray-200 transition-colors shrink-0 ${lockedCursor}`}
-                aria-label={applicationsExpanded ? "Collapse applications" : "Expand applications"}
-                aria-expanded={applicationsExpanded}
-                {...lockedAria}
-              >
-                {applicationsExpanded ? (
-                  <ChevronDown className="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" />
-                ) : (
-                  <ChevronRight className="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" />
-                )}
-              </button>
-            </div>
+                {/* Chevron toggle */}
+                <button
+                  onClick={withLock(() => setApplicationsExpanded(prev => !prev))}
+                  className={`p-0.5 rounded hover:bg-gray-200 transition-colors shrink-0 ${lockedCursor}`}
+                  aria-label={applicationsExpanded ? "Collapse applications" : "Expand applications"}
+                  aria-expanded={applicationsExpanded}
+                  {...lockedAria}
+                >
+                  {applicationsExpanded ? (
+                    <ChevronDown className="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" />
+                  ) : (
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" />
+                  )}
+                </button>
+              </div>
 
-            {/* Nested application list */}
-            {applicationsExpanded && (
-              <ul className="ml-3 mt-1 space-y-0.5">
-                {mockApplications.map((app) => (
-                  <li key={app.id}>
-                    <button
-                      onClick={withLock(() => setExpandedApp(expandedApp === app.id ? "" : app.id))}
-                      className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-sm rounded-md group ${lockedCursor} ${
-                        location.search.includes(`applicationId=${app.id}`)
-                          ? "bg-gray-100 text-gray-900"
-                          : "text-gray-700 hover:bg-gray-50"
-                      }`}
-                      {...lockedAria}
-                    >
-                      {expandedApp === app.id ? (
-                        <ChevronDown className="w-3 h-3 shrink-0" />
-                      ) : (
-                        <ChevronRight className="w-3 h-3 shrink-0" />
-                      )}
-                      <span className="truncate text-xs font-medium">{app.title}</span>
-                    </button>
+              {/* Nested application list */}
+              {applicationsExpanded && renderGrantNavList()}
+            </li>
+          )}
 
-                    {expandedApp === app.id && (
-                      <ul className="ml-5 mt-0.5 space-y-0.5">
-                        {(isGrantWritingDemo ? GRANT_WRITING_DEMO_SECTIONS : app.sections).map((section) => {
-                          const isActiveSection = location.pathname === `/application/${app.id}/s/${section.id}`;
-                          // The one exception to "everything in this sidebar
-                          // is locked" on /grant-writing-demo: these section
-                          // items stay live, scrolling the single-page
-                          // layout to that section's heading (id={section.id}
-                          // — see GrantWritingDemoPage) instead of navigating
-                          // to a separate /application/:id/s/:id route.
-                          const handleSectionClick = isGrantWritingDemo
-                            ? () => document.getElementById(section.id)?.scrollIntoView({ behavior: "smooth", block: "start" })
-                            : withLock(() => navigate(`/application/${app.id}/s/${section.id}`));
-                          return (
-                            <li key={section.id}>
-                              <button
-                                onClick={handleSectionClick}
-                                className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-xs rounded-md transition-colors ${
-                                  isGrantWritingDemo ? "" : lockedCursor
-                                } ${
-                                  isActiveSection
-                                    ? "bg-gray-100 text-gray-900 font-medium"
-                                    : "text-gray-600 hover:bg-gray-50"
-                                }`}
-                                {...(isGrantWritingDemo ? {} : lockedAria)}
-                              >
-                                {isActiveSection && (
-                                  <span className="w-1.5 h-1.5 rounded-full bg-teal-600 shrink-0" />
-                                )}
-                                <span className={isActiveSection ? "" : "ml-3.5"}>{section.name}</span>
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
+          {/* Applications & Partnerships — only rendered on
+              /applications-partnership, in the exact nav slot "All
+              Applications" occupies everywhere else. Embeds that same grant
+              sub-nav (renderGrantNavList — identical markup/behavior to "All
+              Applications" above) plus a second nested list for active
+              partner applications, each expanding to a single "Partnership"
+              child that scrolls/opens that application's accordion on the
+              page via the ?partnerId= query param. */}
+          {isApplicationsPartnershipPage && (
+            <li>
+              <div className="flex items-center gap-2 px-3 py-2 w-full rounded-md transition-colors bg-gray-100 text-gray-900">
+                <button
+                  onClick={withLock(() => navigate("/applications-partnership"))}
+                  className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                  style={{ fontFamily: 'Cabin, sans-serif', fontWeight: 600, fontSize: '14px' }}
+                  aria-label="Go to Applications & Partnerships"
+                  {...lockedAria}
+                >
+                  <FileText className="w-4 h-4 shrink-0" />
+                  <span className="flex-1 truncate">Applications & Partnerships</span>
+                </button>
 
-          {/* Applications & Partnerships — same grant accordions as "All
-              Applications" above, plus a clearly separate "Active Partner
-              Applications" group for applications this org partners on. */}
-          <li>
-            <button
-              onClick={withLock(() => navigate("/applications-partnership"))}
-              className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${lockedCursor} ${
-                isApplicationsPartnershipPage ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-100"
-              }`}
-              style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isApplicationsPartnershipPage ? 600 : 400, fontSize: '14px' }}
-              {...lockedAria}
-            >
-              <Users className="w-4 h-4 shrink-0" />
-              <span className="flex-1 truncate">Applications & Partnerships</span>
-            </button>
-          </li>
+                <span
+                  className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0 select-none"
+                  title={`${mockApplications.length + mockPartnerApplications.length} active application${
+                    mockApplications.length + mockPartnerApplications.length !== 1 ? 's' : ''
+                  }`}
+                >
+                  {mockApplications.length + mockPartnerApplications.length}
+                </span>
+
+                <button
+                  onClick={withLock(() => setPartnershipNavExpanded(prev => !prev))}
+                  className={`p-0.5 rounded hover:bg-gray-200 transition-colors shrink-0 ${lockedCursor}`}
+                  aria-label={partnershipNavExpanded ? "Collapse applications" : "Expand applications"}
+                  aria-expanded={partnershipNavExpanded}
+                  {...lockedAria}
+                >
+                  {partnershipNavExpanded ? (
+                    <ChevronDown className="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" />
+                  ) : (
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" />
+                  )}
+                </button>
+              </div>
+
+              {partnershipNavExpanded && (
+                <>
+                  {renderGrantNavList()}
+
+                  {/* Divider between this org's own grants and the
+                      applications it partners on. */}
+                  <div className="py-1.5">
+                    <div className="border-t border-gray-100 ml-3" />
+                  </div>
+
+                  <ul className="ml-3 mt-1 space-y-0.5">
+                    {mockPartnerApplications.map((partnerApp) => {
+                      const isActivePartnership = location.search.includes(`partnerId=${partnerApp.id}`);
+                      return (
+                        <li key={partnerApp.id}>
+                          <button
+                            onClick={withLock(() =>
+                              setExpandedPartnerNavId(expandedPartnerNavId === partnerApp.id ? "" : partnerApp.id)
+                            )}
+                            className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-sm rounded-md group ${lockedCursor} ${
+                              isActivePartnership
+                                ? "bg-gray-100 text-gray-900"
+                                : "text-gray-700 hover:bg-gray-50"
+                            }`}
+                            {...lockedAria}
+                          >
+                            {expandedPartnerNavId === partnerApp.id ? (
+                              <ChevronDown className="w-3 h-3 shrink-0" />
+                            ) : (
+                              <ChevronRight className="w-3 h-3 shrink-0" />
+                            )}
+                            <span className="truncate text-xs font-medium">{partnerApp.programName}</span>
+                          </button>
+
+                          {expandedPartnerNavId === partnerApp.id && (
+                            <ul className="ml-5 mt-0.5 space-y-0.5">
+                              <li>
+                                <button
+                                  onClick={withLock(() => navigate(`/applications-partnership?partnerId=${partnerApp.id}`))}
+                                  className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-xs rounded-md transition-colors ${lockedCursor} ${
+                                    isActivePartnership
+                                      ? "bg-gray-100 text-gray-900 font-medium"
+                                      : "text-gray-600 hover:bg-gray-50"
+                                  }`}
+                                  {...lockedAria}
+                                >
+                                  {isActivePartnership && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-teal-600 shrink-0" />
+                                  )}
+                                  <span className={isActivePartnership ? "" : "ml-3.5"}>Partnership</span>
+                                </button>
+                              </li>
+                            </ul>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              )}
+            </li>
+          )}
 
           {/* Watch List */}
           <li>
