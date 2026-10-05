@@ -251,8 +251,8 @@ export function SharedSidebar() {
             onClick={withLock(() => setExpandedApp(expandedApp === app.id ? "" : app.id))}
             className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-sm rounded-md group ${lockedCursor} ${
               location.search.includes(`applicationId=${app.id}`)
-                ? "bg-white/10 text-white"
-                : "text-gray-300 hover:bg-white/10"
+                ? "bg-gray-100 text-gray-900"
+                : "text-gray-700 hover:bg-gray-50"
             }`}
             {...lockedAria}
           >
@@ -285,8 +285,8 @@ export function SharedSidebar() {
                         isGrantWritingDemo ? "" : lockedCursor
                       } ${
                         isActiveSection
-                          ? "bg-white/10 text-white font-medium"
-                          : "text-gray-400 hover:bg-white/10"
+                          ? "bg-gray-100 text-gray-900 font-medium"
+                          : "text-gray-600 hover:bg-gray-50"
                       }`}
                       {...(isGrantWritingDemo ? {} : lockedAria)}
                     >
@@ -308,15 +308,15 @@ export function SharedSidebar() {
   const sidebarContent = (
     <aside
       ref={sidebarRef}
-      className="flex flex-col bg-black h-full w-full border-r border-gray-800"
+      className="flex flex-col bg-white h-full w-full border-r border-gray-200"
     >
       {/* Logo */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 shrink-0">
-        <Logo color="white" />
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 shrink-0">
+        <Logo />
         {/* Close button on tablet/mobile overlay */}
         <button
           onClick={() => setMobileOpen(false)}
-          className="lg:hidden p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+          className="lg:hidden p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           aria-label="Close navigation"
         >
           <X className="w-4 h-4" />
@@ -338,8 +338,8 @@ export function SharedSidebar() {
                   onClick={withLock(() => navigate("/"))}
                   className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${lockedCursor} ${
                     isActive("/")
-                      ? "bg-white/10 text-white"
-                      : "text-gray-300 hover:bg-white/10"
+                      ? "bg-gray-100 text-gray-900"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                   style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isActive("/") ? 600 : 400, fontSize: '14px' }}
                   aria-current={isActive("/") ? "page" : undefined}
@@ -352,7 +352,7 @@ export function SharedSidebar() {
 
               {/* Divider */}
               <li className="py-1.5">
-                <div className="border-t border-gray-800" />
+                <div className="border-t border-gray-100" />
               </li>
             </>
           )}
@@ -364,8 +364,8 @@ export function SharedSidebar() {
                 onClick={demoNavOverride("/organization-demo", "/organization")}
                 className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
                   isActive("/organization")
-                    ? "bg-white/10 text-white"
-                    : "text-gray-300 hover:bg-white/10"
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100"
                 }`}
                 style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isActive("/organization") ? 600 : 400, fontSize: '14px' }}
               >
@@ -378,23 +378,23 @@ export function SharedSidebar() {
               <button
                 onClick={demoNavOverride("/organization-demo", "/organization")}
                 className={`w-full text-left rounded-lg transition-colors ${
-                  isActive("/organization") ? "bg-white/10" : "hover:bg-white/10"
+                  isActive("/organization") ? "bg-gray-100" : "hover:bg-gray-50"
                 }`}
               >
                 <div className="flex items-center gap-2 px-3 py-2">
-                  <Building2 className="w-4 h-4 text-gray-300 shrink-0" />
-                  <span className="flex-1 truncate text-white" style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isActive("/organization") ? 600 : 400, fontSize: '14px' }}>
+                  <Building2 className="w-4 h-4 text-gray-700 shrink-0" />
+                  <span className="flex-1 truncate text-gray-900" style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isActive("/organization") ? 600 : 400, fontSize: '14px' }}>
                     Organization Profile
                   </span>
-                  <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-gray-300 text-xs font-semibold shrink-0">
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-xs font-semibold shrink-0">
                     <AlertCircle className="w-3 h-3" />
                     <span>{orgProfileItemsRemaining}</span>
                   </div>
                 </div>
                 <div className="px-3 pb-2 pt-0.5">
                   <div className="flex items-start gap-2">
-                    <AlertCircle className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${isActive("/organization") ? "text-gray-300" : "text-gray-400"}`} />
-                    <p className="text-xs text-gray-400 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                    <AlertCircle className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${isActive("/organization") ? "text-gray-700" : "text-gray-500"}`} />
+                    <p className="text-xs text-gray-600 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
                       Required items remaining to complete your profile
                     </p>
                   </div>
@@ -410,15 +410,15 @@ export function SharedSidebar() {
                 onClick={withLock(() => navigate("/project-details"))}
                 className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${lockedCursor} ${
                   isActive("/project-details")
-                    ? "bg-white/10 text-white"
-                    : "text-gray-300 hover:bg-white/10"
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100"
                 }`}
                 style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isActive("/project-details") ? 600 : 400, fontSize: '14px' }}
                 {...lockedAria}
               >
                 <FolderOpen className="w-4 h-4 shrink-0" />
                 <span className="flex-1 truncate">My Programs</span>
-                <span className="px-2 py-0.5 bg-white/10 text-gray-300 text-xs font-semibold rounded-full shrink-0">
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0">
                   {publishedProjectsCount}
                 </span>
               </button>
@@ -428,7 +428,7 @@ export function SharedSidebar() {
               <button
                 onClick={withLock(() => navigate("/project-details"))}
                 className={`w-full text-left rounded-md transition-colors ${lockedCursor} ${
-                  isActive("/project-details") ? "bg-white/10 text-white" : "text-gray-300 hover:bg-white/10"
+                  isActive("/project-details") ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-100"
                 }`}
                 {...lockedAria}
               >
@@ -440,8 +440,8 @@ export function SharedSidebar() {
                 </div>
                 <div className="px-3 pb-2 pt-0.5">
                   <div className="flex items-start gap-2">
-                    <Sparkles className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${isActive("/project-details") ? "text-gray-300" : "text-gray-400"}`} />
-                    <p className="text-xs text-gray-400 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
+                    <Sparkles className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${isActive("/project-details") ? "text-gray-700" : "text-gray-500"}`} />
+                    <p className="text-xs text-gray-600 leading-relaxed" style={{ fontFamily: 'Cabin, sans-serif' }}>
                       Adding programs helps improve search and AI-drafting capabilities
                     </p>
                   </div>
@@ -452,7 +452,7 @@ export function SharedSidebar() {
 
           {/* Divider */}
           <li className="py-1.5">
-            <div className="border-t border-gray-800" />
+            <div className="border-t border-gray-100" />
           </li>
 
           {/* Grant Search */}
@@ -461,8 +461,8 @@ export function SharedSidebar() {
               onClick={demoNavOverride("/search-demo", "/search")}
               className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${
                 isActive("/search") || isGrantDetailPage
-                  ? "bg-white/10 text-white"
-                  : "text-gray-300 hover:bg-white/10"
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
               style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isActive("/search") || isGrantDetailPage ? 600 : 400, fontSize: '14px' }}
             >
@@ -479,8 +479,8 @@ export function SharedSidebar() {
               <div
                 className={`flex items-center gap-2 px-3 py-2 w-full rounded-md transition-colors ${
                   isAllApplicationsActive
-                    ? "bg-white/10 text-white"
-                    : "text-gray-300 hover:bg-white/10"
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
                 {/* Navigate label area */}
@@ -496,7 +496,7 @@ export function SharedSidebar() {
 
                 {/* Active count badge */}
                 <span
-                  className="px-2 py-0.5 bg-white/10 text-gray-300 text-xs font-semibold rounded-full shrink-0 select-none"
+                  className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0 select-none"
                   title={`${activeApplicationsCount} active application${activeApplicationsCount !== 1 ? 's' : ''}`}
                 >
                   {activeApplicationsCount}
@@ -505,15 +505,15 @@ export function SharedSidebar() {
                 {/* Chevron toggle */}
                 <button
                   onClick={withLock(() => setApplicationsExpanded(prev => !prev))}
-                  className={`p-0.5 rounded hover:bg-white/20 transition-colors shrink-0 ${lockedCursor}`}
+                  className={`p-0.5 rounded hover:bg-gray-200 transition-colors shrink-0 ${lockedCursor}`}
                   aria-label={applicationsExpanded ? "Collapse applications" : "Expand applications"}
                   aria-expanded={applicationsExpanded}
                   {...lockedAria}
                 >
                   {applicationsExpanded ? (
-                    <ChevronDown className="w-3.5 h-3.5 text-gray-400 transition-transform duration-200" />
+                    <ChevronDown className="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" />
                   ) : (
-                    <ChevronRight className="w-3.5 h-3.5 text-gray-400 transition-transform duration-200" />
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" />
                   )}
                 </button>
               </div>
@@ -533,7 +533,7 @@ export function SharedSidebar() {
               page via the ?partnerId= query param. */}
           {isApplicationsPartnershipPage && (
             <li>
-              <div className="flex items-center gap-2 px-3 py-2 w-full rounded-md transition-colors bg-white/10 text-white">
+              <div className="flex items-center gap-2 px-3 py-2 w-full rounded-md transition-colors bg-gray-100 text-gray-900">
                 <button
                   onClick={withLock(() => navigate("/applications-partnership"))}
                   className="flex items-center gap-2 flex-1 min-w-0 text-left"
@@ -546,7 +546,7 @@ export function SharedSidebar() {
                 </button>
 
                 <span
-                  className="px-2 py-0.5 bg-white/10 text-gray-300 text-xs font-semibold rounded-full shrink-0 select-none"
+                  className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0 select-none"
                   title={`${mockApplications.length + mockPartnerApplications.length} active application${
                     mockApplications.length + mockPartnerApplications.length !== 1 ? 's' : ''
                   }`}
@@ -556,15 +556,15 @@ export function SharedSidebar() {
 
                 <button
                   onClick={withLock(() => setPartnershipNavExpanded(prev => !prev))}
-                  className={`p-0.5 rounded hover:bg-white/20 transition-colors shrink-0 ${lockedCursor}`}
+                  className={`p-0.5 rounded hover:bg-gray-200 transition-colors shrink-0 ${lockedCursor}`}
                   aria-label={partnershipNavExpanded ? "Collapse applications" : "Expand applications"}
                   aria-expanded={partnershipNavExpanded}
                   {...lockedAria}
                 >
                   {partnershipNavExpanded ? (
-                    <ChevronDown className="w-3.5 h-3.5 text-gray-400 transition-transform duration-200" />
+                    <ChevronDown className="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" />
                   ) : (
-                    <ChevronRight className="w-3.5 h-3.5 text-gray-400 transition-transform duration-200" />
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" />
                   )}
                 </button>
               </div>
@@ -576,7 +576,7 @@ export function SharedSidebar() {
                   {/* Divider between this org's own grants and the
                       applications it partners on. */}
                   <div className="py-1.5">
-                    <div className="border-t border-gray-800 ml-3" />
+                    <div className="border-t border-gray-100 ml-3" />
                   </div>
 
                   <ul className="ml-3 mt-1 space-y-0.5">
@@ -590,8 +590,8 @@ export function SharedSidebar() {
                             )}
                             className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-sm rounded-md group ${lockedCursor} ${
                               isActivePartnership
-                                ? "bg-white/10 text-white"
-                                : "text-gray-300 hover:bg-white/10"
+                                ? "bg-gray-100 text-gray-900"
+                                : "text-gray-700 hover:bg-gray-50"
                             }`}
                             {...lockedAria}
                           >
@@ -610,8 +610,8 @@ export function SharedSidebar() {
                                   onClick={withLock(() => navigate(`/applications-partnership?partnerId=${partnerApp.id}`))}
                                   className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-xs rounded-md transition-colors ${lockedCursor} ${
                                     isActivePartnership
-                                      ? "bg-white/10 text-white font-medium"
-                                      : "text-gray-400 hover:bg-white/10"
+                                      ? "bg-gray-100 text-gray-900 font-medium"
+                                      : "text-gray-600 hover:bg-gray-50"
                                   }`}
                                   {...lockedAria}
                                 >
@@ -637,7 +637,7 @@ export function SharedSidebar() {
             <button
               onClick={withLock(() => navigate("/watch-list"))}
               className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${lockedCursor} ${
-                isWatchListPage ? "bg-white/10 text-white" : "text-gray-300 hover:bg-white/10"
+                isWatchListPage ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-100"
               }`}
               style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isWatchListPage ? 600 : 400, fontSize: '14px' }}
               {...lockedAria}
@@ -645,7 +645,7 @@ export function SharedSidebar() {
               <Eye className="w-4 h-4 shrink-0" />
               <span className="flex-1 truncate">Watch List</span>
               {watchListCount > 0 && (
-                <span className="px-2 py-0.5 bg-white/10 text-gray-300 text-xs font-semibold rounded-full shrink-0">
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0">
                   {watchListCount}
                 </span>
               )}
@@ -697,16 +697,16 @@ export function SharedSidebar() {
       )}
 
       {/* User Profile */}
-      <div className="px-3 pb-4 border-t border-gray-800 pt-3 shrink-0">
+      <div className="px-3 pb-4 border-t border-gray-200 pt-3 shrink-0">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2.5 w-full hover:bg-white/10 rounded-lg p-2 -m-2 transition-colors">
+            <button className="flex items-center gap-2.5 w-full hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors">
               <div className="w-8 h-8 rounded-full bg-[#E9EAEB] flex items-center justify-center shrink-0">
                 <span className="text-[#181D27] text-xs font-semibold">OR</span>
               </div>
               <div className="flex-1 min-w-0 text-left">
-                <div className="text-sm font-medium text-white truncate">Olivia Rhye</div>
-                <div className="text-xs text-gray-400 truncate">{selectedOrg}</div>
+                <div className="text-sm font-medium text-gray-900 truncate">Olivia Rhye</div>
+                <div className="text-xs text-gray-500 truncate">{selectedOrg}</div>
               </div>
               <Plus className="w-4 h-4 text-gray-400 shrink-0" />
             </button>
