@@ -14,6 +14,7 @@ import {
   Sparkles,
   AlertCircle,
   Eye,
+  Users,
   Clock,
   Loader2,
   Menu,
@@ -102,12 +103,11 @@ export function SharedSidebar() {
   const location = useLocation();
   const [selectedOrg, setSelectedOrg] = useState("UptownArts Coalition");
   const [applicationsExpanded, setApplicationsExpanded] = useState(false);
-  // Applications & Partnerships nav item — only ever rendered on
-  // /applications-partnership (see isApplicationsPartnershipPage below), so
-  // it can safely default to expanded rather than needing its own
-  // auto-expand effect.
-  const [partnershipNavExpanded, setPartnershipNavExpanded] = useState(true);
-  const [expandedPartnerNavId, setExpandedPartnerNavId] = useState<string>("");
+  // Grant Applications nav item — only ever rendered on
+  // /applications-partnership and /partnership-applications (see
+  // isPartnershipSection below). Defaults to collapsed so the
+  // "Partnership Applications" item beneath it stays in view.
+  const [partnershipNavExpanded, setPartnershipNavExpanded] = useState(false);
   const { orgProfileItemsRemaining } = useReadinessScore();
   // Credits are shared with the Dashboard's Plan & credits card — one record,
   // rendered in two places, so the numbers can never disagree.
@@ -126,6 +126,9 @@ export function SharedSidebar() {
   const isGrantDetailPage = location.pathname.startsWith("/grant/");
   const isWatchListPage = location.pathname === "/watch-list";
   const isApplicationsPartnershipPage = location.pathname === "/applications-partnership";
+  const isPartnershipApplicationsPage = location.pathname === "/partnership-applications";
+  const isPartnershipSection = isApplicationsPartnershipPage || isPartnershipApplicationsPage;
+  const activePartnerCount = mockPartnerApplications.filter((a) => a.status === "active").length;
   // /grant-writing-demo (step 6 of the locked tour) is a single scrollable
   // page showing every section of one application at once, rather than one
   // route per section — see the isGrantWritingDemo uses below.
@@ -241,8 +244,8 @@ export function SharedSidebar() {
 
   // The nested grant-applications list — identical markup/behavior whether
   // it's rendered under "All Applications" (every page except
-  // /applications-partnership) or embedded under "Applications &
-  // Partnerships" (that page only), so the two can never drift apart.
+  // the partnership pages) or embedded under "Grant
+  // Applications" (those pages only), so the two can never drift apart.
   const renderGrantNavList = () => (
     <ul className="ml-3 mt-1 space-y-0.5">
       {mockApplications.map((app) => (
@@ -472,9 +475,9 @@ export function SharedSidebar() {
           </li>
 
           {/* All Applications — collapsible with count badge + caret. Hidden
-              on /applications-partnership, which shows "Applications &
-              Partnerships" (below) in this exact slot instead. */}
-          {!isApplicationsPartnershipPage && (
+              on the partnership pages, which show "Grant Applications"
+              and "Partnership Applications" (below) in this exact slot. */}
+          {!isPartnershipSection && (
             <li>
               <div
                 className={`flex items-center gap-2 px-3 py-2 w-full rounded-md transition-colors ${
@@ -523,113 +526,79 @@ export function SharedSidebar() {
             </li>
           )}
 
-          {/* Applications & Partnerships — only rendered on
-              /applications-partnership, in the exact nav slot "All
-              Applications" occupies everywhere else. Embeds that same grant
-              sub-nav (renderGrantNavList — identical markup/behavior to "All
-              Applications" above) plus a second nested list for active
-              partner applications, each expanding to a single "Partnership"
-              child that scrolls/opens that application's accordion on the
-              page via the ?partnerId= query param. */}
-          {isApplicationsPartnershipPage && (
-            <li>
-              <div className="flex items-center gap-2 px-3 py-2 w-full rounded-md transition-colors bg-gray-100 text-gray-900">
-                <button
-                  onClick={withLock(() => navigate("/applications-partnership"))}
-                  className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                  style={{ fontFamily: 'Cabin, sans-serif', fontWeight: 600, fontSize: '14px' }}
-                  aria-label="Go to Applications & Partnerships"
-                  {...lockedAria}
-                >
-                  <FileText className="w-4 h-4 shrink-0" />
-                  <span className="flex-1 truncate">Applications & Partnerships</span>
-                </button>
-
-                <span
-                  className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0 select-none"
-                  title={`${mockApplications.length + mockPartnerApplications.length} active application${
-                    mockApplications.length + mockPartnerApplications.length !== 1 ? 's' : ''
+          {/* Grant Applications + Partnership Applications — only rendered on
+              /applications-partnership and /partnership-applications, in the
+              exact nav slot "All Applications" occupies everywhere else.
+              "Grant Applications" embeds that same grant sub-nav
+              (renderGrantNavList — identical markup/behavior to "All
+              Applications" above); "Partnership Applications" sits beneath
+              it as its own page link. */}
+          {isPartnershipSection && (
+            <>
+              <li>
+                <div
+                  className={`flex items-center gap-2 px-3 py-2 w-full rounded-md transition-colors ${
+                    isApplicationsPartnershipPage ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
-                  {mockApplications.length + mockPartnerApplications.length}
-                </span>
+                  <button
+                    onClick={withLock(() => navigate("/applications-partnership"))}
+                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                    style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isApplicationsPartnershipPage ? 600 : 400, fontSize: '14px' }}
+                    aria-label="Go to Grant Applications"
+                    aria-current={isApplicationsPartnershipPage ? "page" : undefined}
+                    {...lockedAria}
+                  >
+                    <FileText className="w-4 h-4 shrink-0" />
+                    <span className="flex-1 truncate">Grant Applications</span>
+                  </button>
 
+                  <span
+                    className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0 select-none"
+                    title={`${activeApplicationsCount} active grant application${activeApplicationsCount !== 1 ? 's' : ''}`}
+                  >
+                    {activeApplicationsCount}
+                  </span>
+
+                  <button
+                    onClick={withLock(() => setPartnershipNavExpanded(prev => !prev))}
+                    className={`p-0.5 rounded hover:bg-gray-200 transition-colors shrink-0 ${lockedCursor}`}
+                    aria-label={partnershipNavExpanded ? "Collapse grant applications" : "Expand grant applications"}
+                    aria-expanded={partnershipNavExpanded}
+                    {...lockedAria}
+                  >
+                    {partnershipNavExpanded ? (
+                      <ChevronDown className="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" />
+                    ) : (
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" />
+                    )}
+                  </button>
+                </div>
+
+                {partnershipNavExpanded && renderGrantNavList()}
+              </li>
+
+              <li>
                 <button
-                  onClick={withLock(() => setPartnershipNavExpanded(prev => !prev))}
-                  className={`p-0.5 rounded hover:bg-gray-200 transition-colors shrink-0 ${lockedCursor}`}
-                  aria-label={partnershipNavExpanded ? "Collapse applications" : "Expand applications"}
-                  aria-expanded={partnershipNavExpanded}
+                  onClick={withLock(() => navigate("/partnership-applications"))}
+                  className={`flex items-center gap-2 px-3 py-2 w-full text-left rounded-md transition-colors ${lockedCursor} ${
+                    isPartnershipApplicationsPage ? "bg-gray-100 text-gray-900" : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                  style={{ fontFamily: 'Cabin, sans-serif', fontWeight: isPartnershipApplicationsPage ? 600 : 400, fontSize: '14px' }}
+                  aria-current={isPartnershipApplicationsPage ? "page" : undefined}
                   {...lockedAria}
                 >
-                  {partnershipNavExpanded ? (
-                    <ChevronDown className="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" />
-                  ) : (
-                    <ChevronRight className="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" />
-                  )}
+                  <Users className="w-4 h-4 shrink-0" />
+                  <span className="flex-1 truncate">Partnership Applications</span>
+                  <span
+                    className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0 select-none"
+                    title={`${activePartnerCount} active partner application${activePartnerCount !== 1 ? 's' : ''}`}
+                  >
+                    {activePartnerCount}
+                  </span>
                 </button>
-              </div>
-
-              {partnershipNavExpanded && (
-                <>
-                  {renderGrantNavList()}
-
-                  {/* Divider between this org's own grants and the
-                      applications it partners on. */}
-                  <div className="py-1.5">
-                    <div className="border-t border-gray-100 ml-3" />
-                  </div>
-
-                  <ul className="ml-3 mt-1 space-y-0.5">
-                    {mockPartnerApplications.map((partnerApp) => {
-                      const isActivePartnership = location.search.includes(`partnerId=${partnerApp.id}`);
-                      return (
-                        <li key={partnerApp.id}>
-                          <button
-                            onClick={withLock(() =>
-                              setExpandedPartnerNavId(expandedPartnerNavId === partnerApp.id ? "" : partnerApp.id)
-                            )}
-                            className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-sm rounded-md group ${lockedCursor} ${
-                              isActivePartnership
-                                ? "bg-gray-100 text-gray-900"
-                                : "text-gray-700 hover:bg-gray-50"
-                            }`}
-                            {...lockedAria}
-                          >
-                            {expandedPartnerNavId === partnerApp.id ? (
-                              <ChevronDown className="w-3 h-3 shrink-0" />
-                            ) : (
-                              <ChevronRight className="w-3 h-3 shrink-0" />
-                            )}
-                            <span className="truncate text-xs font-medium">{partnerApp.programName}</span>
-                          </button>
-
-                          {expandedPartnerNavId === partnerApp.id && (
-                            <ul className="ml-5 mt-0.5 space-y-0.5">
-                              <li>
-                                <button
-                                  onClick={withLock(() => navigate(`/applications-partnership?partnerId=${partnerApp.id}`))}
-                                  className={`flex items-center gap-2 px-3 py-1.5 w-full text-left text-xs rounded-md transition-colors ${lockedCursor} ${
-                                    isActivePartnership
-                                      ? "bg-gray-100 text-gray-900 font-medium"
-                                      : "text-gray-600 hover:bg-gray-50"
-                                  }`}
-                                  {...lockedAria}
-                                >
-                                  {isActivePartnership && (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-teal-600 shrink-0" />
-                                  )}
-                                  <span className={isActivePartnership ? "" : "ml-3.5"}>Partnership</span>
-                                </button>
-                              </li>
-                            </ul>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </>
-              )}
-            </li>
+              </li>
+            </>
           )}
 
           {/* Watch List */}

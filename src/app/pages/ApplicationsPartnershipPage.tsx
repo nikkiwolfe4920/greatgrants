@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router";
+import { useNavigate, Link } from "react-router";
 import { motion } from "motion/react";
 import {
   Calendar,
@@ -14,7 +14,6 @@ import {
   Loader2,
   Sparkles,
   Check,
-  Users,
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
@@ -42,27 +41,21 @@ import { MarkApplicationSubmittedModal } from "@/app/components/MarkApplicationS
 import { SectionAssignmentControl } from "@/app/components/SectionAssignmentControl";
 
 import { mockApplications, type Application, type Section } from "@/data/applications";
-import { mockPartnerApplications, type PartnerApplication, type PartnershipStageId } from "@/data/partnerApplications";
 import { useSectionAssignments } from "@/hooks/useSectionAssignments";
 import { CURRENT_USER_ID, getOrgMember, orgMembers } from "@/data/orgMembers";
 
 /**
- * /applications-partnership — same accordion-list hierarchy and filters as
- * /applications, but split into two clearly headed groups so grant work and
- * partner commitments never get confused for one another: "My Active
- * Grants" (this org's own applications, identical to /applications) and
- * "Active Partner Applications" (applications this org has been invited
- * into as a sub-recipient/partner — see partnerApplications.ts, modeled on
- * the Figma "Partner view" detail screen). The grouped-sections pattern is
- * intentionally generic so a third application type can join the same page
- * later without changing the layout.
+ * /applications-partnership — "Grant Applications": the active grant
+ * applications this org is preparing as the prime applicant, using the same
+ * accordion hierarchy as /applications. Partner applications live on their
+ * own page, /partnership-applications.
  */
 export function ApplicationsPartnershipPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [expandedApp, setExpandedApp] = useState<string>("1");
-  const [expandedPartnerApp, setExpandedPartnerApp] = useState<string>("p1");
-  const [currentView, setCurrentView] = useState<"active" | "submitted" | "archive">("active");
+  // This page only ever lists active grant applications; submitted and
+  // archived ones live on /applications.
+  const currentView = "active" as const;
   const [archivedApps, setArchivedApps] = useState<string[]>([]);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [selectedAppForExport, setSelectedAppForExport] = useState<Application | null>(null);
@@ -79,19 +72,6 @@ export function ApplicationsPartnershipPage() {
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const { getAssignment, assignSection, setReviewStatus } = useSectionAssignments(applications);
-
-  // Opened from the left nav's "Partnership" child item (see SharedSidebar)
-  // via ?partnerId=<id> — force the Active tab so the target accordion is
-  // actually on screen, expand it, and scroll it into view.
-  useEffect(() => {
-    const partnerId = searchParams.get("partnerId");
-    if (!partnerId) return;
-    setCurrentView("active");
-    setExpandedPartnerApp(partnerId);
-    requestAnimationFrame(() => {
-      document.getElementById(`partner-app-${partnerId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  }, [searchParams]);
 
   // Intersection Observer for tracking active section during scroll
   useEffect(() => {
@@ -266,53 +246,9 @@ export function ApplicationsPartnershipPage() {
     }
   };
 
-  // Partnership-stage badge — the current stage is highlighted green (an
-  // MOU-committed partnership), every other stage reads as a neutral pill.
-  const getStageBadge = (stageId: PartnershipStageId, label: string) => {
-    if (stageId === "committed") {
-      return (
-        <Badge className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50">
-          {label}
-        </Badge>
-      );
-    }
-    return (
-      <Badge className="bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-100">
-        {label}
-      </Badge>
-    );
-  };
-
-  const getAssignedSectionBadge = (status: "assigned" | "in-progress" | "complete") => {
-    switch (status) {
-      case "complete":
-        return (
-          <Badge className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50">
-            Complete
-          </Badge>
-        );
-      case "in-progress":
-        return (
-          <Badge className="bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-50">
-            In Progress
-          </Badge>
-        );
-      default:
-        return (
-          <Badge className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50">
-            Assigned
-          </Badge>
-        );
-    }
-  };
-
   const currentExpandedApp = applications.find(app => app.id === expandedApp);
 
-  const currentApplications = currentView === "active" ? activeApplications : currentView === "submitted" ? submittedApplications : archivedApplications;
-  // Partner applications don't yet model submitted/archived states (see
-  // partnerApplications.ts) — the "Active Partner Applications" group only
-  // shows on the Active tab, same scope as the Figma reference screen.
-  const activePartnerApplications = currentView === "active" ? mockPartnerApplications : [];
+  const currentApplications = activeApplications;
 
   return (
     <div className="max-w-[1400px] mx-auto p-8">
@@ -331,7 +267,7 @@ export function ApplicationsPartnershipPage() {
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>Applications & Partnerships</BreadcrumbPage>
+                <BreadcrumbPage>Grant Applications</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
@@ -345,68 +281,17 @@ export function ApplicationsPartnershipPage() {
                   <FileText className="w-8 h-8" strokeWidth={1.5} />
                 </div>
                 <h1 className="text-2xl text-gray-900" style={{ fontFamily: 'Lustria, serif', fontWeight: 600 }}>
-                  Applications & Partnerships
+                  Grant Applications
                 </h1>
-              </div>
-
-              {/* View Toggle */}
-              <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
-                <button
-                  onClick={() => setCurrentView("active")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    currentView === "active"
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  Active
-                  {(activeApplications.length + activePartnerApplications.length) > 0 && (
-                    <Badge className="ml-2 bg-teal-600 text-white">
-                      {activeApplications.length + activePartnerApplications.length}
-                    </Badge>
-                  )}
-                </button>
-                <button
-                  onClick={() => setCurrentView("submitted")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    currentView === "submitted"
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  Submitted
-                  {submittedApplications.length > 0 && (
-                    <Badge className="ml-2 bg-gray-600 text-white">
-                      {submittedApplications.length}
-                    </Badge>
-                  )}
-                </button>
-                <button
-                  onClick={() => setCurrentView("archive")}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    currentView === "archive"
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  <Archive className="w-4 h-4 inline mr-1.5" />
-                  Archive
-                  {archivedApplications.length > 0 && (
-                    <Badge className="ml-2 bg-gray-600 text-white">
-                      {archivedApplications.length}
-                    </Badge>
-                  )}
-                </button>
               </div>
             </div>
 
             <div className="flex items-center justify-between gap-4">
               <p className="text-gray-600 text-sm">
-                {currentView === "active"
-                  ? "Manage your active grant applications and partner commitments"
-                  : currentView === "submitted"
-                  ? "View grant applications submitted for review"
-                  : "View and manage archived applications"}
+                Manage your active grant applications.{" "}
+                <Link to="/applications" className="text-teal-600 hover:text-teal-700 hover:underline">
+                  View submitted &amp; archived
+                </Link>
               </p>
 
               <div className="flex items-center gap-2">
@@ -423,15 +308,9 @@ export function ApplicationsPartnershipPage() {
             {/* ------------------------------------------------------------ */}
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {currentView === "active" ? "My Active Grants" : currentView === "submitted" ? "Submitted Grants" : "Archived Grants"}
-                </h2>
+                <h2 className="text-lg font-semibold text-gray-900">Active Grant Applications</h2>
                 <p className="text-sm text-gray-500">
-                  {currentView === "active"
-                    ? "Applications your organization is preparing as the prime applicant."
-                    : currentView === "submitted"
-                    ? "Applications your organization has submitted for review."
-                    : "Applications your organization has archived."}
+                  Applications your organization is preparing as the prime applicant.
                 </p>
               </div>
 
@@ -455,9 +334,11 @@ export function ApplicationsPartnershipPage() {
                       : "Archived applications will appear here."}
                   </p>
                   {currentView === "active" && archivedApplications.length > 0 && (
-                    <Button onClick={() => setCurrentView("archive")} variant="outline" className="mt-4">
-                      <Archive className="w-4 h-4 mr-2" />
-                      View archived applications
+                    <Button asChild variant="outline" className="mt-4">
+                      <Link to="/applications">
+                        <Archive className="w-4 h-4 mr-2" />
+                        View archived applications
+                      </Link>
                     </Button>
                   )}
                 </div>
@@ -717,181 +598,6 @@ export function ApplicationsPartnershipPage() {
               )}
             </div>
 
-            {/* ------------------------------------------------------------ */}
-            {/* Active Partner Applications — applications this org has been */}
-            {/* invited into as a partner/sub-recipient. Same accordion      */}
-            {/* summary→expand pattern as the grants list above, with        */}
-            {/* expanded content modeled on the Figma "Partner view"        */}
-            {/* detail screen (Partnership status, Application access, Your  */}
-            {/* role). Kept visually distinct via its own header so it's    */}
-            {/* never mistaken for this org's own grant applications.       */}
-            {/* ------------------------------------------------------------ */}
-            {currentView === "active" && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-gray-400" />
-                  <h2 className="text-lg font-semibold text-gray-900">Active Partner Applications</h2>
-                </div>
-                <p className="text-sm text-gray-500 -mt-3">
-                  Applications where your organization is a partner, not the prime applicant.
-                </p>
-
-                {activePartnerApplications.length === 0 ? (
-                  <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                      <Users className="w-8 h-8 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No partner applications</h3>
-                    <p className="text-gray-600 text-sm">
-                      Applications you're invited to partner on will appear here.
-                    </p>
-                  </div>
-                ) : (
-                  activePartnerApplications.map((partnerApp) => {
-                    const isExpanded = expandedPartnerApp === partnerApp.id;
-                    const currentStage = partnerApp.stages.find((s) => s.id === partnerApp.currentStage);
-                    const nextDue = partnerApp.assignedSections[0];
-
-                    return (
-                      <div
-                        key={partnerApp.id}
-                        id={`partner-app-${partnerApp.id}`}
-                        className="bg-white rounded-lg border border-gray-200 scroll-mt-6"
-                      >
-                        {/* Partner Application Header */}
-                        <div className="p-6 border-b border-gray-200">
-                          <div className="flex items-start justify-between gap-4 mb-3">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2 flex-wrap">
-                                <h3 className="text-lg font-semibold text-gray-900">{partnerApp.programName}</h3>
-                                <Badge className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50">
-                                  {partnerApp.roleBadge}
-                                </Badge>
-                                {currentStage && getStageBadge(currentStage.id, currentStage.label)}
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => setExpandedPartnerApp(isExpanded ? "" : partnerApp.id)}
-                              className="p-1 rounded hover:bg-gray-100"
-                            >
-                              {isExpanded ? (
-                                <ChevronUp className="w-5 h-5 text-gray-500" />
-                              ) : (
-                                <ChevronDown className="w-5 h-5 text-gray-500" />
-                              )}
-                            </button>
-                          </div>
-
-                          <div className="flex items-center gap-6 text-sm text-gray-600">
-                            <div>Prime applicant: {partnerApp.primeApplicant}</div>
-                            {nextDue && (
-                              <div className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4" />
-                                <span>Due {nextDue.dueDate}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Expanded details — mirrors the Figma partner detail
-                            screen's two-column layout (status + access on the
-                            left, role summary on the right) inside the
-                            accordion instead of on its own page. */}
-                        {isExpanded && (
-                          <div className="p-6 flex flex-col lg:flex-row gap-5 items-start">
-                            <div className="flex-1 min-w-0 w-full space-y-4">
-                              {/* Partnership status */}
-                              <div className="border border-gray-200 rounded-xl p-5">
-                                <h4 className="font-semibold text-gray-900 mb-4">Partnership status</h4>
-                                <div className="grid grid-cols-4 gap-2">
-                                  {partnerApp.stages.map((stage) => {
-                                    const isCurrent = stage.id === partnerApp.currentStage;
-                                    return (
-                                      <div
-                                        key={stage.id}
-                                        className={`min-w-0 rounded-lg border px-2.5 py-2.5 ${
-                                          isCurrent ? "bg-green-50 border-green-300" : "bg-gray-50 border-gray-200"
-                                        }`}
-                                      >
-                                        <p className={`text-[13px] font-semibold truncate ${isCurrent ? "text-green-700" : "text-gray-700"}`}>
-                                          {stage.label}
-                                        </p>
-                                        <p className="text-xs text-gray-500">{stage.date ?? "—"}</p>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                                {partnerApp.mouNote && (
-                                  <p className="text-[13px] text-gray-600 mt-4">{partnerApp.mouNote}</p>
-                                )}
-                              </div>
-
-                              {/* Application access */}
-                              <div className="border border-gray-200 rounded-xl p-5">
-                                <h4 className="font-semibold text-gray-900 mb-2">Application access</h4>
-                                <p className="text-sm text-gray-600 mb-4">
-                                  You can read the application narrative and your own partnership details. Other
-                                  partners' details and amounts aren't shown. Sections assigned to you:
-                                </p>
-                                <div className="space-y-3">
-                                  {partnerApp.assignedSections.map((section) => (
-                                    <div
-                                      key={section.id}
-                                      className="border border-gray-200 rounded-lg p-3 flex items-center gap-3"
-                                    >
-                                      <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-gray-900 text-sm">{section.name}</p>
-                                        <p className="text-xs text-gray-500">
-                                          Assigned by {section.assignedBy} · Due {section.dueDate}
-                                        </p>
-                                      </div>
-                                      {getAssignedSectionBadge(section.status)}
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="bg-white shrink-0"
-                                        onClick={() => console.log("Open partner section:", partnerApp.id, section.id)}
-                                      >
-                                        Open section
-                                      </Button>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Your role */}
-                            <div className="w-full lg:w-80 shrink-0 border border-gray-200 rounded-xl p-5 space-y-4">
-                              <h4 className="font-semibold text-gray-900">Your role</h4>
-                              <div>
-                                <p className="text-xs text-gray-500">Need</p>
-                                <p className="text-sm font-semibold text-gray-900">{partnerApp.need}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-gray-500">MOU amount (set by {partnerApp.primeApplicant})</p>
-                                <p className="text-sm font-semibold text-gray-900">{partnerApp.mouAmount}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-gray-500">Period</p>
-                                <p className="text-sm font-semibold text-gray-900">{partnerApp.period}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-gray-500">Prime applicant</p>
-                                <p className="text-sm font-semibold text-gray-900">{partnerApp.primeApplicant}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-gray-500">NOFO deadline</p>
-                                <p className="text-sm font-semibold text-gray-900">{partnerApp.nofoDeadline}</p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            )}
           </div>
         </div>
 

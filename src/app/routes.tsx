@@ -3,6 +3,7 @@ import { AppLayout } from "./components/AppLayout";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ApplicationsPage } from "./pages/ApplicationsPage";
 import { ApplicationsPartnershipPage } from "./pages/ApplicationsPartnershipPage";
+import { PartnershipApplicationsPage } from "./pages/PartnershipApplicationsPage";
 import { ApplicationsDemoPage } from "./pages/ApplicationsDemoPage";
 import { GrantWritingDemoPage } from "./pages/GrantWritingDemoPage";
 import { ApplicationSectionPage } from "./pages/ApplicationSectionPage";
@@ -170,12 +171,14 @@ const routes = [
         element: <ApplicationsPage />,
       },
       {
-        // Same accordion-list hierarchy as /applications, split into "My
-        // Active Grants" and "Active Partner Applications" — see
-        // ApplicationsPartnershipPage for why these live on a separate page
-        // instead of as a third tab.
+        // "Grant Applications" — active grants only; see
+        // ApplicationsPartnershipPage.
         path: "applications-partnership",
         element: <ApplicationsPartnershipPage />,
+      },
+      {
+        path: "partnership-applications",
+        element: <PartnershipApplicationsPage />,
       },
       {
         // Step 5 of the locked demo tour, reached from eligibility-demo's
