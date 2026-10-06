@@ -7,6 +7,7 @@ import { PartnershipApplicationsPage } from "./pages/PartnershipApplicationsPage
 import { ApplicationsDemoPage } from "./pages/ApplicationsDemoPage";
 import { GrantWritingDemoPage } from "./pages/GrantWritingDemoPage";
 import { ApplicationSectionPage } from "./pages/ApplicationSectionPage";
+import { PartnerSearchOrganizationsPage } from "./pages/PartnerSearchOrganizationsPage";
 import { GrantSearchPage } from "./pages/GrantSearchPage";
 import { SearchDemoPage } from "./pages/SearchDemoPage";
 import { GrantDetailPage } from "./pages/GrantDetailPage";
@@ -198,6 +199,12 @@ const routes = [
       {
         path: "application/:applicationId/s/:sectionId",
         element: <ApplicationSectionPage />,
+      },
+      {
+        // "Add a partner" modal laid over /application/1/s/s1 — see
+        // PartnerSearchOrganizationsPage.
+        path: "partner-search-organizations",
+        element: <PartnerSearchOrganizationsPage />,
       },
       {
         path: "search",
