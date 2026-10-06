@@ -125,8 +125,15 @@ function RichTextField({
  * anchor — see the effect below — so the sidebar's per-section links (see
  * SharedSidebar) keep working unchanged.
  */
-export function ApplicationSectionPage() {
-  const { applicationId, sectionId } = useParams<{ applicationId: string; sectionId: string }>();
+export function ApplicationSectionPage({
+  applicationId: applicationIdProp,
+  sectionId: sectionIdProp,
+}: { applicationId?: string; sectionId?: string } = {}) {
+  // Props let a route that isn't /application/:applicationId/s/:sectionId
+  // (e.g. the Partner search modal route) render this page as its backdrop.
+  const params = useParams<{ applicationId: string; sectionId: string }>();
+  const applicationId = applicationIdProp ?? params.applicationId;
+  const sectionId = sectionIdProp ?? params.sectionId;
 
   const currentApplication = mockApplications.find((app) => app.id === applicationId);
   const sections = currentApplication?.sections ?? [];
