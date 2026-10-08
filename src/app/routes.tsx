@@ -4,6 +4,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { ApplicationsPage } from "./pages/ApplicationsPage";
 import { ApplicationsPartnershipPage } from "./pages/ApplicationsPartnershipPage";
 import { PartnershipApplicationsPage } from "./pages/PartnershipApplicationsPage";
+import { ApplicationPartnerPlanningPage } from "./pages/ApplicationPartnerPlanningPage";
 import { ApplicationsDemoPage } from "./pages/ApplicationsDemoPage";
 import { GrantWritingDemoPage } from "./pages/GrantWritingDemoPage";
 import { ApplicationSectionPage } from "./pages/ApplicationSectionPage";
@@ -180,6 +181,12 @@ const routes = [
       {
         path: "partnership-applications",
         element: <PartnershipApplicationsPage />,
+      },
+      {
+        // Prime applicant's "Partners" step for one application in Planning —
+        // see ApplicationPartnerPlanningPage.
+        path: "application-partner-planning",
+        element: <ApplicationPartnerPlanningPage />,
       },
       {
         // Step 5 of the locked demo tour, reached from eligibility-demo's
