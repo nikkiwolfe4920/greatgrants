@@ -594,7 +594,7 @@ function ApplicationResourcesPanel() {
   }
 
   return (
-    <aside className="w-full lg:w-[320px] shrink-0 relative lg:sticky lg:top-0 lg:h-screen bg-[#F9FAFB] border-l border-gray-200 overflow-hidden">
+    <aside className="w-full lg:w-[320px] shrink-0 relative lg:sticky lg:top-0 lg:h-[calc(100vh-var(--demo-bar-h,0px))] lg:self-start bg-[#F9FAFB] border-l border-gray-200 overflow-hidden">
       <button
         onClick={() => setExpanded(false)}
         className="hidden lg:flex absolute top-6 -left-4 z-10 w-8 h-8 bg-white rounded-full border-2 border-gray-200 shadow-lg items-center justify-center hover:border-gray-300 transition-colors"
@@ -679,15 +679,16 @@ const GRANT_TITLE = "National Oceanic and Atmospheric Administration (NOAA) – 
 
 export function GrantWritingDemoPage() {
   return (
-    <div className="max-w-[1400px] mx-auto px-8 py-8">
+    <div>
       {/* Outer flex row wraps the ENTIRE page (breadcrumb through the
           section cards), not just the section cards, so the resources
           panel sits alongside from the very top of the page — same
           structural pattern as ApplicationRightRail on /applications-demo
           (ApplicationsPage's own outer `flex gap-6` wraps its whole page
           this way), just defaulting to open instead of collapsed. */}
-      <div className="flex gap-8 items-start flex-col lg:flex-row">
+      <div className="flex items-start flex-col lg:flex-row">
         <div className="flex-1 min-w-0">
+        <div className="max-w-[1400px] mx-auto px-8 py-8">
       {/* Breadcrumb — Home is inert like every locked demo page. "Applications"
           is a middle crumb here (not the current page), so unlike
           BreadcrumbPage's teal "current page" styling, it renders as plain
@@ -1078,6 +1079,7 @@ export function GrantWritingDemoPage() {
               />
             </div>
           </div>
+        </div>
         </div>
         </div>
 

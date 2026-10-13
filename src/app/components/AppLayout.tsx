@@ -14,7 +14,10 @@ export function AppLayout() {
   const isLockedDemo = isLockedDemoRoute(location.pathname);
 
   return (
-    <div className="flex h-screen flex-col bg-white">
+    <div
+      className="flex h-screen flex-col bg-white"
+      style={isLockedDemo ? ({ "--demo-bar-h": "5rem" } as React.CSSProperties) : undefined}
+    >
       {isLockedDemo && <DemoOnlyBar />}
       <div className="flex flex-1 min-h-0">
         <SharedSidebar />
