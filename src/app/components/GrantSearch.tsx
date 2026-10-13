@@ -981,8 +981,10 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
 
   // TP-1220: website fallback context nudge + missing-context state
   const hasPrograms = publishedProjects.length > 0;
-  const showFallbackNudge = !hasPrograms && hasWebsite && !nudgeDismissed;
-  const showMissingContext = !hasPrograms && !hasWebsite;
+  // The locked /search-demo walkthrough always shows results, so it never
+  // gets the missing-context state or the website-fallback nudge.
+  const showFallbackNudge = !demoLocked && !hasPrograms && hasWebsite && !nudgeDismissed;
+  const showMissingContext = !demoLocked && !hasPrograms && !hasWebsite;
 
   return (
     <div className="max-w-[1400px] mx-auto p-6 overflow-x-hidden">
