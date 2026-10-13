@@ -1,5 +1,4 @@
 import { ArrowLeft, Eye } from "lucide-react";
-import { useNavigate } from "react-router";
 
 const CABIN = { fontFamily: "Cabin, sans-serif" } as const;
 
@@ -34,17 +33,10 @@ const CABIN = { fontFamily: "Cabin, sans-serif" } as const;
  * here (and LockedTourDock's stepper) are the only ways to move around.
  */
 export function DemoOnlyBar() {
-  const navigate = useNavigate();
-
+  // Universal browser-back: whatever step the viewer was on before this
+  // page (including a different site, if they arrived from a shared link).
   const handleBack = () => {
-    // A viewer can land here directly (a shared link) with no in-app
-    // history to pop, so fall back to the dashboard rather than stranding
-    // them on a dead "back" click.
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate("/");
-    }
+    window.history.back();
   };
 
   return (
@@ -81,21 +73,26 @@ export function DemoOnlyBar() {
         {/* Right — Login / Create Your Free Account, ported from the Figma
             "Header / Nav" > Navigation component (node 14398:21796). */}
         <div className="flex shrink-0 items-center justify-end gap-2">
-          <button
-            onClick={() => navigate("/signin")}
+          {/* target="_blank" opens (and the browser focuses) a new tab. */}
+          <a
+            href="https://app.greatgrants.ai/login"
+            target="_blank"
+            rel="noopener noreferrer"
             className="hidden items-center rounded-[8px] px-4 py-[11px] text-[16px] leading-[19.2px] tracking-[0.5px] text-[#475467] transition-colors hover:bg-[#f9fafb] hover:text-[#101828] focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-1 sm:flex"
           >
             Login
-          </button>
-          <button
-            onClick={() => navigate("/subscribe/create-account")}
+          </a>
+          <a
+            href="https://app.greatgrants.ai/create-account"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex shrink-0 items-center justify-center rounded-[8px] border border-[#0e9384] bg-[#107569] px-[18px] py-[10px] text-[16px] leading-6 tracking-[0.5px] text-white shadow-[0px_1px_0.5px_rgba(16,24,40,0.05)] transition-colors hover:bg-[#0e9384] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e9384] focus-visible:ring-offset-1"
           >
             {/* Same CTA, shorter label below sm — the full sentence and
                 "← Back" no longer both fit on a phone-width screen. */}
             <span className="hidden sm:inline">Create Your Free Account</span>
             <span className="sm:hidden">Sign Up</span>
-          </button>
+          </a>
         </div>
       </div>
     </div>
