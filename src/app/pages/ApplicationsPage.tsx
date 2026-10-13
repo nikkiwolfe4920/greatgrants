@@ -375,10 +375,14 @@ export function ApplicationsPage({
   const currentExpandedApp = applications.find(app => app.id === expandedApp);
 
   return (
-    <div className="max-w-[1400px] mx-auto p-8">
-      <div className="flex gap-6">
+    <div>
+      {/* The rail is a sibling of the centered content column (not inside
+          it) so it sits flush against the right edge of the window, like
+          the Profile Completion rail on /organization. */}
+      <div className="flex items-start">
         {/* Main Content */}
         <div className="flex-1 min-w-0">
+        <div className="max-w-[1400px] mx-auto p-8">
       {/* Breadcrumb */}
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
@@ -1042,6 +1046,7 @@ export function ApplicationsPage({
           })
         )}
       </div>
+        </div>
         </div>
 
         {/* Right Rail */}

@@ -300,7 +300,7 @@ export function ApplicationRightRail({
           animate={{ width: 320, opacity: 1 }}
           exit={{ width: 0, opacity: 0 }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          className="bg-[#F9FAFB] border-l border-gray-200 overflow-hidden flex-shrink-0 relative sticky top-0 h-screen"
+          className="bg-[#F9FAFB] border-l border-gray-200 overflow-hidden flex-shrink-0 relative sticky top-0 h-[calc(100vh-var(--demo-bar-h,0px))] self-start"
         >
           {/* Collapse Button */}
           <motion.button
@@ -396,7 +396,7 @@ export function ApplicationRightRail({
         animate={{ width: 320, opacity: 1 }}
         exit={{ width: 0, opacity: 0 }}
         transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        className="bg-[#F9FAFB] border-l border-gray-200 overflow-hidden flex-shrink-0 relative sticky top-0 h-screen"
+        className="bg-[#F9FAFB] border-l border-gray-200 overflow-hidden flex-shrink-0 relative sticky top-0 h-[calc(100vh-var(--demo-bar-h,0px))] self-start"
       >
         {/* Collapse Button */}
         <motion.button
