@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
+  Mail,
   MoreVertical,
   Send,
   Undo2,
@@ -42,6 +43,11 @@ import {
   BreadcrumbSeparator,
   BreadcrumbHome,
 } from "@/app/components/ui/breadcrumb";
+import {
+  PartnerInfoAssistant,
+  EMPTY_ASSISTANT_STATE,
+  type AssistantState,
+} from "@/app/components/PartnerInfoAssistant";
 import {
   mockPartnerApplications,
   type PartnerApplication,
@@ -94,9 +100,13 @@ const todayLabel = () => new Date().toLocaleDateString("en-US", { month: "short"
  * "Partner Decision" toggle.
  */
 export function PartnershipApplicationsPage() {
-  const [applications, setApplications] = useState<PartnerApplication[]>(mockPartnerApplications);
-  const [currentView, setCurrentView] = useState<ViewId>("active");
-  const [expandedId, setExpandedId] = useState<string>("p1");
+  // Opens on the accepted NEA partnership (the Figma state), already read.
+  const [applications, setApplications] = useState<PartnerApplication[]>(() =>
+    mockPartnerApplications.map((a) => (a.id === "p4" && a.decision ? { ...a, decision: { ...a.decision, read: true } } : a)),
+  );
+  const [currentView, setCurrentView] = useState<ViewId>("decision");
+  const [expandedId, setExpandedId] = useState<string>("p4");
+  const [assistants, setAssistants] = useState<Record<string, AssistantState>>({});
   const [pendingSubmitId, setPendingSubmitId] = useState<string | null>(null);
 
   const byStatus = (status: PartnerApplicationStatus) => applications.filter((a) => a.status === status);
@@ -225,11 +235,6 @@ export function PartnershipApplicationsPage() {
       </div>
 
       <section id="partner-panel" role="tabpanel" aria-labelledby={`partner-tab-${currentView}`} className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">{view.heading}</h2>
-          <p className="text-sm text-gray-500">{view.description}</p>
-        </div>
-
         {visible.length === 0 ? (
           <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
@@ -259,6 +264,9 @@ export function PartnershipApplicationsPage() {
                         <StatusBadge app={app} />
                         {isUnread && (
                           <Badge className="bg-green-600 text-white hover:bg-green-600">New</Badge>
+                        )}
+                        {app.decision?.reviewedOn && (
+                          <span className="text-xs text-gray-600">Reviewed: {app.decision.reviewedOn}</span>
                         )}
                       </div>
                     </div>
@@ -341,7 +349,11 @@ export function PartnershipApplicationsPage() {
                 {isExpanded && (
                   <div id={detailsId} className="p-6 space-y-5">
                     {app.decision && <DecisionPanel app={app} />}
-                    <PartnerDetails app={app} />
+                    <PartnerDetails
+                      app={app}
+                      assistant={assistants[app.id] ?? EMPTY_ASSISTANT_STATE}
+                      onAssistantChange={(next) => setAssistants((m) => ({ ...m, [app.id]: next }))}
+                    />
                   </div>
                 )}
               </div>
@@ -414,11 +426,24 @@ function DecisionPanel({ app }: { app: PartnerApplication }) {
   );
 }
 
-function PartnerDetails({ app }: { app: PartnerApplication }) {
+function PartnerDetails({
+  app,
+  assistant,
+  onAssistantChange,
+}: {
+  app: PartnerApplication;
+  assistant: AssistantState;
+  onAssistantChange: (next: AssistantState) => void;
+}) {
   const readOnly = app.status !== "active";
   return (
     <div className="flex flex-col lg:flex-row gap-5 items-start">
       <div className="flex-1 min-w-0 w-full space-y-4">
+        {app.requests && app.requests.length > 0 && !app.decision?.outcome.startsWith("not") && (
+          <PartnerInfoAssistant app={app} state={assistant} onChange={onAssistantChange} />
+        )}
+
+        {!app.decision && (
         <div className="border border-gray-200 rounded-xl p-5">
           <h4 className="font-semibold text-gray-900 mb-4">Partnership status</h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -441,6 +466,7 @@ function PartnerDetails({ app }: { app: PartnerApplication }) {
           </div>
           {app.mouNote && <p className="text-[13px] text-gray-600 mt-4">{app.mouNote}</p>}
         </div>
+        )}
 
         <div className="border border-gray-200 rounded-xl p-5">
           <h4 className="font-semibold text-gray-900 mb-2">Application access</h4>
@@ -467,7 +493,8 @@ function PartnerDetails({ app }: { app: PartnerApplication }) {
         </div>
       </div>
 
-      <div className="w-full lg:w-80 shrink-0 border border-gray-200 rounded-xl p-5 space-y-4">
+      <div className="w-full lg:w-80 shrink-0 space-y-5">
+      <div className="border border-gray-200 rounded-xl p-5 space-y-4">
         <h4 className="font-semibold text-gray-900">Your role</h4>
         {[
           ["Need", app.need],
@@ -481,6 +508,23 @@ function PartnerDetails({ app }: { app: PartnerApplication }) {
             <p className="text-sm font-semibold text-gray-900">{value}</p>
           </div>
         ))}
+      </div>
+      {app.contact && (
+        <div className="border border-gray-200 rounded-xl p-5">
+          <h4 className="font-semibold text-gray-900">Point of contact</h4>
+          <p className="text-sm font-semibold text-gray-900 mt-4">{app.contact.name}</p>
+          <p className="text-xs text-gray-500">
+            {app.contact.role} · {app.contact.organization}
+          </p>
+          <a
+            href={`mailto:${app.contact.email}?subject=${encodeURIComponent(app.programName)}`}
+            className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-teal-700 hover:text-teal-800 break-all underline-offset-2 hover:underline"
+          >
+            <Mail className="w-4 h-4 shrink-0" aria-hidden="true" />
+            {app.contact.email}
+          </a>
+        </div>
+      )}
       </div>
     </div>
   );
