@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import { ArrowRight, CalendarClock, Sparkles } from "lucide-react";
@@ -31,6 +31,28 @@ import { PROCESS_STEPS } from "@/data/greatGrantsProcess";
 const CABIN = { fontFamily: "Cabin, sans-serif" } as const;
 const LUSTRIA = { fontFamily: "Lustria, serif" } as const;
 
+/**
+ * FPO (for placement only) wrapper — greys out a module and overlays an
+ * "FPO" label. Content is inert while wrapped.
+ */
+function Fpo({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={`relative ${className}`}>
+      <div aria-hidden className="grayscale opacity-50 pointer-events-none select-none">
+        {children}
+      </div>
+      <div className="absolute inset-0 rounded-xl bg-gray-200/60 flex items-center justify-center pointer-events-none">
+        <span
+          className="text-4xl font-bold tracking-[0.3em] text-gray-500/80 -rotate-12 border-4 border-gray-500/60 rounded-lg px-4 py-1"
+          style={CABIN}
+        >
+          FPO
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function greeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return "Good morning";
@@ -50,7 +72,13 @@ export function DashboardPage() {
   const progressPercent = Math.round((state.completedStepCount / state.totalStepCount) * 100);
 
   return (
-    <div className="max-w-[1400px] mx-auto p-6 sm:p-8">
+    <div className="max-w-[1400px] mx-auto p-6 sm:p-8 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start">
+      {/* Notifications — pinned to the top right of the page */}
+      <aside className="min-w-0 order-first xl:order-none xl:col-start-2 xl:row-start-1">
+        <NotificationsPanel />
+      </aside>
+
+      <div className="min-w-0 xl:col-start-1 xl:row-start-1">
       {/* Welcome header */}
       <motion.header
         initial={{ opacity: 0, y: 12 }}
@@ -81,6 +109,7 @@ export function DashboardPage() {
           </div>
 
           {/* Next best action */}
+          <Fpo className="shrink-0">
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -141,16 +170,18 @@ export function DashboardPage() {
               </div>
             </div>
           </motion.div>
+          </Fpo>
         </div>
 
         {/* Urgent deadline strip */}
         {state.nearestDeadline && state.nearestDeadline.daysLeft <= 14 && (
+          <Fpo className="mt-5">
           <motion.button
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.15 }}
             onClick={() => navigate("/applications")}
-            className="mt-5 w-full text-left rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 flex items-center gap-3 hover:bg-red-100/70 transition-colors"
+            className="w-full text-left rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 flex items-center gap-3 hover:bg-red-100/70 transition-colors"
           >
             <CalendarClock className="w-4 h-4 text-red-600 shrink-0" />
             <span className="text-sm text-red-900 flex-1 min-w-0" style={CABIN}>
@@ -161,33 +192,46 @@ export function DashboardPage() {
             </span>
             <ArrowRight className="w-4 h-4 text-red-600 shrink-0" />
           </motion.button>
+          </Fpo>
         )}
       </motion.header>
 
       {/* At a glance */}
       <div className="mb-6">
-        <FeatureSummaryGrid />
+        <Fpo>
+          <FeatureSummaryGrid />
+        </Fpo>
       </div>
 
       {/* How it works — the Great Grants Process */}
       <div className="mb-6">
-        <GreatGrantsProcess
-          statusByStep={state.statusByStep}
-          currentStepId={state.currentStepId}
-        />
+        <Fpo>
+          <GreatGrantsProcess
+            statusByStep={state.statusByStep}
+            currentStepId={state.currentStepId}
+          />
+        </Fpo>
       </div>
 
       {/* Work in flight + support rail */}
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)] gap-6 items-start">
         <div className="space-y-6 min-w-0">
-          <ApplicationStatusList />
-          <RecommendedGrants />
+          <Fpo>
+            <ApplicationStatusList />
+          </Fpo>
+          <Fpo>
+            <RecommendedGrants />
+          </Fpo>
         </div>
         <div className="space-y-6 min-w-0">
-          <PlanCreditsCard />
-          <AskGreatGrants />
-          <NotificationsPanel />
+          <Fpo>
+            <PlanCreditsCard />
+          </Fpo>
+          <Fpo>
+            <AskGreatGrants />
+          </Fpo>
         </div>
+      </div>
       </div>
     </div>
   );
