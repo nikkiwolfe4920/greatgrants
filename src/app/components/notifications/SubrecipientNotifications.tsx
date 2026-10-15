@@ -19,7 +19,7 @@ import { CABIN, Entity, NotificationRow, NotificationsCard } from "./Notificatio
 
 const PRIMARY_CTA = "bg-teal-600 text-white hover:bg-teal-700 focus-visible:ring-teal-600/30";
 
-export function SubrecipientNotifications() {
+export function SubrecipientNotifications({ compact = false }: { compact?: boolean }) {
   const [items, setItems] = useState<SubrecipientNotification[]>(subrecipientNotifications);
 
   const markRead = (id: string) =>
@@ -28,17 +28,26 @@ export function SubrecipientNotifications() {
   return (
     <NotificationsCard
       id="subrecipient-notifications"
-      title="Partnership notifications"
+      title={compact ? "Partnerships" : "Partnership notifications"}
       items={items}
       onMarkAllRead={() => setItems((prev) => prev.map((i) => ({ ...i, read: true })))}
       emptyTitle="You're all caught up"
       emptyBody="We'll let you know when a primary applicant responds to your partnership interest."
-      renderItem={(n) => <SubrecipientRow n={n} onOpen={() => markRead(n.id)} />}
+      compact={compact}
+      renderItem={(n) => <SubrecipientRow n={n} compact={compact} onOpen={() => markRead(n.id)} />}
     />
   );
 }
 
-function SubrecipientRow({ n, onOpen }: { n: SubrecipientNotification; onOpen: () => void }) {
+function SubrecipientRow({
+  n,
+  compact,
+  onOpen,
+}: {
+  n: SubrecipientNotification;
+  compact: boolean;
+  onOpen: () => void;
+}) {
   const navigate = useNavigate();
   const go = () => {
     onOpen();
@@ -54,6 +63,7 @@ function SubrecipientRow({ n, onOpen }: { n: SubrecipientNotification; onOpen: (
           statusLabel="In review"
           read={n.read}
           time={n.time}
+          compact={compact}
           actions={
             <Button size="sm" variant="outline" onClick={go}>
               View Application
@@ -76,6 +86,7 @@ function SubrecipientRow({ n, onOpen }: { n: SubrecipientNotification; onOpen: (
           statusLabel="Approved"
           read={n.read}
           time={n.time}
+          compact={compact}
           detail={
             <div className="mt-3">
               <div className="flex items-center justify-between text-xs text-gray-600 mb-1" style={CABIN}>
@@ -114,6 +125,7 @@ function SubrecipientRow({ n, onOpen }: { n: SubrecipientNotification; onOpen: (
           statusLabel="Not approved"
           read={n.read}
           time={n.time}
+          compact={compact}
           actions={
             <Button size="sm" variant="outline" onClick={go}>
               View Application

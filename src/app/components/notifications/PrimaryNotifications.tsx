@@ -32,7 +32,7 @@ const PRIMARY_CTA = "bg-teal-600 text-white hover:bg-teal-700 focus-visible:ring
 
 type RequestNotification = Extract<PrimaryNotification, { status: "request-received" }>;
 
-export function PrimaryNotifications() {
+export function PrimaryNotifications({ compact = false }: { compact?: boolean }) {
   const [items, setItems] = useState<PrimaryNotification[]>(primaryNotifications);
 
   const markRead = (id: string) =>
@@ -48,16 +48,22 @@ export function PrimaryNotifications() {
   return (
     <NotificationsCard
       id="primary-notifications"
-      title="Partnership notifications"
+      title={compact ? "Partnerships" : "Partnership notifications"}
       items={items}
       onMarkAllRead={() => setItems((prev) => prev.map((i) => ({ ...i, read: true })))}
       emptyTitle="You're all caught up"
       emptyBody="We'll let you know when an organization asks to partner on your application."
+      compact={compact}
       renderItem={(n) =>
         n.status === "request-received" ? (
-          <RequestRow n={n} onOpen={() => markRead(n.id)} onDecide={(d) => decide(n.id, d)} />
+          <RequestRow
+            n={n}
+            compact={compact}
+            onOpen={() => markRead(n.id)}
+            onDecide={(d) => decide(n.id, d)}
+          />
         ) : (
-          <CompletedRow n={n} onOpen={() => markRead(n.id)} />
+          <CompletedRow n={n} compact={compact} onOpen={() => markRead(n.id)} />
         )
       }
     />
@@ -66,10 +72,12 @@ export function PrimaryNotifications() {
 
 function RequestRow({
   n,
+  compact,
   onOpen,
   onDecide,
 }: {
   n: RequestNotification;
+  compact: boolean;
   onOpen: () => void;
   onDecide: (decision: PartnershipDecision) => void;
 }) {
@@ -94,6 +102,8 @@ function RequestRow({
         }
         read={n.read}
         time={n.time}
+      compact={compact}
+        compact={compact}
         actions={
           <>
             <Button size="sm" className={decided ? undefined : PRIMARY_CTA} variant={decided ? "outline" : "default"} onClick={review}>
@@ -106,7 +116,7 @@ function RequestRow({
                   : "You declined this request."}
               </span>
             ) : (
-              <div className="flex items-center gap-1.5" role="group" aria-label="Mark request as">
+              <div className={`flex items-center gap-1.5 ${compact ? "[&>button]:flex-1" : ""}`} role="group" aria-label="Mark request as">
                 <span className="text-xs text-gray-600" style={CABIN}>
                   Mark:
                 </span>
@@ -181,8 +191,10 @@ function RequestRow({
 
 function CompletedRow({
   n,
+  compact,
   onOpen,
 }: {
+  compact: boolean;
   n: Extract<PrimaryNotification, { status: "items-completed" }>;
   onOpen: () => void;
 }) {
@@ -194,6 +206,7 @@ function CompletedRow({
       statusLabel="Ready to review"
       read={n.read}
       time={n.time}
+      compact={compact}
       actions={
         <Button
           size="sm"

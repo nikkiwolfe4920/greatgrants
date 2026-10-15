@@ -140,26 +140,16 @@ export function EmailsPage() {
           status, and ends in the next step.
         </p>
 
-        <div className="mb-12 rounded-2xl bg-gray-100 p-6">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:items-start">
-            <div className="min-w-0">
-              <h3 className="mb-1 text-base font-semibold text-gray-900">Sub-recipient</h3>
-              <p className="mb-3 text-sm leading-5 text-gray-500">
-                Tracks their request to join someone else&rsquo;s application: in review, approved
-                (with progress through the 8 items), or not approved.
-              </p>
-              <SubrecipientNotifications />
-            </div>
-            <div className="min-w-0">
-              <h3 className="mb-1 text-base font-semibold text-gray-900">Primary applicant</h3>
-              <p className="mb-3 text-sm leading-5 text-gray-500">
-                Requests waiting on a decision (approve or decline, with confirmation), and
-                partners who&rsquo;ve finished their part.
-              </p>
-              <PrimaryNotifications />
-            </div>
-          </div>
-        </div>
+        <h3 className="mb-3 text-base font-semibold text-gray-900">Standard</h3>
+        <NotificationPair />
+
+        <h3 className="mb-1 mt-10 text-base font-semibold text-gray-900">Compact &mdash; 340px</h3>
+        <p className="mb-3 max-w-2xl text-sm leading-5 text-gray-500">
+          For the 340px side rail (the Dashboard&rsquo;s support column). Same content and states;
+          the leading icon moves into the status chip and CTAs stack full-width so every button
+          keeps a comfortable tap target.
+        </p>
+        <NotificationPair compact />
 
         <div className="mt-4 flex items-center gap-1 text-sm text-gray-500">
           <span>Alerts are managed on</span>
@@ -168,6 +158,43 @@ export function EmailsPage() {
             <ArrowRight className="size-3.5" />
           </Link>
           <span>and on each grant&rsquo;s detail page.</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NotificationPair({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className="mb-12 rounded-2xl bg-gray-100 p-6">
+      <div
+        className={`grid grid-cols-1 gap-8 ${
+          compact ? "justify-items-center md:grid-cols-2" : "md:grid-cols-2"
+        } md:items-start`}
+      >
+        <div className="w-full min-w-0" style={compact ? { maxWidth: 340 } : undefined}>
+          <h4 className="mb-1 text-base font-semibold text-gray-900">Sub-recipient</h4>
+          {!compact && (
+            <p className="mb-3 text-sm leading-5 text-gray-500">
+              Tracks their request to join someone else&rsquo;s application: in review, approved
+              (with progress through the 8 items), or not approved.
+            </p>
+          )}
+          <div className={compact ? "mt-3" : undefined}>
+            <SubrecipientNotifications compact={compact} />
+          </div>
+        </div>
+        <div className="w-full min-w-0" style={compact ? { maxWidth: 340 } : undefined}>
+          <h4 className="mb-1 text-base font-semibold text-gray-900">Primary applicant</h4>
+          {!compact && (
+            <p className="mb-3 text-sm leading-5 text-gray-500">
+              Requests waiting on a decision (approve or decline, with confirmation), and
+              partners who&rsquo;ve finished their part.
+            </p>
+          )}
+          <div className={compact ? "mt-3" : undefined}>
+            <PrimaryNotifications compact={compact} />
+          </div>
         </div>
       </div>
     </div>
