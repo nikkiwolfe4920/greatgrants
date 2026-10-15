@@ -7,6 +7,8 @@ import { WeeklyAlertDigestEmail } from "../components/emails/WeeklyAlertDigestEm
 import { PartnerInvitationEmail } from "../components/emails/PartnerInvitationEmail";
 import { PartnerSelectedEmail } from "../components/emails/PartnerSelectedEmail";
 import { PartnerNotSelectedEmail } from "../components/emails/PartnerNotSelectedEmail";
+import { SubrecipientNotifications } from "../components/notifications/SubrecipientNotifications";
+import { PrimaryNotifications } from "../components/notifications/PrimaryNotifications";
 
 type Viewport = "desktop" | "mobile";
 
@@ -130,6 +132,34 @@ export function EmailsPage() {
         >
           <PartnerNotSelectedEmail />
         </EmailPreviewSection>
+
+        <h2 className="mb-1 mt-16 text-xl font-semibold text-gray-900">Partnership notifications</h2>
+        <p className="mb-6 max-w-2xl text-sm leading-5 text-gray-500">
+          In-app counterpart to the partner emails above: one module per role, same design. Each
+          notification names the partner need and federal opportunity it&rsquo;s about, shows a
+          status, and ends in the next step.
+        </p>
+
+        <div className="mb-12 rounded-2xl bg-gray-100 p-6">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:items-start">
+            <div className="min-w-0">
+              <h3 className="mb-1 text-base font-semibold text-gray-900">Sub-recipient</h3>
+              <p className="mb-3 text-sm leading-5 text-gray-500">
+                Tracks their request to join someone else&rsquo;s application: in review, approved
+                (with progress through the 8 items), or not approved.
+              </p>
+              <SubrecipientNotifications />
+            </div>
+            <div className="min-w-0">
+              <h3 className="mb-1 text-base font-semibold text-gray-900">Primary applicant</h3>
+              <p className="mb-3 text-sm leading-5 text-gray-500">
+                Requests waiting on a decision (approve or decline, with confirmation), and
+                partners who&rsquo;ve finished their part.
+              </p>
+              <PrimaryNotifications />
+            </div>
+          </div>
+        </div>
 
         <div className="mt-4 flex items-center gap-1 text-sm text-gray-500">
           <span>Alerts are managed on</span>
