@@ -36,6 +36,8 @@ interface NotificationsCardProps<T extends { id: string; read: boolean }> {
   onMarkAllRead: () => void;
   emptyTitle: string;
   emptyBody: string;
+  /** 340px sidebar density: tighter padding, stacked full-width CTAs. */
+  compact?: boolean;
   renderItem: (item: T) => ReactNode;
 }
 
@@ -46,19 +48,21 @@ export function NotificationsCard<T extends { id: string; read: boolean }>({
   onMarkAllRead,
   emptyTitle,
   emptyBody,
+  compact = false,
   renderItem,
 }: NotificationsCardProps<T>) {
   const [unreadOnly, setUnreadOnly] = useState(false);
   const unreadCount = useMemo(() => items.filter((n) => !n.read).length, [items]);
   const visible = unreadOnly ? items.filter((n) => !n.read) : items;
   const headingId = `${id}-heading`;
+  const gutter = compact ? "px-4" : "px-5";
 
   return (
     <section
       className="rounded-xl border border-gray-200 bg-white flex flex-col"
       aria-labelledby={headingId}
     >
-      <div className="flex items-center justify-between gap-3 px-5 pt-5 pb-3 border-b border-gray-100">
+      <div className={`flex items-center justify-between gap-3 ${gutter} ${compact ? "pt-4" : "pt-5"} pb-3 border-b border-gray-100`}>
         <div className="flex items-center gap-2 min-w-0">
           <Bell className="w-4 h-4 text-gray-700 shrink-0" aria-hidden />
           <h3 id={headingId} className="text-base text-gray-900 truncate" style={LUSTRIA}>
@@ -85,7 +89,7 @@ export function NotificationsCard<T extends { id: string; read: boolean }>({
         )}
       </div>
 
-      <div className="px-5 py-2.5 border-b border-gray-100">
+      <div className={`${gutter} py-2.5 border-b border-gray-100`}>
         <div
           className="inline-flex items-center gap-1 bg-white border border-gray-200 p-0.5 rounded-lg"
           role="group"
@@ -127,7 +131,7 @@ export function NotificationsCard<T extends { id: string; read: boolean }>({
       </ul>
 
       {visible.length === 0 && (
-        <div className="px-5 py-10 text-center">
+        <div className={`${gutter} py-10 text-center`}>
           <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-2.5">
             <Check className="w-5 h-5 text-green-600" aria-hidden />
           </div>
@@ -156,6 +160,8 @@ interface NotificationRowProps {
   detail?: ReactNode;
   /** CTAs. Primary first. */
   actions: ReactNode;
+  /** Drops the leading icon column (the chip carries the icon) and stacks CTAs full-width. */
+  compact?: boolean;
 }
 
 export function NotificationRow({
@@ -167,22 +173,26 @@ export function NotificationRow({
   children,
   detail,
   actions,
+  compact = false,
 }: NotificationRowProps) {
   const tones = TONE_CLASSES[tone];
   return (
-    <div className={`px-5 py-4 flex gap-3 ${read ? "" : "bg-teal-50/30"}`}>
-      <span
-        className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${tones.icon}`}
-        aria-hidden
-      >
-        <Icon className="w-4 h-4" />
-      </span>
+    <div className={`${compact ? "px-4 py-3.5" : "px-5 py-4 gap-3"} flex ${read ? "" : "bg-teal-50/30"}`}>
+      {!compact && (
+        <span
+          className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${tones.icon}`}
+          aria-hidden
+        >
+          <Icon className="w-4 h-4" />
+        </span>
+      )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 mb-1.5">
           <span
             className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[11px] font-semibold ${tones.chip}`}
             style={CABIN}
           >
+            {compact && <Icon className="w-3 h-3 mr-1" aria-hidden />}
             {statusLabel}
           </span>
           {!read && (
@@ -195,13 +205,19 @@ export function NotificationRow({
           </span>
         </div>
         <p
-          className={`text-sm leading-relaxed ${read ? "text-gray-700" : "text-gray-800"}`}
+          className={`${compact ? "text-[13px]" : "text-sm"} leading-relaxed ${read ? "text-gray-700" : "text-gray-800"}`}
           style={CABIN}
         >
           {children}
         </p>
         {detail}
-        <div className="mt-3 flex flex-wrap items-center gap-2">{actions}</div>
+        <div
+          className={`mt-3 flex gap-2 ${
+            compact ? "flex-col items-stretch [&>button]:w-full" : "flex-wrap items-center"
+          }`}
+        >
+          {actions}
+        </div>
       </div>
     </div>
   );
