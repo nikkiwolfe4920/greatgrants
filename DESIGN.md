@@ -607,9 +607,17 @@ A contextual, collapsible panel docked to the right edge of the main content are
 The app's home (`/`, `src/app/pages/DashboardPage.tsx`). Its reading order is fixed and deliberate — orient, then act, then learn:
 
 1. **Welcome header** — greeting, nearest deadline, and a single "Your next step" card carrying the one action the user should take, derived from real progress rather than hard-coded.
-2. **Your workspace at a glance** (`FeatureSummaryGrid`) — one tile per product area, each showing live state.
-3. **The Great Grants Process** (`GreatGrantsProcess`) — how the product works and where the user is in it. See the next section.
-4. **Two columns** — work in flight (`ApplicationStatusList`, `RecommendedGrants`) beside a support rail (`PlanCreditsCard`, `AskGreatGrants`, `NotificationsPanel`).
+2. **Pick up where you left off** (`ApplicationStatusList`) — shown only when there are active applications; resuming a draft is the most frequent return-visit job, so it precedes the explanatory modules.
+3. **Your workspace at a glance** (`FeatureSummaryGrid`) — one tile per product area, each showing live state.
+4. **The Great Grants Process** (`GreatGrantsProcess`) — how the product works and where the user is in it. See the next section.
+5. **Two columns** — `RecommendedGrants` (preceded by `StartApplicationPrompt` when the user has no active applications) beside a support rail (`PlanCreditsCard`, `AskGreatGrants`, `NotificationsPanel`).
+
+### Pick up where you left off
+- **Card variants** — *in progress* (urgency-toned days-left badge, "Next up", "Jump back in"); *ready to export* (100%: green bar, "Ready to export", "Review & export"); *overdue* (`daysLeft < 0`: red "Past due · N days" badge and red due date, still resumable).
+- **Card cap** — `MAX_VISIBLE_APPLICATIONS = 3`, sorted overdue-first then soonest deadline, so the cap never hides what's urgent. Overflow shows a "View N more applications" link.
+- **Destinations** — "View all" (header and overflow link) and the card title → `/applications`; section chip → `/application/:id/s/:sectionId`; "Jump back in" → first in-progress, else first unfinished, section; "Review & export" → opens the export dialog in place; "Start an application" → `/search`.
+- **No-applications state** — a teal prompt above the Recommended feed. The zero-programs state belongs to the dashboard empty-state ticket.
+- **AI coaching hint** — "AI coaching is ready on this section" depends on Post-draft Coaching (TP-1589). Kept for this increment (it's in the approved design) behind `SHOW_AI_COACHING_HINT`, so dropping it is a one-line change.
 
 ### Standards
 - **No page-local state duplication** — every module reads from `useDashboardState` (`src/app/components/dashboard/useDashboardState.ts`), `useCreditUsage`, or a shared module in `src/data/`. A number shown on the Dashboard must be the same number shown on the page it links to.
