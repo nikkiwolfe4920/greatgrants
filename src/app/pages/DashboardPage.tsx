@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { ArrowRight, CalendarClock, Sparkles } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { GreatGrantsProcess } from "../components/dashboard/GreatGrantsProcess";
-import { ApplicationStatusList } from "../components/dashboard/ApplicationStatusList";
+import { ApplicationStatusList, StartApplicationPrompt } from "../components/dashboard/ApplicationStatusList";
 import { RecommendedGrants } from "../components/dashboard/RecommendedGrants";
 import { NotificationsPanel } from "../components/dashboard/NotificationsPanel";
 import { AskGreatGrants } from "../components/dashboard/AskGreatGrants";
@@ -18,9 +18,10 @@ import { PROCESS_STEPS } from "@/data/greatGrantsProcess";
  *
  * Reading order is deliberate:
  *   1. Where you stand and the single next thing to do.
- *   2. Your workspace at a glance — one tile per feature, each with live state.
- *   3. The Great Grants Process — how the whole thing works, and where you are in it.
- *   4. Work in flight (applications, recommendations) beside the support rail
+ *   2. Pick up where you left off (active applications), when there are any.
+ *   3. Your workspace at a glance — one tile per feature, each with live state.
+ *   4. The Great Grants Process — how the whole thing works, and where you are in it.
+ *   5. Recommendations (with the start prompt when nothing is active) beside the support rail
  *      (plan credits, notifications, AI help).
  *
  * Nothing here holds its own copy of app state: every module reads from
@@ -196,6 +197,16 @@ export function DashboardPage() {
         )}
       </motion.header>
 
+      {/* Pick up where you left off — resuming a draft is the most frequent
+          return-visit job, so it sits straight under the header, ahead of the
+          explanatory modules. With no active applications the "Start an
+          application" prompt takes its place beside Recommended instead. */}
+      {state.activeApplications.length > 0 && (
+        <div className="mb-6">
+          <ApplicationStatusList />
+        </div>
+      )}
+
       {/* At a glance */}
       <div className="mb-6">
         <Fpo>
@@ -216,9 +227,7 @@ export function DashboardPage() {
       {/* Work in flight + support rail */}
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)] gap-6 items-start">
         <div className="space-y-6 min-w-0">
-          <Fpo>
-            <ApplicationStatusList />
-          </Fpo>
+          {state.activeApplications.length === 0 && <StartApplicationPrompt />}
           <Fpo>
             <RecommendedGrants />
           </Fpo>
