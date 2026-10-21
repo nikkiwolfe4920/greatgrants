@@ -118,7 +118,7 @@ export function ApplicationStatusList() {
   const hiddenCount = active.length - visible.length;
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-white" aria-labelledby="applications-heading">
+    <section className="rounded-xl border border-teal-200 bg-gradient-to-br from-teal-50/30 to-white" aria-labelledby="applications-heading">
       <div className="flex items-start justify-between gap-4 px-5 sm:px-6 pt-5 pb-4 border-b border-gray-100">
         <div className="min-w-0">
           <h2 id="applications-heading" className="text-lg text-gray-900" style={LUSTRIA}>
