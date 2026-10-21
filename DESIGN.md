@@ -609,9 +609,10 @@ The app's home (`/`, `src/app/pages/DashboardPage.tsx`). Its reading order is fi
 
 1. **Welcome header** — greeting, nearest deadline, and a single "Your next step" card carrying the one action the user should take, derived from real progress rather than hard-coded.
 2. **Pick up where you left off** (`ApplicationStatusList`) — shown only when there are active applications; resuming a draft is the most frequent return-visit job, so it precedes the explanatory modules.
-3. **Your workspace at a glance** (`FeatureSummaryGrid`) — one tile per product area, each showing live state.
-4. **The Great Grants Process** (`GreatGrantsProcess`) — how the product works and where the user is in it. See the next section.
-5. **Two columns** — `RecommendedGrants` (preceded by `StartApplicationPrompt` when the user has no active applications) beside a support rail (`PlanCreditsCard`, `AskGreatGrants`, `NotificationsPanel`).
+3. **Recommended for you** (`RecommendedGrants`) — directly under Pick up where you left off (preceded by `StartApplicationPrompt` when the user has no active applications). One mixed feed across all programs, each card with a program tag. Only grants with a Grant Guru match score ≥ 60% appear; the score is never shown. 3–6 cards, "See more" → `/search`. States: full (3–6), partial (1–2), no results ("No strong matches yet" → Grant Search), loading skeleton. Open questions: per-program vs. org-level scoring, and sort order (currently score, hidden).
+4. **Your workspace at a glance** (`FeatureSummaryGrid`) — one tile per product area, each showing live state.
+5. **The Great Grants Process** (`GreatGrantsProcess`) — how the product works and where the user is in it. See the next section.
+6. **Support rail** — `PlanCreditsCard` and `AskGreatGrants` (`NotificationsPanel` is pinned top right).
 
 ### Pick up where you left off
 - **Card variants** — *in progress* (urgency-toned days-left badge, "Next up", "Jump back in"); *ready to export* (100%: green bar, "Ready to export", "Review & export"); *overdue* (`daysLeft < 0`: red "Past due · N days" badge and red due date, still resumable).

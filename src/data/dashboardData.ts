@@ -97,27 +97,46 @@ export interface GrantRecommendation {
   reason: string;
   /** Short signals shown as chips — what specifically lined up. */
   signals: string[];
+  /** The user's program this grant was matched against (shown as the card's program tag). */
+  program: string;
 }
+
+/**
+ * Feed rules (dev annotation):
+ * - A grant appears only if its Grant Guru match score (`grant.relevance`) is >= RECOMMENDED_MIN_SCORE.
+ * - The score is never rendered. It only gates and orders the feed.
+ * - 3–6 cards (RECOMMENDED_MAX_CARDS); "See more" goes to Grant Search (/search).
+ * OPEN: whether Grant Guru scores per program or once against the org profile
+ * (decides how `program` is assigned), and whether sort should be score or closing date.
+ */
+export const RECOMMENDED_MIN_SCORE = 60;
+export const RECOMMENDED_MAX_CARDS = 6;
 
 export const grantRecommendations: GrantRecommendation[] = [
   {
     grantId: "1",
+    program: "Community Meals",
     reason: "Your Community Meals program matches this funder's stated priorities almost line for line.",
     signals: ["Faith-based eligible", "Matches 2 of your programs", "Opens to 501(c)(3)"],
   },
   {
     grantId: "2",
+    program: "Community Meals",
     reason: "Rolling deadline and a D.I.Y. effort level — the fastest realistic win on your list.",
     signals: ["D.I.Y. effort", "Rolling deadline", "Churches eligible"],
   },
   {
     grantId: "nasa-roses",
+    program: "Youth STEM Lab",
     reason: "A stretch opportunity: large award, but it needs research capacity you haven't documented yet.",
     signals: ["Stretch fit", "Expert assistance", "Closes Aug 1"],
   },
 ];
 
-/** Joins a recommendation to its full grant record. Skips unknown ids. */
+/**
+ * Joins a recommendation to its full grant record. Skips unknown ids and
+ * anything under the match threshold; sorted by score (hidden), capped at 6.
+ */
 export function getRecommendedGrants(): Array<GrantRecommendation & { grant: GrantDetail }> {
   const byId = new Map(grantDetails.map((g) => [g.id, g]));
   return grantRecommendations
@@ -125,7 +144,10 @@ export function getRecommendedGrants(): Array<GrantRecommendation & { grant: Gra
       const grant = byId.get(rec.grantId);
       return grant ? { ...rec, grant } : null;
     })
-    .filter((r): r is GrantRecommendation & { grant: GrantDetail } => r !== null);
+    .filter((r): r is GrantRecommendation & { grant: GrantDetail } => r !== null)
+    .filter((r) => r.grant.relevance >= RECOMMENDED_MIN_SCORE)
+    .sort((a, b) => b.grant.relevance - a.grant.relevance)
+    .slice(0, RECOMMENDED_MAX_CARDS);
 }
 
 /* ------------------------------------------------------------------ */
