@@ -88,6 +88,59 @@ export const dashboardNotifications: DashboardNotification[] = [
 ];
 
 /* ------------------------------------------------------------------ */
+/* Partnerships                                                        */
+/* ------------------------------------------------------------------ */
+
+export interface PartnershipItem {
+  id: string;
+  /** needs-review: a partner asked to join; ready-to-review: a partner finished their part. */
+  status: "needs-review" | "ready-to-review";
+  partnerName: string;
+  /** The role the partner would fill. */
+  partnerNeed: string;
+  grantName: string;
+  /** Quick items the partner completed (ready-to-review only). */
+  itemCount?: number;
+  time: string;
+  read: boolean;
+  to: string;
+}
+
+export const partnershipItems: PartnershipItem[] = [
+  {
+    id: "p1",
+    status: "needs-review",
+    partnerName: "Eastside Literacy Project",
+    partnerNeed: "Nutrition education partner",
+    grantName: "ACL Assistive Technology Alternative Financing Program",
+    time: "2 hours ago",
+    read: false,
+    to: "/partnership-applications",
+  },
+  {
+    id: "p2",
+    status: "ready-to-review",
+    partnerName: "Northgate Food Collective",
+    partnerNeed: "Data & evaluation partner",
+    grantName: "HRSA Rural Health Network Development Program",
+    itemCount: 8,
+    time: "Yesterday",
+    read: false,
+    to: "/applications",
+  },
+  {
+    id: "p3",
+    status: "needs-review",
+    partnerName: "Lakeshore Family Services",
+    partnerNeed: "Outreach & enrollment partner",
+    grantName: "SAMHSA Community Mental Health Services Block Grant",
+    time: "2 days ago",
+    read: true,
+    to: "/partnership-applications",
+  },
+];
+
+/* ------------------------------------------------------------------ */
 /* Recommended grants                                                  */
 /* ------------------------------------------------------------------ */
 

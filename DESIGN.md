@@ -607,12 +607,12 @@ A contextual, collapsible panel docked to the right edge of the main content are
 
 The app's home (`/`, `src/app/pages/DashboardPage.tsx`). Its reading order is fixed and deliberate — orient, then act, then learn:
 
-1. **Welcome header** — greeting, nearest deadline, and a single "Your next step" card carrying the one action the user should take, derived from real progress rather than hard-coded.
-2. **Pick up where you left off** (`ApplicationStatusList`).
-3. **Recommended for you** (`RecommendedGrants`) — directly under Pick up where you left off (preceded by `StartApplicationPrompt` when the user has no active applications). One mixed feed across all programs, each card is the shared `GrantResultCard` (same card as Grant Search's list view, `src/app/components/GrantResultCard.tsx`) showing Project Fit only — no Word Match — and a teal program-name link drawn from the user's published programs (`usePublishedPrograms`), omitted when there are none. Only grants with a Project Fit ≥ 60% appear, (same calc as Grant Search, `src/data/matchScore.ts`). 3–6 cards, "See more" → `/search`. States: full (3–6), partial (1–2), no results ("No strong matches yet" → Grant Search), loading skeleton. Open questions: per-program vs. org-level scoring, and sort order (currently Project Fit).
-4. **Your workspace at a glance** (`FeatureSummaryGrid`) — one tile per product area, each showing live state.
-5. **The Great Grants Process** (`GreatGrantsProcess`) — how the product works and where the user is in it. See the next section.
-6. **Support rail** — `PlanCreditsCard` and `AskGreatGrants` (`NotificationsPanel` is pinned top right).
+1. **Greeting** — "Good {morning/afternoon/evening}, Olivia". Nothing else in the header.
+2. **Pick up where you left off** (`ApplicationStatusList`) — teal-200 border with a light teal gradient. Shown when there are active applications; otherwise `StartApplicationPrompt` takes its place.
+3. **Recommended for you** (`RecommendedGrants`) — directly under it. One mixed feed across all programs; each card is the shared `GrantResultCard` (same card as Grant Search's list view, `src/app/components/GrantResultCard.tsx`) showing Project Fit only — no Word Match — and a teal program-name link drawn from the user's published programs (`usePublishedPrograms`), omitted when there are none. Only grants with a Project Fit ≥ 60% appear (same calc as Grant Search, `src/data/matchScore.ts`). 3–6 cards, "See more" → `/search`. States: full (3–6), partial (1–2), no results ("No strong matches yet" → Grant Search), loading skeleton. Open questions: per-program vs. org-level scoring, and sort order (currently Project Fit).
+4. **Partnerships** (`PartnershipsPanel`) — right rail, 340px, top-aligned with the greeting. Partner requests ("Needs your review" → "Review Application") and finished partners ("Ready to review" → "View Completed Application"), with All / Unread filter and Mark all read.
+
+The earlier next-step card, workspace-at-a-glance grid, Great Grants Process, plan credits, Ask Great Grants and notifications feed are no longer on the dashboard (components remain in `src/app/components/dashboard/` unused).
 
 ### Pick up where you left off
 - **Card** — matches the Figma "Progress Card": title, calendar icon + "Due {date} ({N} days left)", "Last updated: {time}", a divider, the program name as a teal link (→ `/project-details`) and a single "Jump back in" button. No progress bar, section chips, status badges, "Next up" or coaching hint. Overdue cards read "({N} days past due)".
