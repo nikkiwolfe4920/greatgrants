@@ -18,6 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { grantDetails, type GrantDetail } from "./grantDetails";
+import { getMatchBreakdown } from "./matchScore";
 
 /* ------------------------------------------------------------------ */
 /* Notifications                                                       */
@@ -103,8 +104,8 @@ export interface GrantRecommendation {
 
 /**
  * Feed rules (dev annotation):
- * - A grant appears only if its Grant Guru match score (`grant.relevance`) is >= RECOMMENDED_MIN_SCORE.
- * - The score is never rendered. It only gates and orders the feed.
+ * - A grant appears only if its Project Fit (same calc as Grant Search, see matchScore.ts) is >= RECOMMENDED_MIN_SCORE.
+ * - Each card shows the Project Fit bar, matching Grant Search.
  * - 3–6 cards (RECOMMENDED_MAX_CARDS); "See more" goes to Grant Search (/search).
  * OPEN: whether Grant Guru scores per program or once against the org profile
  * (decides how `program` is assigned), and whether sort should be score or closing date.
@@ -135,9 +136,9 @@ export const grantRecommendations: GrantRecommendation[] = [
 
 /**
  * Joins a recommendation to its full grant record. Skips unknown ids and
- * anything under the match threshold; sorted by score (hidden), capped at 6.
+ * anything under the match threshold; sorted by Project Fit, capped at 6.
  */
-export function getRecommendedGrants(): Array<GrantRecommendation & { grant: GrantDetail }> {
+export function getRecommendedGrants(): Array<GrantRecommendation & { grant: GrantDetail; projectFit: number }> {
   const byId = new Map(grantDetails.map((g) => [g.id, g]));
   return grantRecommendations
     .map((rec) => {
@@ -145,8 +146,9 @@ export function getRecommendedGrants(): Array<GrantRecommendation & { grant: Gra
       return grant ? { ...rec, grant } : null;
     })
     .filter((r): r is GrantRecommendation & { grant: GrantDetail } => r !== null)
-    .filter((r) => r.grant.relevance >= RECOMMENDED_MIN_SCORE)
-    .sort((a, b) => b.grant.relevance - a.grant.relevance)
+    .map((r) => ({ ...r, projectFit: getMatchBreakdown(r.grant.id, r.grant.relevance).projectFit }))
+    .filter((r) => r.projectFit >= RECOMMENDED_MIN_SCORE)
+    .sort((a, b) => b.projectFit - a.projectFit)
     .slice(0, RECOMMENDED_MAX_CARDS);
 }
 

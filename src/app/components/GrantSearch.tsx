@@ -72,6 +72,7 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { StopWatchingDialog } from "./StopWatchingDialog";
 import { useGrantAlerts } from "@/hooks/useGrantAlerts";
 import { useDismissedGrants } from "@/hooks/useDismissedGrants";
+import { getMatchBreakdown } from "@/data/matchScore";
 
 interface Grant {
   id: string;
@@ -772,19 +773,6 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
     } else {
       return { label: "Fair Match", color: "bg-gray-500 text-white border-gray-500" };
     }
-  };
-
-  // Helper function to calculate Project Fit and Word Match percentages
-  const getMatchBreakdown = (grantId: string, relevance: number): { projectFit: number; wordMatch: number } => {
-    // Use grant ID to generate consistent but varied percentages
-    const seed = parseInt(grantId) || 1;
-    const variance1 = ((seed * 37) % 11) - 5; // -5 to +5
-    const variance2 = ((seed * 73) % 11) - 5; // -5 to +5
-    
-    const projectFit = Math.min(100, Math.max(50, relevance + variance1));
-    const wordMatch = Math.min(100, Math.max(50, relevance + variance2));
-    
-    return { projectFit, wordMatch };
   };
 
   const handleDismissNudge = () => {

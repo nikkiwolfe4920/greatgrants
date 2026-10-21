@@ -10,10 +10,9 @@ import { getRecommendedGrants } from "@/data/dashboardData";
  * all of the user's programs, so they can find funding without searching.
  *
  * DEV ANNOTATION
- * - Threshold: a grant appears only if its Grant Guru match score is >= 60%
+ * - Threshold: a grant appears only if its Project Fit is >= 60%
  *   (enforced in getRecommendedGrants).
- * - The score is HIDDEN. It gates and orders the feed but is never rendered,
- *   and the header copy must not imply a visible score.
+ * - Each card shows the Project Fit bar, the same metric shown in Grant Search.
  * - Show 3–6 cards. "See more" → Grant Search (/search).
  * - States: Full (3–6), Partial (1–2), No results (has programs, none >= 60%),
  *   Loading (skeleton).
@@ -106,7 +105,7 @@ export function RecommendedGrants({ isLoading = false }: { isLoading?: boolean }
 
       {!isLoading && recommendations.length > 0 && (
         <ul className="divide-y divide-gray-100">
-          {recommendations.map(({ grant, reason, signals, program }, index) => (
+          {recommendations.map(({ grant, reason, signals, program, projectFit }, index) => (
             <motion.li
               key={grant.id}
               initial={{ opacity: 0, y: 8 }}
@@ -134,6 +133,22 @@ export function RecommendedGrants({ isLoading = false }: { isLoading?: boolean }
                 <p className="text-sm text-gray-700 leading-relaxed mb-2.5" style={CABIN}>
                   {reason}
                 </p>
+
+                {/* Project Fit — same metric as Grant Search */}
+                <div className="flex items-center gap-1.5 mb-3 max-w-sm">
+                  <span className="text-[10px] text-gray-500 w-16 shrink-0" style={CABIN}>
+                    Project Fit
+                  </span>
+                  <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-teal-500 to-teal-600 rounded-full"
+                      style={{ width: `${projectFit}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-semibold text-gray-900 text-right tabular-nums" style={CABIN}>
+                    {Number(projectFit.toFixed(1))}%
+                  </span>
+                </div>
 
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   {signals.map((signal) => (
