@@ -34,6 +34,7 @@ import { EligibilityAssessmentSubPage } from "./pages/EligibilityAssessmentSubPa
 import { OrgDetailDemoPage } from "./pages/OrgDetailDemoPage";
 import { EligibilityDemoPage } from "./pages/EligibilityDemoPage";
 import { DesignSystemPage } from "./pages/DesignSystemPage";
+import { FeatureFactoryPage } from "./pages/FeatureFactoryPage";
 import { CopyPage } from "./pages/CopyPage";
 import { EmailsPage } from "./pages/EmailsPage";
 import { SuperAdminIAPage } from "./pages/SuperAdminIAPage";
@@ -126,6 +127,12 @@ const routes = [
   {
     path: "/design-system",
     element: <DesignSystemPage />,
+  },
+  {
+    // Public, standalone release timeline (two-week cadence). The optional
+    // slug serves other projects' timelines — see src/data/featureFactory.
+    path: "/feature-factory/:projectSlug?",
+    element: <FeatureFactoryPage />,
   },
   {
     path: "/copy",

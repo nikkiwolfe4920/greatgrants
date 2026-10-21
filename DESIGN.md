@@ -21,6 +21,7 @@ Complete design system documentation for the Great Grants application, aligned w
 - [Toggle Settings Row](#toggle-settings-row)
 - [Program Weekly Alert](#program-weekly-alert)
 - [Cloud Document Import (Program Creation)](#cloud-document-import-program-creation)
+- [Feature Factory (Release Timeline)](#feature-factory-release-timeline)
 - [Implementation Guide](#implementation-guide)
 - [Migration Guide](#migration-guide)
 - [Design Principles](#design-principles)
@@ -934,6 +935,25 @@ Per the FRD decision, **each imported file becomes its own Program document reco
 - **Don't** merge multiple cloud-selected files into a single "import batch" document — the FRD requires one record per file, and the batch-result UI must visually prove that happened.
 - **Don't** let a failed/denied connection silently reset the row to "Disconnected" — show the Error state with a reason and a `Try again` path.
 - **Don't** invent a generic "Connect cloud storage" button that hides which provider is being linked; Microsoft and Google have different consent copy, scopes, and account pickers, and the UI should reflect that distinction up front.
+
+---
+
+## Feature Factory (Release Timeline)
+
+`/feature-factory` (`src/app/pages/FeatureFactoryPage.tsx`, components in `src/app/components/feature-factory/`). A public, standalone release feed — one post at the end of every two-week cycle covering what shipped, what changed, design docs, and engineering docs. Like `/design-system`, it sits outside `AppLayout`. The operating workflow and how to add another project are in `docs/feature-factory-workflow.md`.
+
+### Anatomy
+- **Header** — eyebrow (`{Project} · Feature Factory`), Lustria H1, tagline, resource links, and three stat cards: cadence, next release, posts published.
+- **Feed** — an `<ol>` of cycles, **newest first**. Each row is a rail node plus a card; the rail line connects nodes and stops at the last one.
+- **Release card** — cycle label + status pill + date range, Lustria H2 title, summary, then the default underline `Tabs`: *What shipped* · *What changed* · *Design docs* · *Engineering docs*, each with a count pill. Footer lists contributors.
+- **Items** — *shipped* rows carry a type badge (`new` teal, `improved` blue, `fixed` gray); *changed* rows are a gray "Before" / teal "Now" pair plus a "Why"; docs are flat white cards with a 16px Lucide icon per kind.
+
+### Standards
+- **Content lives in the data layer** — posts are defined in `src/data/featureFactory/projects/*.ts`, never inline in components. A post stores only a cycle number; **dates are derived** from the project's `startDate` + `cadenceDays` (`src/lib/featureFactory.ts`), so the feed can't drift.
+- **Node states match the Process Rail** — shipped (`bg-teal-600` + `Check`), in progress (white, `border-teal-600`, pulse ring), planned (white, `border-gray-300`). A cycle that ended without a post is a fourth, dashed-gray "No post" state — a skipped cycle is shown, not hidden.
+- **Placeholder content is labeled** — posts flagged `isTemplate` show a warning-token "Template content" pill so they're never mistaken for shipped work.
+- **Respect `prefers-reduced-motion`** — the in-progress pulse is `motion-safe:` only.
+- **One template, many projects** — projects register in `src/data/featureFactory/index.ts` and render at `/feature-factory/:slug` with no component changes.
 
 ---
 
