@@ -1,10 +1,14 @@
 import { useNavigate } from "react-router";
-import { motion } from "motion/react";
-import { Sparkles, ArrowRight, MapPin, CalendarClock, Gauge, Search } from "lucide-react";
+import { useState } from "react";
+import { Sparkles, ArrowRight, Search } from "lucide-react";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
+import { GrantResultCard } from "../GrantResultCard";
+import { StopWatchingDialog } from "../StopWatchingDialog";
 import { getRecommendedGrants } from "@/data/dashboardData";
 import { usePublishedPrograms } from "@/hooks/usePublishedPrograms";
+import { useGrantAlerts } from "@/hooks/useGrantAlerts";
+import { useDismissedGrants } from "@/hooks/useDismissedGrants";
 
 /**
  * Recommended for you — a short mixed feed of the best grant matches across
@@ -13,7 +17,8 @@ import { usePublishedPrograms } from "@/hooks/usePublishedPrograms";
  * DEV ANNOTATION
  * - Threshold: a grant appears only if its Project Fit is >= 60%
  *   (enforced in getRecommendedGrants).
- * - Each card shows the Project Fit bar, the same metric shown in Grant Search.
+ * - Cards are the shared GrantResultCard used by Grant Search, with Project Fit only
+ *   (Word Match isn't relevant here) and a teal program link.
  * - Show 3–6 cards. "See more" → Grant Search (/search).
  * - States: Full (3–6), Partial (1–2), No results (has programs, none >= 60%),
  *   Loading (skeleton).
@@ -23,21 +28,6 @@ import { usePublishedPrograms } from "@/hooks/usePublishedPrograms";
 
 const CABIN = { fontFamily: "Cabin, sans-serif" } as const;
 const LUSTRIA = { fontFamily: "Lustria, serif" } as const;
-
-function formatAmount(amount: number): string {
-  if (amount >= 1_000_000) {
-    const millions = amount / 1_000_000;
-    return `$${millions % 1 === 0 ? millions : millions.toFixed(1)}M`;
-  }
-  if (amount >= 1_000) return `$${Math.round(amount / 1_000)}K`;
-  return `$${amount}`;
-}
-
-const DIFFICULTY_CLASSES: Record<string, string> = {
-  "D.I.Y.": "bg-green-50 text-green-700 border-green-200",
-  "Might Need Help": "bg-orange-50 text-orange-700 border-orange-200",
-  "Expert Assistance": "bg-red-50 text-red-700 border-red-200",
-};
 
 function RecommendedSkeleton() {
   return (
@@ -55,15 +45,38 @@ function RecommendedSkeleton() {
   );
 }
 
+function lastViewedLabel(grantId: string): string | undefined {
+  try {
+    const recent = JSON.parse(localStorage.getItem("recentlyViewedGrants") || "[]") as Array<{
+      id: string;
+      lastViewed?: number;
+    }>;
+    const ts = recent.find((g) => g.id === grantId)?.lastViewed;
+    if (!ts) return undefined;
+    const diff = Date.now() - ts;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    if (minutes < 1) return "just now";
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.floor(diff / 86400000)}d ago`;
+  } catch {
+    return undefined;
+  }
+}
+
 export function RecommendedGrants({ isLoading = false }: { isLoading?: boolean }) {
   const navigate = useNavigate();
   const recommendations = isLoading ? [] : getRecommendedGrants();
   const publishedPrograms = usePublishedPrograms();
+  const { isGrantAlertEnabled, setAlertEnabled, removeAlert } = useGrantAlerts();
+  const { isGrantDismissed, dismissGrant, restoreGrant } = useDismissedGrants();
+  const [grantToStopWatching, setGrantToStopWatching] = useState<{ id: string; title: string } | null>(null);
 
-  // Program name for the "For this Program" tag: the published program that
-  // matches the card's program tag, else a published program in rotation
-  // (placeholder until Grant Guru returns a program per grant). No published
-  // programs → no tag.
+  // Program name for the card's program link: the published program matching
+  // the card's program, else a published program in rotation (placeholder
+  // until Grant Guru returns a program per grant). No published programs →
+  // no link.
   const forProgram = (program: string, index: number): string | null => {
     if (publishedPrograms.length === 0) return null;
     const match = publishedPrograms.find((p) => p.title.toLowerCase() === program.toLowerCase());
@@ -116,119 +129,59 @@ export function RecommendedGrants({ isLoading = false }: { isLoading?: boolean }
       )}
 
       {!isLoading && recommendations.length > 0 && (
-        <ul className="divide-y divide-gray-100">
-          {recommendations.map(({ grant, reason, signals, program, projectFit }, index) => (
-            <motion.li
-              key={grant.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.06 }}
-            >
-              <div className="p-5 sm:p-6 hover:bg-gray-50/70 transition-colors">
-                <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                  <span
-                    className="px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-[11px] font-medium text-gray-700"
-                    style={CABIN}
-                  >
-                    {program}
-                  </span>
-                  {forProgram(program, index) && (
-                    <span
-                      className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[11px] font-medium text-blue-700"
-                      style={CABIN}
-                    >
-                      For this Program: {forProgram(program, index)}
-                    </span>
-                  )}
-                </div>
-
-                <button onClick={() => navigate(`/grant/${grant.id}`)} className="text-left min-w-0 group block mb-2">
-                  <h3
-                    className="text-[15px] font-semibold text-gray-900 leading-snug group-hover:text-teal-700 transition-colors line-clamp-2"
-                    style={CABIN}
-                  >
-                    {grant.title}
-                  </h3>
-                </button>
-
-                {/* Why this grant */}
-                <p className="text-sm text-gray-700 leading-relaxed mb-2.5" style={CABIN}>
-                  {reason}
-                </p>
-
-                {/* Project Fit — same metric as Grant Search */}
-                <div className="flex items-center gap-1.5 mb-3 max-w-sm">
-                  <span className="text-[10px] text-gray-500 w-16 shrink-0" style={CABIN}>
-                    Project Fit
-                  </span>
-                  <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-teal-500 to-teal-600 rounded-full"
-                      style={{ width: `${projectFit}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] font-semibold text-gray-900 text-right tabular-nums" style={CABIN}>
-                    {Number(projectFit.toFixed(1))}%
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  {signals.map((signal) => (
-                    <span
-                      key={signal}
-                      className="px-2 py-0.5 rounded-full bg-teal-50 border border-teal-200 text-[11px] font-medium text-teal-800"
-                      style={CABIN}
-                    >
-                      {signal}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-3.5 text-xs text-gray-600" style={CABIN}>
-                  <span className="font-semibold text-gray-900">Up to {formatAmount(grant.maxAmount)}</span>
-                  <span className="inline-flex items-center gap-1">
-                    <CalendarClock className="w-3.5 h-3.5 text-gray-400" />
-                    Closes {grant.closeDate}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                    {grant.location}
-                  </span>
-                  <span
-                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[11px] font-medium ${
-                      DIFFICULTY_CLASSES[grant.difficulty] ?? "bg-gray-50 text-gray-700 border-gray-200"
-                    }`}
-                  >
-                    <Gauge className="w-3 h-3" />
-                    {grant.difficulty}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => navigate(`/grant/${grant.id}`)}
-                    className="bg-teal-600 hover:bg-teal-700 text-white font-semibold"
-                    style={CABIN}
-                  >
-                    View grant
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => navigate("/eligibility-assessment")}
-                    className="border-gray-300 text-gray-700 hover:bg-gray-50"
-                    style={CABIN}
-                  >
-                    Check eligibility
-                  </Button>
-                </div>
-              </div>
-            </motion.li>
-          ))}
+        <ul className="space-y-3 p-5 sm:p-6">
+          {recommendations.map(({ grant, program, projectFit }, index) => {
+            const programName = forProgram(program, index);
+            const dismissed = isGrantDismissed(grant.id);
+            return (
+              <li key={grant.id}>
+                <GrantResultCard
+                  grant={grant}
+                  projectFit={projectFit}
+                  dismissed={dismissed}
+                  watched={isGrantAlertEnabled(grant.id)}
+                  lastViewedLabel={lastViewedLabel(grant.id)}
+                  onOpen={() => navigate(`/grant/${grant.id}`)}
+                  tagsExtra={
+                    programName && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate("/project-details");
+                        }}
+                        className="text-sm font-medium text-teal-700 hover:text-teal-800 hover:underline"
+                        style={CABIN}
+                      >
+                        {programName}
+                      </button>
+                    )
+                  }
+                  onToggleDismiss={(e) => {
+                    e.stopPropagation();
+                    if (dismissed) restoreGrant(grant.id, { grantTitle: grant.title });
+                    else dismissGrant(grant, "not-relevant");
+                  }}
+                  onToggleWatch={(e) => {
+                    e.stopPropagation();
+                    if (isGrantAlertEnabled(grant.id)) setGrantToStopWatching(grant);
+                    else setAlertEnabled(grant, true);
+                  }}
+                />
+              </li>
+            );
+          })}
         </ul>
       )}
+
+      <StopWatchingDialog
+        open={grantToStopWatching !== null}
+        onOpenChange={(open) => !open && setGrantToStopWatching(null)}
+        onConfirm={() => {
+          if (grantToStopWatching) removeAlert(grantToStopWatching.id, { grantTitle: grantToStopWatching.title });
+          setGrantToStopWatching(null);
+        }}
+      />
     </section>
   );
 }
