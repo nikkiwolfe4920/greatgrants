@@ -73,6 +73,7 @@ import { StopWatchingDialog } from "./StopWatchingDialog";
 import { useGrantAlerts } from "@/hooks/useGrantAlerts";
 import { useDismissedGrants } from "@/hooks/useDismissedGrants";
 import { getMatchBreakdown } from "@/data/matchScore";
+import { GrantResultCard } from "./GrantResultCard";
 
 interface Grant {
   id: string;
@@ -1513,6 +1514,26 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
               const recentGrant = recentlyViewed.find(g => g.id === grant.id);
               const grantWithTimestamp = recentGrant ? { ...grant, lastViewed: recentGrant.lastViewed } : grant;
               const dismissed = isGrantDismissed(grant.id);
+              if (viewMode === "list") {
+                return (
+                  <GrantResultCard
+                    key={grant.id}
+                    grant={grant}
+                    projectFit={matchBreakdown.projectFit}
+                    wordMatch={matchBreakdown.wordMatch}
+                    matchLabel={matchInfo}
+                    dismissed={dismissed}
+                    watched={isGrantAlertEnabled(grant.id)}
+                    lastViewedLabel={
+                      grantWithTimestamp.lastViewed ? formatTimeAgo(grantWithTimestamp.lastViewed) : undefined
+                    }
+                    locked={demoLocked}
+                    onOpen={() => go(`/grant/${grant.id}`)}
+                    onToggleDismiss={(e) => toggleDismiss(e, grant)}
+                    onToggleWatch={(e) => toggleWatch(e, grant)}
+                  />
+                );
+              }
               return (
                 <div
                   key={grant.id}
