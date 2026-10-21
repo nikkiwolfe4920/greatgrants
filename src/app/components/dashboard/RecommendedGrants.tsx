@@ -4,6 +4,7 @@ import { Sparkles, ArrowRight, MapPin, CalendarClock, Gauge, Search } from "luci
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { getRecommendedGrants } from "@/data/dashboardData";
+import { usePublishedPrograms } from "@/hooks/usePublishedPrograms";
 
 /**
  * Recommended for you — a short mixed feed of the best grant matches across
@@ -57,6 +58,17 @@ function RecommendedSkeleton() {
 export function RecommendedGrants({ isLoading = false }: { isLoading?: boolean }) {
   const navigate = useNavigate();
   const recommendations = isLoading ? [] : getRecommendedGrants();
+  const publishedPrograms = usePublishedPrograms();
+
+  // Program name for the "For this Program" tag: the published program that
+  // matches the card's program tag, else a published program in rotation
+  // (placeholder until Grant Guru returns a program per grant). No published
+  // programs → no tag.
+  const forProgram = (program: string, index: number): string | null => {
+    if (publishedPrograms.length === 0) return null;
+    const match = publishedPrograms.find((p) => p.title.toLowerCase() === program.toLowerCase());
+    return (match ?? publishedPrograms[index % publishedPrograms.length]).title;
+  };
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white" aria-labelledby="recommended-heading">
@@ -113,12 +125,22 @@ export function RecommendedGrants({ isLoading = false }: { isLoading?: boolean }
               transition={{ duration: 0.3, delay: index * 0.06 }}
             >
               <div className="p-5 sm:p-6 hover:bg-gray-50/70 transition-colors">
-                <span
-                  className="inline-block mb-2 px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-[11px] font-medium text-gray-700"
-                  style={CABIN}
-                >
-                  {program}
-                </span>
+                <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                  <span
+                    className="px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-[11px] font-medium text-gray-700"
+                    style={CABIN}
+                  >
+                    {program}
+                  </span>
+                  {forProgram(program, index) && (
+                    <span
+                      className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[11px] font-medium text-blue-700"
+                      style={CABIN}
+                    >
+                      For this Program: {forProgram(program, index)}
+                    </span>
+                  )}
+                </div>
 
                 <button onClick={() => navigate(`/grant/${grant.id}`)} className="text-left min-w-0 group block mb-2">
                   <h3
