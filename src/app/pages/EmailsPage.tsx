@@ -11,6 +11,7 @@ import { SubrecipientNotifications } from "../components/notifications/Subrecipi
 import { PrimaryNotifications } from "../components/notifications/PrimaryNotifications";
 import { StartApplicationPrompt } from "../components/dashboard/ApplicationStatusList";
 import { RecommendedGrants } from "../components/dashboard/RecommendedGrants";
+import { NoProgramsEmptyState } from "../components/dashboard/NoProgramsEmptyState";
 
 type Viewport = "desktop" | "mobile";
 
@@ -171,6 +172,20 @@ export function EmailsPage() {
         <h3 className="mb-3 text-base font-semibold text-gray-900">Recommended for you</h3>
         <div className="mb-12 rounded-2xl bg-gray-100 p-6">
           <RecommendedGrants forceEmpty />
+        </div>
+
+        <h3 className="mb-1 mt-10 text-base font-semibold text-gray-900">No programs</h3>
+        <p className="mb-3 max-w-2xl text-sm leading-5 text-gray-500">
+          One module that replaces both of the above when the org has zero programs, since matches
+          and applications both come from programs. The Dashboard header still shows above it. Its
+          only primary CTA, &ldquo;Create a program&rdquo;, goes to{" "}
+          <Link to="/project-details" className="font-medium text-teal-600 hover:underline">
+            /project-details
+          </Link>
+          .
+        </p>
+        <div className="mb-12 rounded-2xl bg-gray-100 p-6">
+          <NoProgramsEmptyState />
         </div>
 
         <div className="mt-4 flex items-center gap-1 text-sm text-gray-500">
