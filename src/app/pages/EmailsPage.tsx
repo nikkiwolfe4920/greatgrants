@@ -9,6 +9,8 @@ import { PartnerSelectedEmail } from "../components/emails/PartnerSelectedEmail"
 import { PartnerNotSelectedEmail } from "../components/emails/PartnerNotSelectedEmail";
 import { SubrecipientNotifications } from "../components/notifications/SubrecipientNotifications";
 import { PrimaryNotifications } from "../components/notifications/PrimaryNotifications";
+import { StartApplicationPrompt } from "../components/dashboard/ApplicationStatusList";
+import { RecommendedGrants } from "../components/dashboard/RecommendedGrants";
 
 type Viewport = "desktop" | "mobile";
 
@@ -150,6 +152,26 @@ export function EmailsPage() {
           keeps a comfortable tap target.
         </p>
         <NotificationPair compact />
+
+        <h2 className="mb-1 mt-16 text-xl font-semibold text-gray-900">Dashboard empty states</h2>
+        <p className="mb-6 max-w-2xl text-sm leading-5 text-gray-500">
+          The{" "}
+          <Link to="/" className="font-medium text-teal-600 hover:underline">
+            Dashboard
+          </Link>
+          &rsquo;s two work-column modules when there&rsquo;s nothing to show yet: no active
+          applications, and no grants scoring 60% Project Fit or higher.
+        </p>
+
+        <h3 className="mb-3 text-base font-semibold text-gray-900">Pick up where you left off</h3>
+        <div className="mb-10 rounded-2xl bg-gray-100 p-6">
+          <StartApplicationPrompt />
+        </div>
+
+        <h3 className="mb-3 text-base font-semibold text-gray-900">Recommended for you</h3>
+        <div className="mb-12 rounded-2xl bg-gray-100 p-6">
+          <RecommendedGrants forceEmpty />
+        </div>
 
         <div className="mt-4 flex items-center gap-1 text-sm text-gray-500">
           <span>Alerts are managed on</span>
