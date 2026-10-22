@@ -101,7 +101,7 @@ export function GrantResultCard({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <h3 className={`font-semibold text-gray-900 leading-snug group-hover:text-teal-700 transition-colors mb-2 w-full ${
-                    titleMaxChars === undefined ? "truncate" : "break-words"
+                    titleMaxChars === undefined ? "truncate" : "line-clamp-2 break-words"
                   }`}>
                     {displayTitle}
                   </h3>
