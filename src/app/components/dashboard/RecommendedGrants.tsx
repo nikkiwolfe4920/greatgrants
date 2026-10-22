@@ -138,6 +138,7 @@ export function RecommendedGrants({ isLoading = false }: { isLoading?: boolean }
                 <GrantResultCard
                   grant={grant}
                   projectFit={projectFit}
+                  titleMaxChars={106}
                   dismissed={dismissed}
                   watched={isGrantAlertEnabled(grant.id)}
                   lastViewedLabel={lastViewedLabel(grant.id)}

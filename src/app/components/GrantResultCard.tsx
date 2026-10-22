@@ -36,6 +36,8 @@ interface GrantResultCardProps {
   locked?: boolean;
   /** Slot rendered in the tags row after the status badge (e.g. program link). */
   tagsExtra?: React.ReactNode;
+  /** Truncate the title after this many characters (wrapping instead of a single-line CSS clip). */
+  titleMaxChars?: number;
   onOpen: () => void;
   onToggleDismiss: (e: React.MouseEvent) => void;
   onToggleWatch: (e: React.MouseEvent) => void;
@@ -66,10 +68,14 @@ export function GrantResultCard({
   lastViewedLabel,
   locked = false,
   tagsExtra,
+  titleMaxChars,
   onOpen,
   onToggleDismiss,
   onToggleWatch,
 }: GrantResultCardProps) {
+  const titleTruncated = titleMaxChars !== undefined && grant.title.length > titleMaxChars;
+  const displayTitle = titleTruncated ? `${grant.title.slice(0, titleMaxChars).trimEnd()}…` : grant.title;
+
   return (
     <div
       onClick={onOpen}
@@ -94,8 +100,10 @@ export function GrantResultCard({
             <div className="flex-1 min-w-0">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <h3 className="font-semibold text-gray-900 leading-snug group-hover:text-teal-700 transition-colors mb-2 truncate w-full">
-                    {grant.title}
+                  <h3 className={`font-semibold text-gray-900 leading-snug group-hover:text-teal-700 transition-colors mb-2 w-full ${
+                    titleMaxChars === undefined ? "truncate" : "break-words"
+                  }`}>
+                    {displayTitle}
                   </h3>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={4} className="max-w-md z-50">
