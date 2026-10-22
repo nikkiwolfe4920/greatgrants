@@ -65,9 +65,16 @@ function lastViewedLabel(grantId: string): string | undefined {
   }
 }
 
-export function RecommendedGrants({ isLoading = false }: { isLoading?: boolean }) {
+export function RecommendedGrants({
+  isLoading = false,
+  forceEmpty = false,
+}: {
+  isLoading?: boolean;
+  /** Render the "No strong matches yet" state regardless of data (design previews). */
+  forceEmpty?: boolean;
+}) {
   const navigate = useNavigate();
-  const recommendations = isLoading ? [] : getRecommendedGrants();
+  const recommendations = isLoading || forceEmpty ? [] : getRecommendedGrants();
   const publishedPrograms = usePublishedPrograms();
   const { isGrantAlertEnabled, setAlertEnabled, removeAlert } = useGrantAlerts();
   const { isGrantDismissed, dismissGrant, restoreGrant } = useDismissedGrants();
