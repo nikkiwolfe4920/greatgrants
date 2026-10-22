@@ -38,6 +38,8 @@ interface GrantResultCardProps {
   tagsExtra?: React.ReactNode;
   /** Truncate the title after this many characters (wrapping instead of a single-line CSS clip). */
   titleMaxChars?: number;
+  /** Hide the description under the title. */
+  hideDescription?: boolean;
   onOpen: () => void;
   onToggleDismiss: (e: React.MouseEvent) => void;
   onToggleWatch: (e: React.MouseEvent) => void;
@@ -69,6 +71,7 @@ export function GrantResultCard({
   locked = false,
   tagsExtra,
   titleMaxChars,
+  hideDescription = false,
   onOpen,
   onToggleDismiss,
   onToggleWatch,
@@ -110,7 +113,9 @@ export function GrantResultCard({
                   <p className="text-sm leading-relaxed">{grant.title}</p>
                 </TooltipContent>
               </Tooltip>
-              <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">{grant.description}</p>
+              {!hideDescription && (
+                <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">{grant.description}</p>
+              )}
             </div>
 
             <div className="flex-shrink-0 w-48">

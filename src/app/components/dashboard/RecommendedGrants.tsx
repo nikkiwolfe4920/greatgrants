@@ -139,6 +139,7 @@ export function RecommendedGrants({ isLoading = false }: { isLoading?: boolean }
                   grant={grant}
                   projectFit={projectFit}
                   titleMaxChars={106}
+                  hideDescription
                   dismissed={dismissed}
                   watched={isGrantAlertEnabled(grant.id)}
                   lastViewedLabel={lastViewedLabel(grant.id)}
