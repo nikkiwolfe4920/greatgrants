@@ -20,7 +20,10 @@ import { GrantSearch } from "../components/GrantSearch";
  *      clicking through to Grant Detail, Programs, or the Organization
  *      Profile.
  *
- * Everything else — search, filters, sort, grid/list toggle, and the Watch
+ *   4. The search text input is disabled under `demoLocked` (not-allowed
+ *      cursor, no typing).
+ *
+ * Everything else — filters, sort, grid/list toggle, and the Watch
  * toggle — is the same live GrantSearch the real page renders, untouched.
  */
 export function SearchDemoPage() {

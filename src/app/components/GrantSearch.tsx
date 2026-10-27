@@ -1109,9 +1109,10 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Tell us about your project that needs funding"
-                className={`w-full pl-20 pr-12 py-3.5 text-base focus:outline-none transition-all ${searchQuery ? 'bg-teal-50/30' : 'bg-white'}`}
+                disabled={demoLocked}
+                className={`w-full pl-20 pr-12 py-3.5 text-base focus:outline-none transition-all ${lockedCursor} ${searchQuery ? 'bg-teal-50/30' : 'bg-white'}`}
               />
-              {searchQuery && (
+              {searchQuery && !demoLocked && (
                 <button
                   onClick={() => setSearchQuery("")}
                   className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded-full transition-colors"
