@@ -975,14 +975,16 @@ export function ApplicationsPage({
                               {/* Assignment flow — upper right corner of the section row: who it's assigned to and its review status.
                                   A section that hasn't been started yet (badge reads "Not Started") shows a blank status pill rather
                                   than defaulting to "In Progress". */}
-                              <SectionAssignmentControl
-                                size="compact"
-                                assigneeId={assignment.assigneeId}
-                                reviewStatus={actualStatus === "not-started" ? null : assignment.reviewStatus}
-                                lastSavedAt={assignment.lastSavedAt}
-                                onAssign={(memberId) => assignSection(app.id, section.id, memberId)}
-                                onReviewStatusChange={(status) => setReviewStatus(app.id, section.id, status)}
-                              />
+                              {!demoLocked && (
+                                <SectionAssignmentControl
+                                  size="compact"
+                                  assigneeId={assignment.assigneeId}
+                                  reviewStatus={actualStatus === "not-started" ? null : assignment.reviewStatus}
+                                  lastSavedAt={assignment.lastSavedAt}
+                                  onAssign={(memberId) => assignSection(app.id, section.id, memberId)}
+                                  onReviewStatusChange={(status) => setReviewStatus(app.id, section.id, status)}
+                                />
+                              )}
                             </div>
 
                             <div className="flex items-center justify-end gap-2 mt-3">
@@ -992,18 +994,16 @@ export function ApplicationsPage({
                                 </Button>
                               ) : demoLocked ? (
                                 // Start/Continue would navigate off this
-                                // page to /application/:id/s/:id — inert
-                                // here, same as everything else that would
-                                // leave the locked demo.
+                                // page to /application/:id/s/:id — they look
+                                // enabled but do nothing; on desktop hover the
+                                // not-allowed (slash) cursor shows.
                                 <Button
                                   variant={actualStatus === "complete" || actualStatus === "in-progress" ? undefined : "outline"}
-                                  disabled
-                                  aria-disabled="true"
-                                  title="This is a locked demo — sections can't be opened here"
+                                  onClick={(e) => e.preventDefault()}
                                   className={
                                     actualStatus === "complete" || actualStatus === "in-progress"
-                                      ? "bg-teal-600 text-white cursor-not-allowed opacity-60"
-                                      : "bg-white text-gray-400 cursor-not-allowed"
+                                      ? "bg-teal-600 hover:bg-teal-700 text-white hover:cursor-not-allowed"
+                                      : "bg-white hover:cursor-not-allowed"
                                   }
                                 >
                                   {actualStatus === "complete" || actualStatus === "in-progress" ? "Continue" : "Start"}
