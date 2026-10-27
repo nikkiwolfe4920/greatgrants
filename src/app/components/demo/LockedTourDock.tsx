@@ -57,11 +57,11 @@ function DockArrowButton({
  * more visual hierarchy against the page content sitting underneath it.
  *
  * Two states:
- *   - Collapsed (default): a pill — prev arrow, icon + "Step X of Y" +
+ *   - Collapsed: a pill — prev arrow, icon + "Step X of Y" +
  *     title, next arrow. Tapping the pill (or the chevron riding its right
- *     edge) is the only way in; the prev/next arrows always act on the tour
- *     itself, never the expand/collapse.
- *   - Expanded: a card blooms open directly above the pill — a step
+ *     edge) toggles between the two states; the prev/next arrows always act
+ *     on the tour itself, never the expand/collapse.
+ *   - Expanded (default, on every step): a card blooms open directly above the pill — a step
  *     progress dots row, the same icon/label/title at a larger size, and
  *     the step's `description` (its value proposition to the end user) —
  *     with a "Collapse" affordance at the bottom mirroring the chevron that
@@ -75,17 +75,18 @@ function DockArrowButton({
 export function LockedTourDock() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   const currentStep = getLockedDemoTourStep(location.pathname);
   const previousStep = getPreviousTourStep(location.pathname);
   const nextStep = getNextTourStep(location.pathname);
 
-  // Always land on a fresh, collapsed pill for the new step — carrying an
-  // expanded panel across a navigation would show the previous step's
-  // description under the new step's title for a beat.
+  // Always land on a freshly opened panel for the new step — the panel is
+  // open by default on every locked demo page, and resetting it here also
+  // avoids showing the previous step's description under the new step's
+  // title for a beat.
   useEffect(() => {
-    setExpanded(false);
+    setExpanded(true);
   }, [location.pathname]);
 
   if (!currentStep) return null;
