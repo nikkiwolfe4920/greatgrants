@@ -1,5 +1,8 @@
 import { ArrowLeft, Eye } from "lucide-react";
-import { useNavigate } from "react-router";
+
+const MARKETING_URL = "https://www.greatgrants.ai";
+const LOGIN_URL = "https://app.greatgrants.ai/login";
+const CREATE_ACCOUNT_URL = "https://app.greatgrants.ai/create-account";
 
 const CABIN = { fontFamily: "Cabin, sans-serif" } as const;
 
@@ -34,19 +37,6 @@ const CABIN = { fontFamily: "Cabin, sans-serif" } as const;
  * here (and LockedTourDock's stepper) are the only ways to move around.
  */
 export function DemoOnlyBar() {
-  const navigate = useNavigate();
-
-  const handleBack = () => {
-    // A viewer can land here directly (a shared link) with no in-app
-    // history to pop, so fall back to the dashboard rather than stranding
-    // them on a dead "back" click.
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate("/");
-    }
-  };
-
   return (
     <div
       className="relative z-30 w-full bg-gradient-to-b from-white to-white/85 backdrop-blur-[8px] shadow-[0_24px_40px_-28px_rgba(16,24,40,0.35)]"
@@ -58,13 +48,13 @@ export function DemoOnlyBar() {
             immediately followed by the "this is a demo" context, so the
             whole story reads in one glance from the left edge. */}
         <div className="flex min-w-0 items-center gap-3">
-          <button
-            onClick={handleBack}
+          <a
+            href={MARKETING_URL}
             className="flex shrink-0 items-center gap-2 rounded-[8px] px-4 py-[11px] text-[16px] leading-[19.2px] tracking-[0.5px] text-teal-600 transition-colors hover:bg-teal-50 hover:text-teal-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-1"
           >
             <ArrowLeft size={18} strokeWidth={2} />
             Back
-          </button>
+          </a>
 
           <div className="hidden min-w-0 items-center gap-2 text-[#475467] lg:flex">
             <Eye size={16} strokeWidth={2} className="shrink-0 text-[#94979c]" />
@@ -81,21 +71,21 @@ export function DemoOnlyBar() {
         {/* Right — Login / Create Your Free Account, ported from the Figma
             "Header / Nav" > Navigation component (node 14398:21796). */}
         <div className="flex shrink-0 items-center justify-end gap-2">
-          <button
-            onClick={() => navigate("/signin")}
+          <a
+            href={LOGIN_URL}
             className="hidden items-center rounded-[8px] px-4 py-[11px] text-[16px] leading-[19.2px] tracking-[0.5px] text-[#475467] transition-colors hover:bg-[#f9fafb] hover:text-[#101828] focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-1 sm:flex"
           >
             Login
-          </button>
-          <button
-            onClick={() => navigate("/subscribe/create-account")}
+          </a>
+          <a
+            href={CREATE_ACCOUNT_URL}
             className="flex shrink-0 items-center justify-center rounded-[8px] border border-[#0e9384] bg-[#107569] px-[18px] py-[10px] text-[16px] leading-6 tracking-[0.5px] text-white shadow-[0px_1px_0.5px_rgba(16,24,40,0.05)] transition-colors hover:bg-[#0e9384] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0e9384] focus-visible:ring-offset-1"
           >
             {/* Same CTA, shorter label below sm — the full sentence and
                 "← Back" no longer both fit on a phone-width screen. */}
             <span className="hidden sm:inline">Create Your Free Account</span>
             <span className="sm:hidden">Sign Up</span>
-          </button>
+          </a>
         </div>
       </div>
     </div>
