@@ -404,8 +404,11 @@ export function OrganizationProfileForm({ onBack, onNavigate, demoLocked = false
 
 
   // Key Contacts state
+  // The locked /organization-demo walkthrough starts Leader 1 blank.
   const [leaders, setLeaders] = useState<Leader[]>([
-    { id: "1", fullName: "Nikki Wolfe", email: "nikki@org.com", phone: "+1 (770) 314-2385", bio: "Nikki's bio...", isPrimaryContact: true }
+    demoLocked
+      ? { id: "1", fullName: "", email: "", phone: "", bio: "", isPrimaryContact: true }
+      : { id: "1", fullName: "Nikki Wolfe", email: "nikki@org.com", phone: "+1 (770) 314-2385", bio: "Nikki's bio...", isPrimaryContact: true }
   ]);
 
   const [boardMembers, setBoardMembers] = useState<BoardMember[]>([
