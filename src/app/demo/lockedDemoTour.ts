@@ -44,7 +44,7 @@ export const LOCKED_DEMO_TOUR: LockedDemoTourStep[] = [
     totalSteps: 6,
     title: "Curated grant search",
     description:
-      "Federal, state and foundation opportunities filtered by what you've already told us — not a keyword box on a government website.",
+      "Federal and state opportunities filtered by what you've already told us — not a keyword box on a government website.",
     icon: Search,
   },
   {
