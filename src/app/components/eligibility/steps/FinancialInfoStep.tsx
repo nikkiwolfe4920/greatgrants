@@ -73,7 +73,17 @@ export function FinancialInfoStep({ value, onChange, onBack, onContinue }: Finan
   ];
   const confirmedCount = confirmedFlags.filter(Boolean).length;
   const totalCount = confirmedFlags.length;
-  const isComplete = confirmedCount === totalCount;
+  // Continue only needs every question answered (Yes, No or Unsure) —
+  // a non-"Yes" answer shouldn't block the assessment.
+  const answeredFlags = [
+    value.orgRegistrationType !== "",
+    value.cfr200Compliant !== "",
+    value.financialSystemTracking !== "",
+    value.timeEffortReporting !== "",
+    value.indirectCostAgreement.trim() !== "",
+    value.costShareLiquidity !== "",
+  ];
+  const isComplete = answeredFlags.every(Boolean);
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-[33px]">
