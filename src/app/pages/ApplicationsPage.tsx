@@ -486,11 +486,15 @@ export function ApplicationsPage({
               : "View and manage archived applications"}
           </p>
 
+          {!demoLocked && (
+          <>
           {/* View By — every active application accordion still renders; this only filters which of its sections show (see visibleSections). */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">View By:</span>
             <ViewByFilter value={viewByMemberId} onChange={setViewByMemberId} />
           </div>
+          </>
+          )}
         </div>
       </div>
 
