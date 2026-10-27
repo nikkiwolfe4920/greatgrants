@@ -886,6 +886,11 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
 
   const filteredGrants = mockGrants
     .filter(grant => {
+      // The locked demo omits the NASA ROSES result from the list.
+      if (demoLocked && grant.id === "nasa-roses") {
+        return false;
+      }
+
       // Known-ineligible categories the user has explicitly chosen to hide
       // (see useDismissedGrants.hideCategory) are prevented from appearing
       // at all, not just deprioritized — the pill in the results header is
