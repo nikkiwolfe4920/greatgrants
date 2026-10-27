@@ -103,7 +103,7 @@ const PRIORITY_META: Record<
 // Project Narrative section — one module per field (Project Goals and
 // Objectives, Project Activities and Plans, Milestone Schedule, Benefits
 // or Results Expected, and Project Management), each keyed to that
-// field's own mock NOAA Alaska Marine mini-grant content.
+// field's own mock TIP Office Annual Program Statement content.
 const SUGGESTIONS_BY_SECTION: Record<string, Suggestion[]> = {
   "project-narrative-demo-goals": [
     {
@@ -111,35 +111,35 @@ const SUGGESTIONS_BY_SECTION: Record<string, Suggestion[]> = {
       priority: "high",
       title: "Commit to a named evaluation method",
       description:
-        "This section commits to a 25% increase in student-reported career interest, but doesn't say how that will be measured. The NOFO requires a named evaluation method — a survey instrument and timing — not just a target.",
+        "This section commits to a 25% increase in trafficking cases referred for investigation, but doesn't say how that will be measured. The Annual Program Statement requires a named monitoring and evaluation method — a data source and timing — not just a target.",
     },
     {
       id: "gwd-goals-m1",
       priority: "medium",
       title: "Anchor the training count to a baseline",
       description:
-        "\"Training 150 students annually\" has no prior-year comparison point. A baseline (last year's count, or zero if this is new) helps reviewers see the size of the gain.",
+        "\"Training 300 frontline responders annually\" has no prior-year comparison point. A baseline (last year's count, or zero if this is new) helps reviewers see the size of the gain.",
     },
     {
       id: "gwd-goals-m2",
       priority: "medium",
-      title: "Tie the goal to the NOFO's specific priority area",
+      title: "Tie the goal to the TIP Office's specific priority area",
       description:
-        "This names \"ocean and coastal stewards\" broadly but doesn't cite the exact priority area listed in the funding opportunity. Matching that language helps reviewers score alignment.",
+        "This names \"frontline responders\" broadly but doesn't cite the exact priority area listed in the Annual Program Statement. Matching that language helps reviewers score alignment.",
     },
     {
       id: "gwd-goals-r1",
       priority: "recommended",
       title: "Reference prior program performance",
       description:
-        "If Coastal Alaska Marine Institute has run a comparable cohort before, one sentence citing that track record here would strengthen the case without adding much length.",
+        "If Global Freedom Partnership has run a comparable training cohort before, one sentence citing that track record here would strengthen the case without adding much length.",
     },
     {
       id: "gwd-goals-r2",
       priority: "recommended",
-      title: "Open with a specific student outcome",
+      title: "Open with a specific survivor outcome",
       description:
-        "Leading with a single student's story before the structural detail gives reviewers something concrete before the numbers arrive.",
+        "Leading with a single (anonymized) survivor's story before the structural detail gives reviewers something concrete before the numbers arrive.",
     },
   ],
   "project-narrative-demo-activities": [
@@ -155,28 +155,28 @@ const SUGGESTIONS_BY_SECTION: Record<string, Suggestion[]> = {
       priority: "high",
       title: "Name the specific data-collection protocol",
       description:
-        "\"Collect water quality and species-count data\" doesn't name a specific, citable protocol. Without one, reviewers can't verify the methodology is sound.",
+        "\"Standardized victim identification\" doesn't name a specific, citable screening tool or protocol. Without one, reviewers can't verify the methodology is sound.",
     },
     {
       id: "gwd-act-m1",
       priority: "medium",
       title: "Reconcile this phase breakdown with Milestone Schedule",
       description:
-        "This section breaks the project into three phases (Months 1-3, 4-9, 10-12), but Milestone Schedule uses a different month breakdown. Align the two so a reviewer isn't left reconciling them by hand.",
+        "This section breaks the project into three phases (Months 1-3, 4-18, 19-24), but Milestone Schedule uses a different month breakdown. Align the two so a reviewer isn't left reconciling them by hand.",
     },
     {
       id: "gwd-act-r1",
       priority: "recommended",
-      title: "Add a weather contingency for field expeditions",
+      title: "Add a security and safety contingency for field activities",
       description:
-        "The field-expedition months carry real weather risk in coastal Alaska. A one-line contingency note would reassure reviewers the plan is realistic.",
+        "Trainings and survivor-service activities in the field carry security, political, and logistical risks. A one-line contingency note would reassure reviewers the plan is realistic.",
     },
     {
       id: "gwd-act-r2",
       priority: "recommended",
-      title: "Quantify the equipment loan agreements",
+      title: "Quantify the partner MOUs",
       description:
-        "Naming how many devices or instruments are covered by the equipment loan agreements would make this activity easier to verify and budget against.",
+        "Naming how many coalitions and agencies are covered by the memoranda of understanding would make this activity easier to verify and budget against.",
     },
   ],
   "project-narrative-demo-milestones": [
@@ -185,14 +185,14 @@ const SUGGESTIONS_BY_SECTION: Record<string, Suggestion[]> = {
       priority: "high",
       title: "Build in a schedule buffer before the final report",
       description:
-        "There's no buffer month before the showcase or final report. A single delayed permit or weather-canceled expedition would cascade into a missed deadline.",
+        "There's no buffer month before the summit or final report. A single delayed government approval or postponed training would cascade into a missed deadline.",
     },
     {
       id: "gwd-mile-m1",
       priority: "medium",
       title: "Add a mid-year progress checkpoint",
       description:
-        "The schedule jumps from Month 7-9 straight to the Month 10 showcase with no interim review. A mid-year checkpoint gives you (and NOAA) an earlier signal if something's off track.",
+        "The schedule jumps from Month 13-18 straight to the Month 19 summit with no interim review. A mid-project checkpoint gives you (and the TIP Office) an earlier signal if something's off track.",
     },
     {
       id: "gwd-mile-m2",
@@ -211,7 +211,7 @@ const SUGGESTIONS_BY_SECTION: Record<string, Suggestion[]> = {
     {
       id: "gwd-mile-r2",
       priority: "recommended",
-      title: "Tie milestones to NOAA's reporting cadence",
+      title: "Tie milestones to the TIP Office's reporting cadence",
       description:
         "Referencing your required quarterly report dates alongside program milestones shows the schedule was built around the award's actual reporting obligations.",
     },
@@ -220,9 +220,9 @@ const SUGGESTIONS_BY_SECTION: Record<string, Suggestion[]> = {
     {
       id: "gwd-ben-m1",
       priority: "medium",
-      title: "Quantify the community-level benefit",
+      title: "Quantify the survivor-level benefit",
       description:
-        "\"A growing pool of environmentally literate young people\" has no number attached. Reviewers score community-level benefits higher when they're sized, even roughly, the way the student-training numbers already are.",
+        "\"Improved access to services\" has no number attached. Reviewers score survivor-level benefits higher when they're sized, even roughly, the way the responder-training numbers already are.",
     },
     {
       id: "gwd-ben-m2",
@@ -236,7 +236,7 @@ const SUGGESTIONS_BY_SECTION: Record<string, Suggestion[]> = {
       priority: "recommended",
       title: "Lead with the funder's benefit, not last",
       description:
-        "This section lists students first and NOAA's benefit last. Opening with what the funder gains can align more tightly with how reviewers score funder-relevance.",
+        "This section lists responders first and the TIP Office's benefit last. Opening with what the funder gains can align more tightly with how reviewers score funder-relevance.",
     },
     {
       id: "gwd-ben-r2",
@@ -252,14 +252,14 @@ const SUGGESTIONS_BY_SECTION: Record<string, Suggestion[]> = {
       priority: "high",
       title: "Address the sustainability requirement",
       description:
-        "Section IV of the NOFO asks how the program continues after the 12-month award period ends. This section describes staffing and partners during the grant but says nothing about what happens to educator positions or curriculum access afterward.",
+        "Section IV of the Annual Program Statement asks how the program continues after the 24-month award period ends. This section describes staffing and partners during the award but says nothing about what happens to trainer positions or training-material access afterward.",
     },
     {
       id: "gwd-mgmt-m1",
       priority: "medium",
       title: "Clarify the partner's role in evaluation",
       description:
-        "The University of Alaska Fairbanks Marine Advisory Program is named as leading the pre/post assessment analysis, but this doesn't say who at your organization signs off on those results before they're reported to NOAA.",
+        "The Mahidol University Institute for Population and Social Research is named as leading the pre/post assessment analysis, but this doesn't say who at your organization signs off on those results before they're reported to the TIP Office.",
     },
     {
       id: "gwd-mgmt-m2",
