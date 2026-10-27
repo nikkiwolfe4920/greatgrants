@@ -343,7 +343,7 @@ function TakeActionButton({
         title="This is a locked demo — this button can't navigate away"
         className={`${className} cursor-not-allowed`}
       >
-        Take Action
+        Start AI Draft
         <ChevronDown className={chevronClassName} />
       </Button>
     );
