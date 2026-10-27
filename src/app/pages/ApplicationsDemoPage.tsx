@@ -11,9 +11,10 @@ import { ApplicationsPage } from "./ApplicationsPage";
  *      separately via the existing isLockedDemoRoute check, same as every
  *      other locked demo route. It also, page-wide: relabels "AI Enhanced"
  *      section badges to "AI Draft"; shows every active application's "Add
- *      Programs" button with 1 program already added, disabled; disables
- *      every section's Start/Continue button (they'd otherwise navigate off
- *      this page); hides the Unlimited AI-Grant Writer upsell in the "mark
+ *      Programs" button with 1 program already added, disabled; hides
+ *      every section's assignee pill and review-status menu; makes every
+ *      section's Start/Continue button look enabled but inert (not-allowed
+ *      cursor on hover — they'd otherwise navigate off this page); hides the Unlimited AI-Grant Writer upsell in the "mark
  *      as submitted" confirmation; and keeps "Download Grants.gov
  *      Submission Package" in the export dialog disabled regardless of the
  *      acknowledgement checkbox.
