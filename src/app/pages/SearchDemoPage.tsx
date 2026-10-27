@@ -21,7 +21,8 @@ import { GrantSearch } from "../components/GrantSearch";
  *      Profile.
  *
  *   4. The search text input is disabled under `demoLocked` (not-allowed
- *      cursor, no typing).
+ *      cursor, no typing), and the purple "Try:" example pills in the
+ *      header are removed.
  *
  * Everything else — filters, sort, grid/list toggle, and the Watch
  * toggle — is the same live GrantSearch the real page renders, untouched.

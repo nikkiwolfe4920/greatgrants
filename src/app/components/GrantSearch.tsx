@@ -1012,7 +1012,8 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
             <p className="text-sm text-gray-600" style={{ fontFamily: 'Cabin, sans-serif' }}>Discover funding opportunities tailored to your needs</p>
           </div>
           
-          {/* Quick Examples */}
+          {/* Quick Examples — hidden in the locked demo */}
+          {!demoLocked && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500">Try:</span>
             {searchExamples.map((example, idx) => (
@@ -1025,6 +1026,7 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
               </button>
             ))}
           </div>
+          )}
         </div>
 
         {/* Connected Search & Filter Section */}
