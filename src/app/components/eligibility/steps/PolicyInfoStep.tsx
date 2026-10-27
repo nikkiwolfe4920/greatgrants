@@ -54,7 +54,17 @@ export function PolicyInfoStep({
   ];
   const confirmedCount = confirmedFlags.filter(Boolean).length;
   const totalCount = confirmedFlags.length;
-  const isComplete = confirmedCount === totalCount;
+  // Check My Eligibility only needs every question answered (Yes, No or
+  // Unsure) — a non-"Yes" answer shouldn't block the assessment.
+  const isComplete = [
+    value.complianceTrackingSoftware,
+    value.federalDataTracking,
+    value.demographicDataCollection,
+    value.internalControlsDocs,
+    value.procurementPolicies,
+    value.timeEffortPolicies,
+    value.conflictOfInterestPolicies,
+  ].every((v) => v !== "");
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-[33px]">
