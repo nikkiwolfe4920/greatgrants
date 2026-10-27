@@ -675,7 +675,7 @@ function ApplicationResourcesPanel() {
 // Page
 // ---------------------------------------------------------------------------
 
-const GRANT_TITLE = "National Oceanic and Atmospheric Administration (NOAA) – Alaska Marine Education and Training Mini-Grant Program";
+const GRANT_TITLE = "TIP Office International Programs to Combat Human Trafficking Annual Program Statement";
 
 export function GrantWritingDemoPage() {
   return (
@@ -717,7 +717,7 @@ export function GrantWritingDemoPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage className="max-w-[420px] truncate">{GRANT_TITLE}</BreadcrumbPage>
+            <BreadcrumbPage>{GRANT_TITLE}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -727,7 +727,7 @@ export function GrantWritingDemoPage() {
           cluster for the last-saved timestamp and the Preview & Export
           button, matching the Figma layout's ~54/46 column split. */}
       <div className="flex items-center justify-between gap-8 flex-wrap pb-6 border-b border-gray-100">
-        <div className="min-w-0 max-w-md">
+        <div className="min-w-0 flex-1 basis-[480px] max-w-4xl">
           <h1 className="text-3xl text-gray-900 mb-3" style={{ fontFamily: "Lustria, serif" }}>
             {GRANT_TITLE}
           </h1>
@@ -786,8 +786,8 @@ export function GrantWritingDemoPage() {
                 required
                 aiDraft
                 aiDraftBorderOnly
-                helperText="Enter the exact title as listed in the NOFO: '2026 Alaska Marine Education and Training Mini-Grant'."
-                defaultValue="2026 Alaska Marine Education and Training Mini-Grant"
+                helperText="Enter the exact title as listed in the Annual Program Statement: 'TIP Office International Programs to Combat Human Trafficking Annual Program Statement'."
+                defaultValue="TIP Office International Programs to Combat Human Trafficking Annual Program Statement"
               />
               <SmartField
                 label="Funding Opportunity Number"
@@ -795,15 +795,15 @@ export function GrantWritingDemoPage() {
                 aiDraft
                 aiDraftBorderOnly
                 helperText="Enter the Funding Opportunity Number exactly as listed on grants.gov."
-                defaultValue="NOAA-NMFS-AK-2026-33268"
+                defaultValue="SFOP0010211"
               />
               <SmartField
                 label="Assistance Listing Number (CFDA Number)"
                 required
                 aiDraft
                 aiDraftBorderOnly
-                helperText="Enter the Assistance Listing Number: 11.455."
-                defaultValue="11.455"
+                helperText="Enter the Assistance Listing Number: 19.019."
+                defaultValue="19.019"
               />
               <SmartField
                 label="Program/Project Title"
@@ -811,7 +811,7 @@ export function GrantWritingDemoPage() {
                 aiDraft
                 aiDraftBorderOnly
                 helperText="Provide a concise, descriptive title for your proposed project."
-                defaultValue="Expanding Access to Assistive Technology Financing"
+                defaultValue="Strengthening Survivor-Centered Anti-Trafficking Responses in Southeast Asia"
               />
               <SmartField
                 label="Program/Project Duration"
@@ -819,7 +819,7 @@ export function GrantWritingDemoPage() {
                 aiDraft
                 aiDraftBorderOnly
                 helperText="Projects may begin no earlier than September 1, 2026."
-                defaultValue="September 1, 2026 - August 31, 2027"
+                defaultValue="September 1, 2026 - August 31, 2028"
               />
               <SmartField
                 label="Principal Investigator / Project Manager Name"
@@ -827,7 +827,7 @@ export function GrantWritingDemoPage() {
                 aiDraft
                 aiDraftBorderOnly
                 helperText="The PI/PM is the lead technical contact. This person will be listed on all correspondence."
-                defaultValue="Nikki Wolfe"
+                defaultValue="Dr. Maya Okafor"
               />
               <SmartField
                 label="Principal Investigator / Project Manager Email"
@@ -835,7 +835,7 @@ export function GrantWritingDemoPage() {
                 aiDraft
                 aiDraftBorderOnly
                 helperText="Email address for the PI/PM."
-                defaultValue="nikki@email.com"
+                defaultValue="maya.okafor@email.com"
               />
               <SmartField
                 label="Financial Representative Name"
@@ -846,7 +846,7 @@ export function GrantWritingDemoPage() {
                 label="Program Priority (Primary)"
                 required
                 helperText="Select the single priority that most closely reflects this project's focus."
-                options={["Marine Education & Outreach", "Habitat Restoration", "Fisheries Research", "Community Resilience"]}
+                options={["Prosecution & Law Enforcement Capacity", "Victim Protection & Survivor Services", "Prevention & Public Awareness", "Partnerships & Policy Reform"]}
               />
               <SmartField
                 label="Program/Project Proposal Total Amount Requested"
@@ -854,7 +854,7 @@ export function GrantWritingDemoPage() {
                 aiDraft
                 aiDraftBorderOnly
                 helperText="Enter the total amount of federal funding requested for this project period."
-                defaultValue="$50,000.00"
+                defaultValue="$750,000.00"
               />
               <SmartField
                 label="Program/Proposed Project Outcomes (Summary)"
@@ -883,14 +883,14 @@ export function GrantWritingDemoPage() {
                   SmartField's `coachingModule` slot — the same
                   AICoachingModule component used on /application/:id/s/:id
                   (e.g. Mission & Vision at s1), with mock feedback keyed to
-                  that field's NOAA Alaska Marine mini-grant content. */}
+                  that field's TIP Office Annual Program Statement content. */}
               <SmartField
                 label="Project Goals and Objectives"
                 required
                 richText
                 aiDraft
                 helperText="State the overarching project goal clearly. Explain how it aligns with the funder's priorities."
-                defaultValue="The primary goal of this project is to expand marine science literacy among Alaska Native and rural coastal communities by delivering hands-on, place-based STEM training to underserved students in grades 6-12. This objective directly aligns with NOAA's mission to build a stronger, more diverse pipeline of ocean and coastal stewards. Specific objectives include: (1) training 150 students annually in marine ecosystem monitoring techniques, (2) partnering with 5 rural school districts to embed marine curricula into existing science courses, and (3) increasing student-reported interest in ocean science careers by 25% as measured by pre/post surveys."
+                defaultValue="The primary goal of this project is to strengthen victim identification, protection, and prosecution responses to human trafficking in Southeast Asia by building the capacity of frontline service providers, law enforcement, and civil society partners. This objective directly aligns with the TIP Office's 3P paradigm of prevention, protection, and prosecution. Specific objectives include: (1) training 300 frontline responders annually in trauma-informed, victim-centered identification and referral, (2) partnering with 5 local anti-trafficking coalitions to establish standardized survivor referral pathways, and (3) increasing the number of trafficking cases referred for investigation by 25% as measured by partner case-tracking data."
                 coachingModule={<AICoachingModule applicationId="grant-writing-demo" sectionId="project-narrative-demo-goals" />}
               />
               <SmartField
@@ -899,7 +899,7 @@ export function GrantWritingDemoPage() {
                 richText
                 aiDraft
                 helperText="Describe all activities in detail. Explain the methods and approach you'll use."
-                defaultValue="Activities will be organized into three phases. Phase 1 (Months 1-3): recruit and train 4 part-time marine educators, finalize curriculum materials with our academic partner, and establish equipment loan agreements with participating schools. Phase 2 (Months 4-9): deliver in-classroom marine science units and lead six multi-day field expeditions to coastal monitoring sites, where students collect water quality and species-count data alongside NOAA scientists. Phase 3 (Months 10-12): host a regional student showcase where participants present findings to community members and local fisheries managers, and compile a program report documenting lessons learned for future cohorts."
+                defaultValue="Activities will be organized into three phases. Phase 1 (Months 1-3): recruit and train 4 regional anti-trafficking trainers, finalize training curricula with our academic partner, and establish memoranda of understanding with participating coalitions and government agencies. Phase 2 (Months 4-18): deliver in-person and virtual trainings on victim identification and referral, and provide technical assistance and small-scale case-management support to survivor service providers in five target provinces. Phase 3 (Months 19-24): convene a regional learning summit where partners, survivors with lived experience, and government officials share findings, and compile a program report documenting lessons learned and recommendations for future TIP Office investments."
                 coachingModule={<AICoachingModule applicationId="grant-writing-demo" sectionId="project-narrative-demo-activities" />}
               />
               <SmartField
@@ -909,7 +909,7 @@ export function GrantWritingDemoPage() {
                 aiDraft
                 helperText="Provide a clear timeline showing when each major task will be completed."
                 placeholder={"Task 1: [Description] – Month 1-3\nTask 2: [Description] – Month 4-6\nTask 3: [Description] – Month 7-12"}
-                defaultValue={"Month 1-2: Finalize partnerships with participating school districts and hire program staff.\nMonth 3: Complete educator training and curriculum adaptation.\nMonth 4-6: Launch in-classroom instruction; complete first two field expeditions.\nMonth 7-9: Complete remaining field expeditions; begin mid-year data collection review.\nMonth 10: Host regional student showcase event.\nMonth 11: Compile student outcome data and program metrics.\nMonth 12: Submit final program report and disseminate lessons learned to partner districts."}
+                defaultValue={"Month 1-3: Finalize partnerships with coalitions and government agencies; hire program staff and trainers.\nMonth 4-6: Complete trainer certification and adapt curricula to local legal and cultural contexts.\nMonth 7-12: Launch first round of responder trainings; establish referral pathways in the first two provinces.\nMonth 13-18: Complete remaining trainings and referral pathways; conduct mid-project data review.\nMonth 19-21: Host regional learning summit with partners and survivor leaders.\nMonth 22-23: Compile outcome data and program metrics.\nMonth 24: Submit final program report and disseminate lessons learned to partners."}
                 coachingModule={<AICoachingModule applicationId="grant-writing-demo" sectionId="project-narrative-demo-milestones" />}
               />
               <SmartField
@@ -918,7 +918,7 @@ export function GrantWritingDemoPage() {
                 richText
                 aiDraft
                 helperText="Describe the anticipated outcomes and benefits. Identify who benefits and how."
-                defaultValue="Students participating in this program are expected to demonstrate measurable gains in marine science content knowledge and increased interest in ocean-related careers, tracked through pre/post assessments administered each cohort. Partner school districts will gain a reusable, place-based marine curriculum they can continue offering after the grant period ends. The broader Alaska coastal community benefits from a growing pool of environmentally literate young people equipped to participate in local fisheries and habitat-management decisions. NOAA benefits from progress toward its workforce-diversity goals, with outcome data shared back to the agency to inform future mini-grant investments in the region."
+                defaultValue="Frontline responders participating in this program are expected to demonstrate measurable gains in victim-identification knowledge and referral practices, tracked through pre/post assessments administered to each training cohort. Partner coalitions will gain standardized, survivor-centered referral protocols they can continue using after the award period ends. Trafficking survivors and at-risk communities in the target provinces benefit from faster identification, safer referrals, and improved access to services. The TIP Office benefits from progress toward its prevention, protection, and prosecution goals, with outcome data shared back to the Department to inform future international anti-trafficking investments in the region."
                 coachingModule={<AICoachingModule applicationId="grant-writing-demo" sectionId="project-narrative-demo-benefits" />}
               />
               <SmartField
@@ -927,7 +927,7 @@ export function GrantWritingDemoPage() {
                 richText
                 aiDraft
                 helperText="Identify the lead organization/individual and the roles of any partners involved."
-                defaultValue="Coastal Alaska Marine Institute will serve as the lead organization, with Nikki Wolfe (Principal Investigator/Project Manager) responsible for overall program direction, budget oversight, and reporting to NOAA. A part-time Program Coordinator will manage day-to-day scheduling and educator supervision. Curriculum design and evaluation will be conducted in partnership with the University of Alaska Fairbanks Marine Advisory Program, which will provide technical review of instructional materials and lead the pre/post assessment analysis. Participating school districts will designate a single point of contact responsible for coordinating classroom access, transportation for field expeditions, and parental consent."
+                defaultValue="Global Freedom Partnership will serve as the lead organization, with Dr. Maya Okafor (Principal Investigator/Project Manager) responsible for overall program direction, budget oversight, and reporting to the TIP Office. A part-time Program Coordinator will manage day-to-day scheduling and trainer supervision. Curriculum design and evaluation will be conducted in partnership with the Mahidol University Institute for Population and Social Research, which will provide technical review of training materials and lead the pre/post assessment analysis. Each participating coalition will designate a single point of contact responsible for coordinating trainee participation, survivor-safety protocols, and data-sharing agreements."
                 coachingModule={<AICoachingModule applicationId="grant-writing-demo" sectionId="project-narrative-demo-management" />}
               />
             </div>
@@ -996,9 +996,9 @@ export function GrantWritingDemoPage() {
                 defaultValue=""
               />
               <SmartField
-                label="eRA Commons User ID (PD/PI Username)"
+                label="SAM.gov Registration Expiration Date"
                 required
-                helperText="The PD/PI's eRA Commons username must appear on SF-424."
+                helperText="Your SAM.gov registration must remain active through the full period of performance."
               />
               <SmartField
                 label="Congressional District"
@@ -1006,7 +1006,7 @@ export function GrantWritingDemoPage() {
                 aiDraft
                 aiDraftBorderOnly
                 helperText="Enter in the format: [State Abbreviation]-[three digit district number]."
-                defaultValue="AK-001"
+                defaultValue="DC-001"
               />
               <UploadField
                 label="SF-424: Application for Federal Assistance (Upload)"
@@ -1024,14 +1024,14 @@ export function GrantWritingDemoPage() {
                 helperText="Download the SF-424B from www.grants.gov/forms. This must be signed by an authorized representative."
               />
               <UploadField
-                label="CD-511: Certification Regarding Lobbying (Upload)"
+                label="SF-LLL: Disclosure of Lobbying Activities (Upload)"
                 required
-                helperText="Complete and upload the CD-511 form certifying compliance with federal lobbying restrictions."
+                helperText="Complete and upload the SF-LLL if any non-federal funds have been or will be used for lobbying."
               />
               <UploadField
-                label="NEPA Questionnaire (Upload)"
+                label="Risk Assessment Questionnaire (Upload)"
                 required
-                helperText="Complete the NEPA questionnaire, answering at minimum the environmental review questions."
+                helperText="Complete the Department of State risk assessment questionnaire covering organizational capacity and financial management."
               />
             </div>
           </div>
@@ -1045,20 +1045,20 @@ export function GrantWritingDemoPage() {
               <SelectField
                 label="Applicant Type"
                 required
-                helperText="Federal agencies and their employees are NOT eligible to apply."
-                options={["Nonprofit Entity", "For-Profit Entity", "State Government", "Local Government", "Tribal Government", "Institution of Higher Education"]}
+                helperText="U.S. and foreign non-profit organizations, public international organizations, and institutions of higher education are eligible to apply."
+                options={["Nonprofit Entity", "For-Profit Entity", "Public International Organization", "Local Government", "Institution of Higher Education"]}
                 defaultValue="Nonprofit Entity"
               />
               <RadioGroupField
-                label="Will the project be conducted within Alaska?"
+                label="Will the project be implemented outside the United States?"
                 required
-                helperText="Only projects conducted within Alaska are eligible for this NOFO."
-                options={["Yes – the project will be conducted within Alaska", "No – the project will not be conducted within Alaska"]}
-                defaultValue="Yes – the project will be conducted within Alaska"
+                helperText="This Annual Program Statement supports international programs; projects implemented solely within the United States are not eligible."
+                options={["Yes – the project will be implemented outside the United States", "No – the project will be implemented solely within the United States"]}
+                defaultValue="Yes – the project will be implemented outside the United States"
               />
               <CertificationToggle
-                title="Certification: Only one application submitted per applicant"
-                description="Only one application per individual or organization will be accepted for this opportunity."
+                title="Certification: Each proposal is submitted only once"
+                description="Applicants may submit multiple distinct proposals, but each concept must be submitted only once under this Annual Program Statement."
               />
               <RadioGroupField
                 label="Is your organization/entity currently registered and active in SAM.gov?"
@@ -1068,12 +1068,12 @@ export function GrantWritingDemoPage() {
               />
               <CertificationToggle
                 title="Certification: Applicant is NOT a Federal agency"
-                description="Federal agencies and their employees, as well as Federally-funded R&D centers, are not eligible applicants."
+                description="U.S. federal agencies and their employees are not eligible applicants."
               />
               <RadioGroupField
                 label="Do you anticipate incurring pre-award costs?"
                 required
-                helperText="Pre-award costs up to 90 days before the period of performance may be allowable with prior written approval."
+                helperText="Pre-award costs before the period of performance may be allowable with prior written approval."
                 options={["Yes – I anticipate pre-award costs and will notify the agency", "No – I do not anticipate pre-award costs"]}
                 defaultValue="No – I do not anticipate pre-award costs"
               />
