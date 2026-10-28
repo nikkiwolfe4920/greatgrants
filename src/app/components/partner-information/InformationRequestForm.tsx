@@ -2,7 +2,6 @@ import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "rea
 import { toast } from "sonner";
 import {
   Briefcase,
-  Check,
   CheckCircle2,
   DollarSign,
   Download,
@@ -42,7 +41,6 @@ export interface ContactValue {
   lastName: string;
   email: string;
   phone: string;
-  confirmed: boolean;
 }
 
 export interface InformationRequestValues {
@@ -59,11 +57,11 @@ export interface InformationRequestState {
   values: InformationRequestValues;
   /** "2:14 PM" — set by the autosave; undefined until the first edit. */
   savedAt?: string;
-  /** Set once sent to the lead applicant; the form is read-only after. */
+  /** Set once sent to the Support Organization; the form is read-only after. */
   sentOn?: string;
 }
 
-const EMPTY_CONTACT: ContactValue = { firstName: "", lastName: "", email: "", phone: "", confirmed: false };
+const EMPTY_CONTACT: ContactValue = { firstName: "", lastName: "", email: "", phone: "" };
 
 export const EMPTY_INFORMATION_REQUEST: InformationRequestState = {
   values: {
@@ -85,10 +83,11 @@ const CONTACTS: { key: ContactKey; heading: string }[] = [
   { key: "approver", heading: "Final approver" },
 ];
 
-const STEPS = [
-  { label: "Partnership\nApproved" },
-  { label: "Information\nRequest" },
-  { label: "Sent for\nApproval" },
+/** Captions appear only once a step has a date; Sign MOU / Final Approval don't yet. */
+const stepsFor = (decidedOn: string | undefined, sentOn: string | undefined) => [
+  { label: "Partnership\nApproved", caption: decidedOn && `Decided on ${decidedOn}` },
+  { label: "Information\nRequest", caption: decidedOn && `Requested: ${decidedOn}` },
+  { label: "Sent for\nApproval", caption: sentOn && `Sent: ${sentOn}` },
   { label: "Sign\nMOU" },
   { label: "Final\nApproval" },
 ];
@@ -320,11 +319,8 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
   const setValues = (patch: (v: InformationRequestValues) => InformationRequestValues) =>
     onChange((s) => ({ ...s, values: patch(s.values) }));
 
-  const setContact = (key: ContactKey, field: keyof Omit<ContactValue, "confirmed">, value: string) =>
-    setValues((v) => ({ ...v, contacts: { ...v.contacts, [key]: { ...v.contacts[key], [field]: value, confirmed: false } } }));
-
-  const toggleConfirm = (key: ContactKey) =>
-    setValues((v) => ({ ...v, contacts: { ...v.contacts, [key]: { ...v.contacts[key], confirmed: !v.contacts[key].confirmed } } }));
+  const setContact = (key: ContactKey, field: keyof ContactValue, value: string) =>
+    setValues((v) => ({ ...v, contacts: { ...v.contacts, [key]: { ...v.contacts[key], [field]: value } } }));
 
   const removeDoc = (field: "budgetFiles" | "roleDocs", doc: UploadedFile) => {
     setValues((v) => ({ ...v, [field]: v[field].filter((d) => d.id !== doc.id) }));
@@ -354,12 +350,12 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
   };
 
   const rangeHint = app.subawardRange
-    ? `The lead applicant's range for this partner request is ${app.subawardRange}.`
+    ? `The Support Organization's range for this partner request is ${app.subawardRange}.`
     : undefined;
 
   return (
     <div className="space-y-4">
-      <StepperHeader steps={STEPS} currentStep={sent ? 3 : 2} />
+      <StepperHeader steps={stepsFor(app.decision?.decidedOn, sentOn)} currentStep={sent ? 3 : 2} />
 
       <div className="flex flex-wrap items-center gap-3 pt-2">
         <h3 className="font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
@@ -372,7 +368,7 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
           <Button variant="outline" size="sm" className="bg-white" asChild>
             <a href={`mailto:${app.contact.email}?subject=${encodeURIComponent(`Question about ${app.programName}`)}`}>
               <Mail className="size-4" aria-hidden="true" />
-              Ask a question
+              Contact Support Organization
             </a>
           </Button>
         )}
@@ -390,13 +386,11 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
         <Card
           icon={<UserSquare className="size-5" />}
           title="Contacts"
-          description="Who the lead applicant should contact, and who approves your part of the application."
+          description="Who the Support Organization should contact, and who approves your part of the application."
         >
           <div className="space-y-6">
             {CONTACTS.map(({ key, heading }) => {
               const c = values.contacts[key];
-              const canConfirm =
-                !!c.firstName.trim() && !!c.lastName.trim() && EMAIL_RE.test(c.email.trim()) && !errors[`${key}-phone`];
               return (
                 <div key={key} role="group" aria-labelledby={fid(`${key}-heading`)} className="space-y-3">
                   <p id={fid(`${key}-heading`)} className="text-sm font-medium text-gray-700">
@@ -407,22 +401,7 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
                     <TextField id={fid(`${key}-lastName`)} label="Last Name" required value={c.lastName} placeholder="Enter Last Name" onChange={(x) => setContact(key, "lastName", x)} error={show(`${key}-lastName`)} />
                     <TextField id={fid(`${key}-email`)} label="Email Address" required type="email" inputMode="email" value={c.email} placeholder="e.g., email@email.com" onChange={(x) => setContact(key, "email", x)} error={show(`${key}-email`)} />
                   </div>
-                  <div className="flex items-start gap-3">
-                    <TextField id={fid(`${key}-phone`)} label="Phone Number" type="tel" inputMode="tel" value={c.phone} placeholder="e.g., (+1) 123 456 8901" onChange={(x) => setContact(key, "phone", x)} error={show(`${key}-phone`)} />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      aria-pressed={c.confirmed}
-                      aria-label={`${c.confirmed ? "Contact confirmed" : "Confirm contact"}: ${heading}`}
-                      title={canConfirm ? (c.confirmed ? "Confirmed" : "Confirm this contact") : "Add name and email to confirm"}
-                      disabled={!canConfirm && !c.confirmed}
-                      onClick={() => toggleConfirm(key)}
-                      className={`mt-[30px] size-7 shrink-0 p-0 ${c.confirmed ? "bg-teal-600 border-teal-600 text-white hover:bg-teal-700 hover:text-white" : "bg-white text-gray-500 border-gray-300"}`}
-                    >
-                      <Check className="size-4" />
-                    </Button>
-                  </div>
+                  <TextField id={fid(`${key}-phone`)} label="Phone Number" type="tel" inputMode="tel" value={c.phone} placeholder="e.g., (+1) 123 456 8901" onChange={(x) => setContact(key, "phone", x)} error={show(`${key}-phone`)} />
                 </div>
               );
             })}
@@ -532,7 +511,7 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
         </section>
       </fieldset>
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 pt-6">
         <p className="flex items-center gap-1.5 text-xs text-gray-600" role="status" aria-live="polite">
           {saving ? (
             <>

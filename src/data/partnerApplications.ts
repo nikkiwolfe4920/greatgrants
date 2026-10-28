@@ -17,8 +17,6 @@ export interface PartnerDecision {
   message: string;
   /** False until the user has opened the decision — drives the unread dot. */
   read: boolean;
-  /** Date the prime applicant finished reviewing this org's contribution. */
-  reviewedOn?: string;
 }
 
 export interface PartnerContact {
@@ -61,9 +59,9 @@ export interface PartnerApplication {
   /** e.g. "Nutrition education partner" */
   need: string;
   mouAmount: string;
-  /** Lead applicant's funding range for this request, e.g. "$20,000–$26,000". */
+  /** Support Organization's funding range for this request, e.g. "$20,000–$26,000". */
   subawardRange?: string;
-  /** When this org's post-acceptance information is due to the lead applicant. */
+  /** When this org's post-acceptance information is due to the Support Organization. */
   informationDue?: string;
   period: string;
   nofoDeadline: string;
@@ -180,7 +178,6 @@ export const mockPartnerApplications: PartnerApplication[] = [
       message:
         "Congratulations. Next, send the information Westside Cultural Trust needs to draft the application with you. You'll agree the final amount and MOU with them directly, outside Great Grants.",
       read: false,
-      reviewedOn: "Oct 12",
     },
     primeApplicant: "Westside Cultural Trust",
     contact: UPTOWN_ARTS_CONTACT,

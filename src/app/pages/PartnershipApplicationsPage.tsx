@@ -53,42 +53,6 @@ import {
   type PartnerApplicationStatus,
 } from "@/data/partnerApplications";
 
-type ViewId = PartnerApplicationStatus;
-
-const VIEWS: { id: ViewId; label: string; heading: string; description: string }[] = [
-  {
-    id: "active",
-    label: "Active",
-    heading: "Active Partner Applications",
-    description: "Applications where your organization is a partner, not the prime applicant.",
-  },
-  {
-    id: "in-review",
-    label: "In Review",
-    heading: "In Review",
-    description: "Applications you've submitted. The prime applicant is reviewing your contribution.",
-  },
-  {
-    id: "decision",
-    label: "Partner Decision",
-    heading: "Partner Decisions",
-    description: "The prime applicant's decision on your partnership.",
-  },
-  {
-    id: "archived",
-    label: "Archived",
-    heading: "Archived Partner Applications",
-    description: "Applications you've archived.",
-  },
-];
-
-const EMPTY_STATES: Record<ViewId, { title: string; body: string }> = {
-  active: { title: "No active partner applications", body: "Applications you're invited to partner on will appear here." },
-  "in-review": { title: "Nothing in review", body: "Applications you submit will appear here while the prime applicant reviews them." },
-  decision: { title: "No partner decisions yet", body: "Decisions from prime applicants will appear here." },
-  archived: { title: "No archived applications", body: "Archived partner applications will appear here." },
-};
-
 const todayLabel = () => new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 /**
@@ -103,15 +67,17 @@ export function PartnershipApplicationsPage() {
   const [applications, setApplications] = useState<PartnerApplication[]>(() =>
     mockPartnerApplications.map((a) => (a.id === "p4" && a.decision ? { ...a, decision: { ...a.decision, read: true } } : a)),
   );
-  const [currentView, setCurrentView] = useState<ViewId>("decision");
   const [expandedId, setExpandedId] = useState<string>("p4");
   const [infoRequests, setInfoRequests] = useState<Record<string, InformationRequestState>>({});
   const [pendingSubmitId, setPendingSubmitId] = useState<string | null>(null);
 
   const byStatus = (status: PartnerApplicationStatus) => applications.filter((a) => a.status === status);
   const unreadCount = byStatus("decision").filter((a) => a.decision && !a.decision.read).length;
-  const visible = byStatus(currentView);
-  const view = VIEWS.find((v) => v.id === currentView)!;
+  // One list now that the status toggle is gone: decisions first, then work still in progress.
+  const STATUS_ORDER: PartnerApplicationStatus[] = ["decision", "active", "in-review"];
+  const visible = applications
+    .filter((a) => a.status !== "archived")
+    .sort((a, b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status));
   const pendingSubmit = applications.find((a) => a.id === pendingSubmitId);
 
   const update = (id: string, patch: (a: PartnerApplication) => PartnerApplication) =>
@@ -159,8 +125,6 @@ export function PartnershipApplicationsPage() {
   const unarchive = (app: PartnerApplication) =>
     update(app.id, (a) => ({ ...a, status: a.decision ? "decision" : a.submittedOn ? "in-review" : "active" }));
 
-  const tabCount = (id: ViewId) => (id === "decision" ? unreadCount : byStatus(id).length);
-
   return (
     <div className="max-w-[1400px] mx-auto p-8">
       <Breadcrumb className="mb-6">
@@ -189,43 +153,11 @@ export function PartnershipApplicationsPage() {
               Partnership Applications
             </h1>
           </div>
-
-          {/* Status toggle */}
-          <div role="tablist" aria-label="Partner application status" className="flex flex-wrap items-center gap-2 bg-gray-100 p-1 rounded-lg">
-            {VIEWS.map((v) => {
-              const selected = currentView === v.id;
-              const count = tabCount(v.id);
-              return (
-                <button
-                  key={v.id}
-                  role="tab"
-                  id={`partner-tab-${v.id}`}
-                  aria-selected={selected}
-                  aria-controls="partner-panel"
-                  onClick={() => setCurrentView(v.id)}
-                  className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 ${
-                    selected ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  {v.id === "decision" && unreadCount > 0 && (
-                    <>
-                      <span aria-hidden="true" className="mr-2 inline-block size-2 rounded-full bg-green-500 shrink-0" />
-                      <span className="sr-only">{unreadCount} unread. </span>
-                    </>
-                  )}
-                  {v.label}
-                  {count > 0 && (
-                    <Badge className={`ml-2 text-white ${v.id === "active" ? "bg-teal-600" : "bg-gray-600"}`}>{count}</Badge>
-                  )}
-                </button>
-              );
-            })}
-          </div>
         </div>
 
         <div className="flex items-center justify-between gap-4">
           <p className="text-gray-600 text-sm">Manage the applications you're partnering on.</p>
-          {currentView === "decision" && unreadCount > 0 && (
+          {unreadCount > 0 && (
             <Button variant="ghost" size="sm" onClick={markAllRead} className="text-teal-700 hover:text-teal-800">
               Mark all as read
             </Button>
@@ -233,14 +165,14 @@ export function PartnershipApplicationsPage() {
         </div>
       </div>
 
-      <section id="partner-panel" role="tabpanel" aria-labelledby={`partner-tab-${currentView}`} className="space-y-4">
+      <section aria-label="Partnership applications" className="space-y-4">
         {visible.length === 0 ? (
           <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
               <Users className="w-8 h-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{EMPTY_STATES[currentView].title}</h3>
-            <p className="text-gray-600 text-sm">{EMPTY_STATES[currentView].body}</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No partnership applications</h3>
+            <p className="text-gray-600 text-sm">Applications you're invited to partner on will appear here.</p>
           </div>
         ) : (
           visible.map((app) => {
@@ -263,9 +195,6 @@ export function PartnershipApplicationsPage() {
                         <StatusBadge app={app} />
                         {isUnread && (
                           <Badge className="bg-green-600 text-white hover:bg-green-600">New</Badge>
-                        )}
-                        {app.decision?.reviewedOn && (
-                          <span className="text-xs text-gray-600">Reviewed: {app.decision.reviewedOn}</span>
                         )}
                       </div>
                     </div>
@@ -305,7 +234,7 @@ export function PartnershipApplicationsPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-gray-600">
-                    <div>Lead applicant: {app.primeApplicant}</div>
+                    <div>Support Organization: {app.primeApplicant}</div>
                     {app.status === "active" && nextDue && (
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
@@ -415,12 +344,9 @@ function DecisionPanel({ app }: { app: PartnerApplication }) {
     >
       <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${accepted ? "text-green-700" : "text-red-700"}`} aria-hidden="true" />
       <div>
-        <h4 className={`font-semibold ${accepted ? "text-green-800" : "text-red-800"}`}>
+        <h4 className={`font-semibold mb-1.5 ${accepted ? "text-green-800" : "text-red-800"}`}>
           {accepted ? "Partnership accepted" : "Partnership not accepted"}
         </h4>
-        <p className="text-xs text-gray-600 mb-2">
-          {app.primeApplicant} · {decision.decidedOn}
-        </p>
         <p className="text-sm text-gray-700">{decision.message}</p>
       </div>
     </div>
