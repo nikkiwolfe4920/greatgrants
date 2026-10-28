@@ -2,6 +2,8 @@ import { Check } from "lucide-react";
 
 export interface StepDefinition {
   label: string;
+  /** Optional grey caption under the label, e.g. "Decided on Oct 3". */
+  caption?: string;
 }
 
 interface StepperHeaderProps {
@@ -17,7 +19,7 @@ interface StepperHeaderProps {
 export function StepperHeader({ steps, currentStep }: StepperHeaderProps) {
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-6" role="group" aria-label={`Progress: step ${currentStep} of ${steps.length}`}>
-      <div className="flex items-center">
+      <div className="flex items-start">
         {steps.map((step, index) => {
           const stepNumber = index + 1;
           const isDone = stepNumber < currentStep;
@@ -44,9 +46,14 @@ export function StepperHeader({ steps, currentStep }: StepperHeaderProps) {
                   {step.label}
                   <span className="sr-only">{isDone ? " (completed)" : isCurrent ? " (current step)" : ""}</span>
                 </p>
+                {step.caption && (
+                  <p className="mt-0.5 text-xs text-center leading-[15px] text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
+                    {step.caption}
+                  </p>
+                )}
               </div>
               {index !== steps.length - 1 && (
-                <div className="flex-1 h-0.5 bg-gray-200 rounded-full mb-5 mx-2" />
+                <div className="flex-1 h-0.5 bg-gray-200 rounded-full mt-[15px] mx-2" />
               )}
             </div>
           );
