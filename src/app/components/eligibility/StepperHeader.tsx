@@ -16,7 +16,7 @@ interface StepperHeaderProps {
  */
 export function StepperHeader({ steps, currentStep }: StepperHeaderProps) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6">
+    <div className="bg-white border border-gray-200 rounded-xl p-6" role="group" aria-label={`Progress: step ${currentStep} of ${steps.length}`}>
       <div className="flex items-center">
         {steps.map((step, index) => {
           const stepNumber = index + 1;
@@ -26,7 +26,7 @@ export function StepperHeader({ steps, currentStep }: StepperHeaderProps) {
 
           return (
             <div key={step.label} className={`flex items-center ${index === steps.length - 1 ? "" : "flex-1"}`}>
-              <div className="flex flex-col items-center w-[72px] shrink-0">
+              <div className="flex flex-col items-center w-[72px] shrink-0" aria-current={isCurrent ? "step" : undefined}>
                 <div
                   className={`size-8 rounded-full flex items-center justify-center text-xs font-semibold ${
                     isActive ? "bg-teal-600 text-white" : "bg-gray-100 text-gray-400"
@@ -42,6 +42,7 @@ export function StepperHeader({ steps, currentStep }: StepperHeaderProps) {
                   style={{ fontFamily: "Cabin, sans-serif" }}
                 >
                   {step.label}
+                  <span className="sr-only">{isDone ? " (completed)" : isCurrent ? " (current step)" : ""}</span>
                 </p>
               </div>
               {index !== steps.length - 1 && (

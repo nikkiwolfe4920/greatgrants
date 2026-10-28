@@ -9,7 +9,6 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
-  Mail,
   MoreVertical,
   Send,
   Undo2,
@@ -44,10 +43,10 @@ import {
   BreadcrumbHome,
 } from "@/app/components/ui/breadcrumb";
 import {
-  PartnerInfoAssistant,
-  EMPTY_ASSISTANT_STATE,
-  type AssistantState,
-} from "@/app/components/PartnerInfoAssistant";
+  InformationRequestForm,
+  EMPTY_INFORMATION_REQUEST,
+  type InformationRequestState,
+} from "@/app/components/partner-information/InformationRequestForm";
 import {
   mockPartnerApplications,
   type PartnerApplication,
@@ -106,7 +105,7 @@ export function PartnershipApplicationsPage() {
   );
   const [currentView, setCurrentView] = useState<ViewId>("decision");
   const [expandedId, setExpandedId] = useState<string>("p4");
-  const [assistants, setAssistants] = useState<Record<string, AssistantState>>({});
+  const [infoRequests, setInfoRequests] = useState<Record<string, InformationRequestState>>({});
   const [pendingSubmitId, setPendingSubmitId] = useState<string | null>(null);
 
   const byStatus = (status: PartnerApplicationStatus) => applications.filter((a) => a.status === status);
@@ -306,7 +305,7 @@ export function PartnershipApplicationsPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-gray-600">
-                    <div>Prime applicant: {app.primeApplicant}</div>
+                    <div>Lead applicant: {app.primeApplicant}</div>
                     {app.status === "active" && nextDue && (
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
@@ -351,8 +350,10 @@ export function PartnershipApplicationsPage() {
                     {app.decision && <DecisionPanel app={app} />}
                     <PartnerDetails
                       app={app}
-                      assistant={assistants[app.id] ?? EMPTY_ASSISTANT_STATE}
-                      onAssistantChange={(next) => setAssistants((m) => ({ ...m, [app.id]: next }))}
+                      infoRequest={infoRequests[app.id] ?? EMPTY_INFORMATION_REQUEST}
+                      onInfoRequestChange={(patch) =>
+                        setInfoRequests((m) => ({ ...m, [app.id]: patch(m[app.id] ?? EMPTY_INFORMATION_REQUEST) }))
+                      }
                     />
                   </div>
                 )}
@@ -428,104 +429,92 @@ function DecisionPanel({ app }: { app: PartnerApplication }) {
 
 function PartnerDetails({
   app,
-  assistant,
-  onAssistantChange,
+  infoRequest,
+  onInfoRequestChange,
 }: {
   app: PartnerApplication;
-  assistant: AssistantState;
-  onAssistantChange: (next: AssistantState) => void;
+  infoRequest: InformationRequestState;
+  onInfoRequestChange: (patch: (s: InformationRequestState) => InformationRequestState) => void;
 }) {
   const readOnly = app.status !== "active";
+  const accepted = app.decision?.outcome === "accepted";
+  const details: [string, string | undefined][] = [
+    ["Partner request", app.need],
+    ["Estimated subaward", app.subawardRange ? `${app.subawardRange} (estimate)` : app.mouAmount],
+    ["Period of performance", app.period],
+    ["NOFO deadline", app.nofoDeadline],
+    ["Information due", app.informationDue],
+  ];
+
   return (
-    <div className="flex flex-col lg:flex-row gap-5 items-start">
-      <div className="flex-1 min-w-0 w-full space-y-4">
-        {app.requests && app.requests.length > 0 && !app.decision?.outcome.startsWith("not") && (
-          <PartnerInfoAssistant app={app} state={assistant} onChange={onAssistantChange} />
-        )}
+    <div className="space-y-6">
+      <dl className="flex flex-wrap gap-x-8 gap-y-3">
+        {details
+          .filter(([, value]) => value)
+          .map(([label, value]) => (
+            <div key={label} className="flex flex-col gap-0.5">
+              <dt className="text-xs text-gray-500">{label}</dt>
+              <dd className="text-sm font-semibold text-gray-900">{value}</dd>
+            </div>
+          ))}
+      </dl>
 
-        {!app.decision && (
-        <div className="border border-gray-200 rounded-xl p-5">
-          <h4 className="font-semibold text-gray-900 mb-4">Partnership status</h4>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {app.stages.map((stage) => {
-              const isCurrent = stage.id === app.currentStage;
-              return (
-                <div
-                  key={stage.id}
-                  className={`min-w-0 rounded-lg border px-2.5 py-2.5 ${
-                    isCurrent ? "bg-green-50 border-green-300" : "bg-gray-50 border-gray-200"
-                  }`}
-                >
-                  <p className={`text-[13px] font-semibold truncate ${isCurrent ? "text-green-700" : "text-gray-700"}`}>
-                    {stage.label}
-                  </p>
-                  <p className="text-xs text-gray-500">{stage.date ?? "—"}</p>
-                </div>
-              );
-            })}
-          </div>
-          {app.mouNote && <p className="text-[13px] text-gray-600 mt-4">{app.mouNote}</p>}
-        </div>
-        )}
+      <hr className="border-gray-200" />
 
-        <div className="border border-gray-200 rounded-xl p-5">
-          <h4 className="font-semibold text-gray-900 mb-2">Application access</h4>
-          <p className="text-sm text-gray-600 mb-4">
-            You can read the application narrative and your own partnership details. Other partners' details and amounts
-            aren't shown. Sections assigned to you:
-          </p>
-          <div className="space-y-3">
-            {app.assignedSections.map((section) => (
-              <div key={section.id} className="border border-gray-200 rounded-lg p-3 flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 text-sm">{section.name}</p>
-                  <p className="text-xs text-gray-500">
-                    Assigned by {section.assignedBy} · Due {section.dueDate}
-                  </p>
-                </div>
-                <SectionBadge status={section.status} />
-                <Button variant="outline" size="sm" className="bg-white shrink-0">
-                  {readOnly ? "View section" : "Open section"}
-                </Button>
+      {accepted ? (
+        <InformationRequestForm app={app} state={infoRequest} onChange={onInfoRequestChange} />
+      ) : (
+        <div className="space-y-4">
+          {!app.decision && (
+            <div className="border border-gray-200 rounded-xl p-5">
+              <h4 className="font-semibold text-gray-900 mb-4">Partnership status</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {app.stages.map((stage) => {
+                  const isCurrent = stage.id === app.currentStage;
+                  return (
+                    <div
+                      key={stage.id}
+                      className={`min-w-0 rounded-lg border px-2.5 py-2.5 ${
+                        isCurrent ? "bg-green-50 border-green-300" : "bg-gray-50 border-gray-200"
+                      }`}
+                    >
+                      <p className={`text-[13px] font-semibold truncate ${isCurrent ? "text-green-700" : "text-gray-700"}`}>
+                        {stage.label}
+                      </p>
+                      <p className="text-xs text-gray-500">{stage.date ?? "—"}</p>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
+              {app.mouNote && <p className="text-[13px] text-gray-600 mt-4">{app.mouNote}</p>}
+            </div>
+          )}
 
-      <div className="w-full lg:w-80 shrink-0 space-y-5">
-      <div className="border border-gray-200 rounded-xl p-5 space-y-4">
-        <h4 className="font-semibold text-gray-900">Your role</h4>
-        {[
-          ["Need", app.need],
-          [`MOU amount (set by ${app.primeApplicant})`, app.mouAmount],
-          ["Period", app.period],
-          ["Prime applicant", app.primeApplicant],
-          ["NOFO deadline", app.nofoDeadline],
-        ].map(([label, value]) => (
-          <div key={label}>
-            <p className="text-xs text-gray-500">{label}</p>
-            <p className="text-sm font-semibold text-gray-900">{value}</p>
+          <div className="border border-gray-200 rounded-xl p-5">
+            <h4 className="font-semibold text-gray-900 mb-2">Application access</h4>
+            <p className="text-sm text-gray-600 mb-4">
+              You can read the application narrative and your own partnership details. Other partners' details and amounts
+              aren't shown. Sections assigned to you:
+            </p>
+            <div className="space-y-3">
+              {app.assignedSections.map((section) => (
+                <div key={section.id} className="border border-gray-200 rounded-lg p-3 flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 text-sm">{section.name}</p>
+                    <p className="text-xs text-gray-500">
+                      Assigned by {section.assignedBy} · Due {section.dueDate}
+                    </p>
+                  </div>
+                  <SectionBadge status={section.status} />
+                  <Button variant="outline" size="sm" className="bg-white shrink-0">
+                    {readOnly ? "View section" : "Open section"}
+                  </Button>
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
-      {app.contact && (
-        <div className="border border-gray-200 rounded-xl p-5">
-          <h4 className="font-semibold text-gray-900">Point of contact</h4>
-          <p className="text-sm font-semibold text-gray-900 mt-4">{app.contact.name}</p>
-          <p className="text-xs text-gray-500">
-            {app.contact.role} · {app.contact.organization}
-          </p>
-          <a
-            href={`mailto:${app.contact.email}?subject=${encodeURIComponent(app.programName)}`}
-            className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-teal-700 hover:text-teal-800 break-all underline-offset-2 hover:underline"
-          >
-            <Mail className="w-4 h-4 shrink-0" aria-hidden="true" />
-            {app.contact.email}
-          </a>
         </div>
       )}
-      </div>
     </div>
   );
 }
