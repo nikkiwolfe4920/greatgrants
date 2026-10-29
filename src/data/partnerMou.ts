@@ -19,6 +19,17 @@ export const MOU_ACCEPTED = {
   mouRequestedOn: "Oct 29",
 };
 
+/** Signed MOU accepted → partnership is final. */
+export const FINAL_APPROVAL = {
+  approvedAt: "Oct 30, 11:20 AM",
+  decidedOn: "Oct 30",
+  signedMou: {
+    name: "NEA Challenge America MOU (signed).pdf",
+    url: MOU_DOCUMENT.url,
+    meta: "PDF • 3 KB • Signed copy sent Oct 29, 2026",
+  },
+};
+
 /** Information not accepted → the user edits and resubmits. */
 export const MOU_NOT_ACCEPTED = {
   notAcceptedAt: "Oct 29, 3:05 PM",
