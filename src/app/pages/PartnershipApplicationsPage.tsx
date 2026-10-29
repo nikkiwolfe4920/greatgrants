@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import {
+  AlertCircle,
   Archive,
   ArchiveRestore,
   Calendar,
@@ -182,9 +183,16 @@ export function PartnershipApplicationsPage() {
                         <h3 className="text-lg font-semibold text-gray-900">{app.programName}</h3>
                         <Badge className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50">{app.roleBadge}</Badge>
                         <StatusBadge app={app} />
-                        {infoRequests[app.id]?.sentOn && (
-                          <Badge className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-50">Sent for approval</Badge>
-                        )}
+                        {app.decision?.outcome === "accepted" &&
+                          (infoRequests[app.id]?.sentOn ? (
+                            <Badge className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-50">Sent for approval</Badge>
+                          ) : (
+                            // Action required: stronger fill, border and weight than the informational badges.
+                            <Badge className="bg-amber-100 text-amber-800 border-amber-300 font-semibold hover:bg-amber-100">
+                              <AlertCircle aria-hidden="true" />
+                              Request Needed
+                            </Badge>
+                          ))}
                         {isUnread && (
                           <Badge className="bg-green-600 text-white hover:bg-green-600">New</Badge>
                         )}
