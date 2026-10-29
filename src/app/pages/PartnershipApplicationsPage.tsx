@@ -193,6 +193,9 @@ export function PartnershipApplicationsPage() {
                         <h3 className="text-lg font-semibold text-gray-900">{app.programName}</h3>
                         <Badge className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50">{app.roleBadge}</Badge>
                         <StatusBadge app={app} />
+                        {infoRequests[app.id]?.sentOn && (
+                          <Badge className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-50">Sent for approval</Badge>
+                        )}
                         {isUnread && (
                           <Badge className="bg-green-600 text-white hover:bg-green-600">New</Badge>
                         )}

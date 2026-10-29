@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { forwardRef, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import {
   Briefcase,
@@ -100,7 +100,9 @@ const formatMoney = (digits: string) => (digits ? `$${Number(digits).toLocaleStr
 const toDigits = (raw: string) => raw.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 12);
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const nowTime = () => new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-const todayShort = () => new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
+/** "Oct 29, 2:14 PM" — the send timestamp shown in the step bar and confirmation. */
+const nowStamp = () =>
+  `${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${nowTime()}`;
 
 function validate(v: InformationRequestValues) {
   const errors: Record<string, string> = {};
@@ -268,6 +270,68 @@ function DocumentRow({ doc, onRemove, disabled }: { doc: UploadedFile; onRemove:
   );
 }
 
+function ContactSupportButton({ app }: { app: PartnerApplication }) {
+  if (!app.contact) return null;
+  return (
+    <Button variant="outline" size="sm" className="bg-white" asChild>
+      <a href={`mailto:${app.contact.email}?subject=${encodeURIComponent(`Question about ${app.programName}`)}`}>
+        <Mail className="size-4" aria-hidden="true" />
+        Contact Support Organization
+      </a>
+    </Button>
+  );
+}
+
+/**
+ * Shown in place of the "Next steps" header once the information is sent.
+ * Confirms success with the timestamp, sets expectations for what happens
+ * next, and keeps a way back (withdraw to edit) so the state isn't a dead end.
+ */
+const SentConfirmation = forwardRef<
+  HTMLElement,
+  { app: PartnerApplication; sentOn?: string; onWithdraw: () => void }
+>(function SentConfirmation({ app, sentOn, onWithdraw }, ref) {
+  const org = app.primeApplicant;
+  return (
+    <section
+      ref={ref}
+      tabIndex={-1}
+      role="status"
+      aria-labelledby="information-sent-title"
+      className="rounded-xl border border-green-200 bg-green-50 p-5 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+    >
+      <div className="flex gap-3">
+        <CheckCircle2 className="size-5 mt-0.5 shrink-0 text-green-700" aria-hidden="true" />
+        <div className="space-y-4 min-w-0">
+          <div>
+            <h3 id="information-sent-title" className="font-semibold text-green-800">
+              Information sent to {org}
+            </h3>
+            <p className="text-xs text-gray-600">Sent {sentOn}</p>
+            <p className="mt-2 text-sm text-gray-700">
+              Your information was successfully sent. {org} will now review your request.
+            </p>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-900">What happens next</p>
+            <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-gray-700">
+              <li>{org} reviews your request.</li>
+              <li>If approved, you&apos;ll get a notification to sign the MOU document.</li>
+              <li>Once the MOU is signed, you move into final partnership approval.</li>
+            </ol>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <ContactSupportButton app={app} />
+            <Button variant="ghost" size="sm" className="text-gray-700" onClick={onWithdraw}>
+              Withdraw to edit
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+});
+
 /* ------------------------------------------------------------------ */
 /* Form                                                                */
 /* ------------------------------------------------------------------ */
@@ -295,6 +359,7 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
   const [saving, setSaving] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const firstRender = useRef(true);
+  const confirmationRef = useRef<HTMLElement>(null);
 
   const errors = useMemo(() => validate(values), [values]);
   const errorKeys = Object.keys(errors);
@@ -342,11 +407,20 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
 
   const send = () => {
     setConfirmOpen(false);
-    onChange((s) => ({ ...s, sentOn: todayShort(), savedAt: nowTime() }));
-    toast.success("Information sent", {
-      description: `${app.primeApplicant} has been notified and will review it.`,
+    onChange((s) => ({ ...s, sentOn: nowStamp(), savedAt: nowTime() }));
+    toast.success(`Information sent to ${app.primeApplicant}`, {
       action: { label: "Undo", onClick: () => onChange((s) => ({ ...s, sentOn: undefined })) },
     });
+    // Move focus to the confirmation so screen readers announce it and sighted users see it.
+    setTimeout(() => {
+      confirmationRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+      confirmationRef.current?.focus({ preventScroll: true });
+    }, 50);
+  };
+
+  const withdraw = () => {
+    onChange((s) => ({ ...s, sentOn: undefined }));
+    toast(`Request withdrawn. Edit your information, then send it again.`);
   };
 
   const rangeHint = app.subawardRange
@@ -357,30 +431,31 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
     <div className="space-y-4">
       <StepperHeader steps={stepsFor(app.decision?.decidedOn, sentOn)} currentStep={sent ? 3 : 2} />
 
-      <div className="flex flex-wrap items-center gap-3 pt-2">
-        <h3 className="font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-          Next steps
-        </h3>
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600" aria-live="polite">
-          {sent ? `Sent ${sentOn}` : remaining === 0 ? "All required items complete" : `${remaining} required items remaining`}
-        </span>
-        {app.contact && (
-          <Button variant="outline" size="sm" className="bg-white" asChild>
-            <a href={`mailto:${app.contact.email}?subject=${encodeURIComponent(`Question about ${app.programName}`)}`}>
-              <Mail className="size-4" aria-hidden="true" />
-              Contact Support Organization
-            </a>
-          </Button>
-        )}
-      </div>
-      <p className="text-sm text-gray-600 -mt-2">
-        {sent
-          ? `Sent to ${app.primeApplicant}. You'll agree the final amount and MOU with them directly.`
-          : "Changes save automatically as you type. Send when everything is in."}
-      </p>
+      {sent ? (
+        <SentConfirmation ref={confirmationRef} app={app} sentOn={sentOn} onWithdraw={withdraw} />
+      ) : (
+        <>
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <h3 className="font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+              Next steps
+            </h3>
+            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600" aria-live="polite">
+              {remaining === 0 ? "All required items complete" : `${remaining} required items remaining`}
+            </span>
+            <ContactSupportButton app={app} />
+          </div>
+          <p className="text-sm text-gray-600 -mt-2">Changes save automatically as you type. Send when everything is in.</p>
+        </>
+      )}
 
-      {/* A disabled fieldset makes every control read-only once sent. */}
-      <fieldset disabled={sent} className="space-y-4 min-w-0 border-0 p-0 m-0">
+      {sent && (
+        <h3 className="pt-2 font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+          Information you sent
+        </h3>
+      )}
+
+      {/* Once sent, inputs are disabled and dropzones hidden; document preview/download stay available. */}
+      <fieldset className="space-y-4 min-w-0 border-0 p-0 m-0">
         <legend className="sr-only">Information request for {app.programName}</legend>
 
         <Card
@@ -397,11 +472,11 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
                     {heading}
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <TextField id={fid(`${key}-firstName`)} label="First Name" required value={c.firstName} placeholder="Enter First Name" autoComplete="off" onChange={(x) => setContact(key, "firstName", x)} error={show(`${key}-firstName`)} />
-                    <TextField id={fid(`${key}-lastName`)} label="Last Name" required value={c.lastName} placeholder="Enter Last Name" onChange={(x) => setContact(key, "lastName", x)} error={show(`${key}-lastName`)} />
-                    <TextField id={fid(`${key}-email`)} label="Email Address" required type="email" inputMode="email" value={c.email} placeholder="e.g., email@email.com" onChange={(x) => setContact(key, "email", x)} error={show(`${key}-email`)} />
+                    <TextField id={fid(`${key}-firstName`)} label="First Name" required value={c.firstName} placeholder="Enter First Name" autoComplete="off" onChange={(x) => setContact(key, "firstName", x)} error={show(`${key}-firstName`)} disabled={sent} />
+                    <TextField id={fid(`${key}-lastName`)} label="Last Name" required value={c.lastName} placeholder="Enter Last Name" onChange={(x) => setContact(key, "lastName", x)} error={show(`${key}-lastName`)} disabled={sent} />
+                    <TextField id={fid(`${key}-email`)} label="Email Address" required type="email" inputMode="email" value={c.email} placeholder="e.g., email@email.com" onChange={(x) => setContact(key, "email", x)} error={show(`${key}-email`)} disabled={sent} />
                   </div>
-                  <TextField id={fid(`${key}-phone`)} label="Phone Number" type="tel" inputMode="tel" value={c.phone} placeholder="e.g., (+1) 123 456 8901" onChange={(x) => setContact(key, "phone", x)} error={show(`${key}-phone`)} />
+                  <TextField id={fid(`${key}-phone`)} label="Phone Number" type="tel" inputMode="tel" value={c.phone} placeholder="e.g., (+1) 123 456 8901" onChange={(x) => setContact(key, "phone", x)} error={show(`${key}-phone`)} disabled={sent} />
                 </div>
               );
             })}
@@ -419,6 +494,7 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
             onChange={(x) => setValues((v) => ({ ...v, minFunding: toDigits(x) }))}
             hint={rangeHint}
             error={show("minFunding")}
+            disabled={sent}
           />
           <TextField
             id={fid("maxFunding")}
@@ -430,20 +506,26 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
             onChange={(x) => setValues((v) => ({ ...v, maxFunding: toDigits(x) }))}
             hint="Must be at least the minimum."
             error={show("maxFunding")}
+            disabled={sent}
           />
+          {(!sent || values.budgetFiles.length > 0) && (
           <div className="space-y-1.5">
             <p id={fid("budget-label")} className="text-sm font-medium text-gray-700">
               Line-item budget (optional)
             </p>
-            <FileDropzone
-              id={fid("budgetFiles")}
-              label="Line-item budget"
-              describedBy={fid("budget-hint")}
-              onFiles={(f) => setValues((v) => ({ ...v, budgetFiles: [...v.budgetFiles, ...f] }))}
-            />
-            <p id={fid("budget-hint")} className="text-xs text-gray-500">
-              Only the costs for your role. Skip it if you don&apos;t have one yet.
-            </p>
+            {!sent && (
+              <>
+                <FileDropzone
+                  id={fid("budgetFiles")}
+                  label="Line-item budget"
+                  describedBy={fid("budget-hint")}
+                  onFiles={(f) => setValues((v) => ({ ...v, budgetFiles: [...v.budgetFiles, ...f] }))}
+                />
+                <p id={fid("budget-hint")} className="text-xs text-gray-500">
+                  Only the costs for your role. Skip it if you don&apos;t have one yet.
+                </p>
+              </>
+            )}
             {values.budgetFiles.length > 0 && (
               <ul aria-labelledby={fid("budget-label")} className="space-y-2 pt-2">
                 {values.budgetFiles.map((d) => (
@@ -452,6 +534,7 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
               </ul>
             )}
           </div>
+          )}
         </Card>
 
         <Card
@@ -464,21 +547,21 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
               Documents about your role<span aria-hidden="true" className="text-teal-600">*</span>
               <span className="sr-only"> (required)</span>
             </p>
-            <FileDropzone
-              id={fid("roleDocs")}
-              label="Documents about your role"
-              invalid={!!show("roleDocs")}
-              describedBy={fid("roleDocs-hint")}
-              onFiles={(f) => setValues((v) => ({ ...v, roleDocs: [...v.roleDocs, ...f] }))}
-            />
-            <FieldMessage
-              id={fid("roleDocs-hint")}
-              error={show("roleDocs")}
-              hint={undefined}
-            />
-            <p className="text-xs text-gray-500">
-              Current documents, plans, and past proposals. PDF, DOC, DOCX, XLS, or XLSX, up to 50 MB each.
-            </p>
+            {!sent && (
+              <>
+                <FileDropzone
+                  id={fid("roleDocs")}
+                  label="Documents about your role"
+                  invalid={!!show("roleDocs")}
+                  describedBy={fid("roleDocs-hint")}
+                  onFiles={(f) => setValues((v) => ({ ...v, roleDocs: [...v.roleDocs, ...f] }))}
+                />
+                <FieldMessage id={fid("roleDocs-hint")} error={show("roleDocs")} hint={undefined} />
+                <p className="text-xs text-gray-500">
+                  Current documents, plans, and past proposals. PDF, DOC, DOCX, XLS, or XLSX, up to 50 MB each.
+                </p>
+              </>
+            )}
           </div>
           {values.roleDocs.length > 0 && (
             <ul aria-labelledby={fid("roleDocs-label")} className="space-y-2">
@@ -499,6 +582,7 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
               placeholder="Enter details"
               value={values.notes}
               aria-describedby={fid("notes-count")}
+              disabled={sent}
               className="min-h-[132px]"
               onChange={(e) => setValues((v) => ({ ...v, notes: e.target.value }))}
             />
@@ -511,33 +595,33 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
         </section>
       </fieldset>
 
-      <div className="flex flex-wrap items-center justify-between gap-4 pt-6">
-        <p className="flex items-center gap-1.5 text-xs text-gray-600" role="status" aria-live="polite">
-          {saving ? (
-            <>
-              <Loader2 className="size-4 animate-spin text-gray-400" aria-hidden="true" /> Saving…
-            </>
-          ) : state.savedAt ? (
-            <>
-              <CheckCircle2 className="size-4 text-teal-600" aria-hidden="true" /> All changes saved · {state.savedAt}
-            </>
-          ) : (
-            <>Changes save automatically</>
-          )}
-        </p>
-        <div className="flex items-center gap-3">
-          {attempted && !sent && errorKeys.length > 0 && (
-            <p role="alert" className="text-sm text-red-600">
-              {errorKeys.length} {errorKeys.length === 1 ? "item needs" : "items need"} attention before you can send.
-            </p>
-          )}
-          {!sent && (
-            <Button className="bg-teal-600 hover:bg-teal-700 text-white" onClick={trySend}>
-              Send to {app.primeApplicant}
-            </Button>
-          )}
+      {!sent && (
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-6">
+          <p className="flex items-center gap-1.5 text-xs text-gray-600" role="status" aria-live="polite">
+            {saving ? (
+              <>
+                <Loader2 className="size-4 animate-spin text-gray-400" aria-hidden="true" /> Saving…
+              </>
+            ) : state.savedAt ? (
+              <>
+                <CheckCircle2 className="size-4 text-teal-600" aria-hidden="true" /> All changes saved · {state.savedAt}
+              </>
+            ) : (
+              <>Changes save automatically</>
+            )}
+          </p>
+          <div className="flex items-center gap-3">
+            {attempted && errorKeys.length > 0 && (
+              <p role="alert" className="text-sm text-red-600">
+                {errorKeys.length} {errorKeys.length === 1 ? "item needs" : "items need"} attention before you can send.
+              </p>
+            )}
+              <Button className="bg-teal-600 hover:bg-teal-700 text-white" onClick={trySend}>
+                Send to {app.primeApplicant}
+              </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
