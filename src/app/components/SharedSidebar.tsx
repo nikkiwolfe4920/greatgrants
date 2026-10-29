@@ -128,7 +128,7 @@ export function SharedSidebar() {
   const isApplicationsPartnershipPage = location.pathname === "/applications-partnership";
   const isPartnershipApplicationsPage = location.pathname === "/partnership-applications";
   const isPartnershipSection = isApplicationsPartnershipPage || isPartnershipApplicationsPage;
-  const activePartnerCount = mockPartnerApplications.filter((a) => a.status === "active").length;
+  const partnerApplicationCount = mockPartnerApplications.filter((a) => a.status !== "archived").length;
   // /grant-writing-demo (step 6 of the locked tour) is a single scrollable
   // page showing every section of one application at once, rather than one
   // route per section — see the isGrantWritingDemo uses below.
@@ -592,9 +592,9 @@ export function SharedSidebar() {
                   <span className="flex-1 truncate">Partnership Applications</span>
                   <span
                     className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full shrink-0 select-none"
-                    title={`${activePartnerCount} active partner application${activePartnerCount !== 1 ? 's' : ''}`}
+                    title={`${partnerApplicationCount} partnership application${partnerApplicationCount !== 1 ? 's' : ''}`}
                   >
-                    {activePartnerCount}
+                    {partnerApplicationCount}
                   </span>
                 </button>
               </li>
