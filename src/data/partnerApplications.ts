@@ -59,9 +59,9 @@ export interface PartnerApplication {
   /** e.g. "Nutrition education partner" */
   need: string;
   mouAmount: string;
-  /** Support Organization's funding range for this request, e.g. "$20,000–$26,000". */
+  /** Lead applicant's funding range for this request, e.g. "$20,000–$26,000". */
   subawardRange?: string;
-  /** When this org's post-acceptance information is due to the Support Organization. */
+  /** When this org's post-acceptance information is due to the lead applicant. */
   informationDue?: string;
   period: string;
   nofoDeadline: string;
@@ -69,6 +69,8 @@ export interface PartnerApplication {
   /** Freeform note shown under the stage timeline once an MOU is involved. */
   mouNote?: string;
   assignedSections: AssignedPartnerSection[];
+  /** Lead applicant's email, shown on the "Contact" button. */
+  leadContactEmail?: string;
   /** Who to email with questions about the partnership. */
   contact?: PartnerContact;
 }
@@ -181,6 +183,7 @@ export const mockPartnerApplications: PartnerApplication[] = [
     },
     primeApplicant: "Westside Cultural Trust",
     contact: UPTOWN_ARTS_CONTACT,
+    leadContactEmail: "SupportOrganization@org.com",
     need: "Nutrition education partner",
     mouAmount: "$22,000",
     subawardRange: "$20,000–$26,000",

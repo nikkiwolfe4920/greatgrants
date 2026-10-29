@@ -57,7 +57,7 @@ export interface InformationRequestState {
   values: InformationRequestValues;
   /** "2:14 PM" — set by the autosave; undefined until the first edit. */
   savedAt?: string;
-  /** Set once sent to the Support Organization; the form is read-only after. */
+  /** Set once sent to the lead applicant; the form is read-only after. */
   sentOn?: string;
 }
 
@@ -270,13 +270,14 @@ function DocumentRow({ doc, onRemove, disabled }: { doc: UploadedFile; onRemove:
   );
 }
 
+/** Tertiary mail button from Figma node 17093:39972: icon + "Contact: {email}". */
 function ContactSupportButton({ app }: { app: PartnerApplication }) {
-  if (!app.contact) return null;
+  if (!app.leadContactEmail) return null;
   return (
-    <Button variant="outline" size="sm" className="bg-white" asChild>
-      <a href={`mailto:${app.contact.email}?subject=${encodeURIComponent(`Question about ${app.programName}`)}`}>
-        <Mail className="size-4" aria-hidden="true" />
-        Contact Support Organization
+    <Button variant="ghost" size="sm" className="font-semibold text-gray-600" asChild>
+      <a href={`mailto:${app.leadContactEmail}?subject=${encodeURIComponent(`Question about ${app.programName}`)}`}>
+        <Mail className="size-5" aria-hidden="true" />
+        Contact: {app.leadContactEmail}
       </a>
     </Button>
   );
@@ -424,7 +425,7 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
   };
 
   const rangeHint = app.subawardRange
-    ? `The Support Organization's range for this partner request is ${app.subawardRange}.`
+    ? `The lead applicant's range for this partner request is ${app.subawardRange}.`
     : undefined;
 
   return (
@@ -461,7 +462,7 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
         <Card
           icon={<UserSquare className="size-5" />}
           title="Contacts"
-          description="Who the Support Organization should contact, and who approves your part of the application."
+          description="Who the lead applicant should contact, and who approves your part of the application."
         >
           <div className="space-y-6">
             {CONTACTS.map(({ key, heading }) => {

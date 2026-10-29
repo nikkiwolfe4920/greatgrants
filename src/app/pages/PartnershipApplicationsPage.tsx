@@ -72,7 +72,6 @@ export function PartnershipApplicationsPage() {
   const [pendingSubmitId, setPendingSubmitId] = useState<string | null>(null);
 
   const byStatus = (status: PartnerApplicationStatus) => applications.filter((a) => a.status === status);
-  const unreadCount = byStatus("decision").filter((a) => a.decision && !a.decision.read).length;
   // One list now that the status toggle is gone: decisions first, then work still in progress.
   const STATUS_ORDER: PartnerApplicationStatus[] = ["decision", "active", "in-review"];
   const visible = applications
@@ -85,11 +84,6 @@ export function PartnershipApplicationsPage() {
 
   const markRead = (id: string) =>
     update(id, (a) => (a.decision && !a.decision.read ? { ...a, decision: { ...a.decision, read: true } } : a));
-
-  const markAllRead = () =>
-    setApplications((apps) =>
-      apps.map((a) => (a.decision && !a.decision.read ? { ...a, decision: { ...a.decision, read: true } } : a)),
-    );
 
   const toggleExpanded = (app: PartnerApplication) => {
     const opening = expandedId !== app.id;
@@ -157,11 +151,6 @@ export function PartnershipApplicationsPage() {
 
         <div className="flex items-center justify-between gap-4">
           <p className="text-gray-600 text-sm">Manage the applications you're partnering on.</p>
-          {unreadCount > 0 && (
-            <Button variant="ghost" size="sm" onClick={markAllRead} className="text-teal-700 hover:text-teal-800">
-              Mark all as read
-            </Button>
-          )}
         </div>
       </div>
 
@@ -237,7 +226,7 @@ export function PartnershipApplicationsPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-gray-600">
-                    <div>Support Organization: {app.primeApplicant}</div>
+                    <div>Lead applicant: {app.primeApplicant}</div>
                     {app.status === "active" && nextDue && (
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
