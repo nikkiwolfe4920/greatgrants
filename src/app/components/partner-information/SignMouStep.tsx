@@ -1,6 +1,6 @@
 import { useId, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Download, Eye, File as FileIcon, FileCheck2, FileSignature } from "lucide-react";
+import { FileCheck2, FileSignature } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import {
   AlertDialog,
@@ -15,6 +15,7 @@ import {
 import { StepperHeader } from "@/app/components/eligibility/StepperHeader";
 import { Card, ContactSupportButton, DocumentRow } from "./InformationRequestForm";
 import { FileDropzone, type UploadedFile } from "./FileDropzone";
+import { LinkedDocumentRow } from "./LinkedDocumentRow";
 import { SubmissionConfirmation } from "./SubmissionConfirmation";
 import { MOU_ACCEPTED, MOU_DOCUMENT } from "@/data/partnerMou";
 import type { PartnerApplication } from "@/data/partnerApplications";
@@ -129,29 +130,7 @@ export function SignMouStep({ app, state, onChange }: SignMouStepProps) {
         title="Download the MOU"
         description={`Review the MOU ${org} shared with you, then sign it.`}
       >
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 px-4 py-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <FileIcon className="size-10 text-gray-300 shrink-0" strokeWidth={1} aria-hidden="true" />
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">{MOU_DOCUMENT.name}</p>
-              <p className="text-xs text-gray-500">{MOU_DOCUMENT.meta}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button variant="outline" size="sm" className="bg-white" asChild>
-              <a href={MOU_DOCUMENT.url} target="_blank" rel="noopener" aria-label={`Preview ${MOU_DOCUMENT.name}`}>
-                <Eye className="size-4" aria-hidden="true" />
-                Preview
-              </a>
-            </Button>
-            <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white" asChild>
-              <a href={MOU_DOCUMENT.url} download={MOU_DOCUMENT.name} aria-label={`Download ${MOU_DOCUMENT.name}`}>
-                <Download className="size-4" aria-hidden="true" />
-                Download MOU
-              </a>
-            </Button>
-          </div>
-        </div>
+        <LinkedDocumentRow name={MOU_DOCUMENT.name} meta={MOU_DOCUMENT.meta} url={MOU_DOCUMENT.url} downloadLabel="Download MOU" primaryDownload />
       </Card>
 
       {/* Figma node 16986:35403 — Card: Upload MOU */}

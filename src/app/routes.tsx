@@ -6,6 +6,7 @@ import { ApplicationsPartnershipPage } from "./pages/ApplicationsPartnershipPage
 import { PartnershipApplicationsPage } from "./pages/PartnershipApplicationsPage";
 import { PartnershipMouAcceptedPage } from "./pages/PartnershipMouAcceptedPage";
 import { PartnershipMouNotAcceptedPage } from "./pages/PartnershipMouNotAcceptedPage";
+import { PartnershipFinalPage } from "./pages/PartnershipFinalPage";
 import { ApplicationPartnerPlanningPage } from "./pages/ApplicationPartnerPlanningPage";
 import { ApplicationsDemoPage } from "./pages/ApplicationsDemoPage";
 import { GrantWritingDemoPage } from "./pages/GrantWritingDemoPage";
@@ -200,6 +201,11 @@ const routes = [
         // Same page, after the lead applicant did not accept the information: edit and resubmit.
         path: "partnership-applications-mou-notaccepted",
         element: <PartnershipMouNotAcceptedPage />,
+      },
+      {
+        // Same page, after the lead applicant gave final approval: every step complete.
+        path: "partnership-applications-final",
+        element: <PartnershipFinalPage />,
       },
       {
         // Prime applicant's "Partners" step for one application in Planning —
