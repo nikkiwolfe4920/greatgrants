@@ -1,8 +1,7 @@
-import { useMemo, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { ArrowRight, CalendarClock, Sparkles } from "lucide-react";
-import { Button } from "../components/ui/button";
+import { ArrowRight, CalendarClock } from "lucide-react";
 import { GreatGrantsProcess } from "../components/dashboard/GreatGrantsProcess";
 import { ApplicationStatusList, StartApplicationPrompt } from "../components/dashboard/ApplicationStatusList";
 import { RecommendedGrants } from "../components/dashboard/RecommendedGrants";
@@ -11,7 +10,6 @@ import { AskGreatGrants } from "../components/dashboard/AskGreatGrants";
 import { PlanCreditsCard } from "../components/dashboard/PlanCreditsCard";
 import { FeatureSummaryGrid } from "../components/dashboard/FeatureSummaryGrid";
 import { useDashboardState } from "../components/dashboard/useDashboardState";
-import { PROCESS_STEPS } from "@/data/greatGrantsProcess";
 
 /**
  * Dashboard (/) — the app's home.
@@ -65,13 +63,6 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const state = useDashboardState();
 
-  const nextStep = useMemo(
-    () => PROCESS_STEPS.find((s) => s.id === state.currentStepId) ?? PROCESS_STEPS[0],
-    [state.currentStepId],
-  );
-
-  const progressPercent = Math.round((state.completedStepCount / state.totalStepCount) * 100);
-
   return (
     <div className="max-w-[1400px] mx-auto p-6 sm:p-8 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start">
       {/* Notifications — pinned to the top right of the page */}
@@ -109,69 +100,6 @@ export function DashboardPage() {
             </p>
           </div>
 
-          {/* Next best action */}
-          <Fpo className="shrink-0">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.35, delay: 0.1 }}
-            className="rounded-xl border border-teal-200 bg-gradient-to-br from-teal-50 to-white p-4 lg:min-w-[380px] shrink-0"
-          >
-            <div className="flex items-start gap-3">
-              <span className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center shrink-0">
-                <Sparkles className="w-4 h-4 text-white" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <span
-                  className="block text-[11px] font-semibold uppercase tracking-wide text-teal-700 mb-0.5"
-                  style={CABIN}
-                >
-                  Your next step
-                </span>
-                <span className="block text-sm font-semibold text-gray-900 mb-0.5" style={CABIN}>
-                  {nextStep.title}
-                </span>
-                <span className="block text-xs text-gray-600 leading-relaxed mb-2.5" style={CABIN}>
-                  {nextStep.promise}
-                </span>
-                <div className="flex items-center gap-3">
-                  <Button
-                    size="sm"
-                    onClick={() => navigate(nextStep.cta.to)}
-                    className="bg-teal-600 hover:bg-teal-700 text-white font-semibold"
-                    style={CABIN}
-                  >
-                    {nextStep.cta.label}
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Button>
-                  <span className="text-[11px] text-gray-500 tabular-nums" style={CABIN}>
-                    Step {nextStep.order} of {state.totalStepCount}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Overall process progress */}
-            <div className="mt-3.5 pt-3 border-t border-teal-100">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-medium text-gray-600" style={CABIN}>
-                  Great Grants Process
-                </span>
-                <span className="text-[11px] font-semibold text-gray-900 tabular-nums" style={CABIN}>
-                  {state.completedStepCount}/{state.totalStepCount} complete
-                </span>
-              </div>
-              <div className="h-1.5 w-full rounded-full bg-teal-100 overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full bg-teal-600"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progressPercent}%` }}
-                  transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1], delay: 0.2 }}
-                />
-              </div>
-            </div>
-          </motion.div>
-          </Fpo>
         </div>
 
         {/* Urgent deadline strip */}
