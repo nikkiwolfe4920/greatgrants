@@ -32,6 +32,10 @@ interface FileDropzoneProps {
   disabled?: boolean;
   invalid?: boolean;
   describedBy?: string;
+  /** Single-file mode: a new upload replaces the previous one. Default true (multiple). */
+  multiple?: boolean;
+  /** Overrides the format line under the dropzone. */
+  hint?: string;
 }
 
 /**
@@ -41,7 +45,7 @@ interface FileDropzoneProps {
  * silently disappearing.
  */
 export const FileDropzone = forwardRef<HTMLButtonElement, FileDropzoneProps>(function FileDropzone(
-  { id, label, onFiles, disabled, invalid, describedBy },
+  { id, label, onFiles, disabled, invalid, describedBy, multiple = true, hint = ACCEPTED_FORMATS_LABEL },
   ref,
 ) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -52,7 +56,7 @@ export const FileDropzone = forwardRef<HTMLButtonElement, FileDropzoneProps>(fun
     if (!list || list.length === 0) return;
     const ok: UploadedFile[] = [];
     const rejected: string[] = [];
-    Array.from(list).forEach((file) => {
+    Array.from(multiple ? list : [list[0]]).forEach((file) => {
       const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
       if (!ACCEPTED_EXTENSIONS.includes(ext)) rejected.push(`${file.name} isn't a supported format`);
       else if (file.size > MAX_BYTES) rejected.push(`${file.name} is over 50 MB`);
@@ -109,12 +113,12 @@ export const FileDropzone = forwardRef<HTMLButtonElement, FileDropzoneProps>(fun
             </button>{" "}
             or drag and drop
           </p>
-          <p className="text-xs text-gray-600 text-center">{ACCEPTED_FORMATS_LABEL}</p>
+          <p className="text-xs text-gray-600 text-center">{hint}</p>
         </div>
         <input
           ref={inputRef}
           type="file"
-          multiple
+          multiple={multiple}
           tabIndex={-1}
           className="sr-only"
           aria-hidden="true"

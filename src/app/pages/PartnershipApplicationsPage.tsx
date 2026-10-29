@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router";
 import { toast } from "sonner";
 import {
   AlertCircle,
@@ -21,15 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-  BreadcrumbHome,
-} from "@/app/components/ui/breadcrumb";
+import { PartnershipPageShell, PartnerDetailsStrip } from "@/app/components/partner-information/PartnershipPageShell";
 import {
   InformationRequestForm,
   EMPTY_INFORMATION_REQUEST,
@@ -82,41 +73,7 @@ export function PartnershipApplicationsPage() {
     update(app.id, (a) => ({ ...a, status: a.decision ? "decision" : a.submittedOn ? "in-review" : "active" }));
 
   return (
-    <div className="max-w-[1400px] mx-auto p-8">
-      <Breadcrumb className="mb-6">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/">
-                <BreadcrumbHome />
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Partnership Applications</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      <div className="mb-8">
-        <div className="flex flex-wrap items-start justify-between gap-4 mb-2">
-          <div>
-            <div className="mb-3">
-              <Users className="w-8 h-8" strokeWidth={1.5} />
-            </div>
-            <h1 className="text-2xl text-gray-900" style={{ fontFamily: "Lustria, serif", fontWeight: 600 }}>
-              Partnership Applications
-            </h1>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-gray-600 text-sm">Manage the applications you're partnering on.</p>
-        </div>
-      </div>
-
-      <section aria-label="Partnership applications" className="space-y-4">
+    <PartnershipPageShell>
         {visible.length === 0 ? (
           <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
@@ -220,8 +177,7 @@ export function PartnershipApplicationsPage() {
             );
           })
         )}
-      </section>
-    </div>
+    </PartnershipPageShell>
   );
 }
 
@@ -276,26 +232,9 @@ function PartnerDetails({
 }) {
   const readOnly = app.status !== "active";
   const accepted = app.decision?.outcome === "accepted";
-  const details: [string, string | undefined][] = [
-    ["Partner request", app.need],
-    ["Estimated subaward", app.subawardRange ? `${app.subawardRange} (estimate)` : app.mouAmount],
-    ["Period of performance", app.period],
-    ["NOFO deadline", app.nofoDeadline],
-    ["Information due", app.informationDue],
-  ];
-
   return (
     <div className="space-y-6">
-      <dl className="flex flex-wrap gap-x-8 gap-y-3">
-        {details
-          .filter(([, value]) => value)
-          .map(([label, value]) => (
-            <div key={label} className="flex flex-col gap-0.5">
-              <dt className="text-xs text-gray-500">{label}</dt>
-              <dd className="text-sm font-semibold text-gray-900">{value}</dd>
-            </div>
-          ))}
-      </dl>
+      <PartnerDetailsStrip app={app} />
 
       <hr className="border-gray-200" />
 

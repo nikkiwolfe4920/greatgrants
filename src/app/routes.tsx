@@ -4,6 +4,8 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { ApplicationsPage } from "./pages/ApplicationsPage";
 import { ApplicationsPartnershipPage } from "./pages/ApplicationsPartnershipPage";
 import { PartnershipApplicationsPage } from "./pages/PartnershipApplicationsPage";
+import { PartnershipMouAcceptedPage } from "./pages/PartnershipMouAcceptedPage";
+import { PartnershipMouNotAcceptedPage } from "./pages/PartnershipMouNotAcceptedPage";
 import { ApplicationPartnerPlanningPage } from "./pages/ApplicationPartnerPlanningPage";
 import { ApplicationsDemoPage } from "./pages/ApplicationsDemoPage";
 import { GrantWritingDemoPage } from "./pages/GrantWritingDemoPage";
@@ -188,6 +190,16 @@ const routes = [
       {
         path: "partnership-applications",
         element: <PartnershipApplicationsPage />,
+      },
+      {
+        // Same page, after the lead applicant accepted the information: Sign MOU step.
+        path: "partnership-applications-mou-accepted",
+        element: <PartnershipMouAcceptedPage />,
+      },
+      {
+        // Same page, after the lead applicant did not accept the information: edit and resubmit.
+        path: "partnership-applications-mou-notaccepted",
+        element: <PartnershipMouNotAcceptedPage />,
       },
       {
         // Prime applicant's "Partners" step for one application in Planning —
