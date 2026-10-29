@@ -126,7 +126,7 @@ export function SharedSidebar() {
   const isGrantDetailPage = location.pathname.startsWith("/grant/");
   const isWatchListPage = location.pathname === "/watch-list";
   const isApplicationsPartnershipPage = location.pathname === "/applications-partnership";
-  const isPartnershipApplicationsPage = location.pathname === "/partnership-applications";
+  const isPartnershipApplicationsPage = location.pathname.startsWith("/partnership-applications");
   const isPartnershipSection = isApplicationsPartnershipPage || isPartnershipApplicationsPage;
   const partnerApplicationCount = mockPartnerApplications.filter((a) => a.status !== "archived").length;
   // /grant-writing-demo (step 6 of the locked tour) is a single scrollable

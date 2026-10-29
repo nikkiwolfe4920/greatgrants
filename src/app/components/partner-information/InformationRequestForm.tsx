@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/app/components/ui/alert-dialog";
 import { StepperHeader } from "@/app/components/eligibility/StepperHeader";
+import { SubmissionConfirmation } from "./SubmissionConfirmation";
 import { FileDropzone, fileExtension, formatFileSize, type UploadedFile } from "./FileDropzone";
 import type { PartnerApplication } from "@/data/partnerApplications";
 
@@ -83,11 +84,18 @@ const CONTACTS: { key: ContactKey; heading: string }[] = [
   { key: "approver", heading: "Final approver" },
 ];
 
+export interface Resubmission {
+  /** "Oct 29, 3:05 PM" — when the lead applicant marked the information not accepted. */
+  notAcceptedAt: string;
+}
+
 /** Captions appear only once a step has a date; Sign MOU / Final Approval don't yet. */
-const stepsFor = (decidedOn: string | undefined, sentOn: string | undefined) => [
-  { label: "Partnership\nApproved", caption: decidedOn && `Decided on ${decidedOn}` },
-  { label: "Information\nRequest", caption: decidedOn && `Requested: ${decidedOn}` },
-  { label: "Sent for\nApproval", caption: sentOn && `Sent: ${sentOn}` },
+const stepsFor = (decidedOn: string | undefined, sentOn: string | undefined, resubmission?: Resubmission) => [
+  { label: "Partnership\nApproved", caption: decidedOn && `Decided on\n${decidedOn}` },
+  { label: "Information\nRequest", caption: decidedOn && `Requested:\n${decidedOn}` },
+  resubmission && !sentOn
+    ? { label: "Sent for\nApproval", status: "error" as const, caption: `Not accepted:\n${resubmission.notAcceptedAt}` }
+    : { label: "Sent for\nApproval", caption: sentOn && `${resubmission ? "Resubmitted" : "Sent"}:\n${sentOn}` },
   { label: "Sign\nMOU" },
   { label: "Final\nApproval" },
 ];
@@ -141,7 +149,7 @@ function requiredRemaining(v: InformationRequestValues) {
 /* Building blocks                                                     */
 /* ------------------------------------------------------------------ */
 
-function Card({ icon, title, description, children }: { icon: ReactNode; title: string; description: string; children: ReactNode }) {
+export function Card({ icon, title, description, children }: { icon: ReactNode; title: string; description: string; children: ReactNode }) {
   return (
     <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
       <header className="flex items-start gap-3">
@@ -160,7 +168,7 @@ function Card({ icon, title, description, children }: { icon: ReactNode; title: 
   );
 }
 
-function FieldLabel({ htmlFor, required, children }: { htmlFor: string; required?: boolean; children: ReactNode }) {
+export function FieldLabel({ htmlFor, required, children }: { htmlFor: string; required?: boolean; children: ReactNode }) {
   return (
     <Label htmlFor={htmlFor} className="text-gray-700 gap-0.5 leading-5">
       {children}
@@ -227,7 +235,7 @@ function TextField({ id, label, value, onChange, required, placeholder, type = "
   );
 }
 
-function DocumentRow({ doc, onRemove, disabled }: { doc: UploadedFile; onRemove: () => void; disabled?: boolean }) {
+export function DocumentRow({ doc, onRemove, disabled }: { doc: UploadedFile; onRemove: () => void; disabled?: boolean }) {
   const open = (download: boolean) => {
     if (!doc.file) return toast("This file was uploaded in an earlier session and can't be previewed here.");
     const url = URL.createObjectURL(doc.file);
@@ -271,7 +279,7 @@ function DocumentRow({ doc, onRemove, disabled }: { doc: UploadedFile; onRemove:
 }
 
 /** Tertiary mail button from Figma node 17093:39972: icon + "Contact: {email}". */
-function ContactSupportButton({ app }: { app: PartnerApplication }) {
+export function ContactSupportButton({ app }: { app: PartnerApplication }) {
   if (!app.leadContactEmail) return null;
   return (
     <Button variant="ghost" size="sm" className="font-semibold text-gray-600" asChild>
@@ -282,53 +290,6 @@ function ContactSupportButton({ app }: { app: PartnerApplication }) {
     </Button>
   );
 }
-
-/**
- * Shown in place of the "Next steps" header once the information is sent.
- * Confirms success with the timestamp, sets expectations for what happens
- * next. Sending is final in this flow, so there is no withdraw or undo.
- */
-const SentConfirmation = forwardRef<
-  HTMLElement,
-  { app: PartnerApplication; sentOn?: string }
->(function SentConfirmation({ app, sentOn }, ref) {
-  const org = app.primeApplicant;
-  return (
-    <section
-      ref={ref}
-      tabIndex={-1}
-      role="status"
-      aria-labelledby="information-sent-title"
-      className="rounded-xl border border-green-200 bg-green-50 p-5 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
-    >
-      <div className="flex gap-3">
-        <CheckCircle2 className="size-5 mt-0.5 shrink-0 text-green-700" aria-hidden="true" />
-        <div className="space-y-4 min-w-0">
-          <div>
-            <h3 id="information-sent-title" className="font-semibold text-green-800">
-              Information sent to {org}
-            </h3>
-            <p className="text-xs text-gray-600">Sent {sentOn}</p>
-            <p className="mt-2 text-sm text-gray-700">
-              Your information was successfully sent. {org} will now review your request.
-            </p>
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-900">What happens next</p>
-            <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-gray-700">
-              <li>{org} reviews your request.</li>
-              <li>If approved, you&apos;ll get a notification to sign the MOU document.</li>
-              <li>Once the MOU is signed, you move into final partnership approval.</li>
-            </ol>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <ContactSupportButton app={app} />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-});
 
 function SummaryValue({ label, value }: { label: string; value?: string }) {
   return (
@@ -426,6 +387,8 @@ interface InformationRequestFormProps {
   app: PartnerApplication;
   state: InformationRequestState;
   onChange: (patch: (s: InformationRequestState) => InformationRequestState) => void;
+  /** Set when the lead applicant did not accept the information: step 3 shows as failed and the form resubmits. */
+  resubmission?: Resubmission;
 }
 
 /**
@@ -435,7 +398,7 @@ interface InformationRequestFormProps {
  * Partnership Approved → Information Request → Sent for Approval → Sign MOU →
  * Final Approval.
  */
-export function InformationRequestForm({ app, state, onChange }: InformationRequestFormProps) {
+export function InformationRequestForm({ app, state, onChange, resubmission }: InformationRequestFormProps) {
   const uid = useId();
   const fid = (key: string) => `${uid}-${key}`;
   const { values, sentOn } = state;
@@ -446,6 +409,45 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
   const [confirmOpen, setConfirmOpen] = useState(false);
   const firstRender = useRef(true);
   const confirmationRef = useRef<HTMLElement>(null);
+  // Resubmission only makes sense once something has changed since the not-accepted review.
+  const baseline = useRef(JSON.stringify(state.values));
+  const [triedUnchanged, setTriedUnchanged] = useState(false);
+  const unchanged = JSON.stringify(values) === baseline.current;
+  const org = app.primeApplicant;
+  const copy = resubmission
+    ? {
+        intro: "Update what needs fixing based on the notes above. Changes save automatically as you type. Resubmit when everything is in.",
+        button: `Resubmit to ${org}`,
+        dialogTitle: `Resubmit information to ${org}?`,
+        dialogBody: `${org} will review your updated information again. The request moves back to Sent for Approval.`,
+        dialogAction: "Resubmit information",
+        toast: `Information resubmitted to ${org}`,
+        confirmTitle: `Information resubmitted to ${org}`,
+        confirmBody: `Your updated information was successfully resubmitted. ${org} will now review it again.`,
+        nextSteps: [
+          `${org} reviews your updated information.`,
+          "If accepted, you'll get a notification to sign the MOU document.",
+          "Once the MOU is signed, you move into final partnership approval.",
+        ],
+        attention: "Make the changes the notes ask for before resubmitting.",
+      }
+    : {
+        intro: "Changes save automatically as you type. Send when everything is in.",
+        button: `Send to ${org}`,
+        dialogTitle: `Send information to ${org}?`,
+        dialogBody:
+          "They'll use your contacts, funding range, and role documents to draft the application with you. The request moves to Sent for Approval.",
+        dialogAction: "Send information",
+        toast: `Information sent to ${org}`,
+        confirmTitle: `Information sent to ${org}`,
+        confirmBody: `Your information was successfully sent. ${org} will now review your request.`,
+        nextSteps: [
+          `${org} reviews your request.`,
+          "If approved, you'll get a notification to sign the MOU document.",
+          "Once the MOU is signed, you move into final partnership approval.",
+        ],
+        attention: "",
+      };
 
   const errors = useMemo(() => validate(values), [values]);
   const errorKeys = Object.keys(errors);
@@ -488,14 +490,17 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
       target?.focus({ preventScroll: true });
       return;
     }
+    if (resubmission && unchanged) {
+      setTriedUnchanged(true);
+      return;
+    }
     setConfirmOpen(true);
   };
 
   const send = () => {
     setConfirmOpen(false);
     onChange((s) => ({ ...s, sentOn: nowStamp(), savedAt: nowTime() }));
-    toast.success(`Information sent to ${app.primeApplicant}`, {
-    });
+    toast.success(copy.toast);
     // Move focus to the confirmation so screen readers announce it and sighted users see it.
     setTimeout(() => {
       confirmationRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -510,8 +515,15 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
   if (sent) {
     return (
       <div className="space-y-4">
-        <StepperHeader steps={stepsFor(app.decision?.decidedOn, sentOn)} currentStep={3} />
-        <SentConfirmation ref={confirmationRef} app={app} sentOn={sentOn} />
+        <StepperHeader steps={stepsFor(app.decision?.decidedOn, sentOn, resubmission)} currentStep={3} />
+        <SubmissionConfirmation
+          ref={confirmationRef}
+          title={copy.confirmTitle}
+          sentOn={sentOn}
+          body={copy.confirmBody}
+          nextSteps={copy.nextSteps}
+          actions={<ContactSupportButton app={app} />}
+        />
         <SentSummary values={values} />
       </div>
     );
@@ -519,7 +531,7 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
 
   return (
     <div className="space-y-4">
-      <StepperHeader steps={stepsFor(app.decision?.decidedOn, sentOn)} currentStep={2} />
+      <StepperHeader steps={stepsFor(app.decision?.decidedOn, sentOn, resubmission)} currentStep={resubmission ? 3 : 2} />
 
       <div className="flex flex-wrap items-center gap-3 pt-2">
         <h3 className="font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
@@ -530,7 +542,7 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
         </span>
         <ContactSupportButton app={app} />
       </div>
-      <p className="text-sm text-gray-600 -mt-2">Changes save automatically as you type. Send when everything is in.</p>
+      <p className="text-sm text-gray-600 -mt-2">{copy.intro}</p>
 
       <fieldset className="space-y-4 min-w-0 border-0 p-0 m-0">
         <legend className="sr-only">Information request for {app.programName}</legend>
@@ -679,24 +691,26 @@ export function InformationRequestForm({ app, state, onChange }: InformationRequ
               {errorKeys.length} {errorKeys.length === 1 ? "item needs" : "items need"} attention before you can send.
             </p>
           )}
-            <Button className="bg-teal-600 hover:bg-teal-700 text-white" onClick={trySend}>
-              Send to {app.primeApplicant}
-            </Button>
+          {resubmission && triedUnchanged && unchanged && (
+            <p role="alert" className="text-sm text-red-600">
+              {copy.attention}
+            </p>
+          )}
+          <Button className="bg-teal-600 hover:bg-teal-700 text-white" onClick={trySend}>
+            {copy.button}
+          </Button>
         </div>
       </div>
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Send information to {app.primeApplicant}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              They&apos;ll use your contacts, funding range, and role documents to draft the application with you. The
-              request moves to Sent for Approval; you can undo right after sending.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{copy.dialogTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{copy.dialogBody}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep editing</AlertDialogCancel>
             <AlertDialogAction onClick={send} className="bg-teal-600 hover:bg-teal-700 text-white">
-              Send information
+              {copy.dialogAction}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
