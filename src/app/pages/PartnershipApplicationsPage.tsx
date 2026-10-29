@@ -9,25 +9,12 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  Clock,
   MoreVertical,
-  Send,
-  Undo2,
   Users,
   XCircle,
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/app/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,10 +38,7 @@ import {
 import {
   mockPartnerApplications,
   type PartnerApplication,
-  type PartnerApplicationStatus,
 } from "@/data/partnerApplications";
-
-const todayLabel = () => new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 /**
  * /partnership-applications — applications this org has been invited into as
@@ -70,15 +54,8 @@ export function PartnershipApplicationsPage() {
   );
   const [expandedId, setExpandedId] = useState<string>("p4");
   const [infoRequests, setInfoRequests] = useState<Record<string, InformationRequestState>>({});
-  const [pendingSubmitId, setPendingSubmitId] = useState<string | null>(null);
 
-  const byStatus = (status: PartnerApplicationStatus) => applications.filter((a) => a.status === status);
-  // One list now that the status toggle is gone: decisions first, then work still in progress.
-  const STATUS_ORDER: PartnerApplicationStatus[] = ["decision", "active", "in-review"];
-  const visible = applications
-    .filter((a) => a.status !== "archived")
-    .sort((a, b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status));
-  const pendingSubmit = applications.find((a) => a.id === pendingSubmitId);
+  const visible = applications.filter((a) => a.status !== "archived");
 
   const update = (id: string, patch: (a: PartnerApplication) => PartnerApplication) =>
     setApplications((apps) => apps.map((a) => (a.id === id ? patch(a) : a)));
@@ -91,22 +68,6 @@ export function PartnershipApplicationsPage() {
     setExpandedId(opening ? app.id : "");
     // Opening a decision is what counts as "reading" it.
     if (opening && app.status === "decision") markRead(app.id);
-  };
-
-  const submitApplication = () => {
-    if (!pendingSubmit) return;
-    const { id, programName, primeApplicant } = pendingSubmit;
-    update(id, (a) => ({ ...a, status: "in-review", submittedOn: todayLabel() }));
-    setPendingSubmitId(null);
-    toast.success("Application submitted", {
-      description: `${programName} moved to In Review. ${primeApplicant} has been notified.`,
-      action: { label: "Undo", onClick: () => update(id, (a) => ({ ...a, status: "active", submittedOn: undefined })) },
-    });
-  };
-
-  const withdraw = (app: PartnerApplication) => {
-    update(app.id, (a) => ({ ...a, status: "active", submittedOn: undefined }));
-    toast(`${app.programName} moved back to Active`);
   };
 
   const archive = (app: PartnerApplication) => {
@@ -167,7 +128,6 @@ export function PartnershipApplicationsPage() {
         ) : (
           visible.map((app) => {
             const isExpanded = expandedId === app.id;
-            const nextDue = app.assignedSections[0];
             const isUnread = !!app.decision && !app.decision.read;
             const detailsId = `partner-details-${app.id}`;
 
@@ -235,18 +195,6 @@ export function PartnershipApplicationsPage() {
 
                   <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-gray-600">
                     <div>Lead applicant: {app.primeApplicant}</div>
-                    {app.status === "active" && nextDue && (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>Due {nextDue.dueDate}</span>
-                      </div>
-                    )}
-                    {app.status === "in-review" && app.submittedOn && (
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        <span>Submitted on {app.submittedOn}</span>
-                      </div>
-                    )}
                     {app.decision && (
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
@@ -254,24 +202,6 @@ export function PartnershipApplicationsPage() {
                       </div>
                     )}
                   </div>
-
-                  {app.status === "active" && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end">
-                      <Button className="bg-teal-600 hover:bg-teal-700 text-white" onClick={() => setPendingSubmitId(app.id)}>
-                        <Send className="w-4 h-4 mr-2" />
-                        Submit application
-                      </Button>
-                    </div>
-                  )}
-
-                  {app.status === "in-review" && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end">
-                      <Button variant="outline" className="bg-white" onClick={() => withdraw(app)}>
-                        <Undo2 className="w-4 h-4 mr-2" />
-                        Move back to Active
-                      </Button>
-                    </div>
-                  )}
                 </div>
 
                 {isExpanded && (
@@ -291,24 +221,6 @@ export function PartnershipApplicationsPage() {
           })
         )}
       </section>
-
-      <AlertDialog open={pendingSubmitId !== null} onOpenChange={(open) => !open && setPendingSubmitId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Submit this application?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Your assigned sections for {pendingSubmit?.programName} will be sent to {pendingSubmit?.primeApplicant} and
-              the application will move to In Review. You can move it back to Active while it's under review.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={submitApplication} className="bg-teal-600 hover:bg-teal-700 text-white">
-              Submit application
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
