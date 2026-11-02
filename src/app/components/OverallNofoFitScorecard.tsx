@@ -122,6 +122,8 @@ export interface OverallNofoFitScorecardProps {
   strengths?: string[];
   risks?: string[];
   nextSteps?: string[];
+  /** Shows the Strengths / Risks lists under the category breakdown. Defaults to true. */
+  showStrengthsRisks?: boolean;
   /** Shows the "ready to apply" CTA (Figma node 12827:38919) at the bottom of the card when provided. Renders regardless of the category breakdown's scores. */
   onStartApplication?: () => void;
   /** Swaps the CTA copy to the "all clear" variant once every action item is resolved. Defaults to false. */
@@ -172,6 +174,7 @@ export function OverallNofoFitScorecard({
     "Add partner MOUs.",
     "Strengthen evidence of measurable outcomes.",
   ],
+  showStrengthsRisks = true,
   onStartApplication,
   allActionsComplete = false,
   demoLocked = false,
@@ -217,7 +220,7 @@ export function OverallNofoFitScorecard({
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
             Category Breakdown
           </p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className={`grid grid-cols-2 gap-3 ${categories.length <= 2 ? "" : "sm:grid-cols-3"}`}>
             {categories.map((category) => (
               <CategoryTile key={category.label} {...category} />
             ))}
@@ -225,6 +228,7 @@ export function OverallNofoFitScorecard({
         </div>
 
         {/* Strengths / Risks */}
+        {showStrengthsRisks && (
         <div className="grid grid-cols-1 gap-4 border-t border-gray-100 pt-5 md:grid-cols-2">
           <ListSection
             title="Strengths"
@@ -240,6 +244,7 @@ export function OverallNofoFitScorecard({
             items={risks}
           />
         </div>
+        )}
 
         {/* Recommended Next Steps */}
         {nextSteps.length > 0 && (
@@ -292,7 +297,7 @@ export function OverallNofoFitScorecard({
               title={demoLocked ? "This is a locked demo — applications can't be started here" : undefined}
               className={`shrink-0 bg-teal-600 text-white gap-1.5 ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
             >
-              Start Application
+              Start AI Draft
               <ArrowRight className="size-3.5" />
             </Button>
           </div>

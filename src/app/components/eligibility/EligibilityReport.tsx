@@ -93,6 +93,9 @@ const BASE_CATEGORIES: FitCategory[] = [
   { label: "Competitiveness", score: 65 },
 ];
 
+/** The report headlines just these two metrics. */
+const HEADLINE_METRICS = ["Eligibility", "Program Alignment"];
+
 const BASE_RISKS = ["No prior awards from this agency", "Limited evaluation framework", "Matching funds not secured"];
 
 interface EligibilityReportProps {
@@ -189,10 +192,15 @@ export function EligibilityReport({
       )}
 
       <OverallNofoFitScorecard
+        eyebrow="Eligibility Report"
+        title="Grant Readiness Overview"
+        showStrengthsRisks={false}
         showScore={showScore}
         overallScore={overallScore}
         status={status}
-        categories={isAllComplete ? categories.map((c) => ({ ...c, score: 100 })) : categories}
+        categories={(isAllComplete ? categories.map((c) => ({ ...c, score: 100 })) : categories).filter((c) =>
+          HEADLINE_METRICS.includes(c.label),
+        )}
         risks={isAllComplete ? [] : risks}
         nextSteps={[]}
         onStartApplication={onStartApplication}
@@ -284,7 +292,7 @@ export function EligibilityReport({
               title={demoLocked ? "This is a locked demo — applications can't be started here" : undefined}
               className={`mt-4 bg-teal-600 text-white gap-1.5 ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
             >
-              Start Application
+              Start AI Draft
               <ArrowRight className="size-4" />
             </Button>
           </div>
