@@ -51,7 +51,7 @@ export function OrganizationDetailsStep({
         </div>
         <div>
           <p className="text-xs font-normal text-gray-500 uppercase tracking-[0.3px]" style={{ fontFamily: "Cabin, sans-serif" }}>
-            Step 2 of 5
+            Step 2 of 6
           </p>
           <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
             Organization Details

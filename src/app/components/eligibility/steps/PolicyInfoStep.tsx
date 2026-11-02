@@ -77,7 +77,7 @@ export function PolicyInfoStep({
         </div>
         <div>
           <p className="text-xs font-normal text-gray-500 uppercase tracking-[0.3px]" style={{ fontFamily: "Cabin, sans-serif" }}>
-            Step 4 of 5
+            Step 5 of 6
           </p>
           <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
             Policy Info

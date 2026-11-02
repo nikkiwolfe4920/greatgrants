@@ -22,7 +22,6 @@ import {
   MoreVertical,
   Users,
 } from "lucide-react";
-import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { toast } from "sonner";
 import { Badge } from "@/app/components/ui/badge";
 import {
@@ -300,7 +299,7 @@ function CheckYourEligibilityCard({
               <ArrowRight className="size-4" />
             </Button>
             <span className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
-              ~5 minutes • 5 steps
+              ~5 minutes • 6 steps
             </span>
           </div>
           {!hideAssessmentUsage && <AssessmentUsageMeter usedCount={usedCount} limit={limit} compact />}
@@ -564,6 +563,22 @@ export function EligibilityAssessmentPage({
     setIsAssessing(true);
   };
 
+  // Escape closes the modal; page scroll is locked while it's open.
+  useEffect(() => {
+    if (!isAssessing) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsAssessing(false);
+    };
+    const main = document.querySelector("main") as HTMLElement | null;
+    const prevOverflow = main?.style.overflow ?? "";
+    if (main) main.style.overflow = "hidden";
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      if (main) main.style.overflow = prevOverflow;
+    };
+  }, [isAssessing]);
+
   const scrollModalToTop = () => modalContentRef.current?.scrollTo({ top: 0 });
 
   const handleRequestSubRecipient = () => {
@@ -608,41 +623,45 @@ export function EligibilityAssessmentPage({
     <div className="min-h-screen bg-gray-50">
       <ApplicationLoadingModal isOpen={showApplicationLoading} grantTitle={GRANT_TITLE} grantId={GRANT_ID} />
 
-      {/* Eligibility Assessment modal — Continue lives in its sticky header. */}
+      {/* Eligibility Assessment modal — Continue lives in its sticky header.
+          A plain modal (not Radix Dialog) so the workflow can stay mounted,
+          hidden, while closed: answers are kept and "Continue Eligibility
+          Assessment" reopens exactly where the viewer left off. */}
       {hasOpenedAssessment && (
-        <DialogPrimitive.Root open={isAssessing} onOpenChange={setIsAssessing}>
-          <DialogPrimitive.Portal forceMount>
-            <DialogPrimitive.Overlay
-              forceMount
-              className="fixed inset-0 z-50 bg-black/50 data-[state=closed]:hidden"
+        <div
+          className={`fixed inset-0 z-[60] bg-black/50 ${isAssessing ? "" : "hidden"}`}
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setIsAssessing(false);
+          }}
+        >
+          <div
+            ref={modalContentRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="eligibility-modal-title"
+            className="absolute left-1/2 top-1/2 max-h-[90vh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 shadow-xl"
+          >
+            <EligibilityWorkflowPanel
+              modal
+              grantId={GRANT_ID}
+              grantTitle={GRANT_TITLE}
+              onExit={() => setIsAssessing(false)}
+              onReportGenerated={setReportGeneratedAt}
+              onStartedChange={setHasStarted}
+              onStartApplication={handleStartApplication}
+              onAnchorScroll={scrollModalToTop}
+              demoLocked={demoLocked}
+              hideAssessmentUsage={hideAssessmentUsage}
+              startWithReport={subRecipientOutcome}
+              reportCategories={subRecipientOutcome ? subRecipientCategories : undefined}
+              reportRisks={subRecipientOutcome ? subRecipientRisks : undefined}
+              showOverallScore={subRecipientOutcome}
+              overallScore={subRecipientOutcome ? subRecipientOverallScore : undefined}
+              reportStatus={subRecipientOutcome ? "caution" : undefined}
+              onRequestToJoin={subRecipientOutcome ? handleRequestToJoin : undefined}
             />
-            <DialogPrimitive.Content
-              forceMount
-              ref={modalContentRef}
-              className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 shadow-xl data-[state=closed]:hidden"
-            >
-              <EligibilityWorkflowPanel
-                modal
-                grantId={GRANT_ID}
-                grantTitle={GRANT_TITLE}
-                onExit={() => setIsAssessing(false)}
-                onReportGenerated={setReportGeneratedAt}
-                onStartedChange={setHasStarted}
-                onStartApplication={handleStartApplication}
-                onAnchorScroll={scrollModalToTop}
-                demoLocked={demoLocked}
-                hideAssessmentUsage={hideAssessmentUsage}
-                startWithReport={subRecipientOutcome}
-                reportCategories={subRecipientOutcome ? subRecipientCategories : undefined}
-                reportRisks={subRecipientOutcome ? subRecipientRisks : undefined}
-                showOverallScore={subRecipientOutcome}
-                overallScore={subRecipientOutcome ? subRecipientOverallScore : undefined}
-                reportStatus={subRecipientOutcome ? "caution" : undefined}
-                onRequestToJoin={subRecipientOutcome ? handleRequestToJoin : undefined}
-              />
-            </DialogPrimitive.Content>
-          </DialogPrimitive.Portal>
-        </DialogPrimitive.Root>
+          </div>
+        </div>
       )}
 
       {/* Stop Watching Confirmation */}
