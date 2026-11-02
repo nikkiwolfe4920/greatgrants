@@ -11,6 +11,8 @@ interface OrganizationDetailsStepProps {
   onContinue: () => void;
   /** Disables the "Account Settings → Organization Profile" link with a not-allowed cursor — it would otherwise navigate off the locked demo. See EligibilityAssessmentPage. */
   demoLocked?: boolean;
+  /** Hides the footer Continue button — the modal header renders it instead (sticky, top right). */
+  hideContinue?: boolean;
 }
 
 const GROUP_LABELS: Record<OrgDetailField["group"], string> = {
@@ -33,6 +35,7 @@ export function OrganizationDetailsStep({
   onBack,
   onContinue,
   demoLocked = false,
+  hideContinue = false,
 }: OrganizationDetailsStepProps) {
   const missingFields = fields.filter((f) => !f.filled);
   const filledByGroup = GROUP_ORDER.map((group) => ({
@@ -130,10 +133,12 @@ export function OrganizationDetailsStep({
             <ArrowLeft className="size-4" />
             Back
           </Button>
-          <Button onClick={onContinue} className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
-            Continue
-            <ArrowRight className="size-4" />
-          </Button>
+          {!hideContinue && (
+            <Button onClick={onContinue} className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
+              Continue
+              <ArrowRight className="size-4" />
+            </Button>
+          )}
         </div>
       </div>
     </div>

@@ -19,6 +19,8 @@ interface ProgramAssociationStepProps {
    * and Continuing stay live. See EligibilityAssessmentPage.
    */
   demoLocked?: boolean;
+  /** Hides the footer Continue button — the modal header renders it instead (sticky, top right). */
+  hideContinue?: boolean;
 }
 
 /**
@@ -35,6 +37,7 @@ export function ProgramAssociationStep({
   onContinue,
   canContinue,
   demoLocked = false,
+  hideContinue = false,
 }: ProgramAssociationStepProps) {
   const navigate = useNavigate();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -168,14 +171,16 @@ export function ProgramAssociationStep({
             <ArrowLeft className="size-4" />
             Back
           </Button>
-          <Button
-            onClick={onContinue}
-            disabled={!canContinue}
-            className={canContinue ? "bg-teal-600 hover:bg-teal-700 text-white gap-1.5" : "bg-gray-100 text-gray-400 gap-1.5 cursor-not-allowed"}
-          >
-            Continue
-            <ArrowRight className="size-4" />
-          </Button>
+          {!hideContinue && (
+            <Button
+              onClick={onContinue}
+              disabled={!canContinue}
+              className={canContinue ? "bg-teal-600 hover:bg-teal-700 text-white gap-1.5" : "bg-gray-100 text-gray-400 gap-1.5 cursor-not-allowed"}
+            >
+              Continue
+              <ArrowRight className="size-4" />
+            </Button>
+          )}
         </div>
       </div>
 

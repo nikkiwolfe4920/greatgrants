@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { ArrowRight, ShieldCheck, X } from "lucide-react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { Button } from "@/app/components/ui/button";
 import { StepperHeader } from "@/app/components/eligibility/StepperHeader";
 import { AssessmentUsageMeter } from "@/app/components/eligibility/AssessmentUsageMeter";
 import { ProgramAssociationStep } from "@/app/components/eligibility/steps/ProgramAssociationStep";
@@ -72,6 +75,19 @@ interface EligibilityWorkflowPanelProps {
   reportStatus?: GoStatus;
   /** Swaps both "Start Application" CTAs in the report for SubRecipientCallout. See EligibilityReport. */
   onRequestToJoin?: () => void;
+  /**
+   * Fires whenever the viewer has (or no longer has) work in progress — a
+   * program picked, a later step reached, or a finished report. Drives the
+   * page's "Start" → "Continue Eligibility Assessment" CTA labels.
+   */
+  onStartedChange?: (started: boolean) => void;
+  /**
+   * Renders inside the Eligibility Assessment modal: adds a sticky header
+   * (always in the viewport while the modal body scrolls) with the step's
+   * Continue / Check My Eligibility button in the top right, and removes
+   * that button from each step's footer.
+   */
+  modal?: boolean;
 }
 
 /**
@@ -96,6 +112,8 @@ export function EligibilityWorkflowPanel({
   overallScore,
   reportStatus,
   onRequestToJoin,
+  onStartedChange,
+  modal = false,
 }: EligibilityWorkflowPanelProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [programId, setProgramId] = useState("");
@@ -118,6 +136,11 @@ export function EligibilityWorkflowPanel({
   }, []);
 
   const canContinueStep1 = programId !== "";
+
+  const started = canContinueStep1 || currentStep > 1 || showReport;
+  useEffect(() => {
+    onStartedChange?.(started);
+  }, [started, onStartedChange]);
 
   useEffect(() => {
     onProgramLinked?.(canContinueStep1);
@@ -176,12 +199,89 @@ export function EligibilityWorkflowPanel({
     setActionItems((prev) => prev.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item)));
   };
 
+  // Same "answered" rules the step footers use (Yes / No / Unsure all count).
+  const financialComplete =
+    financialInfo.orgRegistrationType !== "" &&
+    financialInfo.cfr200Compliant !== "" &&
+    financialInfo.financialSystemTracking !== "" &&
+    financialInfo.timeEffortReporting !== "" &&
+    financialInfo.indirectCostAgreement.trim() !== "" &&
+    financialInfo.costShareLiquidity !== "";
+  const policyComplete = [
+    policyInfo.complianceTrackingSoftware,
+    policyInfo.federalDataTracking,
+    policyInfo.demographicDataCollection,
+    policyInfo.internalControlsDocs,
+    policyInfo.procurementPolicies,
+    policyInfo.timeEffortPolicies,
+    policyInfo.conflictOfInterestPolicies,
+  ].every((v) => v !== "");
+
+  const advance = (to: number) => {
+    onAnchorScroll?.();
+    setCurrentStep(to);
+  };
+  const headerAction =
+    currentStep === 1
+      ? { label: "Continue", enabled: canContinueStep1, onClick: () => advance(2) }
+      : currentStep === 2
+        ? { label: "Continue", enabled: true, onClick: () => advance(3) }
+        : currentStep === 3
+          ? { label: "Continue", enabled: financialComplete, onClick: () => advance(4) }
+          : { label: "Check My Eligibility", enabled: policyComplete, onClick: handleCheckEligibility };
+
+  const modalHeader = modal ? (
+    <div className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-gray-200 bg-white px-6 py-3">
+      <div className="min-w-0">
+        <DialogPrimitive.Title className="truncate text-base font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+          Eligibility Assessment
+        </DialogPrimitive.Title>
+        <DialogPrimitive.Description className="truncate text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
+          {grantTitle}
+        </DialogPrimitive.Description>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        {!isSubmitting && !showReport && (
+          <Button
+            onClick={headerAction.onClick}
+            disabled={!headerAction.enabled}
+            className={
+              headerAction.enabled
+                ? "bg-teal-600 hover:bg-teal-700 text-white gap-1.5"
+                : "bg-gray-100 text-gray-400 gap-1.5 cursor-not-allowed"
+            }
+          >
+            {currentStep === 4 ? <ShieldCheck className="size-4" /> : null}
+            {headerAction.label}
+            {currentStep === 4 ? null : <ArrowRight className="size-4" />}
+          </Button>
+        )}
+        <DialogPrimitive.Close
+          aria-label="Close"
+          className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+        >
+          <X className="size-5" />
+        </DialogPrimitive.Close>
+      </div>
+    </div>
+  ) : null;
+
+  const wrap = (content: React.ReactNode) =>
+    modal ? (
+      <>
+        {modalHeader}
+        <div className="p-6">{content}</div>
+      </>
+    ) : (
+      content
+    );
+
   if (isSubmitting) {
-    return <EligibilityLoader />;
+    return wrap(<EligibilityLoader />);
   }
 
   if (showReport) {
-    return (
+    return wrap(
       <EligibilityReport
         actionItems={actionItems}
         passItems={eligibilityPassItems}
@@ -199,7 +299,7 @@ export function EligibilityWorkflowPanel({
     );
   }
 
-  return (
+  return wrap(
     <div className="space-y-6">
       {!hideAssessmentUsage && (
         <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -226,6 +326,7 @@ export function EligibilityWorkflowPanel({
           }}
           canContinue={canContinueStep1}
           demoLocked={demoLocked}
+          hideContinue={modal}
         />
       )}
 
@@ -239,6 +340,7 @@ export function EligibilityWorkflowPanel({
             setCurrentStep(3);
           }}
           demoLocked={demoLocked}
+          hideContinue={modal}
         />
       )}
 
@@ -251,6 +353,7 @@ export function EligibilityWorkflowPanel({
             onAnchorScroll?.();
             setCurrentStep(4);
           }}
+          hideContinue={modal}
         />
       )}
 
@@ -262,6 +365,7 @@ export function EligibilityWorkflowPanel({
           onCheckEligibility={handleCheckEligibility}
           isSubmitting={isSubmitting}
           hideAssessmentUsage={hideAssessmentUsage}
+          hideContinue={modal}
         />
       )}
     </div>
