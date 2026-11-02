@@ -22,6 +22,7 @@ import {
   MoreVertical,
   Users,
 } from "lucide-react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { toast } from "sonner";
 import { Badge } from "@/app/components/ui/badge";
 import {
@@ -124,7 +125,6 @@ const DOCUMENTS = [
 const ON_THIS_PAGE = [
   { id: "overview", label: "Overview" },
   { id: "eligible-activities", label: "Eligible Activities" },
-  { id: "eligibility-assessment", label: "Eligibility Assessment" },
   { id: "who-can-apply", label: "Who Can Apply" },
   { id: "assessment-criteria", label: "Assessment Criteria" },
   { id: "restrictions", label: "Restrictions" },
@@ -195,6 +195,8 @@ interface CheckYourEligibilityCardProps {
    * EligibilityAssessmentPage.
    */
   hideAssessmentUsage?: boolean;
+  /** Work in progress exists — the CTA reads "Continue Eligibility Assessment" instead of "Start …". */
+  hasStarted?: boolean;
 }
 
 function CheckYourEligibilityCard({
@@ -205,9 +207,10 @@ function CheckYourEligibilityCard({
   demoLocked = false,
   unlockEligibilityAssessment = false,
   hideAssessmentUsage = false,
+  hasStarted = false,
 }: CheckYourEligibilityCardProps) {
   const startLocked = demoLocked && !unlockEligibilityAssessment;
-  if (isExhausted && !hideAssessmentUsage) {
+  if (isExhausted && !hideAssessmentUsage && !hasStarted) {
     return (
       <motion.div
         key="exhausted"
@@ -293,7 +296,7 @@ function CheckYourEligibilityCard({
               className={`bg-[#9810fa] text-white gap-2 ${startLocked ? "cursor-not-allowed" : "hover:bg-[#8710e0]"}`}
             >
               <Sparkles className="size-4" />
-              Start Eligibility Assessment
+              {hasStarted ? "Continue Eligibility Assessment" : "Start Eligibility Assessment"}
               <ArrowRight className="size-4" />
             </Button>
             <span className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
@@ -307,71 +310,66 @@ function CheckYourEligibilityCard({
   );
 }
 
-interface TakeActionButtonProps {
+interface ActionButtonsProps {
   demoLocked: boolean;
+  /** Same carve-out as the entry card: the assessment button stays live on /eligibility-demo. */
+  unlockEligibilityAssessment: boolean;
+  hasStarted: boolean;
   size?: "sm";
-  className: string;
-  chevronClassName: string;
-  onStartEligibilityAssessment: () => void;
+  assessmentClassName: string;
+  draftClassName: string;
+  onOpenEligibilityAssessment: () => void;
   onStartAIDraft: () => void;
-  onRequestSubRecipient: () => void;
 }
 
 /**
- * Replaces the old single "Start Application" button (Figma node
- * 15004:44246) with a "Take Action" trigger that opens a menu of the three
- * next steps a viewer can take on this grant (Figma node 15004:45130).
- * Locked the same way "Start Application" was — fully inert, menu never
- * opens — on the /org-detail-demo walkthrough (see EligibilityAssessmentPage
- * `demoLocked`).
+ * Replaces the old "Take Action" dropdown with two buttons: a secondary
+ * "Start / Continue Eligibility Assessment" (opens the assessment modal) and
+ * the primary "Start AI Draft". The three-dots menu sits next to them.
+ * "Start AI Draft" is inert on the locked /org-detail-demo walkthrough, and
+ * the assessment button is too unless `unlockEligibilityAssessment` is set.
  */
-function TakeActionButton({
+function ActionButtons({
   demoLocked,
+  unlockEligibilityAssessment,
+  hasStarted,
   size,
-  className,
-  chevronClassName,
-  onStartEligibilityAssessment,
+  assessmentClassName,
+  draftClassName,
+  onOpenEligibilityAssessment,
   onStartAIDraft,
-  onRequestSubRecipient,
-}: TakeActionButtonProps) {
-  if (demoLocked) {
-    return (
+}: ActionButtonsProps) {
+  const assessmentLocked = demoLocked && !unlockEligibilityAssessment;
+  return (
+    <>
       <Button
         size={size}
-        onClick={(e) => e.preventDefault()}
-        aria-disabled="true"
-        title="This is a locked demo — this button can't navigate away"
-        className={`${className} cursor-not-allowed`}
+        variant="outline"
+        onClick={() => {
+          if (!assessmentLocked) onOpenEligibilityAssessment();
+        }}
+        aria-disabled={assessmentLocked || undefined}
+        title={assessmentLocked ? "This is a locked demo — the assessment doesn't run here" : undefined}
+        className={`${assessmentClassName} ${assessmentLocked ? "cursor-not-allowed" : ""}`}
+      >
+        {hasStarted ? "Continue Eligibility Assessment" : "Start Eligibility Assessment"}
+      </Button>
+      <Button
+        size={size}
+        onClick={(e) => {
+          if (demoLocked) {
+            e.preventDefault();
+            return;
+          }
+          onStartAIDraft();
+        }}
+        aria-disabled={demoLocked || undefined}
+        title={demoLocked ? "This is a locked demo — this button can't navigate away" : undefined}
+        className={`${draftClassName} ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
       >
         Start AI Draft
-        <ChevronDown className={chevronClassName} />
       </Button>
-    );
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button size={size} className={`${className} hover:bg-teal-700`}>
-          Take Action
-          <ChevronDown className={chevronClassName} />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuItem onClick={onStartEligibilityAssessment}>
-          <Sparkles className="w-4 h-4 mr-2 text-gray-500" />
-          Start Eligibility Assessment
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onStartAIDraft}>
-          <Sparkles className="w-4 h-4 mr-2 text-gray-500" />
-          Start AI Draft
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onRequestSubRecipient}>
-          <Users className="w-4 h-4 mr-2 text-gray-500" />
-          Request to be a Sub-recipient
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    </>
   );
 }
 
@@ -449,7 +447,13 @@ export function EligibilityAssessmentPage({
   hideAssessmentUsage = false,
   subRecipientOutcome = false,
 }: EligibilityAssessmentPageProps = {}) {
+  // The Eligibility Assessment lives in a modal. The workflow stays mounted
+  // (just hidden) once opened, so closing the modal keeps the viewer's
+  // answers and the CTAs flip to "Continue Eligibility Assessment".
   const [isAssessing, setIsAssessing] = useState(subRecipientOutcome);
+  const [hasOpenedAssessment, setHasOpenedAssessment] = useState(subRecipientOutcome);
+  const [hasStarted, setHasStarted] = useState(false);
+  const modalContentRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState("overview");
   const [docsExpanded, setDocsExpanded] = useState(true);
   const [reportGeneratedAt, setReportGeneratedAt] = useState<number | null>(null);
@@ -555,10 +559,12 @@ export function EligibilityAssessmentPage({
     setShowApplicationLoading(true);
   };
 
-  const handleStartEligibilityAssessmentFromMenu = () => {
+  const openEligibilityAssessment = () => {
+    setHasOpenedAssessment(true);
     setIsAssessing(true);
-    scrollToSection("eligibility-assessment");
   };
+
+  const scrollModalToTop = () => modalContentRef.current?.scrollTo({ top: 0 });
 
   const handleRequestSubRecipient = () => {
     toast.success("Request sent", {
@@ -601,6 +607,43 @@ export function EligibilityAssessmentPage({
   return (
     <div className="min-h-screen bg-gray-50">
       <ApplicationLoadingModal isOpen={showApplicationLoading} grantTitle={GRANT_TITLE} grantId={GRANT_ID} />
+
+      {/* Eligibility Assessment modal — Continue lives in its sticky header. */}
+      {hasOpenedAssessment && (
+        <DialogPrimitive.Root open={isAssessing} onOpenChange={setIsAssessing}>
+          <DialogPrimitive.Portal forceMount>
+            <DialogPrimitive.Overlay
+              forceMount
+              className="fixed inset-0 z-50 bg-black/50 data-[state=closed]:hidden"
+            />
+            <DialogPrimitive.Content
+              forceMount
+              ref={modalContentRef}
+              className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 shadow-xl data-[state=closed]:hidden"
+            >
+              <EligibilityWorkflowPanel
+                modal
+                grantId={GRANT_ID}
+                grantTitle={GRANT_TITLE}
+                onExit={() => setIsAssessing(false)}
+                onReportGenerated={setReportGeneratedAt}
+                onStartedChange={setHasStarted}
+                onStartApplication={handleStartApplication}
+                onAnchorScroll={scrollModalToTop}
+                demoLocked={demoLocked}
+                hideAssessmentUsage={hideAssessmentUsage}
+                startWithReport={subRecipientOutcome}
+                reportCategories={subRecipientOutcome ? subRecipientCategories : undefined}
+                reportRisks={subRecipientOutcome ? subRecipientRisks : undefined}
+                showOverallScore={subRecipientOutcome}
+                overallScore={subRecipientOutcome ? subRecipientOverallScore : undefined}
+                reportStatus={subRecipientOutcome ? "caution" : undefined}
+                onRequestToJoin={subRecipientOutcome ? handleRequestToJoin : undefined}
+              />
+            </DialogPrimitive.Content>
+          </DialogPrimitive.Portal>
+        </DialogPrimitive.Root>
+      )}
 
       {/* Stop Watching Confirmation */}
       <StopWatchingDialog
@@ -660,14 +703,15 @@ export function EligibilityAssessmentPage({
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-                  <TakeActionButton
+                  <ActionButtons
                     demoLocked={demoLocked}
+                    unlockEligibilityAssessment={unlockEligibilityAssessment}
+                    hasStarted={hasStarted}
                     size="sm"
-                    className="bg-teal-600 text-white font-semibold h-8 text-xs px-4"
-                    chevronClassName="w-3.5 h-3.5 ml-1.5"
-                    onStartEligibilityAssessment={handleStartEligibilityAssessmentFromMenu}
+                    assessmentClassName="h-8 text-xs px-4 font-semibold"
+                    draftClassName="bg-teal-600 text-white font-semibold h-8 text-xs px-4"
+                    onOpenEligibilityAssessment={openEligibilityAssessment}
                     onStartAIDraft={handleStartApplication}
-                    onRequestSubRecipient={handleRequestSubRecipient}
                   />
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -696,6 +740,10 @@ export function EligibilityAssessmentPage({
                       <DropdownMenuItem onClick={handleShare}>
                         <Share2 className="w-4 h-4 mr-2" />
                         Share
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleRequestSubRecipient}>
+                        <Users className="w-4 h-4 mr-2" />
+                        Request to be a Sub-recipient
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -761,13 +809,14 @@ export function EligibilityAssessmentPage({
 
             <div className="flex flex-col items-end gap-3 shrink-0">
               <div className="flex items-center gap-3 flex-wrap justify-end">
-                <TakeActionButton
+                <ActionButtons
                   demoLocked={demoLocked}
-                  className="bg-teal-600 text-white gap-1.5"
-                  chevronClassName="w-4 h-4"
-                  onStartEligibilityAssessment={handleStartEligibilityAssessmentFromMenu}
+                  unlockEligibilityAssessment={unlockEligibilityAssessment}
+                  hasStarted={hasStarted}
+                  assessmentClassName="font-semibold"
+                  draftClassName="bg-teal-600 text-white font-semibold"
+                  onOpenEligibilityAssessment={openEligibilityAssessment}
                   onStartAIDraft={handleStartApplication}
-                  onRequestSubRecipient={handleRequestSubRecipient}
                 />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -796,6 +845,10 @@ export function EligibilityAssessmentPage({
                     <DropdownMenuItem onClick={handleShare}>
                       <Share2 className="w-4 h-4 mr-2" />
                       Share
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleRequestSubRecipient}>
+                      <Users className="w-4 h-4 mr-2" />
+                      Request to be a Sub-recipient
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -959,52 +1012,21 @@ export function EligibilityAssessmentPage({
             {/* Eligible Activities */}
             <section id="eligible-activities" className="scroll-mt-8">
               <SectionHeading>Eligible Activities</SectionHeading>
-              <EligibleActivitiesSection />
-            </section>
-
-            {/* Eligibility Assessment — slides open into the eligibility workflow */}
-            <section id="eligibility-assessment" className="scroll-mt-8">
-              <SectionHeading>Eligibility Assessment</SectionHeading>
-
-              <AnimatePresence mode="wait">
-                {isAssessing ? (
-                  <motion.div
-                    key="workflow"
-                    initial={{ opacity: 0, x: 24 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -24 }}
-                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <EligibilityWorkflowPanel
-                      grantId={GRANT_ID}
-                      grantTitle={GRANT_TITLE}
-                      onExit={() => setIsAssessing(false)}
-                      onReportGenerated={setReportGeneratedAt}
-                      onStartApplication={handleStartApplication}
-                      onAnchorScroll={() => scrollToSection("eligibility-assessment")}
-                      demoLocked={demoLocked}
-                      hideAssessmentUsage={hideAssessmentUsage}
-                      startWithReport={subRecipientOutcome}
-                      reportCategories={subRecipientOutcome ? subRecipientCategories : undefined}
-                      reportRisks={subRecipientOutcome ? subRecipientRisks : undefined}
-                      showOverallScore={subRecipientOutcome}
-                      overallScore={subRecipientOutcome ? subRecipientOverallScore : undefined}
-                      reportStatus={subRecipientOutcome ? "caution" : undefined}
-                      onRequestToJoin={subRecipientOutcome ? handleRequestToJoin : undefined}
-                    />
-                  </motion.div>
-                ) : (
+              <div className="space-y-6">
+                <EligibleActivitiesSection />
+                <div id="eligibility-assessment" className="scroll-mt-8">
                   <CheckYourEligibilityCard
-                    onStart={() => setIsAssessing(true)}
+                    onStart={openEligibilityAssessment}
                     usedCount={usedCount}
                     limit={limit}
                     isExhausted={isExhausted}
                     demoLocked={demoLocked}
                     unlockEligibilityAssessment={unlockEligibilityAssessment}
                     hideAssessmentUsage={hideAssessmentUsage}
+                    hasStarted={hasStarted}
                   />
-                )}
-              </AnimatePresence>
+                </div>
+              </div>
             </section>
 
             {/* Who Can Apply */}

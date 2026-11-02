@@ -23,6 +23,8 @@ interface PolicyInfoStepProps {
   isSubmitting: boolean;
   /** Hides "This will use assessment N of M for this period." below the Check My Eligibility button. See EligibilityAssessmentPage. */
   hideAssessmentUsage?: boolean;
+  /** Hides the footer Check My Eligibility button — the modal header renders it instead (sticky, top right). */
+  hideContinue?: boolean;
 }
 
 /**
@@ -37,6 +39,7 @@ export function PolicyInfoStep({
   onCheckEligibility,
   isSubmitting,
   hideAssessmentUsage = false,
+  hideContinue = false,
 }: PolicyInfoStepProps) {
   const set = <K extends keyof PolicyInfoState>(key: K, val: PolicyInfoState[K]) =>
     onChange({ ...value, [key]: val });
@@ -151,14 +154,16 @@ export function PolicyInfoStep({
             Back
           </Button>
           <div className="flex flex-col items-end gap-1.5">
-            <Button
-              onClick={onCheckEligibility}
-              disabled={isSubmitting || !isComplete}
-              className={isComplete ? "bg-teal-600 hover:bg-teal-700 text-white gap-1.5" : "bg-gray-100 text-gray-400 gap-1.5 cursor-not-allowed"}
-            >
-              {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
-              Check My Eligibility
-            </Button>
+            {!hideContinue && (
+              <Button
+                onClick={onCheckEligibility}
+                disabled={isSubmitting || !isComplete}
+                className={isComplete ? "bg-teal-600 hover:bg-teal-700 text-white gap-1.5" : "bg-gray-100 text-gray-400 gap-1.5 cursor-not-allowed"}
+              >
+                {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
+                Check My Eligibility
+              </Button>
+            )}
             {!hideAssessmentUsage && (
               <p className="text-xs text-gray-400" style={{ fontFamily: "Cabin, sans-serif" }}>
                 This will use assessment {usedCount + 1} of {limit} for this period.

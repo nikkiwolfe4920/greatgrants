@@ -45,6 +45,8 @@ interface FinancialInfoStepProps {
   onChange: (value: FinancialInfoState) => void;
   onBack: () => void;
   onContinue: () => void;
+  /** Hides the footer Continue button — the modal header renders it instead (sticky, top right). */
+  hideContinue?: boolean;
 }
 
 const REGISTRATION_OPTIONS: { value: FinancialInfoState["orgRegistrationType"]; label: string }[] = [
@@ -59,7 +61,7 @@ const REGISTRATION_OPTIONS: { value: FinancialInfoState["orgRegistrationType"]; 
  * 12683:27670; the six questions themselves reuse the exact input pattern
  * from /organization's Financial Info tab.
  */
-export function FinancialInfoStep({ value, onChange, onBack, onContinue }: FinancialInfoStepProps) {
+export function FinancialInfoStep({ value, onChange, onBack, onContinue, hideContinue = false }: FinancialInfoStepProps) {
   const set = <K extends keyof FinancialInfoState>(key: K, val: FinancialInfoState[K]) =>
     onChange({ ...value, [key]: val });
 
@@ -206,14 +208,16 @@ export function FinancialInfoStep({ value, onChange, onBack, onContinue }: Finan
             <ArrowLeft className="size-4" />
             Back
           </Button>
-          <Button
-            onClick={onContinue}
-            disabled={!isComplete}
-            className={isComplete ? "bg-teal-600 hover:bg-teal-700 text-white gap-1.5" : "bg-gray-100 text-gray-400 gap-1.5 cursor-not-allowed"}
-          >
-            Continue
-            <ArrowRight className="size-4" />
-          </Button>
+          {!hideContinue && (
+            <Button
+              onClick={onContinue}
+              disabled={!isComplete}
+              className={isComplete ? "bg-teal-600 hover:bg-teal-700 text-white gap-1.5" : "bg-gray-100 text-gray-400 gap-1.5 cursor-not-allowed"}
+            >
+              Continue
+              <ArrowRight className="size-4" />
+            </Button>
+          )}
         </div>
       </div>
     </div>
