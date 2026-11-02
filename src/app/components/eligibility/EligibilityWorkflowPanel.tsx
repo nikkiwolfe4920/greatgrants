@@ -32,7 +32,7 @@ const STEP_LABELS = [
   { label: "Grant\nRequirements" },
   { label: "Financial\nInfo" },
   { label: "Policy\nInfo" },
-  { label: "Eligibility\nReport" },
+  { label: "Eligibility\nAssessment" },
 ];
 
 interface EligibilityWorkflowPanelProps {
