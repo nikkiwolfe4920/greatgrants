@@ -17,14 +17,12 @@ export const eligibilityPrograms: EligibilityProgram[] = [
     name: "Child Protection Systems Initiative",
     description:
       "Strengthening national child protection frameworks and workforce in Sub-Saharan Africa.",
-    improvementItems: ["Program Description", "Documents", "Partnerships"],
   },
   {
     id: "family-based-care-reform",
     name: "Family-Based Care Reform Project",
     description:
       "Expanding kinship and foster care alternatives to residential institutions in Southeast Asia.",
-    improvementItems: ["Program Description", "Documents", "Partnerships"],
   },
 ];
 
