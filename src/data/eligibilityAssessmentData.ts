@@ -24,6 +24,61 @@ export const eligibilityPrograms: EligibilityProgram[] = [
     name: "Family-Based Care Reform Project",
     description:
       "Expanding kinship and foster care alternatives to residential institutions in Southeast Asia.",
+    improvementItems: ["Program Description", "Documents", "Partnerships"],
+  },
+];
+
+export type RequirementAnswer = "yes" | "no" | "unsure";
+export type RequirementStatus = "met" | "unmet" | "unknown";
+
+/** A requirement pulled from the grant's NOFO, shown in the "Grant Requirements" step. */
+export interface GrantRequirement {
+  id: string;
+  /** The requirement as stated in the NOFO. */
+  title: string;
+  /** Status before the viewer answers — "unmet"/"met" when it can be answered from their organization profile. */
+  initialStatus: RequirementStatus;
+  /** Explains how the initial status was reached, e.g. "This grant is open to: …". */
+  detail?: string;
+  /** Shown under `detail` when the status was derived from the organization profile. */
+  answeredFromProfile?: boolean;
+  /** "What you can do: …" guidance. */
+  guidance?: string;
+  /** Verbatim NOFO excerpt, and where it came from. */
+  quote?: string;
+  quoteSource?: string;
+  /** Question the viewer answers with Yes / No / Not sure. */
+  question: string;
+}
+
+export const grantRequirements: GrantRequirement[] = [
+  {
+    id: "municipal-entity",
+    title:
+      "Only Alaska municipal government entities defined under AS Sec 29.04.030 — first class boroughs, second class boroughs, third class boroughs, first class cities, and second class cities — may apply; the Municipality of Anchorage is explicitly excluded.",
+    initialStatus: "unmet",
+    detail:
+      "This grant is open to: First class boroughs; Second class boroughs; Third class boroughs; First Class cities; Second class cities. Your organization type (other nonprofit) isn't on that list.",
+    answeredFromProfile: true,
+    guidance:
+      "If your organization is not one of these five municipal types, or if you are the Municipality of Anchorage, you are not eligible — skip this grant.",
+    quote:
+      "Eligible applicants include any municipal government entity as defined by Title 29 of the Alaska Statutes (AS Sec 29.04.030)…For the purposes of the State CDBG program, the Municipality of Anchorage is not included.",
+    quoteSource: "From Grant listing: Who Can Apply?",
+    question:
+      "Is your organization a first class borough, second class borough, third class borough, first class city, or second class city under Alaska Statutes Title 29 (AS Sec 29.04.030), and is it something other than the Municipality of Anchorage?",
+  },
+  {
+    id: "past-recipient-expenditure",
+    title:
+      "A past recipient of CDBG funds may not receive a new award unless at least 75% of non-administrative funds from the prior grant have been expended and reported and the project is substantially complete, or the project is fully complete with all reporting requirements met.",
+    initialStatus: "unknown",
+    detail: "Answer this question to check it.",
+    quote:
+      "Past Recipients: A past recipient of CDBG funds may not be awarded additional CDBG funds until: (a) a minimum of 75% of the non-administrative funds have been expended and reported to DCCED and, in the judgment of the DCCED, the previously funded project is substantially complete; or (b) the project is complete and all reporting requirements met. Applicants with prior year grants are encouraged to verify expenditure levels with CDBG Program staff. Expenditure levels will be computed based on expenditures reported as of November 30, 2026.",
+    quoteSource: "From Application Handbook.pdf",
+    question:
+      "If your organization has received CDBG funds before, have at least 75% of the non-administrative funds been expended and reported to DCCED with the prior project substantially complete (or fully complete with all reporting done)?",
   },
 ];
 

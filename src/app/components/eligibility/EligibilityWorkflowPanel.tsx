@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ShieldCheck, X } from "lucide-react";
-import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "@/app/components/ui/button";
 import { StepperHeader } from "@/app/components/eligibility/StepperHeader";
 import { AssessmentUsageMeter } from "@/app/components/eligibility/AssessmentUsageMeter";
 import { ProgramAssociationStep } from "@/app/components/eligibility/steps/ProgramAssociationStep";
 import { OrganizationDetailsStep } from "@/app/components/eligibility/steps/OrganizationDetailsStep";
+import { GrantRequirementsStep } from "@/app/components/eligibility/steps/GrantRequirementsStep";
 import { FinancialInfoStep } from "@/app/components/eligibility/steps/FinancialInfoStep";
 import { PolicyInfoStep } from "@/app/components/eligibility/steps/PolicyInfoStep";
 import { EligibilityLoader } from "@/app/components/eligibility/EligibilityLoader";
@@ -22,13 +22,17 @@ import {
   type FinancialInfoState,
   type PolicyInfoState,
   type ActionItem,
+  type RequirementAnswer,
+  grantRequirements,
 } from "@/data/eligibilityAssessmentData";
 
 const STEP_LABELS = [
   { label: "Program\nAssociation" },
   { label: "Organization\nDetails" },
+  { label: "Grant\nRequirements" },
   { label: "Financial\nInfo" },
   { label: "Policy\nInfo" },
+  { label: "Eligibility\nReport" },
 ];
 
 interface EligibilityWorkflowPanelProps {
@@ -91,8 +95,8 @@ interface EligibilityWorkflowPanelProps {
 }
 
 /**
- * Orchestrates the 4-step eligibility workflow: Program Association →
- * Organization Details → Financial Info → Policy Info → (loader) → report.
+ * Orchestrates the 6-step eligibility workflow: Program Association →
+ * Organization Details → Financial Info → Grant Requirements → Financial Info → Policy Info → (loader) → report.
  * Owns all step state so the individual step components stay presentational.
  */
 export function EligibilityWorkflowPanel({
@@ -118,6 +122,7 @@ export function EligibilityWorkflowPanel({
   const [currentStep, setCurrentStep] = useState(1);
   const [programId, setProgramId] = useState("");
   const [orgFields, setOrgFields] = useState<OrgDetailField[]>(orgDetailFields);
+  const [requirementAnswers, setRequirementAnswers] = useState<Record<string, RequirementAnswer | undefined>>({});
   const [financialInfo, setFinancialInfo] = useState<FinancialInfoState>(defaultFinancialInfo);
   const [policyInfo, setPolicyInfo] = useState<PolicyInfoState>(defaultPolicyInfo);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -227,18 +232,20 @@ export function EligibilityWorkflowPanel({
       : currentStep === 2
         ? { label: "Continue", enabled: true, onClick: () => advance(3) }
         : currentStep === 3
-          ? { label: "Continue", enabled: financialComplete, onClick: () => advance(4) }
-          : { label: "Check My Eligibility", enabled: policyComplete, onClick: handleCheckEligibility };
+          ? { label: "Continue", enabled: true, onClick: () => advance(4) }
+          : currentStep === 4
+            ? { label: "Continue", enabled: financialComplete, onClick: () => advance(5) }
+            : { label: "Check My Eligibility", enabled: policyComplete, onClick: handleCheckEligibility };
 
   const modalHeader = modal ? (
     <div className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-gray-200 bg-white px-6 py-3">
       <div className="min-w-0">
-        <DialogPrimitive.Title className="truncate text-base font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+        <h2 id="eligibility-modal-title" className="truncate text-base font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
           Eligibility Assessment
-        </DialogPrimitive.Title>
-        <DialogPrimitive.Description className="truncate text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
+        </h2>
+        <p className="truncate text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
           {grantTitle}
-        </DialogPrimitive.Description>
+        </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {!isSubmitting && !showReport && (
@@ -251,17 +258,19 @@ export function EligibilityWorkflowPanel({
                 : "bg-gray-100 text-gray-400 gap-1.5 cursor-not-allowed"
             }
           >
-            {currentStep === 4 ? <ShieldCheck className="size-4" /> : null}
+            {currentStep === 5 ? <ShieldCheck className="size-4" /> : null}
             {headerAction.label}
-            {currentStep === 4 ? null : <ArrowRight className="size-4" />}
+            {currentStep === 5 ? null : <ArrowRight className="size-4" />}
           </Button>
         )}
-        <DialogPrimitive.Close
+        <button
+          type="button"
+          onClick={onExit}
           aria-label="Close"
           className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
         >
           <X className="size-5" />
-        </DialogPrimitive.Close>
+        </button>
       </div>
     </div>
   ) : null;
@@ -282,6 +291,8 @@ export function EligibilityWorkflowPanel({
 
   if (showReport) {
     return wrap(
+      <div className="space-y-6">
+      <StepperHeader steps={STEP_LABELS.map((s) => ({ label: s.label }))} currentStep={STEP_LABELS.length} />
       <EligibilityReport
         actionItems={actionItems}
         passItems={eligibilityPassItems}
@@ -296,6 +307,7 @@ export function EligibilityWorkflowPanel({
         status={reportStatus}
         onRequestToJoin={onRequestToJoin}
       />
+      </div>
     );
   }
 
@@ -345,9 +357,10 @@ export function EligibilityWorkflowPanel({
       )}
 
       {currentStep === 3 && (
-        <FinancialInfoStep
-          value={financialInfo}
-          onChange={setFinancialInfo}
+        <GrantRequirementsStep
+          requirements={grantRequirements}
+          answers={requirementAnswers}
+          onAnswer={(id, answer) => setRequirementAnswers((prev) => ({ ...prev, [id]: answer }))}
           onBack={() => setCurrentStep(2)}
           onContinue={() => {
             onAnchorScroll?.();
@@ -358,10 +371,23 @@ export function EligibilityWorkflowPanel({
       )}
 
       {currentStep === 4 && (
+        <FinancialInfoStep
+          value={financialInfo}
+          onChange={setFinancialInfo}
+          onBack={() => setCurrentStep(3)}
+          onContinue={() => {
+            onAnchorScroll?.();
+            setCurrentStep(5);
+          }}
+          hideContinue={modal}
+        />
+      )}
+
+      {currentStep === 5 && (
         <PolicyInfoStep
           value={policyInfo}
           onChange={setPolicyInfo}
-          onBack={() => setCurrentStep(3)}
+          onBack={() => setCurrentStep(4)}
           onCheckEligibility={handleCheckEligibility}
           isSubmitting={isSubmitting}
           hideAssessmentUsage={hideAssessmentUsage}
