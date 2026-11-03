@@ -7,7 +7,7 @@ import type { FitCategory } from "@/app/components/OverallNofoFitScorecard";
 export const subRecipientOverallScore = 58;
 
 export const subRecipientCategories: FitCategory[] = [
-  { label: "Eligibility", score: 60 },
+  { label: "Organization Checks", score: 60 },
   { label: "Mission Fit", score: 78 },
   { label: "Program Alignment", score: 55 },
   { label: "Capacity", score: 38 },
