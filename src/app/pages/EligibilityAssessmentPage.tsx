@@ -145,6 +145,11 @@ function formatTimeAgo(date: Date | null): string {
   return date.toLocaleDateString();
 }
 
+function assessmentCtaLabel(hasStarted: boolean, isChecked: boolean): string {
+  if (isChecked) return "View Eligibility Assessment";
+  return hasStarted ? "Continue Eligibility Assessment" : "Start Eligibility Assessment";
+}
+
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <div className="mb-4">
@@ -200,6 +205,8 @@ interface CheckYourEligibilityCardProps {
   hideAssessmentUsage?: boolean;
   /** Work in progress exists — the CTA reads "Continue Eligibility Assessment" instead of "Start …". */
   hasStarted?: boolean;
+  /** The eligibility check has completed — the CTA reads "View Eligibility Assessment". */
+  isChecked?: boolean;
 }
 
 function CheckYourEligibilityCard({
@@ -211,6 +218,7 @@ function CheckYourEligibilityCard({
   unlockEligibilityAssessment = false,
   hideAssessmentUsage = false,
   hasStarted = false,
+  isChecked = false,
 }: CheckYourEligibilityCardProps) {
   const startLocked = demoLocked && !unlockEligibilityAssessment;
   if (isExhausted && !hideAssessmentUsage && !hasStarted) {
@@ -299,7 +307,7 @@ function CheckYourEligibilityCard({
               className={`bg-[#9810fa] text-white gap-2 ${startLocked ? "cursor-not-allowed" : "hover:bg-[#8710e0]"}`}
             >
               <Sparkles className="size-4" />
-              {hasStarted ? "Continue Eligibility Assessment" : "Start Eligibility Assessment"}
+              {assessmentCtaLabel(hasStarted, isChecked)}
               <ArrowRight className="size-4" />
             </Button>
             <span className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
@@ -318,6 +326,7 @@ interface ActionButtonsProps {
   /** Same carve-out as the entry card: the assessment button stays live on /eligibility-demo. */
   unlockEligibilityAssessment: boolean;
   hasStarted: boolean;
+  isChecked: boolean;
   size?: "sm";
   assessmentClassName: string;
   draftClassName: string;
@@ -336,6 +345,7 @@ function ActionButtons({
   demoLocked,
   unlockEligibilityAssessment,
   hasStarted,
+  isChecked,
   size,
   assessmentClassName,
   draftClassName,
@@ -355,7 +365,7 @@ function ActionButtons({
         title={assessmentLocked ? "This is a locked demo — the assessment doesn't run here" : undefined}
         className={`${assessmentClassName} ${assessmentLocked ? "cursor-not-allowed" : ""}`}
       >
-        {hasStarted ? "Continue Eligibility Assessment" : "Start Eligibility Assessment"}
+        {assessmentCtaLabel(hasStarted, isChecked)}
       </Button>
       <Button
         size={size}
@@ -462,6 +472,7 @@ export function EligibilityAssessmentPage({
   const [activeSection, setActiveSection] = useState("overview");
   const [docsExpanded, setDocsExpanded] = useState(true);
   const [reportGeneratedAt, setReportGeneratedAt] = useState<number | null>(null);
+  const isChecked = reportGeneratedAt !== null;
   const [showApplicationLoading, setShowApplicationLoading] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -760,6 +771,7 @@ export function EligibilityAssessmentPage({
                     demoLocked={demoLocked}
                     unlockEligibilityAssessment={unlockEligibilityAssessment}
                     hasStarted={hasStarted}
+                    isChecked={isChecked}
                     size="sm"
                     assessmentClassName="h-8 text-xs px-4 font-semibold"
                     draftClassName="bg-teal-600 text-white font-semibold h-8 text-xs px-4"
@@ -866,6 +878,7 @@ export function EligibilityAssessmentPage({
                   demoLocked={demoLocked}
                   unlockEligibilityAssessment={unlockEligibilityAssessment}
                   hasStarted={hasStarted}
+                  isChecked={isChecked}
                   assessmentClassName="font-semibold"
                   draftClassName="bg-teal-600 text-white font-semibold"
                   onOpenEligibilityAssessment={openEligibilityAssessment}
@@ -1077,6 +1090,7 @@ export function EligibilityAssessmentPage({
                     unlockEligibilityAssessment={unlockEligibilityAssessment}
                     hideAssessmentUsage={hideAssessmentUsage}
                     hasStarted={hasStarted}
+                    isChecked={isChecked}
                   />
                 </div>
               </div>
