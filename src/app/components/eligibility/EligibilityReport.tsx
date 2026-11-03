@@ -127,6 +127,8 @@ interface EligibilityReportProps {
    * toward a prime application no longer fits the outcome.
    */
   onRequestToJoin?: () => void;
+  /** Restarts the assessment from Step 1 — drives the "Retake assessment" link next to "Start AI Draft". */
+  onRetake?: () => void;
 }
 
 /**
@@ -295,6 +297,16 @@ export function EligibilityReport({
               Start AI Draft
               <ArrowRight className="size-4" />
             </Button>
+            {onRetake && (
+              <button
+                type="button"
+                onClick={onRetake}
+                className="mt-4 ml-4 text-sm font-medium text-teal-700 underline-offset-2 hover:underline"
+                style={{ fontFamily: "Cabin, sans-serif" }}
+              >
+                Retake assessment
+              </button>
+            )}
           </div>
         </div>
       )}
