@@ -200,6 +200,18 @@ export function EligibilityWorkflowPanel({
     }, 4000);
   };
 
+  // Back to Step 1 with a fresh report next time; answers are kept so the
+  // viewer can tweak them rather than start from scratch.
+  const handleRetake = () => {
+    if (submitTimeoutRef.current) clearTimeout(submitTimeoutRef.current);
+    setIsSubmitting(false);
+    setShowReport(false);
+    setActionItems(eligibilityActionItems);
+    setCurrentStep(1);
+    onReportGenerated?.(null);
+    onAnchorScrollRef.current?.();
+  };
+
   const handleToggleActionItem = (id: string) => {
     setActionItems((prev) => prev.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item)));
   };
@@ -306,6 +318,7 @@ export function EligibilityWorkflowPanel({
         overallScore={overallScore}
         status={reportStatus}
         onRequestToJoin={onRequestToJoin}
+        onRetake={handleRetake}
       />
       </div>
     );
