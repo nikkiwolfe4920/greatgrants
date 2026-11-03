@@ -41,6 +41,7 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 import { EligibilityWorkflowPanel } from "@/app/components/eligibility/EligibilityWorkflowPanel";
+import { EligibilityLoader } from "@/app/components/eligibility/EligibilityLoader";
 import { AssessmentUsageMeter } from "@/app/components/eligibility/AssessmentUsageMeter";
 import { ApplicationLoadingModal } from "@/app/components/ApplicationLoadingModal";
 import { StopWatchingDialog } from "@/app/components/StopWatchingDialog";
@@ -53,7 +54,10 @@ import {
   subRecipientOverallScore,
 } from "@/data/eligibilityAssessmentSubData";
 
-const GRANT_ID = "dfop0017890-child-protection";
+// How long the loader shows before the assessment modal opens.
+const ASSESSMENT_OPEN_DELAY_MS = 1200;
+
+const GRANT_ID ="dfop0017890-child-protection";
 const GRANT_TITLE = "Advancing Global Health — Child Development, Care, and Protection Addendum";
 
 // Minimal grant_alerts record for this fixed opportunity — same shape
@@ -452,6 +456,8 @@ export function EligibilityAssessmentPage({
   const [isAssessing, setIsAssessing] = useState(subRecipientOutcome);
   const [hasOpenedAssessment, setHasOpenedAssessment] = useState(subRecipientOutcome);
   const [hasStarted, setHasStarted] = useState(false);
+  const [isOpeningAssessment, setIsOpeningAssessment] = useState(false);
+  const openTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const modalContentRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState("overview");
   const [docsExpanded, setDocsExpanded] = useState(true);
@@ -558,10 +564,26 @@ export function EligibilityAssessmentPage({
     setShowApplicationLoading(true);
   };
 
+  // Both "Start" and "Continue Eligibility Assessment" show the same loader
+  // used while the final report generates (EligibilityLoader) before the
+  // modal opens.
   const openEligibilityAssessment = () => {
-    setHasOpenedAssessment(true);
-    setIsAssessing(true);
+    if (isOpeningAssessment) return;
+    setIsOpeningAssessment(true);
+    openTimeoutRef.current = setTimeout(() => {
+      openTimeoutRef.current = null;
+      setIsOpeningAssessment(false);
+      setHasOpenedAssessment(true);
+      setIsAssessing(true);
+    }, ASSESSMENT_OPEN_DELAY_MS);
   };
+
+  useEffect(
+    () => () => {
+      if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
+    },
+    []
+  );
 
   // Escape closes the modal; page scroll is locked while it's open.
   useEffect(() => {
@@ -622,6 +644,18 @@ export function EligibilityAssessmentPage({
   return (
     <div className="min-h-screen bg-gray-50">
       <ApplicationLoadingModal isOpen={showApplicationLoading} grantTitle={GRANT_TITLE} grantId={GRANT_ID} />
+
+      {isOpeningAssessment && (
+        <div className="fixed inset-0 z-[60] bg-black/50">
+          <div
+            role="status"
+            aria-live="polite"
+            className="absolute left-1/2 top-1/2 w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl shadow-xl"
+          >
+            <EligibilityLoader />
+          </div>
+        </div>
+      )}
 
       {/* Eligibility Assessment modal — Continue lives in its sticky header.
           A plain modal (not Radix Dialog) so the workflow can stay mounted,
