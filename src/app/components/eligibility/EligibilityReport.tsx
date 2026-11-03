@@ -85,7 +85,7 @@ function PassTagRow({ item }: { item: PassItem }) {
 }
 
 const BASE_CATEGORIES: FitCategory[] = [
-  { label: "Eligibility", score: 100 },
+  { label: "Organization Checks", score: 100 },
   { label: "Mission Fit", score: 92 },
   { label: "Program Alignment", score: 84 },
   { label: "Capacity", score: 71 },
@@ -94,7 +94,7 @@ const BASE_CATEGORIES: FitCategory[] = [
 ];
 
 /** The report headlines just these two metrics. */
-const HEADLINE_METRICS = ["Eligibility", "Program Alignment"];
+const HEADLINE_METRICS = ["Organization Checks", "Program Alignment"];
 
 const BASE_RISKS = ["No prior awards from this agency", "Limited evaluation framework", "Matching funds not secured"];
 
