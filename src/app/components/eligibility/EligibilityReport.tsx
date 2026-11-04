@@ -115,11 +115,10 @@ export interface EligibilityDecision {
   notSure: number;
 }
 
-function DecisionBlock({ decision }: { decision: EligibilityDecision }) {
-  const { isGo, noAnswers, unmetRequirements, notSure } = decision;
-  // "No" answers and requirements answered No are both Unmet; "Not sure" is Unresolved.
+function DecisionBlock({ decision, unresolved }: { decision: EligibilityDecision; unresolved: number }) {
+  const { isGo, noAnswers, unmetRequirements } = decision;
+  // Same numbers as the Unmet / Unresolved chips in Action Items below.
   const unmet = noAnswers + unmetRequirements;
-  const unresolved = notSure;
 
   return (
     <div
@@ -241,7 +240,7 @@ export function EligibilityReport({
         onStartApplication={onStartApplication}
         allActionsComplete={isAllComplete}
         demoLocked={demoLocked}
-        decision={decision ? <DecisionBlock decision={decision} /> : undefined}
+        decision={decision ? <DecisionBlock decision={decision} unresolved={unresolvedCount} /> : undefined}
         ctaSecondary={
           decision && !decision.isGo && onRetake ? (
             <button

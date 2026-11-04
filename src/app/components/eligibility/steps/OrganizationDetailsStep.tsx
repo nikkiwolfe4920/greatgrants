@@ -13,6 +13,8 @@ interface OrganizationDetailsStepProps {
   demoLocked?: boolean;
   /** Hides the footer Continue button — the modal header renders it instead (sticky, top right). */
   hideContinue?: boolean;
+  /** Footer Continue is disabled until the required UEI is saved. Defaults to true. */
+  canContinue?: boolean;
 }
 
 const GROUP_LABELS: Record<OrgDetailField["group"], string> = {
@@ -36,6 +38,7 @@ export function OrganizationDetailsStep({
   onContinue,
   demoLocked = false,
   hideContinue = false,
+  canContinue = true,
 }: OrganizationDetailsStepProps) {
   // Only the UEI is a headline "Missing Details" item (yellow, open input).
   // Every other empty field sits in its own group as a compact "Missing
@@ -81,6 +84,7 @@ export function OrganizationDetailsStep({
                   <MissingFieldRow
                     key={field.key}
                     label={field.label}
+                    required
                     onSave={(value) => onUpdateField(field.key, value)}
                   />
                 ))}
@@ -146,7 +150,11 @@ export function OrganizationDetailsStep({
             Back
           </Button>
           {!hideContinue && (
-            <Button onClick={onContinue} className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
+            <Button
+              onClick={onContinue}
+              disabled={!canContinue}
+              className={canContinue ? "bg-teal-600 hover:bg-teal-700 text-white gap-1.5" : "bg-gray-100 text-gray-400 gap-1.5 cursor-not-allowed"}
+            >
               Continue
               <ArrowRight className="size-4" />
             </Button>
