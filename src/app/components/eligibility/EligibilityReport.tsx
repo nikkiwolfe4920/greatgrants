@@ -115,20 +115,11 @@ export interface EligibilityDecision {
   notSure: number;
 }
 
-function plural(n: number, one: string, many: string) {
-  return `${n} ${n === 1 ? one : many}`;
-}
-
 function DecisionBlock({ decision }: { decision: EligibilityDecision }) {
   const { isGo, noAnswers, unmetRequirements, notSure } = decision;
-  const reasons = [
-    noAnswers > 0 && `${plural(noAnswers, "answer", "answers")} marked No`,
-    unmetRequirements > 0 && `${plural(unmetRequirements, "requirement", "requirements")} marked Unmet`,
-    notSure > 0 && `${plural(notSure, "answer", "answers")} marked Not sure`,
-  ].filter(Boolean) as string[];
-  const reasonText =
-    reasons.length <= 1 ? reasons[0] : `${reasons.slice(0, -1).join(", ")} and ${reasons[reasons.length - 1]}`;
-  const isAre = noAnswers + unmetRequirements + notSure === 1 ? "is" : "are";
+  // "No" answers and requirements answered No are both Unmet; "Not sure" is Unresolved.
+  const unmet = noAnswers + unmetRequirements;
+  const unresolved = notSure;
 
   return (
     <div
@@ -152,7 +143,7 @@ function DecisionBlock({ decision }: { decision: EligibilityDecision }) {
         <p className="mt-1.5 text-sm text-gray-700" style={{ fontFamily: "Cabin, sans-serif" }}>
           {isGo
             ? "You have 100% answers marked Yes or Meets requirements."
-            : `There ${isAre} ${reasonText}.`}
+            : `There ${unmet === 1 ? "is" : "are"} ${unmet} ${unmet === 1 ? "requirement" : "requirements"} marked Unmet & ${unresolved} Unresolved.`}
         </p>
       </div>
     </div>
@@ -225,7 +216,9 @@ export function EligibilityReport({
   const totalCount = actionItems.length;
   const percent = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
   const passCount = passItems.length;
-  const unresolvedCount = totalCount - completedCount;
+  const isGo = decision?.isGo === true;
+  // On GO everything is Met: no unresolved action items are listed or counted.
+  const unresolvedCount = isGo ? 0 : totalCount - completedCount + (decision?.notSure ?? 0);
   const isAllComplete = totalCount > 0 && completedCount === totalCount;
 
   // Reflects the assessment this report belongs to, which
@@ -289,6 +282,8 @@ export function EligibilityReport({
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-5">
+            {!isGo && (
+            <>
             <div className="flex items-center justify-between text-xs mb-1.5" style={{ fontFamily: "Cabin, sans-serif" }}>
               <span className="text-gray-500">
                 {completedCount} of {totalCount} actions completed
@@ -304,8 +299,10 @@ export function EligibilityReport({
                 <ActionItemRow key={item.id} item={item} onToggle={onToggleActionItem} />
               ))}
             </div>
+            </>
+            )}
 
-            <div className="space-y-2 mt-4">
+            <div className={`space-y-2 ${isGo ? "" : "mt-4"}`}>
               {passItems.map((item) => (
                 <PassTagRow key={item.id} item={item} />
               ))}

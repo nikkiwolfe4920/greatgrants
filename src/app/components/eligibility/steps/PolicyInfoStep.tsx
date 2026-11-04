@@ -1,7 +1,6 @@
 import { ShieldCheck, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { YesNoUnsureQuestion } from "@/app/components/eligibility/YesNoUnsure";
-import { GettingGrantReadyBanner } from "@/app/components/eligibility/GettingGrantReadyBanner";
 import { HelpfulTipAccordion } from "@/app/components/eligibility/HelpfulTipAccordion";
 import type { PolicyInfoState } from "@/data/eligibilityAssessmentData";
 
@@ -84,8 +83,6 @@ export function PolicyInfoStep({
       </div>
 
       <div className="pt-6 space-y-6">
-        <GettingGrantReadyBanner />
-
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm text-gray-600" style={{ fontFamily: "Cabin, sans-serif" }}>
             Please answer the following questions to help us assess policy and compliance.
