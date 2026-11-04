@@ -1,5 +1,6 @@
-import { ArrowLeft, ArrowRight, ListChecks } from "lucide-react";
+import { ArrowLeft, ArrowRight, CircleHelp, ListChecks } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/ui/tooltip";
 import {
   RequirementAnswerToggle,
   RequirementStatusBadge,
@@ -52,6 +53,7 @@ export function GrantRequirementsStep({
         </div>
       </div>
 
+      <TooltipProvider delayDuration={100}>
       <div className="pt-6" style={{ fontFamily: "Cabin, sans-serif" }}>
         <div className="flex items-baseline justify-between gap-3 flex-wrap">
           <h4 className="text-lg font-semibold text-gray-900">This grant&apos;s requirements</h4>
@@ -68,17 +70,36 @@ export function GrantRequirementsStep({
             <div key={req.id} className="rounded-xl border border-gray-200 p-5">
               <RequirementStatusBadge status={statuses[i]} />
               <p className="mt-3 text-base font-semibold text-gray-900 leading-snug">{req.question}</p>
-              <div className="mt-4">
+              <div className="mt-4 flex items-center gap-2">
                 <RequirementAnswerToggle
                   answer={answers[req.id]}
                   onChange={(a) => onAnswer(req.id, a)}
                   label={req.question}
                 />
+                {req.quote && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label="View citation from the NOFO"
+                        className="rounded-full text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+                      >
+                        <CircleHelp className="size-5" />
+                      </button>
+                    </TooltipTrigger>
+                    {/* z-[70]: the assessment modal sits at z-[60], above the tooltip's default z-50. */}
+                    <TooltipContent side="top" className="z-[70] max-w-sm space-y-1 px-3 py-2 text-left">
+                      <p className="italic">&ldquo;{req.quote}&rdquo;</p>
+                      {req.quoteSource && <p className="text-gray-300">{req.quoteSource}</p>}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
             </div>
           ))}
         </div>
       </div>
+      </TooltipProvider>
 
       <div className="pt-8">
         <div className="border-t border-gray-100 pt-[25px] flex items-center justify-between">
