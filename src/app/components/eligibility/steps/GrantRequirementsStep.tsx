@@ -1,33 +1,13 @@
 import { ArrowLeft, ArrowRight, ListChecks } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
-import type {
-  GrantRequirement,
-  RequirementAnswer,
-  RequirementStatus,
-} from "@/data/eligibilityAssessmentData";
+import {
+  RequirementAnswerToggle,
+  RequirementStatusBadge,
+  requirementStatus,
+} from "@/app/components/eligibility/RequirementStatus";
+import type { GrantRequirement, RequirementAnswer, RequirementStatus } from "@/data/eligibilityAssessmentData";
 
-const ANSWER_STATUS: Record<RequirementAnswer, RequirementStatus> = {
-  yes: "met",
-  no: "unmet",
-  unsure: "unknown",
-};
-
-const ANSWER_OPTIONS: { value: RequirementAnswer; label: string }[] = [
-  { value: "yes", label: "Yes" },
-  { value: "no", label: "No" },
-  { value: "unsure", label: "Not sure" },
-];
-
-const STATUS_STYLES: Record<RequirementStatus, { label: string; className: string }> = {
-  met: { label: "Met", className: "border-teal-200 bg-teal-50 text-teal-700" },
-  unmet: { label: "Unmet", className: "border-red-200 bg-red-50 text-red-600" },
-  unknown: { label: "Unknown", className: "border-gray-200 bg-white text-gray-700" },
-};
-
-/** A viewer's answer wins; otherwise the requirement's profile-derived starting status applies. */
-export function requirementStatus(req: GrantRequirement, answer?: RequirementAnswer): RequirementStatus {
-  return answer ? ANSWER_STATUS[answer] : req.initialStatus;
-}
+export { requirementStatus };
 
 interface GrantRequirementsStepProps {
   requirements: GrantRequirement[];
@@ -41,7 +21,7 @@ interface GrantRequirementsStepProps {
 
 /**
  * Step 3 — Grant Requirements. Lists what the grant's NOFO requires, each
- * tagged Met / Unmet / Unknown and answerable with Yes / No / Not sure.
+ * tagged Met / Unmet / Unresolved and answerable with Yes / No / Not sure.
  * Never blocks Continue: an unmet requirement is advice ("you likely can't
  * apply"), and the report below reflects it.
  */
@@ -76,70 +56,27 @@ export function GrantRequirementsStep({
         <div className="flex items-baseline justify-between gap-3 flex-wrap">
           <h4 className="text-lg font-semibold text-gray-900">This grant&apos;s requirements</h4>
           <span className="text-sm text-gray-500 whitespace-nowrap">
-            {count("met")} met · {count("unmet")} unmet · {count("unknown")} unknown
+            {count("met")} met · {count("unmet")} unmet · {count("unknown")} unresolved
           </span>
         </div>
         <p className="text-sm text-gray-600 mt-1">
-          Pulled from this grant&apos;s NOFO. If you can&apos;t meet one of these, you likely can&apos;t apply.
+          Pulled from this grant&apos;s NOFO. Answer each one — if you can&apos;t meet a requirement, you likely can&apos;t apply.
         </p>
 
         <div className="mt-5 space-y-4">
-          {requirements.map((req, i) => {
-            const status = statuses[i];
-            const style = STATUS_STYLES[status];
-            const answer = answers[req.id];
-            return (
-              <div key={req.id} className="rounded-xl border border-gray-200 p-5 flex flex-col sm:flex-row gap-4">
-                <div className="shrink-0">
-                  <span className={`inline-block rounded-full border px-3 py-1 text-sm ${style.className}`}>{style.label}</span>
-                </div>
-                <div className="min-w-0 flex-1 space-y-3">
-                  <p className="text-base font-medium text-gray-900 leading-snug">{req.title}</p>
-
-                  {(req.detail || req.answeredFromProfile) && (
-                    <div className="space-y-1">
-                      {req.detail && <p className="text-sm text-gray-500">{req.detail}</p>}
-                      {req.answeredFromProfile && (
-                        <p className="text-sm text-gray-500">Answered from your organization profile.</p>
-                      )}
-                    </div>
-                  )}
-
-                  {req.guidance && (
-                    <p className="text-sm text-gray-700">
-                      <span className="font-medium">What you can do:</span> {req.guidance}
-                    </p>
-                  )}
-
-                  {req.quote && (
-                    <blockquote className="border-l-2 border-gray-200 pl-3">
-                      <p className="text-sm italic text-gray-600">&ldquo;{req.quote}&rdquo;</p>
-                      {req.quoteSource && <p className="text-sm text-gray-500 mt-1">{req.quoteSource}</p>}
-                    </blockquote>
-                  )}
-
-                  <p className="text-base text-gray-900 leading-snug pt-1">{req.question}</p>
-
-                  <div role="radiogroup" aria-label="Your answer" className="inline-flex rounded-lg border border-gray-200 overflow-hidden divide-x divide-gray-200">
-                    {ANSWER_OPTIONS.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={answer === option.value}
-                        onClick={() => onAnswer(req.id, option.value)}
-                        className={`px-5 py-2.5 text-sm font-medium transition-colors ${
-                          answer === option.value ? "bg-teal-600 text-white" : "bg-white text-gray-900 hover:bg-gray-50"
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+          {requirements.map((req, i) => (
+            <div key={req.id} className="rounded-xl border border-gray-200 p-5">
+              <RequirementStatusBadge status={statuses[i]} />
+              <p className="mt-3 text-base font-semibold text-gray-900 leading-snug">{req.question}</p>
+              <div className="mt-4">
+                <RequirementAnswerToggle
+                  answer={answers[req.id]}
+                  onChange={(a) => onAnswer(req.id, a)}
+                  label={req.question}
+                />
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
 

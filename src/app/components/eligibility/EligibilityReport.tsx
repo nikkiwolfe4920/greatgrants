@@ -8,7 +8,17 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { OverallNofoFitScorecard, type FitCategory, type GoStatus } from "@/app/components/OverallNofoFitScorecard";
 import { SubRecipientCallout } from "@/app/components/eligibility/SubRecipientCallout";
-import type { ActionItem, PassItem } from "@/data/eligibilityAssessmentData";
+import {
+  RequirementAnswerToggle,
+  RequirementStatusBadge,
+  requirementStatus,
+} from "@/app/components/eligibility/RequirementStatus";
+import type {
+  ActionItem,
+  GrantRequirement,
+  PassItem,
+  RequirementAnswer,
+} from "@/data/eligibilityAssessmentData";
 
 interface ActionItemRowProps {
   item: ActionItem;
@@ -49,15 +59,49 @@ function ActionItemRow({ item, onToggle }: ActionItemRowProps) {
               Response stored
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-600">
-              <XCircle className="size-3" />
-              Unresolved
-            </span>
+            <RequirementStatusBadge status="unknown" />
           )}
         </div>
         <p className={`text-xs mt-1 ${item.completed ? "text-gray-400" : "text-gray-500"}`} style={{ fontFamily: "Cabin, sans-serif" }}>
           {item.description}
         </p>
+      </div>
+    </div>
+  );
+}
+
+interface RequirementRowProps {
+  requirement: GrantRequirement;
+  answer?: RequirementAnswer;
+  onAnswer: (id: string, answer: RequirementAnswer) => void;
+}
+
+/**
+ * A Step 3 requirement carried into the report. Same Met / Unmet /
+ * Unresolved status as Step 3, editable in place with the same Yes / No /
+ * Not sure control. A Met (Yes) requirement reads "Response stored".
+ */
+function RequirementRow({ requirement, answer, onAnswer }: RequirementRowProps) {
+  const status = requirementStatus(requirement, answer);
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-[17px] flex items-start gap-4">
+      <span className="mt-0.5 shrink-0" aria-hidden="true">
+        {status === "met" ? (
+          <CheckCircle2 className="size-5 text-teal-600" />
+        ) : status === "unmet" ? (
+          <XCircle className="size-5 text-amber-600" />
+        ) : (
+          <Circle className="size-5 text-gray-300" />
+        )}
+      </span>
+      <div className="flex-1 min-w-0 space-y-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <RequirementStatusBadge status={status} label={status === "met" ? "Response stored" : undefined} />
+        </div>
+        <p className="text-sm font-semibold text-gray-900 leading-snug" style={{ fontFamily: "Cabin, sans-serif" }}>
+          {requirement.question}
+        </p>
+        <RequirementAnswerToggle answer={answer} onChange={(a) => onAnswer(requirement.id, a)} label={requirement.question} />
       </div>
     </div>
   );
@@ -127,6 +171,10 @@ interface EligibilityReportProps {
   onRequestToJoin?: () => void;
   /** Restarts the assessment from Step 1 — drives the "Retake assessment" link next to "Start AI Draft". */
   onRetake?: () => void;
+  /** Step 3 requirements to carry into the Action Items list, with the viewer's answers and an updater. */
+  requirements?: GrantRequirement[];
+  requirementAnswers?: Record<string, RequirementAnswer | undefined>;
+  onAnswerRequirement?: (id: string, answer: RequirementAnswer) => void;
 }
 
 /**
@@ -153,9 +201,17 @@ export function EligibilityReport({
   overallScore,
   status,
   onRequestToJoin,
+  onRetake,
+  requirements = [],
+  requirementAnswers = {},
+  onAnswerRequirement,
 }: EligibilityReportProps) {
-  const completedCount = actionItems.filter((item) => item.completed).length;
-  const totalCount = actionItems.length;
+  // A requirement counts as complete once it's Met (answered Yes).
+  const metRequirements = requirements.filter(
+    (r) => requirementStatus(r, requirementAnswers[r.id]) === "met",
+  ).length;
+  const completedCount = actionItems.filter((item) => item.completed).length + metRequirements;
+  const totalCount = actionItems.length + requirements.length;
   const percent = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
   const passCount = passItems.length;
   const unresolvedCount = totalCount - completedCount;
@@ -199,7 +255,7 @@ export function EligibilityReport({
                 <CheckCircle2 className="size-3" />
                 {passCount} Pass
               </span>
-              <span className="inline-flex items-center gap-1 rounded bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-700">
+              <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-semibold text-gray-600">
                 <XCircle className="size-3" />
                 {unresolvedCount} Unresolved
               </span>
@@ -217,6 +273,15 @@ export function EligibilityReport({
             </div>
 
             <div className="space-y-3">
+              {onAnswerRequirement &&
+                requirements.map((req) => (
+                  <RequirementRow
+                    key={req.id}
+                    requirement={req}
+                    answer={requirementAnswers[req.id]}
+                    onAnswer={onAnswerRequirement}
+                  />
+                ))}
               {actionItems.map((item) => (
                 <ActionItemRow key={item.id} item={item} onToggle={onToggleActionItem} />
               ))}

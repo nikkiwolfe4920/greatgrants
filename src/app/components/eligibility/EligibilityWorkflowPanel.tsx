@@ -318,6 +318,9 @@ export function EligibilityWorkflowPanel({
         status={reportStatus}
         onRequestToJoin={onRequestToJoin}
         onRetake={handleRetake}
+        requirements={startWithReport ? undefined : grantRequirements}
+        requirementAnswers={requirementAnswers}
+        onAnswerRequirement={(id, answer) => setRequirementAnswers((prev) => ({ ...prev, [id]: answer }))}
       />
       </div>
     );
