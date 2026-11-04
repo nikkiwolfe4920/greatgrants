@@ -1,10 +1,11 @@
-import { ClipboardList, ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { useId, useState, type ReactNode } from "react";
+import { ClipboardList, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { YesNoUnsureQuestion } from "@/app/components/eligibility/YesNoUnsure";
 import { HelpfulTipAccordion } from "@/app/components/eligibility/HelpfulTipAccordion";
-import type { FinancialInfoState } from "@/data/eligibilityAssessmentData";
+import { financialInfoOnFileKeys, type FinancialInfoState, type YesNoUnsure } from "@/data/eligibilityAssessmentData";
 
 const FINANCIAL_TIP = (
   <>
@@ -39,6 +40,67 @@ function ConfirmedBadge() {
   );
 }
 
+type FinancialKey = keyof FinancialInfoState;
+
+/** "Your financial system can …" style statement for a stored Yes / No / Unsure answer. */
+function yesNoStatement(answer: YesNoUnsure, yes: string, no: string, unsure: string) {
+  return answer === "yes" ? yes : answer === "no" ? no : unsure;
+}
+
+/**
+ * Collapsed-by-default summary of answers already stored from the
+ * organization profile. "View / Edit Answers" drawers the full questions out
+ * (same radio-card pattern as the rest of the step) with their answers
+ * pre-selected, so nothing is asked twice but everything stays editable.
+ */
+function StoredAnswersModule({
+  id,
+  expanded,
+  onToggle,
+  statements,
+  children,
+}: {
+  id: string;
+  expanded: boolean;
+  onToggle: () => void;
+  statements: string[];
+  children: ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-gray-50 p-5" style={{ fontFamily: "Cabin, sans-serif" }}>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="min-w-0 flex-1 basis-64">
+          <h4 className="text-base font-semibold text-gray-900">
+            You&apos;ve answered {statements.length} {statements.length === 1 ? "question" : "questions"} that
+            we&apos;ve stored.
+          </h4>
+          {!expanded && (
+            <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm text-gray-700 marker:text-gray-400">
+              {statements.map((statement) => (
+                <li key={statement}>{statement}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onToggle}
+          aria-expanded={expanded}
+          aria-controls={id}
+          className="gap-1.5 bg-white"
+        >
+          {expanded ? "Hide answers" : "View / Edit Answers"}
+          <ChevronDown className={`size-4 transition-transform ${expanded ? "rotate-180" : ""}`} aria-hidden="true" />
+        </Button>
+      </div>
+      <div id={id} hidden={!expanded}>
+        {expanded && <div className="mt-6 space-y-6 border-t border-gray-200 pt-6">{children}</div>}
+      </div>
+    </div>
+  );
+}
+
 interface FinancialInfoStepProps {
   value: FinancialInfoState;
   onChange: (value: FinancialInfoState) => void;
@@ -63,6 +125,145 @@ const REGISTRATION_OPTIONS: { value: FinancialInfoState["orgRegistrationType"]; 
 export function FinancialInfoStep({ value, onChange, onBack, onContinue, hideContinue = false }: FinancialInfoStepProps) {
   const set = <K extends keyof FinancialInfoState>(key: K, val: FinancialInfoState[K]) =>
     onChange({ ...value, [key]: val });
+
+  const questions: Record<FinancialKey, ReactNode> = {
+    orgRegistrationType: (
+      <div>
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <Label className="block text-sm font-medium text-gray-900">
+            How is the organization registered? <span className="text-red-500">*</span>
+          </Label>
+          {value.orgRegistrationType !== "" && <ConfirmedBadge />}
+        </div>
+        <div className="mb-3">
+          <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
+        </div>
+        <div className="flex flex-col gap-2">
+          {REGISTRATION_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => set("orgRegistrationType", option.value)}
+              className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
+                value.orgRegistrationType === option.value
+                  ? "border-teal-600 bg-teal-50 text-gray-900"
+                  : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                    value.orgRegistrationType === option.value ? "border-teal-600 bg-teal-600" : "border-gray-300 bg-white"
+                  }`}
+                >
+                  {value.orgRegistrationType === option.value && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+                <span className="text-sm font-medium" style={{ fontFamily: "Cabin, sans-serif" }}>
+                  {option.label}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    ),
+    cfr200Compliant: (
+      <YesNoUnsureQuestion
+        question="Is the organization compliant with a 2 CFR 200 audit requirement (including a Single Audit)?"
+        value={value.cfr200Compliant}
+        onChange={(v) => set("cfr200Compliant", v)}
+        tip={<HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>}
+      />
+    ),
+    financialSystemTracking: (
+      <YesNoUnsureQuestion
+        question="Can the organization's financial system track expenses by individual grant and manage federal drawdowns?"
+        value={value.financialSystemTracking}
+        onChange={(v) => set("financialSystemTracking", v)}
+        tip={<HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>}
+      />
+    ),
+    timeEffortReporting: (
+      <YesNoUnsureQuestion
+        question="Can the organization's financial system support time and effort reporting?"
+        value={value.timeEffortReporting}
+        onChange={(v) => set("timeEffortReporting", v)}
+        tip={<HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>}
+      />
+    ),
+    indirectCostAgreement: (
+      <div>
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <Label htmlFor="indirectCostAgreement" className="block text-sm font-medium text-gray-900">
+            Does the organization have a Negotiated Indirect Cost Rate Agreement (NICRA), or will it use the 10% de minimis rate?{" "}
+            <span className="text-red-500">*</span>
+          </Label>
+          {value.indirectCostAgreement.trim() !== "" && <ConfirmedBadge />}
+        </div>
+        <div className="mb-3">
+          <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
+        </div>
+        <Input
+          id="indirectCostAgreement"
+          value={value.indirectCostAgreement}
+          onChange={(e) => set("indirectCostAgreement", e.target.value)}
+          placeholder='e.g., "NICRA at 35%" or "De minimis 15%"'
+        />
+      </div>
+    ),
+    costShareLiquidity: (
+      <YesNoUnsureQuestion
+        question="Does the organization have liquidity or committed financial resources to meet cost-share/matching requirements?"
+        value={value.costShareLiquidity}
+        onChange={(v) => set("costShareLiquidity", v)}
+        tip={<HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>}
+      />
+    ),
+  };
+
+  const order: FinancialKey[] = [
+    "orgRegistrationType",
+    "cfr200Compliant",
+    "financialSystemTracking",
+    "timeEffortReporting",
+    "indirectCostAgreement",
+    "costShareLiquidity",
+  ];
+  // Answers already on file stay tucked into a collapsed module so the step
+  // only asks for what's still needed.
+  const onFileKeys = financialInfoOnFileKeys.filter((k) => value[k] !== "");
+  const [storedOpen, setStoredOpen] = useState(false);
+  const storedId = useId();
+  const registrationLabel = REGISTRATION_OPTIONS.find((o) => o.value === value.orgRegistrationType)?.label ?? "";
+  const statementFor: Record<FinancialKey, string> = {
+    orgRegistrationType: `Your organization is registered as ${registrationLabel}`,
+    cfr200Compliant: yesNoStatement(
+      value.cfr200Compliant,
+      "Your organization is compliant with a 2 CFR 200 audit requirement",
+      "Your organization is not compliant with a 2 CFR 200 audit requirement",
+      "You're not sure whether your organization meets 2 CFR 200 audit requirements",
+    ),
+    financialSystemTracking: yesNoStatement(
+      value.financialSystemTracking,
+      "Your financial system can track expenses by individual grant and manage federal drawdowns",
+      "Your financial system can't track expenses by individual grant or manage federal drawdowns",
+      "You're not sure your financial system can track expenses by grant and manage federal drawdowns",
+    ),
+    timeEffortReporting: yesNoStatement(
+      value.timeEffortReporting,
+      "Your financial system supports time and effort reporting",
+      "Your financial system doesn't support time and effort reporting",
+      "You're not sure your financial system supports time and effort reporting",
+    ),
+    indirectCostAgreement: `Your indirect cost rate: ${value.indirectCostAgreement}`,
+    costShareLiquidity: yesNoStatement(
+      value.costShareLiquidity,
+      "Your organization has the liquidity to meet cost-share requirements",
+      "Your organization doesn't have the liquidity to meet cost-share requirements",
+      "You're not sure your organization can meet cost-share requirements",
+    ),
+  };
+  const storedStatements = onFileKeys.map((k) => statementFor[k]);
 
   const confirmedFlags = [
     value.orgRegistrationType !== "",
@@ -112,91 +313,22 @@ export function FinancialInfoStep({ value, onChange, onBack, onContinue, hideCon
           </span>
         </div>
 
-        <div>
-          <div className="flex items-start justify-between gap-3 mb-3">
-            <Label className="block text-sm font-medium text-gray-900">
-              How is the organization registered? <span className="text-red-500">*</span>
-            </Label>
-            {value.orgRegistrationType !== "" && <ConfirmedBadge />}
-          </div>
-          <div className="mb-3">
-            <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
-          </div>
-          <div className="flex flex-col gap-2">
-            {REGISTRATION_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => set("orgRegistrationType", option.value)}
-                className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                  value.orgRegistrationType === option.value
-                    ? "border-teal-600 bg-teal-50 text-gray-900"
-                    : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                      value.orgRegistrationType === option.value ? "border-teal-600 bg-teal-600" : "border-gray-300 bg-white"
-                    }`}
-                  >
-                    {value.orgRegistrationType === option.value && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </div>
-                  <span className="text-sm font-medium" style={{ fontFamily: "Cabin, sans-serif" }}>
-                    {option.label}
-                  </span>
-                </div>
-              </button>
+        {onFileKeys.length > 0 && (
+          <StoredAnswersModule
+            id={storedId}
+            expanded={storedOpen}
+            onToggle={() => setStoredOpen((o) => !o)}
+            statements={storedStatements}
+          >
+            {onFileKeys.map((k) => (
+              <div key={k}>{questions[k]}</div>
             ))}
-          </div>
-        </div>
+          </StoredAnswersModule>
+        )}
 
-        <YesNoUnsureQuestion
-          question="Is the organization compliant with a 2 CFR 200 audit requirement (including a Single Audit)?"
-          value={value.cfr200Compliant}
-          onChange={(v) => set("cfr200Compliant", v)}
-          tip={<HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>}
-        />
-
-        <YesNoUnsureQuestion
-          question="Can the organization's financial system track expenses by individual grant and manage federal drawdowns?"
-          value={value.financialSystemTracking}
-          onChange={(v) => set("financialSystemTracking", v)}
-          tip={<HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>}
-        />
-
-        <YesNoUnsureQuestion
-          question="Can the organization's financial system support time and effort reporting?"
-          value={value.timeEffortReporting}
-          onChange={(v) => set("timeEffortReporting", v)}
-          tip={<HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>}
-        />
-
-        <div>
-          <div className="flex items-start justify-between gap-3 mb-2">
-            <Label htmlFor="indirectCostAgreement" className="block text-sm font-medium text-gray-900">
-              Does the organization have a Negotiated Indirect Cost Rate Agreement (NICRA), or will it use the 10% de minimis rate?{" "}
-              <span className="text-red-500">*</span>
-            </Label>
-            {value.indirectCostAgreement.trim() !== "" && <ConfirmedBadge />}
-          </div>
-          <div className="mb-3">
-            <HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>
-          </div>
-          <Input
-            id="indirectCostAgreement"
-            value={value.indirectCostAgreement}
-            onChange={(e) => set("indirectCostAgreement", e.target.value)}
-            placeholder='e.g., "NICRA at 35%" or "De minimis 15%"'
-          />
-        </div>
-
-        <YesNoUnsureQuestion
-          question="Does the organization have liquidity or committed financial resources to meet cost-share/matching requirements?"
-          value={value.costShareLiquidity}
-          onChange={(v) => set("costShareLiquidity", v)}
-          tip={<HelpfulTipAccordion>{FINANCIAL_TIP}</HelpfulTipAccordion>}
-        />
+        {order.filter((k) => !onFileKeys.includes(k)).map((k) => (
+          <div key={k}>{questions[k]}</div>
+        ))}
       </div>
 
       <div className="pt-8">
