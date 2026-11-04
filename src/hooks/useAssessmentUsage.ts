@@ -16,7 +16,6 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
 
 const STORAGE_KEY = "assessmentUsage";
 const UPDATE_EVENT = "assessmentUsageUpdated";
@@ -88,18 +87,6 @@ export function useAssessmentUsage() {
     setRecords(updated);
     window.dispatchEvent(new Event(UPDATE_EVENT));
 
-    const remainingAfter = Math.max(0, ASSESSMENT_LIMIT - updated.length);
-    if (remainingAfter === 0) {
-      toast("Assessment limit reached", {
-        description: `You've now used all ${ASSESSMENT_LIMIT} eligibility assessments included in your plan this period. Upgrade to run more.`,
-        duration: 5000,
-      });
-    } else {
-      toast.success("Assessment marked as used", {
-        description: `${updated.length} of ${ASSESSMENT_LIMIT} assessments used this period — ${remainingAfter} remaining.`,
-        duration: 4000,
-      });
-    }
   }, []);
 
   return { records, usedCount, limit: ASSESSMENT_LIMIT, remaining, isExhausted, recordCompletion };

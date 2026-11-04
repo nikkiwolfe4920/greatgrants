@@ -16,7 +16,6 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
-  AlertTriangle,
   MinusCircle,
   PlusCircle,
   MoreVertical,
@@ -42,12 +41,11 @@ import {
 } from "@/app/components/ui/dropdown-menu";
 import { EligibilityWorkflowPanel } from "@/app/components/eligibility/EligibilityWorkflowPanel";
 import { EligibilityLoader } from "@/app/components/eligibility/EligibilityLoader";
-import { AssessmentUsageMeter } from "@/app/components/eligibility/AssessmentUsageMeter";
 import { ApplicationLoadingModal } from "@/app/components/ApplicationLoadingModal";
 import { StopWatchingDialog } from "@/app/components/StopWatchingDialog";
 import { useGrantAlerts } from "@/hooks/useGrantAlerts";
 import { useDismissedGrants } from "@/hooks/useDismissedGrants";
-import { useAssessmentUsage, resetAssessmentUsage } from "@/hooks/useAssessmentUsage";
+import { resetAssessmentUsage } from "@/hooks/useAssessmentUsage";
 import {
   subRecipientCategories,
   subRecipientRisks,
@@ -146,8 +144,8 @@ function formatTimeAgo(date: Date | null): string {
 }
 
 function assessmentCtaLabel(hasStarted: boolean, isChecked: boolean): string {
-  if (isChecked) return "View Eligibility Assessment";
-  return hasStarted ? "Continue Eligibility Assessment" : "Start Eligibility Assessment";
+  if (isChecked) return "View Eligibility";
+  return hasStarted ? "Continue Eligibility" : "Check Eligibility";
 }
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
@@ -185,9 +183,6 @@ function EligibleActivitiesSection() {
 
 interface CheckYourEligibilityCardProps {
   onStart: () => void;
-  usedCount: number;
-  limit: number;
-  isExhausted: boolean;
   /** Locked /org-detail-demo walkthrough — see EligibilityAssessmentPage. */
   demoLocked?: boolean;
   /**
@@ -202,75 +197,20 @@ interface CheckYourEligibilityCardProps {
    * exhausted "Upgrade Plan" state — the demo isn't capped at N runs. See
    * EligibilityAssessmentPage.
    */
-  hideAssessmentUsage?: boolean;
-  /** Work in progress exists — the CTA reads "Continue Eligibility Assessment" instead of "Start …". */
+  /** Work in progress exists — the CTA reads "Continue Eligibility" instead of "Check Eligibility". */
   hasStarted?: boolean;
-  /** The eligibility check has completed — the CTA reads "View Eligibility Assessment". */
+  /** The eligibility check has completed — the CTA reads "View Eligibility". */
   isChecked?: boolean;
 }
 
 function CheckYourEligibilityCard({
   onStart,
-  usedCount,
-  limit,
-  isExhausted,
   demoLocked = false,
   unlockEligibilityAssessment = false,
-  hideAssessmentUsage = false,
   hasStarted = false,
   isChecked = false,
 }: CheckYourEligibilityCardProps) {
   const startLocked = demoLocked && !unlockEligibilityAssessment;
-  if (isExhausted && !hideAssessmentUsage && !hasStarted) {
-    return (
-      <motion.div
-        key="exhausted"
-        initial={{ opacity: 0, x: 24 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -24 }}
-        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        className="bg-white rounded-xl border border-gray-200 p-6"
-      >
-        <div className="rounded-xl bg-red-50 border border-red-100 p-6">
-          <div className="flex items-start gap-4">
-            <div className="size-12 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
-              <AlertTriangle className="size-6 text-red-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-                You&apos;ve used all {limit} eligibility assessments
-              </h4>
-              <p className="text-sm text-gray-600 mt-2 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
-                Your plan includes {limit} eligibility assessments per billing period, and you&apos;ve used{" "}
-                {usedCount} of {limit}. Upgrade your plan to run more assessments — including this one.
-              </p>
-              <div className="flex items-center gap-3 mt-4">
-                {demoLocked ? (
-                  <Button
-                    onClick={(e) => e.preventDefault()}
-                    aria-disabled="true"
-                    title="This is a locked demo — this button can't navigate away"
-                    className="bg-red-600 text-white gap-2 cursor-not-allowed hover:bg-red-600"
-                  >
-                    Upgrade Plan
-                    <ArrowRight className="size-4" />
-                  </Button>
-                ) : (
-                  <Button asChild className="bg-red-600 hover:bg-red-700 text-white gap-2">
-                    <Link to="/subscribe/upgrade-modal">
-                      Upgrade Plan
-                      <ArrowRight className="size-4" />
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
-
   return (
     <motion.div
       key="default"
@@ -308,13 +248,11 @@ function CheckYourEligibilityCard({
             >
               <Sparkles className="size-4" />
               {assessmentCtaLabel(hasStarted, isChecked)}
-              <ArrowRight className="size-4" />
             </Button>
             <span className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
               ~5 minutes • 6 steps
             </span>
           </div>
-          {!hideAssessmentUsage && <AssessmentUsageMeter usedCount={usedCount} limit={limit} compact />}
         </div>
       </div>
     </motion.div>
@@ -366,6 +304,7 @@ function ActionButtons({
         className={`${assessmentClassName} ${assessmentLocked ? "cursor-not-allowed" : ""}`}
       >
         {assessmentCtaLabel(hasStarted, isChecked)}
+        <Sparkles className="size-4" />
       </Button>
       <Button
         size={size}
@@ -502,7 +441,6 @@ export function EligibilityAssessmentPage({
   // Subscription-wide eligibility assessment usage — shown on the entry
   // card before starting and passed through to the workflow so it stays
   // visible during and after the run too.
-  const { usedCount, limit, isExhausted } = useAssessmentUsage();
 
   // Stop Watching Dialog State — confirmation shown before turning off Watch.
   const [stopWatchingDialogOpen, setStopWatchingDialogOpen] = useState(false);
@@ -1083,12 +1021,8 @@ export function EligibilityAssessmentPage({
                 <div id="eligibility-assessment" className="scroll-mt-8">
                   <CheckYourEligibilityCard
                     onStart={openEligibilityAssessment}
-                    usedCount={usedCount}
-                    limit={limit}
-                    isExhausted={isExhausted}
                     demoLocked={demoLocked}
                     unlockEligibilityAssessment={unlockEligibilityAssessment}
-                    hideAssessmentUsage={hideAssessmentUsage}
                     hasStarted={hasStarted}
                     isChecked={isChecked}
                   />
