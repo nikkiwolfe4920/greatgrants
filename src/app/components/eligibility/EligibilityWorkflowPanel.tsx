@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { StepperHeader } from "@/app/components/eligibility/StepperHeader";
-import { AssessmentUsageMeter } from "@/app/components/eligibility/AssessmentUsageMeter";
 import { ProgramAssociationStep } from "@/app/components/eligibility/steps/ProgramAssociationStep";
 import { OrganizationDetailsStep } from "@/app/components/eligibility/steps/OrganizationDetailsStep";
 import { GrantRequirementsStep } from "@/app/components/eligibility/steps/GrantRequirementsStep";
@@ -129,7 +128,7 @@ export function EligibilityWorkflowPanel({
   const [showReport, setShowReport] = useState(startWithReport);
   const [actionItems, setActionItems] = useState<ActionItem[]>(eligibilityActionItems);
   const submitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { usedCount, limit, recordCompletion } = useAssessmentUsage();
+  const { recordCompletion } = useAssessmentUsage();
   // Only the initial `startWithReport` mount should skip recordCompletion —
   // any report reached afterwards (retaking the assessment) is real usage.
   const skipNextUsageRecordRef = useRef(startWithReport);
@@ -326,15 +325,6 @@ export function EligibilityWorkflowPanel({
 
   return wrap(
     <div className="space-y-6">
-      {!hideAssessmentUsage && (
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <p className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
-            Completing this assessment will use 1 of your plan's included assessments.
-          </p>
-          <AssessmentUsageMeter usedCount={usedCount} limit={limit} compact />
-        </div>
-      )}
-
       <StepperHeader steps={STEP_LABELS.map((s) => ({ label: s.label }))} currentStep={currentStep} />
 
       {currentStep === 1 && (
