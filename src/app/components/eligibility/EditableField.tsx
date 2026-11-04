@@ -76,7 +76,6 @@ export function FilledFieldRow({ label, value, onSave, multiline = false }: Fill
 
   return (
     <div className="bg-gray-50 border border-gray-200 rounded-lg p-[13px] flex items-center gap-3">
-      <CheckCircle2 className="size-5 text-teal-600 shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
           {label}
@@ -88,17 +87,20 @@ export function FilledFieldRow({ label, value, onSave, multiline = false }: Fill
           {value}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={() => {
-          setDraft(value);
-          setIsEditing(true);
-        }}
-        aria-label={`Edit ${label}`}
-        className="shrink-0 text-gray-400 hover:text-gray-600"
-      >
-        <SquarePen className="size-5" />
-      </button>
+      <div className="flex items-center gap-3 shrink-0">
+        <CheckCircle2 className="size-5 text-teal-600" />
+        <button
+          type="button"
+          onClick={() => {
+            setDraft(value);
+            setIsEditing(true);
+          }}
+          aria-label={`Edit ${label}`}
+          className="shrink-0 text-gray-400 hover:text-gray-600"
+        >
+          <SquarePen className="size-5" />
+        </button>
+      </div>
     </div>
   );
 }
