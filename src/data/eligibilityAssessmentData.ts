@@ -135,14 +135,27 @@ export interface FinancialInfoState {
   costShareLiquidity: YesNoUnsure;
 }
 
+/**
+ * Answers already on file from the organization profile — pre-filled on the
+ * Financial Info step and grouped into its collapsed "stored answers"
+ * module instead of being asked again.
+ */
 export const defaultFinancialInfo: FinancialInfoState = {
-  orgRegistrationType: "",
+  orgRegistrationType: "501c3-church",
   cfr200Compliant: "",
-  financialSystemTracking: "",
-  timeEffortReporting: "",
-  indirectCostAgreement: "",
+  financialSystemTracking: "yes",
+  timeEffortReporting: "yes",
+  indirectCostAgreement: "De minimis 15%",
   costShareLiquidity: "",
 };
+
+/** The Financial Info questions answered from the profile (see defaultFinancialInfo). */
+export const financialInfoOnFileKeys: (keyof FinancialInfoState)[] = [
+  "orgRegistrationType",
+  "financialSystemTracking",
+  "timeEffortReporting",
+  "indirectCostAgreement",
+];
 
 export interface PolicyInfoState {
   complianceTrackingSoftware: YesNoUnsure;
