@@ -140,6 +140,8 @@ export function EligibilityWorkflowPanel({
   }, []);
 
   const canContinueStep1 = programId !== "";
+  // The Unique Entity Identifier is required to continue past Organization Details.
+  const ueiProvided = orgFields.some((f) => f.key === "uei" && f.filled);
 
   const started = canContinueStep1 || currentStep > 1 || showReport;
   useEffect(() => {
@@ -241,7 +243,7 @@ export function EligibilityWorkflowPanel({
     currentStep === 1
       ? { label: "Continue", enabled: canContinueStep1, onClick: () => advance(2) }
       : currentStep === 2
-        ? { label: "Continue", enabled: true, onClick: () => advance(3) }
+        ? { label: "Continue", enabled: ueiProvided, onClick: () => advance(3) }
         : currentStep === 3
           ? { label: "Continue", enabled: true, onClick: () => advance(4) }
           : currentStep === 4
@@ -397,6 +399,7 @@ export function EligibilityWorkflowPanel({
           }}
           demoLocked={demoLocked}
           hideContinue={modal}
+          canContinue={ueiProvided}
         />
       )}
 

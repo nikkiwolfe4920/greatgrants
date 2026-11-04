@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CheckCircle2, SquarePen } from "lucide-react";
 import { Input } from "@/app/components/ui/input";
 import { Textarea } from "@/app/components/ui/textarea";
@@ -108,6 +108,8 @@ export function FilledFieldRow({ label, value, onSave, multiline = false }: Fill
 interface MissingFieldRowProps {
   label: string;
   onSave: (value: string) => void;
+  /** Marks the field required (red asterisk, aria-required). */
+  required?: boolean;
 }
 
 /**
@@ -116,24 +118,61 @@ interface MissingFieldRowProps {
  * The input is blank and open directly in the yellow module — no "ADD"
  * button/click-to-reveal step.
  */
-export function MissingFieldRow({ label, onSave }: MissingFieldRowProps) {
+export function MissingFieldRow({ label, onSave, required = false }: MissingFieldRowProps) {
   const [draft, setDraft] = useState("");
+  const [focused, setFocused] = useState(false);
+  const rowRef = useRef<HTMLDivElement>(null);
+  // Save / Cancel stay up while the input is selected or holds an unsaved entry.
+  const active = focused || draft !== "";
+  const canSave = draft.trim() !== "";
+
+  const commit = () => {
+    if (canSave) onSave(draft.trim());
+  };
+  const cancel = () => {
+    setDraft("");
+    rowRef.current?.querySelector("input")?.blur();
+  };
 
   return (
-    <div className="bg-amber-50 border border-amber-200 rounded-lg p-[13px]">
-      <p className="text-xs text-gray-500 mb-1" style={{ fontFamily: "Cabin, sans-serif" }}>
+    <div ref={rowRef} className="bg-amber-50 border border-amber-200 rounded-lg p-[13px]">
+      <label htmlFor={`missing-${label}`} className="block text-xs text-gray-500 mb-1" style={{ fontFamily: "Cabin, sans-serif" }}>
         {label}
-      </p>
+        {required && <span className="text-red-500"> *</span>}
+      </label>
       <Input
+        id={`missing-${label}`}
         value={draft}
+        required={required}
+        aria-required={required || undefined}
         placeholder={`Enter ${label.toLowerCase()}`}
         onChange={(e) => setDraft(e.target.value)}
-        onBlur={() => onSave(draft.trim())}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") onSave(draft.trim());
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") cancel();
         }}
-        className="h-8 bg-white border-amber-300"
+        className={`bg-white ${active ? "border-teal-600 focus-visible:border-teal-600 focus-visible:ring-teal-600/30" : "border-amber-300"}`}
       />
+      {active && (
+        <div className="flex justify-end gap-2 mt-3">
+          {/* preventDefault on mousedown keeps focus in the input so the buttons don't vanish before the click lands. */}
+          <Button type="button" size="sm" variant="outline" onMouseDown={(e) => e.preventDefault()} onClick={cancel} className="bg-white border-gray-300">
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={!canSave}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={commit}
+            className="bg-teal-600 hover:bg-teal-700 text-white"
+          >
+            Save
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
