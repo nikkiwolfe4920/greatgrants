@@ -1,7 +1,7 @@
 import { Users, AlertTriangle, Info, ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "@/app/components/ui/button";
-import { FilledFieldRow, MissingFieldRow } from "@/app/components/eligibility/EditableField";
+import { EmptyFieldRow, FilledFieldRow, MissingFieldRow } from "@/app/components/eligibility/EditableField";
 import type { OrgDetailField } from "@/data/eligibilityAssessmentData";
 
 interface OrganizationDetailsStepProps {
@@ -37,10 +37,13 @@ export function OrganizationDetailsStep({
   demoLocked = false,
   hideContinue = false,
 }: OrganizationDetailsStepProps) {
-  const missingFields = fields.filter((f) => !f.filled);
-  const filledByGroup = GROUP_ORDER.map((group) => ({
+  // Only the UEI is a headline "Missing Details" item (yellow, open input).
+  // Every other empty field sits in its own group as a compact "Missing
+  // details" row with an edit icon.
+  const missingFields = fields.filter((f) => !f.filled && f.key === "uei");
+  const groups = GROUP_ORDER.map((group) => ({
     group,
-    fields: fields.filter((f) => f.filled && f.group === group),
+    fields: fields.filter((f) => f.group === group && (f.filled || f.key !== "uei")),
   })).filter((g) => g.fields.length > 0);
 
   return (
@@ -85,13 +88,21 @@ export function OrganizationDetailsStep({
             </div>
           )}
 
-          {filledByGroup.map(({ group, fields: groupFields }) => (
+          {groups.map(({ group, fields: groupFields }) => (
             <div key={group}>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-[0.3px] pb-2" style={{ fontFamily: "Cabin, sans-serif" }}>
                 {GROUP_LABELS[group]}
               </p>
               <div className="space-y-2">
-                {groupFields.map((field) => (
+                {groupFields.map((field) =>
+                  !field.filled ? (
+                    <EmptyFieldRow
+                      key={field.key}
+                      label={field.label}
+                      multiline={field.type === "textarea"}
+                      onSave={(value) => onUpdateField(field.key, value)}
+                    />
+                  ) : (
                   <FilledFieldRow
                     key={field.key}
                     label={field.label}
@@ -99,7 +110,8 @@ export function OrganizationDetailsStep({
                     multiline={field.type === "textarea"}
                     onSave={(value) => onUpdateField(field.key, value)}
                   />
-                ))}
+                  )
+                )}
               </div>
             </div>
           ))}
