@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle2, Pencil, SquarePen } from "lucide-react";
+import { CheckCircle2, SquarePen } from "lucide-react";
 import { Input } from "@/app/components/ui/input";
 import { Textarea } from "@/app/components/ui/textarea";
 import { Button } from "@/app/components/ui/button";
@@ -20,7 +20,7 @@ interface FilledFieldRowProps {
 /**
  * A field pulled in from the org profile that already has a value. Reads
  * as a plain success row (label + value + green check) at rest; hovering
- * reveals a pencil (Figma node 12683:25237) that opens an inline text
+ * shows an always-visible edit icon (same as the empty-field row) that opens an inline text
  * input in place, so editing never leaves this row. Narrative fields
  * (`multiline`) edit as a textarea with a 0/5000 word counter.
  */
@@ -75,7 +75,8 @@ export function FilledFieldRow({ label, value, onSave, multiline = false }: Fill
   }
 
   return (
-    <div className="group bg-gray-50 border border-gray-100 rounded-lg p-[13px] flex items-start justify-between gap-3">
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-[13px] flex items-center gap-3">
+      <CheckCircle2 className="size-5 text-teal-600 shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
           {label}
@@ -87,20 +88,17 @@ export function FilledFieldRow({ label, value, onSave, multiline = false }: Fill
           {value}
         </p>
       </div>
-      <div className="flex items-center gap-2 shrink-0 pl-2">
-        <CheckCircle2 className="size-5 text-teal-600" />
-        <button
-          type="button"
-          onClick={() => {
-            setDraft(value);
-            setIsEditing(true);
-          }}
-          aria-label={`Edit ${label}`}
-          className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
-        >
-          <Pencil className="size-3.5" />
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => {
+          setDraft(value);
+          setIsEditing(true);
+        }}
+        aria-label={`Edit ${label}`}
+        className="shrink-0 text-gray-400 hover:text-gray-600"
+      >
+        <SquarePen className="size-5" />
+      </button>
     </div>
   );
 }

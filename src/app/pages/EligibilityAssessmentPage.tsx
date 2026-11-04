@@ -299,8 +299,8 @@ function ActionButtons({
         title={assessmentLocked ? "This is a locked demo — the assessment doesn't run here" : undefined}
         className={`${assessmentClassName} ${assessmentLocked ? "cursor-not-allowed" : ""}`}
       >
-        {assessmentCtaLabel(hasStarted, isChecked)}
         <Sparkles className="size-4" />
+        {assessmentCtaLabel(hasStarted, isChecked)}
       </Button>
       <Button
         size={size}
