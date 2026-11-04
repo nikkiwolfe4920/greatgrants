@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle2, Pencil } from "lucide-react";
+import { CheckCircle2, Pencil, SquarePen } from "lucide-react";
 import { Input } from "@/app/components/ui/input";
 import { Textarea } from "@/app/components/ui/textarea";
 import { Button } from "@/app/components/ui/button";
@@ -134,6 +134,93 @@ export function MissingFieldRow({ label, onSave }: MissingFieldRowProps) {
         }}
         className="h-8 bg-white border-amber-300"
       />
+    </div>
+  );
+}
+
+interface EmptyFieldRowProps {
+  label: string;
+  onSave: (value: string) => void;
+  multiline?: boolean;
+}
+
+/**
+ * A field the org profile lacks that isn't a headline "Missing Details" item.
+ * At rest: label + italic "Missing details" + an edit icon. Pressing the icon
+ * opens an inline input with Cancel / Save. Saving a value turns the field
+ * into a normal filled row (the parent flips `filled`).
+ */
+export function EmptyFieldRow({ label, onSave, multiline = false }: EmptyFieldRowProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  const commit = () => {
+    const v = draft.trim();
+    if (v) onSave(v);
+    setIsEditing(false);
+  };
+  const cancel = () => {
+    setDraft("");
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-[13px]">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-xs font-semibold text-gray-700 mb-2" style={{ fontFamily: "Cabin, sans-serif" }}>
+            {label}
+          </p>
+          {multiline && (
+            <span className="text-xs text-gray-400 shrink-0" style={{ fontFamily: "Cabin, sans-serif" }}>
+              {wordCount(draft)}/{MAX_NARRATIVE_WORDS} words
+            </span>
+          )}
+        </div>
+        {multiline ? (
+          <Textarea autoFocus value={draft} onChange={(e) => setDraft(e.target.value)} className="bg-white min-h-24" />
+        ) : (
+          <Input
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commit();
+              if (e.key === "Escape") cancel();
+            }}
+            className="bg-white"
+          />
+        )}
+        <div className="flex justify-end gap-2 mt-3">
+          <Button size="sm" variant="outline" onClick={cancel}>
+            Cancel
+          </Button>
+          <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white" onClick={commit}>
+            Save
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-[13px] flex items-center justify-between gap-3">
+      <div className="min-w-0 flex-1">
+        <p className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
+          {label}
+        </p>
+        <p className="text-sm italic font-medium text-gray-700 mt-0.5" style={{ fontFamily: "Cabin, sans-serif" }}>
+          Missing details
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => setIsEditing(true)}
+        aria-label={`Edit ${label}`}
+        className="shrink-0 text-gray-400 hover:text-gray-600"
+      >
+        <SquarePen className="size-5" />
+      </button>
     </div>
   );
 }
