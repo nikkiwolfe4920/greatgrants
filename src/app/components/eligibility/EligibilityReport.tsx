@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, XCircle, ArrowRight } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowRight } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -8,17 +8,8 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { OverallNofoFitScorecard, type FitCategory, type GoStatus } from "@/app/components/OverallNofoFitScorecard";
 import { SubRecipientCallout } from "@/app/components/eligibility/SubRecipientCallout";
-import {
-  RequirementAnswerToggle,
-  RequirementStatusBadge,
-  requirementStatus,
-} from "@/app/components/eligibility/RequirementStatus";
-import type {
-  ActionItem,
-  GrantRequirement,
-  PassItem,
-  RequirementAnswer,
-} from "@/data/eligibilityAssessmentData";
+import { RequirementStatusBadge } from "@/app/components/eligibility/RequirementStatus";
+import type { ActionItem, PassItem } from "@/data/eligibilityAssessmentData";
 
 interface ActionItemRowProps {
   item: ActionItem;
@@ -32,19 +23,17 @@ function ActionItemRow({ item, onToggle }: ActionItemRowProps) {
         item.completed ? "bg-gray-50/60 border-gray-200" : "bg-white border-gray-200"
       }`}
     >
-      <button
-        type="button"
-        onClick={() => onToggle(item.id)}
-        aria-pressed={item.completed}
-        aria-label={item.completed ? `Mark "${item.title}" incomplete` : `Mark "${item.title}" complete`}
-        className="mt-0.5 shrink-0"
-      >
-        {item.completed ? (
+      {item.completed && (
+        <button
+          type="button"
+          onClick={() => onToggle(item.id)}
+          aria-pressed
+          aria-label={`Mark "${item.title}" as unresolved`}
+          className="mt-0.5 shrink-0"
+        >
           <CheckCircle2 className="size-5 text-teal-600" />
-        ) : (
-          <Circle className="size-5 text-gray-300 hover:text-gray-400" />
-        )}
-      </button>
+        </button>
+      )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <p
@@ -66,43 +55,17 @@ function ActionItemRow({ item, onToggle }: ActionItemRowProps) {
           {item.description}
         </p>
       </div>
-    </div>
-  );
-}
-
-interface RequirementRowProps {
-  requirement: GrantRequirement;
-  answer?: RequirementAnswer;
-  onAnswer: (id: string, answer: RequirementAnswer) => void;
-}
-
-/**
- * A Step 3 requirement carried into the report. Same Met / Unmet /
- * Unresolved status as Step 3, editable in place with the same Yes / No /
- * Not sure control. A Met (Yes) requirement reads "Response stored".
- */
-function RequirementRow({ requirement, answer, onAnswer }: RequirementRowProps) {
-  const status = requirementStatus(requirement, answer);
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white p-[17px] flex items-start gap-4">
-      <span className="mt-0.5 shrink-0" aria-hidden="true">
-        {status === "met" ? (
-          <CheckCircle2 className="size-5 text-teal-600" />
-        ) : status === "unmet" ? (
-          <XCircle className="size-5 text-amber-600" />
-        ) : (
-          <Circle className="size-5 text-gray-300" />
-        )}
-      </span>
-      <div className="flex-1 min-w-0 space-y-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <RequirementStatusBadge status={status} label={status === "met" ? "Response stored" : undefined} />
-        </div>
-        <p className="text-sm font-semibold text-gray-900 leading-snug" style={{ fontFamily: "Cabin, sans-serif" }}>
-          {requirement.question}
-        </p>
-        <RequirementAnswerToggle answer={answer} onChange={(a) => onAnswer(requirement.id, a)} label={requirement.question} />
-      </div>
+      {!item.completed && (
+        <button
+          type="button"
+          onClick={() => onToggle(item.id)}
+          aria-label={`Mark "${item.title}" as met`}
+          className="shrink-0 text-xs font-medium text-teal-700 underline-offset-2 hover:underline"
+          style={{ fontFamily: "Cabin, sans-serif" }}
+        >
+          Mark as met
+        </button>
+      )}
     </div>
   );
 }
@@ -112,7 +75,7 @@ function PassTagRow({ item }: { item: PassItem }) {
     <div className="rounded-lg border border-green-200 bg-green-50 px-[17px] py-[13px] flex items-start gap-3">
       <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700 shrink-0 mt-0.5">
         <CheckCircle2 className="size-3" />
-        Pass
+        Met
       </span>
       <div>
         <p className="text-sm font-medium text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
@@ -139,6 +102,62 @@ const BASE_CATEGORIES: FitCategory[] = [
 const HEADLINE_METRICS = ["Eligibility", "Program Alignment"];
 
 const BASE_RISKS = ["No prior awards from this agency", "Limited evaluation framework", "Matching funds not secured"];
+
+/** GO / NO GO outcome of the whole workflow, computed by EligibilityWorkflowPanel. */
+export interface EligibilityDecision {
+  /** GO only when every answer is Yes / every requirement is Met. */
+  isGo: boolean;
+  /** Questions answered "No" (financial + policy). */
+  noAnswers: number;
+  /** Grant requirements answered "No" (Unmet). */
+  unmetRequirements: number;
+  /** Anything answered "Not sure" or left unresolved. */
+  notSure: number;
+}
+
+function plural(n: number, one: string, many: string) {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
+function DecisionBlock({ decision }: { decision: EligibilityDecision }) {
+  const { isGo, noAnswers, unmetRequirements, notSure } = decision;
+  const reasons = [
+    noAnswers > 0 && `${plural(noAnswers, "answer", "answers")} marked No`,
+    unmetRequirements > 0 && `${plural(unmetRequirements, "requirement", "requirements")} marked Unmet`,
+    notSure > 0 && `${plural(notSure, "answer", "answers")} marked Not sure`,
+  ].filter(Boolean) as string[];
+  const reasonText =
+    reasons.length <= 1 ? reasons[0] : `${reasons.slice(0, -1).join(", ")} and ${reasons[reasons.length - 1]}`;
+  const isAre = noAnswers + unmetRequirements + notSure === 1 ? "is" : "are";
+
+  return (
+    <div
+      className={`rounded-xl border px-5 py-4 flex items-start gap-3 ${
+        isGo ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"
+      }`}
+      role="status"
+    >
+      {isGo ? (
+        <CheckCircle2 className="size-6 text-green-700 shrink-0" aria-hidden="true" />
+      ) : (
+        <XCircle className="size-6 text-red-600 shrink-0" aria-hidden="true" />
+      )}
+      <div>
+        <p
+          className={`text-2xl font-semibold leading-none ${isGo ? "text-green-700" : "text-red-600"}`}
+          style={{ fontFamily: "Cabin, sans-serif" }}
+        >
+          {isGo ? "GO" : "NO GO"}
+        </p>
+        <p className="mt-1.5 text-sm text-gray-700" style={{ fontFamily: "Cabin, sans-serif" }}>
+          {isGo
+            ? "You have 100% answers marked Yes or Meets requirements."
+            : `There ${isAre} ${reasonText}.`}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 interface EligibilityReportProps {
   actionItems: ActionItem[];
@@ -171,10 +190,8 @@ interface EligibilityReportProps {
   onRequestToJoin?: () => void;
   /** Restarts the assessment from Step 1 — drives the "Retake assessment" link next to "Start AI Draft". */
   onRetake?: () => void;
-  /** Step 3 requirements to carry into the Action Items list, with the viewer's answers and an updater. */
-  requirements?: GrantRequirement[];
-  requirementAnswers?: Record<string, RequirementAnswer | undefined>;
-  onAnswerRequirement?: (id: string, answer: RequirementAnswer) => void;
+  /** When set, the scorecard shows a GO / NO GO decision instead of the category breakdown. */
+  decision?: EligibilityDecision;
 }
 
 /**
@@ -202,16 +219,10 @@ export function EligibilityReport({
   status,
   onRequestToJoin,
   onRetake,
-  requirements = [],
-  requirementAnswers = {},
-  onAnswerRequirement,
+  decision,
 }: EligibilityReportProps) {
-  // A requirement counts as complete once it's Met (answered Yes).
-  const metRequirements = requirements.filter(
-    (r) => requirementStatus(r, requirementAnswers[r.id]) === "met",
-  ).length;
-  const completedCount = actionItems.filter((item) => item.completed).length + metRequirements;
-  const totalCount = actionItems.length + requirements.length;
+  const completedCount = actionItems.filter((item) => item.completed).length;
+  const totalCount = actionItems.length;
   const percent = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
   const passCount = passItems.length;
   const unresolvedCount = totalCount - completedCount;
@@ -237,6 +248,19 @@ export function EligibilityReport({
         onStartApplication={onStartApplication}
         allActionsComplete={isAllComplete}
         demoLocked={demoLocked}
+        decision={decision ? <DecisionBlock decision={decision} /> : undefined}
+        ctaSecondary={
+          decision && !decision.isGo && onRetake ? (
+            <button
+              type="button"
+              onClick={onRetake}
+              className="text-sm font-medium text-teal-700 underline-offset-2 hover:underline whitespace-nowrap"
+              style={{ fontFamily: "Cabin, sans-serif" }}
+            >
+              Retake assessment
+            </button>
+          ) : undefined
+        }
         ctaOverride={
           onRequestToJoin ? (
             <SubRecipientCallout layout="inline" onRequestToJoin={onRequestToJoin} demoLocked={demoLocked} />
@@ -253,10 +277,13 @@ export function EligibilityReport({
               </span>
               <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-semibold text-green-700">
                 <CheckCircle2 className="size-3" />
-                {passCount} Pass
+                {passCount} Met
+              </span>
+              <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-700">
+                <XCircle className="size-3" />
+                {decision ? decision.noAnswers + decision.unmetRequirements : 0} Unmet
               </span>
               <span className="inline-flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-semibold text-gray-600">
-                <XCircle className="size-3" />
                 {unresolvedCount} Unresolved
               </span>
             </div>
@@ -273,15 +300,6 @@ export function EligibilityReport({
             </div>
 
             <div className="space-y-3">
-              {onAnswerRequirement &&
-                requirements.map((req) => (
-                  <RequirementRow
-                    key={req.id}
-                    requirement={req}
-                    answer={requirementAnswers[req.id]}
-                    onAnswer={onAnswerRequirement}
-                  />
-                ))}
               {actionItems.map((item) => (
                 <ActionItemRow key={item.id} item={item} onToggle={onToggleActionItem} />
               ))}

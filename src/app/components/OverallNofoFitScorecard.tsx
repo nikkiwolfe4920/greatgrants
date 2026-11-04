@@ -136,6 +136,10 @@ export interface OverallNofoFitScorecardProps {
    * fit report) — takes precedence over `onStartApplication` when set.
    */
   ctaOverride?: ReactNode;
+  /** Replaces the Category Breakdown block (e.g. with a GO / NO GO decision). */
+  decision?: ReactNode;
+  /** Rendered beside the "Start AI Draft" button in the CTA row (e.g. a Retake link). */
+  ctaSecondary?: ReactNode;
 }
 
 /**
@@ -179,6 +183,8 @@ export function OverallNofoFitScorecard({
   allActionsComplete = false,
   demoLocked = false,
   ctaOverride,
+  decision,
+  ctaSecondary,
 }: OverallNofoFitScorecardProps) {
   const statusStyles = STATUS_STYLES[status];
   const StatusIcon = statusStyles.Icon;
@@ -215,7 +221,10 @@ export function OverallNofoFitScorecard({
 
       {/* Body */}
       <div className="flex flex-col gap-5 px-6 py-5">
+        {decision}
+
         {/* Category breakdown */}
+        {!decision && (
         <div>
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
             Category Breakdown
@@ -226,6 +235,7 @@ export function OverallNofoFitScorecard({
             ))}
           </div>
         </div>
+        )}
 
         {/* Strengths / Risks */}
         {showStrengthsRisks && (
@@ -270,7 +280,7 @@ export function OverallNofoFitScorecard({
             `ctaOverride` swaps this whole slot for a different callout. */}
         {ctaOverride ?? (onStartApplication && (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3.5">
-            <div className="flex min-w-0 items-center gap-3">
+            <div className="flex min-w-0 flex-1 basis-64 items-center gap-3">
               <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-teal-100">
                 <CheckCircle2 className="size-4 text-teal-700" aria-hidden="true" />
               </div>
@@ -288,18 +298,21 @@ export function OverallNofoFitScorecard({
                 )}
               </p>
             </div>
-            <Button
-              onClick={() => {
-                if (!demoLocked) onStartApplication();
-              }}
-              size="sm"
-              aria-disabled={demoLocked || undefined}
-              title={demoLocked ? "This is a locked demo — applications can't be started here" : undefined}
-              className={`shrink-0 bg-teal-600 text-white gap-1.5 ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
-            >
-              Start AI Draft
-              <ArrowRight className="size-3.5" />
-            </Button>
+            <div className="flex shrink-0 items-center gap-4">
+              <Button
+                onClick={() => {
+                  if (!demoLocked) onStartApplication();
+                }}
+                size="sm"
+                aria-disabled={demoLocked || undefined}
+                title={demoLocked ? "This is a locked demo — applications can't be started here" : undefined}
+                className={`shrink-0 bg-teal-600 text-white gap-1.5 ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
+              >
+                Start AI Draft
+                <ArrowRight className="size-3.5" />
+              </Button>
+              {ctaSecondary}
+            </div>
           </div>
         ))}
       </div>

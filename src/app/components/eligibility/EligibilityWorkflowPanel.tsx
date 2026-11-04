@@ -8,7 +8,7 @@ import { GrantRequirementsStep } from "@/app/components/eligibility/steps/GrantR
 import { FinancialInfoStep } from "@/app/components/eligibility/steps/FinancialInfoStep";
 import { PolicyInfoStep } from "@/app/components/eligibility/steps/PolicyInfoStep";
 import { EligibilityLoader } from "@/app/components/eligibility/EligibilityLoader";
-import { EligibilityReport } from "@/app/components/eligibility/EligibilityReport";
+import { EligibilityReport, type EligibilityDecision } from "@/app/components/eligibility/EligibilityReport";
 import type { FitCategory, GoStatus } from "@/app/components/OverallNofoFitScorecard";
 import { useAssessmentUsage } from "@/hooks/useAssessmentUsage";
 import {
@@ -248,6 +248,34 @@ export function EligibilityWorkflowPanel({
             ? { label: "Continue", enabled: financialComplete, onClick: () => advance(5) }
             : { label: "Check My Eligibility", enabled: policyComplete, onClick: handleCheckEligibility };
 
+  // GO only when every Yes / No / Not sure answer in the workflow is Yes and
+  // every grant requirement is Met. Anything else is NO GO.
+  const yesNoAnswers = [
+    financialInfo.cfr200Compliant,
+    financialInfo.financialSystemTracking,
+    financialInfo.timeEffortReporting,
+    financialInfo.costShareLiquidity,
+    policyInfo.complianceTrackingSoftware,
+    policyInfo.federalDataTracking,
+    policyInfo.demographicDataCollection,
+    policyInfo.internalControlsDocs,
+    policyInfo.procurementPolicies,
+    policyInfo.timeEffortPolicies,
+    policyInfo.conflictOfInterestPolicies,
+  ];
+  const requirementAnswerList = grantRequirements.map((r) => requirementAnswers[r.id]);
+  const noAnswers = yesNoAnswers.filter((a) => a === "no").length;
+  const unmetRequirements = requirementAnswerList.filter((a) => a === "no").length;
+  const notSure =
+    yesNoAnswers.filter((a) => a !== "yes" && a !== "no").length +
+    requirementAnswerList.filter((a) => a !== "yes" && a !== "no").length;
+  const decision: EligibilityDecision = {
+    isGo: noAnswers + unmetRequirements + notSure === 0,
+    noAnswers,
+    unmetRequirements,
+    notSure,
+  };
+
   const modalHeader = modal ? (
     <div className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-gray-200 bg-white px-6 py-3">
       <div className="min-w-0">
@@ -272,6 +300,18 @@ export function EligibilityWorkflowPanel({
             {currentStep === 5 ? <ShieldCheck className="size-4" /> : null}
             {headerAction.label}
             {currentStep === 5 ? null : <ArrowRight className="size-4" />}
+          </Button>
+        )}
+        {showReport && !isSubmitting && !onRequestToJoin && (
+          <Button
+            onClick={() => {
+              if (!demoLocked) onStartApplication?.();
+            }}
+            aria-disabled={demoLocked || undefined}
+            title={demoLocked ? "This is a locked demo — applications can't be started here" : undefined}
+            className={`bg-teal-600 text-white ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
+          >
+            Start AI Draft
           </Button>
         )}
         <button
@@ -318,9 +358,7 @@ export function EligibilityWorkflowPanel({
         status={reportStatus}
         onRequestToJoin={onRequestToJoin}
         onRetake={handleRetake}
-        requirements={startWithReport ? undefined : grantRequirements}
-        requirementAnswers={requirementAnswers}
-        onAnswerRequirement={(id, answer) => setRequirementAnswers((prev) => ({ ...prev, [id]: answer }))}
+        decision={startWithReport ? undefined : decision}
       />
       </div>
     );
