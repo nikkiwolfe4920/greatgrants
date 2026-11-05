@@ -94,7 +94,7 @@ export const mockPartnerApplications: PartnerApplication[] = [
       outcome: "accepted",
       decidedOn: "Oct 3",
       message:
-        "Congratulations. Next, send the information Westside Cultural Trust needs to draft the application with you. You'll agree the final amount and MOU with them directly, outside Great Grants.",
+        "Congratulations. Next, send the information Westside Cultural Trust needs to draft the application with you. Your next steps is to complete the Information Request.",
       read: false,
     },
     primeApplicant: "Westside Cultural Trust",

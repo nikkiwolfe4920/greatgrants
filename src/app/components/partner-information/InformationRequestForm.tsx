@@ -28,6 +28,7 @@ import {
 } from "@/app/components/ui/alert-dialog";
 import { StepperHeader } from "@/app/components/eligibility/StepperHeader";
 import { SubmissionConfirmation } from "./SubmissionConfirmation";
+import { ResubmitDialog } from "./ResubmitDialog";
 import { FileDropzone, fileExtension, formatFileSize, type UploadedFile } from "./FileDropzone";
 import type { PartnerApplication } from "@/data/partnerApplications";
 
@@ -85,18 +86,18 @@ const CONTACTS: { key: ContactKey; heading: string }[] = [
 ];
 
 export interface Resubmission {
-  /** "Oct 29, 3:05 PM" — when the lead applicant marked the information not accepted. */
-  notAcceptedAt: string;
+  /** "Oct 29, 3:05 PM" — when the lead applicant approved the information with changes. */
+  reviewedAt: string;
 }
 
 /** Captions appear only once a step has a date; Sign MOU / Final Approval don't yet. */
 const stepsFor = (decidedOn: string | undefined, sentOn: string | undefined, resubmission?: Resubmission) => [
-  { label: "Partnership\nApproved", caption: decidedOn && `Decided on\n${decidedOn}` },
+  { label: "Partnership\nUnder Condition", caption: decidedOn && `Decided on\n${decidedOn}` },
   { label: "Information\nRequest", caption: decidedOn && `Requested:\n${decidedOn}` },
   resubmission && !sentOn
-    ? { label: "Sent for\nApproval", status: "error" as const, caption: `Not accepted:\n${resubmission.notAcceptedAt}` }
+    ? { label: "Sent for\nApproval", status: "error" as const, caption: `Approved with changes:\n${resubmission.reviewedAt}` }
     : { label: "Sent for\nApproval", caption: sentOn && `${resubmission ? "Resubmitted" : "Sent"}:\n${sentOn}` },
-  { label: "Sign\nMOU" },
+  { label: "Download &\nSign MOU" },
   { label: "Final\nApproval" },
 ];
 
@@ -304,7 +305,7 @@ function SummaryValue({ label, value }: { label: string; value?: string }) {
 }
 
 /** Read-only record of what was sent: plain labelled text, not disabled inputs. */
-function SentSummary({ values }: { values: InformationRequestValues }) {
+export function SentSummary({ values }: { values: InformationRequestValues }) {
   return (
     <div className="space-y-4">
       <h3 className="pt-2 font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
@@ -701,20 +702,24 @@ export function InformationRequestForm({ app, state, onChange, resubmission }: I
           </Button>
         </div>
       </div>
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{copy.dialogTitle}</AlertDialogTitle>
-            <AlertDialogDescription>{copy.dialogBody}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep editing</AlertDialogCancel>
-            <AlertDialogAction onClick={send} className="bg-teal-600 hover:bg-teal-700 text-white">
-              {copy.dialogAction}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {resubmission ? (
+        <ResubmitDialog open={confirmOpen} onOpenChange={setConfirmOpen} org={org} onResubmit={send} />
+      ) : (
+        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{copy.dialogTitle}</AlertDialogTitle>
+              <AlertDialogDescription>{copy.dialogBody}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep editing</AlertDialogCancel>
+              <AlertDialogAction onClick={send} className="bg-teal-600 hover:bg-teal-700 text-white">
+                {copy.dialogAction}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }

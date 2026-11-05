@@ -5,6 +5,7 @@ import { ApplicationsPage } from "./pages/ApplicationsPage";
 import { ApplicationsPartnershipPage } from "./pages/ApplicationsPartnershipPage";
 import { PartnershipApplicationsPage } from "./pages/PartnershipApplicationsPage";
 import { PartnershipMouAcceptedPage } from "./pages/PartnershipMouAcceptedPage";
+import { PartnershipMouAcceptedWithChangesPage } from "./pages/PartnershipMouAcceptedWithChangesPage";
 import { PartnershipMouNotAcceptedPage } from "./pages/PartnershipMouNotAcceptedPage";
 import { PartnershipFinalPage } from "./pages/PartnershipFinalPage";
 import { ApplicationPartnerPlanningPage } from "./pages/ApplicationPartnerPlanningPage";
@@ -198,7 +199,12 @@ const routes = [
         element: <PartnershipMouAcceptedPage />,
       },
       {
-        // Same page, after the lead applicant did not accept the information: edit and resubmit.
+        // Same page, after the lead applicant approved the information with changes: edit and resubmit.
+        path: "partnership-applications-mou-accepted-withchanges",
+        element: <PartnershipMouAcceptedWithChangesPage />,
+      },
+      {
+        // Same page, after the lead applicant did not accept the information: read-only record.
         path: "partnership-applications-mou-notaccepted",
         element: <PartnershipMouNotAcceptedPage />,
       },

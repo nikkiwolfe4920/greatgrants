@@ -54,15 +54,17 @@ export function PartnershipPageShell({ children }: { children: ReactNode }) {
 
 interface PartnerCardHeaderProps {
   app: PartnerApplication;
-  /** Status badges after the standard Sub-recipient + Accepted pair. */
+  /** Status badges after the standard Sub-recipient + decision pair. */
   badges?: ReactNode;
+  /** Replaces the default green "Under Condition" decision badge. */
+  decisionBadge?: ReactNode;
   expanded: boolean;
   onToggle: () => void;
   detailsId: string;
 }
 
 /** Accordion header: program name, status badges, lead applicant and decision date. */
-export function PartnerCardHeader({ app, badges, expanded, onToggle, detailsId }: PartnerCardHeaderProps) {
+export function PartnerCardHeader({ app, badges, decisionBadge, expanded, onToggle, detailsId }: PartnerCardHeaderProps) {
   return (
     <div className="p-6 border-b border-gray-200">
       <div className="flex items-start justify-between gap-4 mb-3">
@@ -70,7 +72,9 @@ export function PartnerCardHeader({ app, badges, expanded, onToggle, detailsId }
           <div className="flex items-center gap-3 mb-2 flex-wrap">
             <h3 className="text-lg font-semibold text-gray-900">{app.programName}</h3>
             <Badge className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50">{app.roleBadge}</Badge>
-            <Badge className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50">Accepted</Badge>
+            {decisionBadge ?? (
+              <Badge className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50">Under Condition</Badge>
+            )}
             {badges}
           </div>
         </div>

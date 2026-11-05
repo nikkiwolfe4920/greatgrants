@@ -14,10 +14,10 @@ import type { PartnerApplication } from "@/data/partnerApplications";
 export function FinalApprovalStep({ app }: { app: PartnerApplication }) {
   const org = app.primeApplicant;
   const steps = [
-    { label: "Partnership\nApproved", caption: app.decision && `Decided on\n${app.decision.decidedOn}` },
+    { label: "Partnership\nUnder Condition", caption: app.decision && `Decided on\n${app.decision.decidedOn}` },
     { label: "Information\nRequest", caption: app.decision && `Requested:\n${app.decision.decidedOn}` },
     { label: "Sent for\nApproval", caption: `Accepted:\n${MOU_ACCEPTED.acceptedAt}` },
-    { label: "Sign\nMOU", caption: `Requested\n${MOU_ACCEPTED.mouRequestedOn}` },
+    { label: "Download &\nSign MOU", caption: `Requested\n${MOU_ACCEPTED.mouRequestedOn}` },
     { label: "Final\nApproval", caption: `Decided on\n${FINAL_APPROVAL.decidedOn}` },
   ];
 

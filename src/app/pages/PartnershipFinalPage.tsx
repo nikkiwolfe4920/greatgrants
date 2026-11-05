@@ -7,6 +7,7 @@ import {
   PartnershipPageShell,
   StatusBanner,
 } from "@/app/components/partner-information/PartnershipPageShell";
+import { NofoCountdown } from "@/app/components/partner-information/NofoCountdown";
 import { FinalApprovalStep } from "@/app/components/partner-information/FinalApprovalStep";
 import { mockPartnerApplications } from "@/data/partnerApplications";
 import { FINAL_APPROVAL, MOU_APPLICATION_ID } from "@/data/partnerMou";
@@ -43,6 +44,7 @@ export function PartnershipFinalPage() {
               {app.primeApplicant} approved your signed MOU on {FINAL_APPROVAL.approvedAt}. Your partnership on the{" "}
               {app.programName} is confirmed.
             </StatusBanner>
+            {app.nofoDeadline && <NofoCountdown deadlineLabel={app.nofoDeadline} />}
             <div className="space-y-6">
               <PartnerDetailsStrip app={app} includeInformationDue={false} />
               <hr className="border-gray-200" />

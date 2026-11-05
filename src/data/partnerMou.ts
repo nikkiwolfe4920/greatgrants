@@ -30,11 +30,7 @@ export const FINAL_APPROVAL = {
   },
 };
 
-/** Information not accepted → the user edits and resubmits. */
-export const MOU_NOT_ACCEPTED = {
-  notAcceptedAt: "Oct 29, 3:05 PM",
-  reviewedBy: "Westside Cultural Trust",
-  notes: {
+const REVIEW_NOTES = {
     reason:
       "Your minimum funding request of $32,000 is above the $20,000–$26,000 range for this partner request, and no line-item budget was attached, so we couldn't confirm how the funds would be used.",
     fixes: [
@@ -47,7 +43,22 @@ export const MOU_NOT_ACCEPTED = {
       "Resubmit it to Westside Cultural Trust.",
       "They'll review it again and you'll get a notification with their decision.",
     ],
-  },
+};
+
+/** Information not accepted → the partnership ends; the page is a read-only record. */
+export const MOU_NOT_ACCEPTED = {
+  notAcceptedAt: "Oct 29, 3:05 PM",
+  reviewedBy: "Westside Cultural Trust",
+  message:
+    "Thank you for your interest. Westside Cultural Trust reviewed your information and has decided to take an alternative direction.",
+  notes: REVIEW_NOTES,
+};
+
+/** Information approved with changes → the user edits and resubmits. */
+export const MOU_WITH_CHANGES = {
+  reviewedAt: "Oct 29, 3:05 PM",
+  reviewedBy: "Westside Cultural Trust",
+  notes: REVIEW_NOTES,
 };
 
 /** What was sent in the Information Request step — prefilled and editable on the not-accepted page. */
