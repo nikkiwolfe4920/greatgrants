@@ -184,7 +184,7 @@ export function PartnershipApplicationsPage() {
 function StatusBadge({ app }: { app: PartnerApplication }) {
   if (app.decision) {
     return app.decision.outcome === "accepted" ? (
-      <Badge className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50">Accepted</Badge>
+      <Badge className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50">Under Condition</Badge>
     ) : (
       <Badge className="bg-red-50 text-red-700 border-red-200 hover:bg-red-50">Not accepted</Badge>
     );
@@ -213,7 +213,7 @@ function DecisionPanel({ app }: { app: PartnerApplication }) {
       <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${accepted ? "text-green-700" : "text-red-700"}`} aria-hidden="true" />
       <div>
         <h4 className={`font-semibold mb-1.5 ${accepted ? "text-green-800" : "text-red-800"}`}>
-          {accepted ? "Partnership accepted" : "Partnership not accepted"}
+          {accepted ? "Partnership under condition" : "Partnership not accepted"}
         </h4>
         <p className="text-sm text-gray-700">{decision.message}</p>
       </div>

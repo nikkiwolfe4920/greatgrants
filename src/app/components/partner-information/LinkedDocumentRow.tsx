@@ -8,10 +8,12 @@ interface LinkedDocumentRowProps {
   /** Label for the download button; the primary (teal) style is used when `primaryDownload` is set. */
   downloadLabel?: string;
   primaryDownload?: boolean;
+  /** Fires when the download link is activated. */
+  onDownload?: () => void;
 }
 
 /** A document that lives at a URL (e.g. the MOU PDF): file icon, name/meta, Preview and Download. */
-export function LinkedDocumentRow({ name, meta, url, downloadLabel = "Download", primaryDownload }: LinkedDocumentRowProps) {
+export function LinkedDocumentRow({ name, meta, url, downloadLabel = "Download", primaryDownload, onDownload }: LinkedDocumentRowProps) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 px-4 py-3">
       <div className="flex items-center gap-3 min-w-0">
@@ -34,7 +36,7 @@ export function LinkedDocumentRow({ name, meta, url, downloadLabel = "Download",
           className={primaryDownload ? "bg-teal-600 hover:bg-teal-700 text-white" : "bg-white"}
           asChild
         >
-          <a href={url} download={name} aria-label={`Download ${name}`}>
+          <a href={url} download={name} onClick={onDownload} aria-label={`Download ${name}`}>
             <Download className="size-4" aria-hidden="true" />
             {downloadLabel}
           </a>
