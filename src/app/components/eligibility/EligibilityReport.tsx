@@ -119,6 +119,7 @@ export function DownloadReportModule({ onDownload, onRetake }: { onDownload?: ()
   return (
     <section
       aria-label="Download report"
+      data-print-hide
       className="rounded-xl border-2 border-[#125d56] bg-[#125d56] p-5 text-white shadow-lg"
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
