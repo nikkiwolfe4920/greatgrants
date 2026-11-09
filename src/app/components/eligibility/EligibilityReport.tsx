@@ -119,21 +119,21 @@ export function DownloadReportModule({ onDownload, onRetake }: { onDownload?: ()
   return (
     <section
       aria-label="Download report"
-      className="rounded-xl border-2 border-blue-700 bg-blue-600 p-5 text-white shadow-lg shadow-blue-600/25"
+      className="rounded-xl border-2 border-[#125d56] bg-[#125d56] p-5 text-white shadow-lg"
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0 flex-1 basis-64">
           <p className="text-lg font-semibold leading-tight" style={{ fontFamily: "Cabin, sans-serif" }}>
             Download your eligibility report
           </p>
-          <p className="mt-1 text-sm text-blue-50" style={{ fontFamily: "Cabin, sans-serif" }}>
+          <p className="mt-1 text-sm text-[#eff6ff]" style={{ fontFamily: "Cabin, sans-serif" }}>
             Take this outcome to your team — it&apos;s the fastest way to decide what to do next.
           </p>
         </div>
         <Button
           data-print-hide
           onClick={onDownload}
-          className="h-11 shrink-0 gap-2 bg-white px-5 text-base font-semibold text-blue-700 hover:bg-blue-50"
+          className="h-11 shrink-0 gap-2 bg-white px-5 text-base font-semibold text-[#125d56] hover:bg-gray-100"
         >
           <Download className="size-5" aria-hidden="true" />
           Download Report
@@ -141,22 +141,22 @@ export function DownloadReportModule({ onDownload, onRetake }: { onDownload?: ()
       </div>
 
       <ol className="mt-4 grid gap-2 sm:grid-cols-2" style={{ fontFamily: "Cabin, sans-serif" }}>
-        <li className="flex items-center gap-3 rounded-lg bg-blue-700/60 px-3 py-2.5 text-sm">
-          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-blue-700">1</span>
+        <li className="flex items-center gap-3 rounded-lg bg-[#134e48] px-3 py-2.5 text-sm">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-[#125d56]">1</span>
           <FileDown className="size-4 shrink-0" aria-hidden="true" />
           <span><span className="font-semibold">Export the PDF</span> of this report</span>
         </li>
-        <li className="flex items-center gap-3 rounded-lg bg-blue-700/60 px-3 py-2.5 text-sm">
-          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-blue-700">2</span>
+        <li className="flex items-center gap-3 rounded-lg bg-[#134e48] px-3 py-2.5 text-sm">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-[#125d56]">2</span>
           <Share2 className="size-4 shrink-0" aria-hidden="true" />
           <span><span className="font-semibold">Share it with your team</span> to review</span>
         </li>
       </ol>
 
       {onRetake && (
-        <p data-print-hide className="mt-3 text-xs text-blue-100" style={{ fontFamily: "Cabin, sans-serif" }}>
+        <p data-print-hide className="mt-3 text-xs text-[#dbeafe]" style={{ fontFamily: "Cabin, sans-serif" }}>
           Answers changed?{" "}
-          <button type="button" onClick={onRetake} className="font-semibold text-white underline underline-offset-2">
+          <button type="button" onClick={onRetake} className="text-base font-semibold text-white underline underline-offset-2">
             Retake assessment
           </button>{" "}
           — it&apos;s the only way to update this outcome.

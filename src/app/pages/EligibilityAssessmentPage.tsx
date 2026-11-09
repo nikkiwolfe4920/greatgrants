@@ -293,7 +293,7 @@ function CheckYourEligibilityCard({
               title={startLocked ? "This is a locked demo — the assessment doesn't run here" : undefined}
               className={`gap-2 ${
                 isChecked
-                  ? "border-teal-600 bg-white text-teal-700 hover:bg-teal-50"
+                  ? "border-gray-300 bg-white text-gray-900 hover:bg-gray-50"
                   : "bg-[#9810fa] text-white hover:bg-[#8710e0]"
               } ${startLocked ? "cursor-not-allowed" : ""}`}
             >
@@ -301,7 +301,7 @@ function CheckYourEligibilityCard({
               {assessmentCtaLabel(hasStarted, isChecked)}
             </Button>
             {outcome === "nogo" && (
-              <Button onClick={onDownloadReport} className="gap-2 bg-blue-600 text-white hover:bg-blue-700">
+              <Button onClick={onDownloadReport} className="gap-2 bg-[#009689] text-white hover:bg-teal-700">
                 <Download className="size-4" />
                 Download Report
               </Button>
