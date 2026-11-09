@@ -308,7 +308,7 @@ export function OverallNofoFitScorecard({
                 title={demoLocked ? "This is a locked demo — applications can't be started here" : undefined}
                 className={`shrink-0 bg-teal-600 text-white gap-1.5 ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
               >
-                Start AI Draft
+                Start Your AI Draft
                 <ArrowRight className="size-3.5" />
               </Button>
               {ctaSecondary}

@@ -20,6 +20,7 @@ import {
   PlusCircle,
   MoreVertical,
   Users,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/app/components/ui/badge";
@@ -40,6 +41,8 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 import { EligibilityWorkflowPanel } from "@/app/components/eligibility/EligibilityWorkflowPanel";
+import type { EligibilityDecision } from "@/app/components/eligibility/EligibilityReport";
+import { printReport } from "@/lib/printReport";
 import { ApplicationLoadingModal } from "@/app/components/ApplicationLoadingModal";
 import { StopWatchingDialog } from "@/app/components/StopWatchingDialog";
 import { useGrantAlerts } from "@/hooks/useGrantAlerts";
@@ -197,6 +200,10 @@ interface CheckYourEligibilityCardProps {
   hasStarted?: boolean;
   /** The eligibility check has completed — the CTA reads "View Eligibility". */
   isChecked?: boolean;
+  /** GO / NO GO outcome of the completed check — swaps the card to the matching status treatment. */
+  decision?: EligibilityDecision | null;
+  onDownloadReport?: () => void;
+  onStartAIDraft?: () => void;
 }
 
 function CheckYourEligibilityCard({
@@ -205,8 +212,15 @@ function CheckYourEligibilityCard({
   unlockEligibilityAssessment = false,
   hasStarted = false,
   isChecked = false,
+  decision = null,
+  onDownloadReport,
+  onStartAIDraft,
 }: CheckYourEligibilityCardProps) {
   const startLocked = demoLocked && !unlockEligibilityAssessment;
+  const outcome = isChecked && decision ? (decision.isGo ? "go" : "nogo") : null;
+  const panelTone =
+    outcome === "go" ? "bg-green-50 border border-green-200" : outcome === "nogo" ? "bg-red-50 border border-red-200" : "bg-purple-50";
+  const unmet = decision ? decision.noAnswers + decision.unmetRequirements : 0;
   return (
     <motion.div
       key="default"
@@ -216,19 +230,55 @@ function CheckYourEligibilityCard({
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
       className="bg-white rounded-xl border border-gray-200 p-6"
     >
-      <div className="rounded-xl bg-purple-50 p-6">
+      <div className={`rounded-xl p-6 ${panelTone}`}>
         <div className="flex items-start gap-4">
-          <div className="size-12 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
-            <ShieldCheck className="size-6 text-[#9810fa]" />
+          <div
+            className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${
+              outcome === "go" ? "bg-green-100" : outcome === "nogo" ? "bg-red-100" : "bg-purple-100"
+            }`}
+          >
+            {outcome === "go" ? (
+              <CheckCircle2 className="size-6 text-green-700" />
+            ) : outcome === "nogo" ? (
+              <XCircle className="size-6 text-red-600" />
+            ) : (
+              <ShieldCheck className="size-6 text-[#9810fa]" />
+            )}
           </div>
           <div>
-            <h4 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-              Check Your Eligibility
-            </h4>
-            <p className="text-sm text-gray-600 mt-2 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
-              Answer a few questions and we&apos;ll automatically verify what we already know about your
-              organization — then give you a personalized eligibility score and GO / NO-GO recommendation.
-            </p>
+            {outcome ? (
+              <>
+                <h4
+                  className={`text-lg font-semibold ${outcome === "go" ? "text-green-700" : "text-red-600"}`}
+                  style={{ fontFamily: "Cabin, sans-serif" }}
+                >
+                  {outcome === "go" ? "GO" : "NO GO"}
+                </h4>
+                <p className="text-sm text-gray-700 mt-2 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
+                  {outcome === "go" ? (
+                    <>
+                      <span className="font-semibold text-gray-900">Ready to move forward? </span>
+                      Start your application whenever you are.
+                    </>
+                  ) : (
+                    <>
+                      There {unmet === 1 ? "is" : "are"} {unmet} {unmet === 1 ? "requirement" : "requirements"} marked
+                      Unmet &amp; {decision?.notSure ?? 0} Unresolved. Download the report and share it with your team.
+                    </>
+                  )}
+                </p>
+              </>
+            ) : (
+              <>
+                <h4 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
+                  Check Your Eligibility
+                </h4>
+                <p className="text-sm text-gray-600 mt-2 leading-relaxed" style={{ fontFamily: "Cabin, sans-serif" }}>
+                  Answer a few questions and we&apos;ll automatically verify what we already know about your
+                  organization — then give you a personalized eligibility score and GO / NO-GO recommendation.
+                </p>
+              </>
+            )}
           </div>
         </div>
 
@@ -238,16 +288,39 @@ function CheckYourEligibilityCard({
               onClick={() => {
                 if (!startLocked) onStart();
               }}
+              variant={isChecked ? "outline" : "default"}
               aria-disabled={startLocked || undefined}
               title={startLocked ? "This is a locked demo — the assessment doesn't run here" : undefined}
-              className={`bg-[#9810fa] text-white gap-2 ${startLocked ? "cursor-not-allowed" : "hover:bg-[#8710e0]"}`}
+              className={`gap-2 ${
+                isChecked
+                  ? "border-teal-600 bg-white text-teal-700 hover:bg-teal-50"
+                  : "bg-[#9810fa] text-white hover:bg-[#8710e0]"
+              } ${startLocked ? "cursor-not-allowed" : ""}`}
             >
               <Sparkles className="size-4" />
               {assessmentCtaLabel(hasStarted, isChecked)}
             </Button>
-            <span className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
-              ~5 minutes • 6 steps
-            </span>
+            {outcome === "nogo" && (
+              <Button onClick={onDownloadReport} className="gap-2 bg-blue-600 text-white hover:bg-blue-700">
+                <Download className="size-4" />
+                Download Report
+              </Button>
+            )}
+            {outcome === "go" && (
+              <Button
+                onClick={onStartAIDraft}
+                aria-disabled={demoLocked || undefined}
+                className={`gap-2 bg-teal-600 text-white ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
+              >
+                Start Your AI Draft
+                <ArrowRight className="size-4" />
+              </Button>
+            )}
+            {!isChecked && (
+              <span className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
+                ~5 minutes • 6 steps
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -406,6 +479,7 @@ export function EligibilityAssessmentPage({
   const [docsExpanded, setDocsExpanded] = useState(true);
   const [reportGeneratedAt, setReportGeneratedAt] = useState<number | null>(null);
   const isChecked = reportGeneratedAt !== null;
+  const [decision, setDecision] = useState<EligibilityDecision | null>(null);
   const [showApplicationLoading, setShowApplicationLoading] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -507,6 +581,15 @@ export function EligibilityAssessmentPage({
     setShowApplicationLoading(true);
   };
 
+  const handleDownloadReport = () => {
+    // The report stays mounted (hidden) inside the modal, so it can be
+    // exported straight from the page without reopening the assessment.
+    const el = modalContentRef.current?.querySelector<HTMLElement>("#eligibility-report-print");
+    if (!printReport(el, `Eligibility Report — ${GRANT_TITLE}`)) {
+      toast.error("Allow pop-ups for this site to export the PDF.");
+    }
+  };
+
   const openEligibilityAssessment = () => {
     setHasOpenedAssessment(true);
     setIsAssessing(true);
@@ -596,6 +679,7 @@ export function EligibilityAssessmentPage({
               grantTitle={GRANT_TITLE}
               onExit={() => setIsAssessing(false)}
               onReportGenerated={setReportGeneratedAt}
+              onDecisionChange={setDecision}
               onStartedChange={setHasStarted}
               onStartApplication={handleStartApplication}
               onAnchorScroll={scrollModalToTop}
@@ -991,6 +1075,9 @@ export function EligibilityAssessmentPage({
                     unlockEligibilityAssessment={unlockEligibilityAssessment}
                     hasStarted={hasStarted}
                     isChecked={isChecked}
+                    decision={decision}
+                    onDownloadReport={handleDownloadReport}
+                    onStartAIDraft={handleStartApplication}
                   />
                 </div>
               </div>

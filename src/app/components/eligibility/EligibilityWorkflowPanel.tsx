@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ShieldCheck, X } from "lucide-react";
+import { ArrowRight, Download, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { StepperHeader } from "@/app/components/eligibility/StepperHeader";
 import { ProgramAssociationStep } from "@/app/components/eligibility/steps/ProgramAssociationStep";
@@ -10,6 +10,7 @@ import { PolicyInfoStep } from "@/app/components/eligibility/steps/PolicyInfoSte
 import { EligibilityLoader } from "@/app/components/eligibility/EligibilityLoader";
 import { EligibilityReport, type EligibilityDecision } from "@/app/components/eligibility/EligibilityReport";
 import type { FitCategory, GoStatus } from "@/app/components/OverallNofoFitScorecard";
+import { printReport } from "@/lib/printReport";
 import { useAssessmentUsage } from "@/hooks/useAssessmentUsage";
 import {
   orgDetailFields,
@@ -43,6 +44,8 @@ interface EligibilityWorkflowPanelProps {
   onProgramLinked?: (linked: boolean) => void;
   /** Fires once the eligibility report has been generated, with a timestamp (or null when retaking). */
   onReportGenerated?: (generatedAt: number | null) => void;
+  /** Fires with the GO / NO GO outcome once the report is generated (null while retaking). */
+  onDecisionChange?: (decision: EligibilityDecision | null) => void;
   onStartApplication?: () => void;
   /** Fires on every Continue / Check My Eligibility / step-1-Back so the page can scroll back up and anchor on the "Eligibility Assessment" heading. */
   onAnchorScroll?: () => void;
@@ -104,6 +107,7 @@ export function EligibilityWorkflowPanel({
   onExit,
   onProgramLinked,
   onReportGenerated,
+  onDecisionChange,
   onStartApplication,
   onAnchorScroll,
   demoLocked = false,
@@ -272,6 +276,19 @@ export function EligibilityWorkflowPanel({
     notSure,
   };
 
+  const decisionKey = `${decision.isGo}-${decision.noAnswers}-${decision.unmetRequirements}-${decision.notSure}`;
+  useEffect(() => {
+    onDecisionChange?.(showReport && !startWithReport ? decision : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showReport, startWithReport, decisionKey, onDecisionChange]);
+
+  const handleDownloadReport = () => {
+    const el = document.getElementById("eligibility-report-print");
+    if (!printReport(el, `Eligibility Report — ${grantTitle}`)) {
+      window.alert("Allow pop-ups for this site to export the PDF.");
+    }
+  };
+
   const modalHeader = modal ? (
     <div className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-gray-200 bg-white px-6 py-3">
       <div className="min-w-0">
@@ -298,7 +315,13 @@ export function EligibilityWorkflowPanel({
             {currentStep === 5 ? null : <ArrowRight className="size-4" />}
           </Button>
         )}
-        {showReport && !isSubmitting && !onRequestToJoin && (
+        {showReport && !isSubmitting && decision && !startWithReport && !decision.isGo && (
+          <Button onClick={handleDownloadReport} className="gap-1.5 bg-blue-600 text-white hover:bg-blue-700">
+            <Download className="size-4" />
+            Download Report
+          </Button>
+        )}
+        {showReport && !isSubmitting && !onRequestToJoin && (startWithReport || decision.isGo) && (
           <Button
             onClick={() => {
               if (!demoLocked) onStartApplication?.();
@@ -307,7 +330,7 @@ export function EligibilityWorkflowPanel({
             title={demoLocked ? "This is a locked demo — applications can't be started here" : undefined}
             className={`bg-teal-600 text-white ${demoLocked ? "cursor-not-allowed" : "hover:bg-teal-700"}`}
           >
-            Start AI Draft
+            Start Your AI Draft
           </Button>
         )}
         <button
@@ -354,6 +377,7 @@ export function EligibilityWorkflowPanel({
         onRequestToJoin={onRequestToJoin}
         onRetake={handleRetake}
         decision={startWithReport ? undefined : decision}
+        onDownload={handleDownloadReport}
       />
       </div>
     );
