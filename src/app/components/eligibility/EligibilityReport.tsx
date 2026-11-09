@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle, ArrowRight } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowRight, Download, FileDown, Share2, ChevronDown } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -109,6 +109,63 @@ function DecisionBlock({ decision }: { decision: EligibilityDecision }) {
   );
 }
 
+
+/**
+ * NO GO only: the prominent "Download report" callout under the status. A solid
+ * blue panel (deliberately louder than the Figma notification) that spells
+ * out the two-step handoff — export the PDF, then share it with the team.
+ */
+export function DownloadReportModule({ onDownload, onRetake }: { onDownload?: () => void; onRetake?: () => void }) {
+  return (
+    <section
+      aria-label="Download report"
+      className="rounded-xl border-2 border-blue-700 bg-blue-600 p-5 text-white shadow-lg shadow-blue-600/25"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0 flex-1 basis-64">
+          <p className="text-lg font-semibold leading-tight" style={{ fontFamily: "Cabin, sans-serif" }}>
+            Download your eligibility report
+          </p>
+          <p className="mt-1 text-sm text-blue-50" style={{ fontFamily: "Cabin, sans-serif" }}>
+            Take this outcome to your team — it&apos;s the fastest way to decide what to do next.
+          </p>
+        </div>
+        <Button
+          data-print-hide
+          onClick={onDownload}
+          className="h-11 shrink-0 gap-2 bg-white px-5 text-base font-semibold text-blue-700 hover:bg-blue-50"
+        >
+          <Download className="size-5" aria-hidden="true" />
+          Download Report
+        </Button>
+      </div>
+
+      <ol className="mt-4 grid gap-2 sm:grid-cols-2" style={{ fontFamily: "Cabin, sans-serif" }}>
+        <li className="flex items-center gap-3 rounded-lg bg-blue-700/60 px-3 py-2.5 text-sm">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-blue-700">1</span>
+          <FileDown className="size-4 shrink-0" aria-hidden="true" />
+          <span><span className="font-semibold">Export the PDF</span> of this report</span>
+        </li>
+        <li className="flex items-center gap-3 rounded-lg bg-blue-700/60 px-3 py-2.5 text-sm">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-blue-700">2</span>
+          <Share2 className="size-4 shrink-0" aria-hidden="true" />
+          <span><span className="font-semibold">Share it with your team</span> to review</span>
+        </li>
+      </ol>
+
+      {onRetake && (
+        <p data-print-hide className="mt-3 text-xs text-blue-100" style={{ fontFamily: "Cabin, sans-serif" }}>
+          Answers changed?{" "}
+          <button type="button" onClick={onRetake} className="font-semibold text-white underline underline-offset-2">
+            Retake assessment
+          </button>{" "}
+          — it&apos;s the only way to update this outcome.
+        </p>
+      )}
+    </section>
+  );
+}
+
 interface EligibilityReportProps {
   actionItems: ActionItem[];
   passItems: PassItem[];
@@ -141,6 +198,8 @@ interface EligibilityReportProps {
   onRetake?: () => void;
   /** When set, the scorecard shows a GO / NO GO decision instead of the category breakdown. */
   decision?: EligibilityDecision;
+  /** Exports the report as a PDF — drives the Download Report module shown on NO GO. */
+  onDownload?: () => void;
 }
 
 /**
@@ -168,6 +227,7 @@ export function EligibilityReport({
   onRequestToJoin,
   onRetake,
   decision,
+  onDownload,
 }: EligibilityReportProps) {
   const completedCount = actionItems.filter((item) => item.completed).length;
   const totalCount = actionItems.length;
@@ -182,7 +242,7 @@ export function EligibilityReport({
   // EligibilityWorkflowPanel already marked as used the moment this report
   // was generated — this banner is just confirming that back to the user.
   return (
-    <div className="space-y-5">
+    <div id="eligibility-report-print" className="space-y-5">
       <OverallNofoFitScorecard
         eyebrow="Eligibility Report"
         title="Grant Readiness Overview"
@@ -195,12 +255,19 @@ export function EligibilityReport({
         )}
         risks={isAllComplete ? [] : risks}
         nextSteps={[]}
-        onStartApplication={onStartApplication}
+        onStartApplication={decision && !decision.isGo ? undefined : onStartApplication}
         allActionsComplete={isAllComplete}
         demoLocked={demoLocked}
-        decision={decision ? <DecisionBlock decision={decision} /> : undefined}
+        decision={
+          decision ? (
+            <>
+              <DecisionBlock decision={decision} />
+              {!decision.isGo && <DownloadReportModule onDownload={onDownload} onRetake={onRetake} />}
+            </>
+          ) : undefined
+        }
         ctaSecondary={
-          decision && !decision.isGo && onRetake ? (
+          decision && decision.isGo && onRetake ? (
             <button
               type="button"
               onClick={onRetake}
@@ -218,6 +285,7 @@ export function EligibilityReport({
         }
       />
 
+      {!isGo && (
       <Accordion type="single" defaultValue="action-items" collapsible className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <AccordionItem value="action-items" className="border-b-0">
           <AccordionTrigger className="px-5 py-4 no-underline hover:no-underline">
@@ -241,16 +309,6 @@ export function EligibilityReport({
           <AccordionContent className="px-5">
             {!isGo && (
             <>
-            <div className="flex items-center justify-between text-xs mb-1.5" style={{ fontFamily: "Cabin, sans-serif" }}>
-              <span className="text-gray-500">
-                {completedCount} of {totalCount} actions completed
-              </span>
-              <span className="font-medium text-teal-600">{percent}%</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden mb-4">
-              <div className="h-full rounded-full bg-teal-500 transition-all" style={{ width: `${percent}%` }} />
-            </div>
-
             <div className="space-y-3">
               {actionItems.map((item) => (
                 <ActionItemRow key={item.id} item={item} />
@@ -259,20 +317,32 @@ export function EligibilityReport({
             </>
             )}
 
-            <div className={`space-y-2 ${isGo ? "" : "mt-4"}`}>
-              {passItems.map((item) => (
-                <PassTagRow key={item.id} item={item} />
-              ))}
-            </div>
+            {passCount > 0 && (
+              <details className="group mt-4 rounded-lg border border-green-200 bg-green-50/60">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-semibold text-green-800 [&::-webkit-details-marker]:hidden">
+                  <span className="inline-flex items-center gap-2" style={{ fontFamily: "Cabin, sans-serif" }}>
+                    <CheckCircle2 className="size-4" aria-hidden="true" />
+                    {passCount} Met
+                  </span>
+                  <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+                </summary>
+                <div className="space-y-2 px-3 pb-3">
+                  {passItems.map((item) => (
+                    <PassTagRow key={item.id} item={item} />
+                  ))}
+                </div>
+              </details>
+            )}
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+      )}
 
       {/* "Ready to apply" CTA — Figma node 12827:38919. Always shown at the
           bottom of the report regardless of how many action items are
           checked off, so there's always a clear next step into the
           application. `onRequestToJoin` swaps this for SubRecipientCallout. */}
-      {onRequestToJoin ? (
+      {decision ? null : onRequestToJoin ? (
         <SubRecipientCallout layout="card" onRequestToJoin={onRequestToJoin} demoLocked={demoLocked} />
       ) : (
         <div className="bg-teal-50 border border-teal-200 rounded-2xl p-6 flex items-start gap-4">
