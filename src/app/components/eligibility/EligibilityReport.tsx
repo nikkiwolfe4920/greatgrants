@@ -11,61 +11,20 @@ import { SubRecipientCallout } from "@/app/components/eligibility/SubRecipientCa
 import { RequirementStatusBadge } from "@/app/components/eligibility/RequirementStatus";
 import type { ActionItem, PassItem } from "@/data/eligibilityAssessmentData";
 
-interface ActionItemRowProps {
-  item: ActionItem;
-  onToggle: (id: string) => void;
-}
-
-function ActionItemRow({ item, onToggle }: ActionItemRowProps) {
+function ActionItemRow({ item }: { item: ActionItem }) {
   return (
-    <div
-      className={`rounded-lg border p-[17px] flex items-start gap-4 transition-colors ${
-        item.completed ? "bg-gray-50/60 border-gray-200" : "bg-white border-gray-200"
-      }`}
-    >
-      {item.completed && (
-        <button
-          type="button"
-          onClick={() => onToggle(item.id)}
-          aria-pressed
-          aria-label={`Mark "${item.title}" as unresolved`}
-          className="mt-0.5 shrink-0"
-        >
-          <CheckCircle2 className="size-5 text-teal-600" />
-        </button>
-      )}
+    <div className="rounded-lg border border-gray-200 bg-white p-[17px] flex items-start gap-4">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <p
-            className={`text-sm font-semibold ${item.completed ? "text-gray-400 line-through" : "text-gray-900"}`}
-            style={{ fontFamily: "Cabin, sans-serif" }}
-          >
+          <p className="text-sm font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
             {item.title}
           </p>
-          {item.completed ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700">
-              <CheckCircle2 className="size-3" />
-              Response stored
-            </span>
-          ) : (
-            <RequirementStatusBadge status="unknown" />
-          )}
+          <RequirementStatusBadge status="unknown" />
         </div>
-        <p className={`text-xs mt-1 ${item.completed ? "text-gray-400" : "text-gray-500"}`} style={{ fontFamily: "Cabin, sans-serif" }}>
+        <p className="text-xs mt-1 text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
           {item.description}
         </p>
       </div>
-      {!item.completed && (
-        <button
-          type="button"
-          onClick={() => onToggle(item.id)}
-          aria-label={`Mark "${item.title}" as met`}
-          className="shrink-0 text-xs font-medium text-teal-700 underline-offset-2 hover:underline"
-          style={{ fontFamily: "Cabin, sans-serif" }}
-        >
-          Mark as met
-        </button>
-      )}
     </div>
   );
 }
@@ -153,7 +112,6 @@ function DecisionBlock({ decision }: { decision: EligibilityDecision }) {
 interface EligibilityReportProps {
   actionItems: ActionItem[];
   passItems: PassItem[];
-  onToggleActionItem: (id: string) => void;
   onStartApplication: () => void;
   /**
    * Disables the "Start Application" button in the "Ready when you are"
@@ -199,7 +157,6 @@ interface EligibilityReportProps {
 export function EligibilityReport({
   actionItems,
   passItems,
-  onToggleActionItem,
   onStartApplication,
   demoLocked = false,
   hideAssessmentUsage = false,
@@ -296,7 +253,7 @@ export function EligibilityReport({
 
             <div className="space-y-3">
               {actionItems.map((item) => (
-                <ActionItemRow key={item.id} item={item} onToggle={onToggleActionItem} />
+                <ActionItemRow key={item.id} item={item} />
               ))}
             </div>
             </>

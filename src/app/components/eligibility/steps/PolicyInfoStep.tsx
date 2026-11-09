@@ -1,4 +1,4 @@
-import { ShieldCheck, ArrowLeft, Loader2 } from "lucide-react";
+import { ShieldCheck, ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { YesNoUnsureQuestion } from "@/app/components/eligibility/YesNoUnsure";
 import { HelpfulTipAccordion } from "@/app/components/eligibility/HelpfulTipAccordion";
@@ -17,16 +17,13 @@ interface PolicyInfoStepProps {
   value: PolicyInfoState;
   onChange: (value: PolicyInfoState) => void;
   onBack: () => void;
-  onCheckEligibility: () => void;
-  isSubmitting: boolean;
-  /** Hides "This will use assessment N of M for this period." below the Check My Eligibility button. See EligibilityAssessmentPage. */
-  hideAssessmentUsage?: boolean;
-  /** Hides the footer Check My Eligibility button — the modal header renders it instead (sticky, top right). */
+  onContinue: () => void;
+  /** Hides the footer Continue button — the modal header renders it instead (sticky, top right). */
   hideContinue?: boolean;
 }
 
 /**
- * Step 4 — Policy Info. Header, "Check My Eligibility" and back button
+ * Step 4 — Policy Info. Header, Continue and back button
  * chrome from Figma node 12683:28940; the seven questions reuse the exact
  * input pattern from /organization's Policies & Compliance tab.
  */
@@ -34,9 +31,7 @@ export function PolicyInfoStep({
   value,
   onChange,
   onBack,
-  onCheckEligibility,
-  isSubmitting,
-  hideAssessmentUsage = false,
+  onContinue,
   hideContinue = false,
 }: PolicyInfoStepProps) {
   const set = <K extends keyof PolicyInfoState>(key: K, val: PolicyInfoState[K]) =>
@@ -54,7 +49,7 @@ export function PolicyInfoStep({
   ];
   const confirmedCount = confirmedFlags.filter(Boolean).length;
   const totalCount = confirmedFlags.length;
-  // Check My Eligibility only needs every question answered (Yes, No or
+  // Continue only needs every question answered (Yes, No or
   // Unsure) — a non-"Yes" answer shouldn't block the assessment.
   const isComplete = [
     value.complianceTrackingSoftware,
@@ -74,7 +69,7 @@ export function PolicyInfoStep({
         </div>
         <div>
           <p className="text-xs font-normal text-gray-500 uppercase tracking-[0.3px]" style={{ fontFamily: "Cabin, sans-serif" }}>
-            Step 5 of 6
+            Step 4 of 6
           </p>
           <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
             Policy Info
@@ -144,19 +139,19 @@ export function PolicyInfoStep({
 
       <div className="pt-8">
         <div className="border-t border-gray-100 pt-[25px] flex items-center justify-between">
-          <Button variant="ghost" onClick={onBack} disabled={isSubmitting} className="gap-1.5 text-gray-500">
+          <Button variant="ghost" onClick={onBack} className="gap-1.5 text-gray-500">
             <ArrowLeft className="size-4" />
             Back
           </Button>
           <div className="flex flex-col items-end gap-1.5">
             {!hideContinue && (
               <Button
-                onClick={onCheckEligibility}
-                disabled={isSubmitting || !isComplete}
+                onClick={onContinue}
+                disabled={!isComplete}
                 className={isComplete ? "bg-teal-600 hover:bg-teal-700 text-white gap-1.5" : "bg-gray-100 text-gray-400 gap-1.5 cursor-not-allowed"}
               >
-                {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
-                Check My Eligibility
+                Continue
+                <ArrowRight className="size-4" />
               </Button>
             )}
           </div>
