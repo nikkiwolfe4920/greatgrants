@@ -316,7 +316,7 @@ export function EligibilityWorkflowPanel({
           </Button>
         )}
         {showReport && !isSubmitting && decision && !startWithReport && !decision.isGo && (
-          <Button onClick={handleDownloadReport} className="gap-1.5 bg-blue-600 text-white hover:bg-blue-700">
+          <Button onClick={handleDownloadReport} className="gap-1.5 bg-teal-600 text-white hover:bg-teal-700">
             <Download className="size-4" />
             Download Report
           </Button>
