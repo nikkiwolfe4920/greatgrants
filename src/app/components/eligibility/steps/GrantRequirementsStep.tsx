@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, CircleHelp, ListChecks } from "lucide-react";
+import { ArrowLeft, CircleHelp, ListChecks, Loader2, ShieldCheck, TriangleAlert } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/ui/tooltip";
 import {
@@ -15,15 +15,18 @@ interface GrantRequirementsStepProps {
   answers: Record<string, RequirementAnswer | undefined>;
   onAnswer: (id: string, answer: RequirementAnswer) => void;
   onBack: () => void;
-  onContinue: () => void;
-  /** Hides the footer Continue button — the modal header renders it instead (sticky, top right). */
+  onCheckEligibility: () => void;
+  isSubmitting: boolean;
+  /** Hides the usage display — kept for parity with the other steps. */
+  hideAssessmentUsage?: boolean;
+  /** Hides the footer Check My Eligibility button — the modal header renders it instead (sticky, top right). */
   hideContinue?: boolean;
 }
 
 /**
- * Step 3 — Grant Requirements. Lists what the grant's NOFO requires, each
+ * Step 5 — Grant Requirements. Lists what the grant's NOFO requires, each
  * tagged Met / Unmet / Unresolved and answerable with Yes / No / Not sure.
- * Never blocks Continue: an unmet requirement is advice ("you likely can't
+ * Never blocks Check My Eligibility: an unmet requirement is advice ("you likely can't
  * apply"), and the report below reflects it.
  */
 export function GrantRequirementsStep({
@@ -31,7 +34,8 @@ export function GrantRequirementsStep({
   answers,
   onAnswer,
   onBack,
-  onContinue,
+  onCheckEligibility,
+  isSubmitting,
   hideContinue = false,
 }: GrantRequirementsStepProps) {
   const statuses = requirements.map((r) => requirementStatus(r, answers[r.id]));
@@ -45,7 +49,7 @@ export function GrantRequirementsStep({
         </div>
         <div>
           <p className="text-xs font-normal text-gray-500 uppercase tracking-[0.3px]" style={{ fontFamily: "Cabin, sans-serif" }}>
-            Step 3 of 6
+            Step 5 of 6
           </p>
           <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
             Grant Requirements
@@ -58,7 +62,7 @@ export function GrantRequirementsStep({
         <div className="flex items-baseline justify-between gap-3 flex-wrap">
           <h4 className="text-lg font-semibold text-gray-900">This grant&apos;s requirements</h4>
           <span className="text-sm text-gray-500 whitespace-nowrap">
-            {count("met")} met · {count("unmet")} unmet · {count("unknown")} unresolved
+            {count("met")} met · {count("unmet") + count("failed")} unmet · {count("error")} error · {count("unknown")} unresolved
           </span>
         </div>
         <p className="text-sm text-gray-600 mt-1">
@@ -69,6 +73,17 @@ export function GrantRequirementsStep({
           {requirements.map((req, i) => (
             <div key={req.id} className="rounded-xl border border-gray-200 p-5">
               <RequirementStatusBadge status={statuses[i]} />
+              {req.outcomeMessage?.[statuses[i]] && (
+                <p
+                  role="alert"
+                  className={`mt-3 flex items-start gap-2 rounded-lg border px-3 py-2 text-sm ${
+                    statuses[i] === "failed" ? "border-red-200 bg-red-50 text-red-700" : "border-orange-200 bg-orange-50 text-orange-700"
+                  }`}
+                >
+                  <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                  {req.outcomeMessage[statuses[i]]}
+                </p>
+              )}
               <p className="mt-3 text-base font-semibold text-gray-900 leading-snug">{req.question}</p>
               <div className="mt-4 flex items-center gap-2">
                 <RequirementAnswerToggle
@@ -103,14 +118,18 @@ export function GrantRequirementsStep({
 
       <div className="pt-8">
         <div className="border-t border-gray-100 pt-[25px] flex items-center justify-between">
-          <Button variant="ghost" onClick={onBack} className="gap-1.5 text-gray-500">
+          <Button variant="ghost" onClick={onBack} disabled={isSubmitting} className="gap-1.5 text-gray-500">
             <ArrowLeft className="size-4" />
             Back
           </Button>
           {!hideContinue && (
-            <Button onClick={onContinue} className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5">
-              Continue
-              <ArrowRight className="size-4" />
+            <Button
+              onClick={onCheckEligibility}
+              disabled={isSubmitting}
+              className="bg-teal-600 hover:bg-teal-700 text-white gap-1.5"
+            >
+              {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
+              Check My Eligibility
             </Button>
           )}
         </div>

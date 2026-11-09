@@ -27,7 +27,11 @@ export const eligibilityPrograms: EligibilityProgram[] = [
 ];
 
 export type RequirementAnswer = "yes" | "no" | "unsure";
-export type RequirementStatus = "met" | "unmet" | "unknown";
+/**
+ * "failed" is a hard fail: the answer disqualifies the applicant outright.
+ * "error" means the requirement couldn't be evaluated (e.g. NOFO text unreadable).
+ */
+export type RequirementStatus = "met" | "unmet" | "unknown" | "failed" | "error";
 
 /** A requirement pulled from the grant's NOFO, shown in the "Grant Requirements" step. */
 export interface GrantRequirement {
@@ -47,6 +51,10 @@ export interface GrantRequirement {
   quoteSource?: string;
   /** Question the viewer answers with Yes / No / Not sure. */
   question: string;
+  /** Overrides the status for specific answers, e.g. a "No" that disqualifies the applicant is "failed". */
+  answerStatus?: Partial<Record<RequirementAnswer, RequirementStatus>>;
+  /** Shown under the question when the current answer produces a failed / error status. */
+  outcomeMessage?: Partial<Record<RequirementStatus, string>>;
 }
 
 export const grantRequirements: GrantRequirement[] = [
@@ -63,6 +71,11 @@ export const grantRequirements: GrantRequirement[] = [
     quote:
       "Eligible applicants include any municipal government entity as defined by Title 29 of the Alaska Statutes (AS Sec 29.04.030)…For the purposes of the State CDBG program, the Municipality of Anchorage is not included.",
     quoteSource: "From Grant listing: Who Can Apply?",
+    answerStatus: { no: "failed" },
+    outcomeMessage: {
+      failed:
+        "Failed — this is a disqualifying requirement. Only Alaska municipal entities (excluding the Municipality of Anchorage) can apply, so this grant isn't a fit.",
+    },
     question:
       "Is your organization a first class borough, second class borough, third class borough, first class city, or second class city under Alaska Statutes Title 29 (AS Sec 29.04.030), and is it something other than the Municipality of Anchorage?",
   },
@@ -75,6 +88,11 @@ export const grantRequirements: GrantRequirement[] = [
     quote:
       "Past Recipients: A past recipient of CDBG funds may not be awarded additional CDBG funds until: (a) a minimum of 75% of the non-administrative funds have been expended and reported to DCCED and, in the judgment of the DCCED, the previously funded project is substantially complete; or (b) the project is complete and all reporting requirements met. Applicants with prior year grants are encouraged to verify expenditure levels with CDBG Program staff. Expenditure levels will be computed based on expenditures reported as of November 30, 2026.",
     quoteSource: "From Application Handbook.pdf",
+    answerStatus: { unsure: "error" },
+    outcomeMessage: {
+      error:
+        "Error — we couldn't verify your prior-award expenditure levels. Confirm them with CDBG Program staff, then retake the assessment.",
+    },
     question:
       "If your organization has received CDBG funds before, have at least 75% of the non-administrative funds been expended and reported to DCCED with the prior project substantially complete (or fully complete with all reporting done)?",
   },

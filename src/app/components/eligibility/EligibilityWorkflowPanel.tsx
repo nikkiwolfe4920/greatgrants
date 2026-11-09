@@ -28,9 +28,9 @@ import {
 const STEP_LABELS = [
   { label: "Program\nAssociation" },
   { label: "Organization\nDetails" },
-  { label: "Grant\nRequirements" },
   { label: "Financial\nInfo" },
   { label: "Policy\nInfo" },
+  { label: "Grant\nRequirements" },
   { label: "Eligibility\nAssessment" },
 ];
 
@@ -95,7 +95,7 @@ interface EligibilityWorkflowPanelProps {
 
 /**
  * Orchestrates the 6-step eligibility workflow: Program Association →
- * Organization Details → Financial Info → Grant Requirements → Financial Info → Policy Info → (loader) → report.
+ * Organization Details → Financial Info → Policy Info → Grant Requirements → (loader) → report.
  * Owns all step state so the individual step components stay presentational.
  */
 export function EligibilityWorkflowPanel({
@@ -211,10 +211,6 @@ export function EligibilityWorkflowPanel({
     onAnchorScrollRef.current?.();
   };
 
-  const handleToggleActionItem = (id: string) => {
-    setActionItems((prev) => prev.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item)));
-  };
-
   // Same "answered" rules the step footers use (Yes / No / Unsure all count).
   const financialComplete =
     financialInfo.orgRegistrationType !== "" &&
@@ -243,10 +239,10 @@ export function EligibilityWorkflowPanel({
       : currentStep === 2
         ? { label: "Continue", enabled: true, onClick: () => advance(3) }
         : currentStep === 3
-          ? { label: "Continue", enabled: true, onClick: () => advance(4) }
+          ? { label: "Continue", enabled: financialComplete, onClick: () => advance(4) }
           : currentStep === 4
-            ? { label: "Continue", enabled: financialComplete, onClick: () => advance(5) }
-            : { label: "Check My Eligibility", enabled: policyComplete, onClick: handleCheckEligibility };
+            ? { label: "Continue", enabled: policyComplete, onClick: () => advance(5) }
+            : { label: "Check My Eligibility", enabled: true, onClick: handleCheckEligibility };
 
   // GO only when every Yes / No / Not sure answer in the workflow is Yes and
   // every grant requirement is Met. Anything else is NO GO.
@@ -347,7 +343,6 @@ export function EligibilityWorkflowPanel({
       <EligibilityReport
         actionItems={actionItems}
         passItems={eligibilityPassItems}
-        onToggleActionItem={handleToggleActionItem}
         onStartApplication={() => onStartApplication?.()}
         demoLocked={demoLocked}
         hideAssessmentUsage={hideAssessmentUsage}
@@ -401,10 +396,9 @@ export function EligibilityWorkflowPanel({
       )}
 
       {currentStep === 3 && (
-        <GrantRequirementsStep
-          requirements={grantRequirements}
-          answers={requirementAnswers}
-          onAnswer={(id, answer) => setRequirementAnswers((prev) => ({ ...prev, [id]: answer }))}
+        <FinancialInfoStep
+          value={financialInfo}
+          onChange={setFinancialInfo}
           onBack={() => setCurrentStep(2)}
           onContinue={() => {
             onAnchorScroll?.();
@@ -415,9 +409,9 @@ export function EligibilityWorkflowPanel({
       )}
 
       {currentStep === 4 && (
-        <FinancialInfoStep
-          value={financialInfo}
-          onChange={setFinancialInfo}
+        <PolicyInfoStep
+          value={policyInfo}
+          onChange={setPolicyInfo}
           onBack={() => setCurrentStep(3)}
           onContinue={() => {
             onAnchorScroll?.();
@@ -428,9 +422,10 @@ export function EligibilityWorkflowPanel({
       )}
 
       {currentStep === 5 && (
-        <PolicyInfoStep
-          value={policyInfo}
-          onChange={setPolicyInfo}
+        <GrantRequirementsStep
+          requirements={grantRequirements}
+          answers={requirementAnswers}
+          onAnswer={(id, answer) => setRequirementAnswers((prev) => ({ ...prev, [id]: answer }))}
           onBack={() => setCurrentStep(4)}
           onCheckEligibility={handleCheckEligibility}
           isSubmitting={isSubmitting}

@@ -11,20 +11,25 @@ export const STATUS_LABEL: Record<RequirementStatus, string> = {
   met: "Met",
   unmet: "Unmet",
   unknown: "Unresolved",
+  failed: "Failed",
+  error: "Error",
 };
 
 const STATUS_BADGE: Record<RequirementStatus, string> = {
   met: "border-teal-200 bg-teal-50 text-teal-700",
   unmet: "border-amber-200 bg-amber-50 text-amber-700",
   unknown: "border-gray-200 bg-gray-100 text-gray-600",
+  failed: "border-red-200 bg-red-50 text-red-700",
+  error: "border-orange-200 bg-orange-50 text-orange-700",
 };
 
 /**
  * Every requirement starts Unresolved; it only changes once the viewer picks
- * an answer. (Profile-derived `initialStatus` is intentionally not applied.)
+ * an answer (a requirement can map specific answers to Failed / Error). (Profile-derived `initialStatus` is intentionally not applied.)
  */
-export function requirementStatus(_req: GrantRequirement, answer?: RequirementAnswer): RequirementStatus {
-  return answer ? ANSWER_STATUS[answer] : "unknown";
+export function requirementStatus(req: GrantRequirement, answer?: RequirementAnswer): RequirementStatus {
+  if (!answer) return "unknown";
+  return req.answerStatus?.[answer] ?? ANSWER_STATUS[answer];
 }
 
 export function RequirementStatusBadge({
