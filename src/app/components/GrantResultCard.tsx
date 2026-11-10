@@ -26,11 +26,12 @@ export interface GrantResultCardGrant {
 
 interface GrantResultCardProps {
   grant: GrantResultCardGrant;
-  projectFit: number;
+  /** Omit (with `matchLabel`) to hide the whole match-metrics column. */
+  projectFit?: number;
   wordMatch?: number;
   matchLabel?: { label: string; color: string };
-  dismissed: boolean;
-  watched: boolean;
+  dismissed?: boolean;
+  watched?: boolean;
   /** Pre-formatted, e.g. "2d ago". */
   lastViewedLabel?: string;
   locked?: boolean;
@@ -41,8 +42,10 @@ interface GrantResultCardProps {
   /** Hide the description under the title. */
   hideDescription?: boolean;
   onOpen: () => void;
-  onToggleDismiss: (e: React.MouseEvent) => void;
-  onToggleWatch: (e: React.MouseEvent) => void;
+  /** Omit to hide the Exclude / Include button. */
+  onToggleDismiss?: (e: React.MouseEvent) => void;
+  /** Omit to hide the Watch / Unwatch button. */
+  onToggleWatch?: (e: React.MouseEvent) => void;
 }
 
 function MatchBar({ label, value }: { label: string; value: number }) {
@@ -65,8 +68,8 @@ export function GrantResultCard({
   projectFit,
   wordMatch,
   matchLabel,
-  dismissed,
-  watched,
+  dismissed = false,
+  watched = false,
   lastViewedLabel,
   locked = false,
   tagsExtra,
@@ -118,6 +121,7 @@ export function GrantResultCard({
               )}
             </div>
 
+            {(matchLabel || projectFit !== undefined) && (
             <div className="flex-shrink-0 w-48">
               {matchLabel && (
                 <Badge className={`text-xs font-semibold mb-2 ${matchLabel.color}`}>
@@ -126,10 +130,11 @@ export function GrantResultCard({
                 </Badge>
               )}
               <div className="space-y-1">
-                <MatchBar label="Project Fit" value={projectFit} />
+                {projectFit !== undefined && <MatchBar label="Project Fit" value={projectFit} />}
                 {wordMatch !== undefined && <MatchBar label="Word Match" value={wordMatch} />}
               </div>
             </div>
+            )}
           </div>
         </div>
 
@@ -172,9 +177,11 @@ export function GrantResultCard({
             {tagsExtra}
           </div>
 
+          {(lastViewedLabel || onToggleDismiss || onToggleWatch) && (
           <div className="flex gap-1.5 items-center">
             {lastViewedLabel && <span className="text-xs text-gray-500">Last viewed {lastViewedLabel}</span>}
             <div className="flex items-center gap-2 flex-wrap justify-end">
+              {onToggleDismiss && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -204,6 +211,8 @@ export function GrantResultCard({
                   </p>
                 </TooltipContent>
               </Tooltip>
+              )}
+              {onToggleWatch && (
               <Button
                 variant="outline"
                 size="sm"
@@ -216,8 +225,10 @@ export function GrantResultCard({
                 {watched ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                 {watched ? "Unwatch" : "Watch"}
               </Button>
+              )}
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>
