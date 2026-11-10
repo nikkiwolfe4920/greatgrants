@@ -12,6 +12,10 @@ import {
   Check,
   ChevronsUpDown,
   X,
+  List,
+  LayoutGrid,
+  ArrowUpDown,
+  Download,
 } from "lucide-react";
 import { Logo } from "../components/Logo";
 import { Button } from "../components/ui/button";
@@ -23,6 +27,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu";
 import { TooltipProvider } from "../components/ui/tooltip";
 import { GrantResultCard, type GrantResultCardGrant } from "../components/GrantResultCard";
 
@@ -79,6 +89,7 @@ const PRIVATE_OPPORTUNITIES: PrivateOpportunity[] = [
     maxAmount: 75000,
     location: "California, Oregon, Washington",
     closeDate: "Dec 15, 2026",
+    image: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
     states: ["California", "Oregon", "Washington"],
     populations: ["Children / Youth"],
   },
@@ -90,6 +101,7 @@ const PRIVATE_OPPORTUNITIES: PrivateOpportunity[] = [
     maxAmount: 150000,
     location: "Texas",
     closeDate: "Jan 31, 2027",
+    image: "https://images.unsplash.com/photo-1761039808597-5639866bab8a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzcG9ydHMlMjBtZW50b3JpbmclMjB5b3V0aCUyMGNvbW11bml0eXxlbnwxfHx8fDE3NzE5NDQwMTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
     states: ["Texas"],
     populations: ["Homeless Individuals", "Low-Income Families"],
   },
@@ -101,6 +113,7 @@ const PRIVATE_OPPORTUNITIES: PrivateOpportunity[] = [
     maxAmount: 50000,
     location: "Virginia, Maryland, District of Columbia",
     closeDate: "Mar 1, 2027",
+    image: "https://images.unsplash.com/photo-1753185234794-e3b41b94a352?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzbWFsbCUyMGJ1c2luZXNzJTIwb3duZXIlMjB3b3JraW5nfGVufDF8fHx8MTc3MTkxNzM0Nnww&ixlib=rb-4.1.0&q=80&w=1080",
     states: ["Virginia", "Maryland", "District of Columbia"],
     populations: ["Veterans"],
   },
@@ -112,6 +125,7 @@ const PRIVATE_OPPORTUNITIES: PrivateOpportunity[] = [
     maxAmount: 40000,
     location: "New York",
     closeDate: "Sep 30, 2026",
+    image: "https://images.unsplash.com/photo-1611956565880-10e29a417648?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b21hbiUyMGVudHJlcHJlbmV1ciUyMGJ1c2luZXNzJTIwb3duZXJ8ZW58MXx8fHwxNzcxODYzODU1fDA&ixlib=rb-4.1.0&q=80&w=1080",
     states: ["New York"],
     populations: ["Seniors / Elderly", "People with Disabilities"],
   },
@@ -123,10 +137,115 @@ const PRIVATE_OPPORTUNITIES: PrivateOpportunity[] = [
     maxAmount: 100000,
     location: "Minnesota, Illinois",
     closeDate: "Feb 14, 2027",
+    image: "https://images.unsplash.com/photo-1765109384317-592bf3852007?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjB3b21lbiUyMHRlYW13b3JrfGVufDF8fHx8MTc3MTk0NDAyM3ww&ixlib=rb-4.1.0&q=80&w=1080",
     states: ["Minnesota", "Illinois"],
     populations: ["Immigrants / Refugees"],
   },
+  {
+    id: "po-6",
+    title: "Cedar Ridge Family Foundation — Rural Health Access",
+    description: "Mobile clinics and telehealth partnerships serving low-income rural families.",
+    status: "Open",
+    maxAmount: 120000,
+    location: "Montana, Idaho",
+    closeDate: "Jan 10, 2027",
+    image: "https://images.unsplash.com/photo-1634872583967-6417a8638a59?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxyZXNlYXJjaCUyMGxhYm9yYXRvcnklMjBzY2llbmNlfGVufDF8fHx8MTc3MTg1NTQ2M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+    states: ["Montana", "Idaho"],
+    populations: ["Low-Income Families", "Seniors / Elderly"],
+  },
+  {
+    id: "po-7",
+    title: "Lakeshore Giving Circle — Inclusive Recreation Grants",
+    description: "Adaptive sports and recreation programs for people with disabilities.",
+    status: "Open",
+    maxAmount: 35000,
+    location: "Michigan, Ohio",
+    closeDate: "Dec 1, 2026",
+    image: "https://images.unsplash.com/photo-1766846573044-f1107ca5418b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhcnRzJTIwY3VsdHVyZSUyMGNvbW11bml0eSUyMHRoZWF0ZXJ8ZW58MXx8fHwxNzcxOTQ0MDIwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+    states: ["Michigan", "Ohio"],
+    populations: ["People with Disabilities", "Children / Youth"],
+  },
+  {
+    id: "po-8",
+    title: "Tribal Futures Trust — Cultural Preservation Fund",
+    description: "Language revitalization and cultural programming led by Indigenous communities.",
+    status: "Pending",
+    maxAmount: 90000,
+    location: "Arizona, New Mexico",
+    closeDate: "Apr 15, 2027",
+    image: "https://images.unsplash.com/photo-1760033444489-462f148d598b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxydXJhbCUyMGJ1c2luZXNzJTIwZmFybSUyMGNvdW50cnlzaWRlfGVufDF8fHx8MTc3MTk0NDAyMHww&ixlib=rb-4.1.0&q=80&w=1080",
+    states: ["Arizona", "New Mexico"],
+    populations: ["Indigenous Communities"],
+  },
+  {
+    id: "po-9",
+    title: "Greenway Corporate Foundation — Neighborhood Revitalization",
+    description: "Community-led housing, green space and small business projects in underinvested neighborhoods.",
+    status: "Open",
+    maxAmount: 250000,
+    location: "Georgia, Florida",
+    closeDate: "Feb 28, 2027",
+    image: "https://images.unsplash.com/photo-1758936381780-8092bc60e153?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb21tdW5pdHklMjBkZXZlbG9wbWVudCUyMGhvdXNpbmd8ZW58MXx8fHwxNzcxOTQ0MDIxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+    states: ["Georgia", "Florida"],
+    populations: ["Low-Income Families", "Homeless Individuals"],
+  },
+  {
+    id: "po-10",
+    title: "Brightpath Family Foundation — Early Literacy Initiative",
+    description: "Reading programs and family engagement for children in under-resourced schools.",
+    status: "Open",
+    maxAmount: 60000,
+    location: "North Carolina, South Carolina",
+    closeDate: "Jan 20, 2027",
+    image: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+    states: ["North Carolina", "South Carolina"],
+    populations: ["Children / Youth"],
+  },
+  {
+    id: "po-11",
+    title: "Summit Community Foundation — Arts for All",
+    description: "Community theater, music and visual arts programs that reach youth and seniors.",
+    status: "Closed",
+    maxAmount: 30000,
+    location: "Colorado",
+    closeDate: "Oct 15, 2026",
+    image: "https://images.unsplash.com/photo-1761039808597-5639866bab8a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzcG9ydHMlMjBtZW50b3JpbmclMjB5b3V0aCUyMGNvbW11bml0eXxlbnwxfHx8fDE3NzE5NDQwMTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+    states: ["Colorado"],
+    populations: ["Children / Youth", "Seniors / Elderly"],
+  },
+  {
+    id: "po-12",
+    title: "Riverbend Trust — Emergency Shelter Support",
+    description: "Operating support for emergency shelters and transitional housing providers.",
+    status: "Open",
+    maxAmount: 200000,
+    location: "Pennsylvania, New Jersey",
+    closeDate: "Mar 15, 2027",
+    image: "https://images.unsplash.com/photo-1753185234794-e3b41b94a352?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzbWFsbCUyMGJ1c2luZXNzJTIwb3duZXIlMjB3b3JraW5nfGVufDF8fHx8MTc3MTkxNzM0Nnww&ixlib=rb-4.1.0&q=80&w=1080",
+    states: ["Pennsylvania", "New Jersey"],
+    populations: ["Homeless Individuals"],
+  },
+  {
+    id: "po-13",
+    title: "Harvest Table Foundation — Food Security Fund",
+    description: "Food bank, pantry and meal delivery programs serving families and seniors.",
+    status: "Open",
+    maxAmount: 80000,
+    location: "Wisconsin, Iowa",
+    closeDate: "Feb 1, 2027",
+    image: "https://images.unsplash.com/photo-1611956565880-10e29a417648?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b21hbiUyMGVudHJlcHJlbmV1ciUyMGJ1c2luZXNzJTIwb3duZXJ8ZW58MXx8fHwxNzcxODYzODU1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+    states: ["Wisconsin", "Iowa"],
+    populations: ["Low-Income Families", "Seniors / Elderly"],
+  },
 ];
+
+type SortKey = "relevance" | "amount" | "deadline" | "recent";
+const SORT_LABELS: Record<SortKey, string> = {
+  relevance: "Relevance",
+  amount: "Funding Amount",
+  deadline: "Deadline",
+  recent: "Recently Added",
+};
 
 const RECENT_SEARCHES: string[][] = [
   ["#KeywordEntered", "#attribute", "#attribute", "#attribute", "#attribute"],
@@ -186,6 +305,8 @@ export function SuperAdminPrivateOpportunitiesPage() {
   const [addingCategory, setAddingCategory] = useState(false);
   const [categoryDraft, setCategoryDraft] = useState("");
   const [submitted, setSubmitted] = useState<Criteria | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [sortBy, setSortBy] = useState<SortKey>("relevance");
 
   const hasInput = keyword.trim() !== "" || locations.length > 0 || populations.length > 0;
 
@@ -231,20 +352,20 @@ export function SuperAdminPrivateOpportunitiesPage() {
     setSubmitted({ keyword: keyword.trim(), locations, populations });
   }
 
-  const results = submitted
-    ? PRIVATE_OPPORTUNITIES.filter((o) => {
-        const q = submitted.keyword.toLowerCase();
-        const keywordOk =
-          !q || o.title.toLowerCase().includes(q) || o.description.toLowerCase().includes(q);
-        const geoOk =
-          submitted.locations.length === 0 ||
-          submitted.locations.some((l) => o.states.includes(l.state));
-        const popOk =
-          submitted.populations.length === 0 ||
-          submitted.populations.some((p) => o.populations.includes(p));
-        return keywordOk && geoOk && popOk;
-      })
-    : [];
+  const filtered = PRIVATE_OPPORTUNITIES.filter((o) => {
+    if (!submitted) return true;
+    const q = submitted.keyword.toLowerCase();
+    const keywordOk = !q || o.title.toLowerCase().includes(q) || o.description.toLowerCase().includes(q);
+    const geoOk = submitted.locations.length === 0 || submitted.locations.some((l) => o.states.includes(l.state));
+    const popOk = submitted.populations.length === 0 || submitted.populations.some((p) => o.populations.includes(p));
+    return keywordOk && geoOk && popOk;
+  });
+
+  const results = [...filtered].sort((a, b) => {
+    if (sortBy === "amount") return b.maxAmount - a.maxAmount;
+    if (sortBy === "deadline") return Date.parse(a.closeDate ?? "") - Date.parse(b.closeDate ?? "");
+    return 0; // relevance / recently added: source order
+  });
 
   const allPopulations = [...PREDEFINED_POPULATIONS, ...customCategories];
 
@@ -509,40 +630,89 @@ export function SuperAdminPrivateOpportunitiesPage() {
             </div>
           </div>
 
-          {/* Results / recent searches */}
-          {submitted ? (
-            <section className="mt-6" aria-live="polite">
-              <p className="text-sm text-gray-600 mb-3">
-                {results.length} private {results.length === 1 ? "opportunity" : "opportunities"}
-              </p>
-              {results.length === 0 ? (
-                <div className="border border-gray-200 rounded-xl py-12 text-center">
-                  <p className="text-sm font-semibold text-gray-700">No private opportunities match</p>
-                  <p className="text-xs text-gray-400 mt-1">Try removing a filter or searching a different keyword.</p>
-                </div>
-              ) : (
-                <div className="space-y-3 w-full">
-                  {results.map((o) => (
-                    <GrantResultCard key={o.id} grant={o} onOpen={() => navigate(`/grant/${o.id}`)} />
+          {/* Recent searches */}
+          <section className="mt-8">
+            <p className="text-[9.5px] font-bold uppercase tracking-wide text-gray-400">Recent searches</p>
+            <div className="flex flex-col">
+              {RECENT_SEARCHES.map((tags, i) => (
+                <div key={i} className="flex items-center gap-1.5 pt-2.5 pb-1 text-xs text-gray-500">
+                  <Search className="size-3 text-gray-300 shrink-0" />
+                  {tags.map((t, j) => (
+                    <span key={j}>{t}</span>
                   ))}
                 </div>
-              )}
-            </section>
-          ) : (
-            <section className="mt-8">
-              <p className="text-[9.5px] font-bold uppercase tracking-wide text-gray-400">Recent searches</p>
-              <div className="flex flex-col">
-                {RECENT_SEARCHES.map((tags, i) => (
-                  <div key={i} className="flex items-center gap-1.5 pt-2.5 pb-1 text-xs text-gray-500">
-                    <Search className="size-3 text-gray-300 shrink-0" />
-                    {tags.map((t, j) => (
-                      <span key={j}>{t}</span>
+              ))}
+            </div>
+          </section>
+
+          {/* Results — full width, same toolbar + cards as Grant Search */}
+          <section className="mt-8 w-full" aria-live="polite">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {results.length} <span className="text-gray-500 font-normal">grants</span>
+              </h2>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center bg-white border border-gray-200 rounded-lg p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("list")}
+                    aria-label="List view"
+                    aria-pressed={viewMode === "list"}
+                    className={`p-1.5 rounded transition-colors ${
+                      viewMode === "list" ? "bg-gray-100 text-gray-900" : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("grid")}
+                    aria-label="Grid view"
+                    aria-pressed={viewMode === "grid"}
+                    className={`p-1.5 rounded transition-colors ${
+                      viewMode === "grid" ? "bg-gray-100 text-gray-900" : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <ArrowUpDown className="w-3.5 h-3.5" />
+                      <span className="text-sm">{SORT_LABELS[sortBy]}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+                      <DropdownMenuItem key={key} onClick={() => setSortBy(key)}>
+                        {SORT_LABELS[key]}
+                      </DropdownMenuItem>
                     ))}
-                  </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Download className="w-3.5 h-3.5" />
+                  Export
+                </Button>
+              </div>
+            </div>
+
+            {results.length === 0 ? (
+              <div className="border border-gray-200 rounded-xl py-12 text-center">
+                <p className="text-sm font-semibold text-gray-700">No private opportunities match</p>
+                <p className="text-xs text-gray-400 mt-1">Try removing a filter or searching a different keyword.</p>
+              </div>
+            ) : (
+              <div className={viewMode === "grid" ? "grid grid-cols-1 xl:grid-cols-2 gap-4" : "space-y-3"}>
+                {results.map((o) => (
+                  <GrantResultCard key={o.id} grant={o} onOpen={() => navigate(`/grant/${o.id}`)} />
                 ))}
               </div>
-            </section>
-          )}
+            )}
+          </section>
         </div>
       </main>
     </div>
