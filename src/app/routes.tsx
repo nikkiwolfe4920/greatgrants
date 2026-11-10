@@ -43,6 +43,7 @@ import { CopyPage } from "./pages/CopyPage";
 import { EmailsPage } from "./pages/EmailsPage";
 import { SuperAdminIAPage } from "./pages/SuperAdminIAPage";
 import { SuperAdminSearchPage } from "./pages/SuperAdminSearchPage";
+import { SuperAdminPrivateOpportunitiesPage } from "./pages/SuperAdminPrivateOpportunitiesPage";
 import { SubscribeEntryPage } from "./pages/SubscribeEntryPage";
 import { SubscribeCreateAccountPage } from "./pages/SubscribeCreateAccountPage";
 import { SubscribeOrgPage } from "./pages/SubscribeOrgPage";
@@ -153,6 +154,10 @@ const routes = [
   {
     path: "/super-admin/search",
     element: <SuperAdminSearchPage />,
+  },
+  {
+    path: "/super-admin-p",
+    element: <SuperAdminPrivateOpportunitiesPage />,
   },
   {
     path: "/onboarding",
