@@ -15,6 +15,7 @@ import { ApplicationSectionPage } from "./pages/ApplicationSectionPage";
 import { PartnerSearchOrganizationsPage } from "./pages/PartnerSearchOrganizationsPage";
 import { GrantSearchPage } from "./pages/GrantSearchPage";
 import { SearchDemoPage } from "./pages/SearchDemoPage";
+import { SearchPrivatePage } from "./pages/SearchPrivatePage";
 import { GrantDetailPage } from "./pages/GrantDetailPage";
 import { WatchListPage } from "./pages/WatchListPage";
 import { OrganizationPage } from "./pages/OrganizationPage";
@@ -258,6 +259,12 @@ const routes = [
       {
         path: "search",
         element: <GrantSearchPage />,
+      },
+      {
+        // Duplicate of /search with a permanently pinned private opportunity
+        // above the results — see SearchPrivatePage.
+        path: "search-private",
+        element: <SearchPrivatePage />,
       },
       {
         // Locked walkthrough duplicate of /search — see SearchDemoPage for

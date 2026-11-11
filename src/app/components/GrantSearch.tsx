@@ -74,6 +74,7 @@ import { useGrantAlerts } from "@/hooks/useGrantAlerts";
 import { useDismissedGrants } from "@/hooks/useDismissedGrants";
 import { getMatchBreakdown } from "@/data/matchScore";
 import { GrantResultCard } from "./GrantResultCard";
+import { PinnedPrivateOpportunity } from "./PinnedPrivateOpportunity";
 
 interface Grant {
   id: string;
@@ -628,9 +629,15 @@ interface GrantSearchProps {
    * through to anywhere else in the prototype.
    */
   demoLocked?: boolean;
+  /**
+   * Permanently pins a private opportunity above the results list — used by
+   * /search-private (see SearchPrivatePage). It is always shown, regardless
+   * of query / filters, and can't be unpinned.
+   */
+  pinnedPrivate?: boolean;
 }
 
-export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
+export function GrantSearch({ demoLocked = false, pinnedPrivate = false }: GrantSearchProps = {}) {
   const navigate = useNavigate();
   // Every real navigation on this page goes through `go` instead of
   // `navigate` directly, so locking the page is one flag rather than a
@@ -981,7 +988,7 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
   const showMissingContext = !demoLocked && !hasPrograms && !hasWebsite;
 
   return (
-    <div className="max-w-[1400px] mx-auto p-6 overflow-x-hidden">
+    <div className={`max-w-[1400px] mx-auto p-6 ${pinnedPrivate ? "overflow-x-clip" : "overflow-x-hidden"}`}>
       {/* Breadcrumb */}
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
@@ -1202,6 +1209,7 @@ export function GrantSearch({ demoLocked = false }: GrantSearchProps = {}) {
       <div className="flex gap-6">
         {/* Main Results */}
         <div className="flex-1">
+          {pinnedPrivate && <PinnedPrivateOpportunity />}
           {showMissingContext ? (
             <div
               className="flex items-center justify-center py-20"
