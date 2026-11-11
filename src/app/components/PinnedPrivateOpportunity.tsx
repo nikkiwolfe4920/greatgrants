@@ -39,8 +39,8 @@ const PINNED = {
     "Supporting religious organizations providing job training, vocational education, career counseling, and employment placement services for underserved communities.",
   amount: "$400,000",
   location: "US: National",
-  deadline: "Aug 15, 2026",
-  status: "Closed",
+  deadline: "Mar 15, 2027",
+  status: "Open",
   type: "Private Opportunity",
 };
 
@@ -55,9 +55,11 @@ function Meta({ icon: Icon, children, strong }: { icon: typeof Globe; children: 
   );
 }
 
-function Badge({ children, icon: Icon }: { children: React.ReactNode; icon?: typeof BookOpen }) {
+function Badge({ children, icon: Icon, tone = "gray" }: { children: React.ReactNode; icon?: typeof BookOpen; tone?: "gray" | "open" }) {
+  // "open" matches the Open status badge used by GrantResultCard.
+  const colors = tone === "open" ? "border-green-200 bg-green-50 text-green-700" : "border-[#e9eaeb] bg-[#fafafa] text-[#414651]";
   return (
-    <span className="inline-flex items-center gap-0.5 rounded-md border border-[#e9eaeb] bg-[#fafafa] pl-1.5 pr-2 py-0.5 text-xs font-medium leading-[18px] text-[#414651] whitespace-nowrap">
+    <span className={`inline-flex items-center gap-0.5 rounded-md border pl-1.5 pr-2 py-0.5 text-xs font-medium leading-[18px] whitespace-nowrap ${colors}`}>
       {Icon && <Icon className="w-3 h-3 mr-0.5" aria-hidden="true" />}
       {children}
     </span>
@@ -159,7 +161,7 @@ export function PinnedPrivateOpportunity() {
             {/* Footer badges */}
             <Collapsible open={!stuck}>
               <div className="flex items-center justify-between pt-3">
-                <Badge>{PINNED.status}</Badge>
+                <Badge tone="open">{PINNED.status}</Badge>
                 <Badge icon={BookOpen}>{PINNED.type}</Badge>
               </div>
             </Collapsible>
