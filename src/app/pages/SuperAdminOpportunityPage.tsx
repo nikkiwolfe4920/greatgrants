@@ -19,6 +19,7 @@ import {
   Plus,
 } from "lucide-react";
 import { AdminSidebar } from "../components/admin/AdminSidebar";
+import { DatePickerField } from "../components/admin/DatePickerField";
 import { EditableList, EditableText } from "../components/admin/editable";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -379,15 +380,12 @@ function OpportunityEditor({ seed }: { seed: PrivateOpportunityDetail }) {
                       <div className="flex items-center gap-1.5 text-sm text-gray-600">
                         <Clock className="w-4 h-4 text-gray-400" />
                         <span>Closes</span>
-                        <div className="w-36">
-                          <EditableText
-                            value={draft.closeDate}
-                            onChange={(v) => set("closeDate", v)}
-                            label="Close date"
-                            placeholder="Add date"
-                            className="font-medium text-gray-800 text-sm"
-                          />
-                        </div>
+                        <DatePickerField
+                          value={draft.closeDate}
+                          onChange={(v) => set("closeDate", v)}
+                          label="Close date"
+                          className="font-medium text-gray-800 text-sm"
+                        />
                       </div>
                       <div className="flex items-center gap-1.5 text-sm text-gray-600">
                         <DollarSign className="w-4 h-4 text-gray-400" />
