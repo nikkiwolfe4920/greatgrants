@@ -45,6 +45,7 @@ import { EmailsPage } from "./pages/EmailsPage";
 import { SuperAdminIAPage } from "./pages/SuperAdminIAPage";
 import { SuperAdminSearchPage } from "./pages/SuperAdminSearchPage";
 import { SuperAdminPrivateOpportunitiesPage } from "./pages/SuperAdminPrivateOpportunitiesPage";
+import { SuperAdminSopPage } from "./pages/SuperAdminSopPage";
 import { SuperAdminOpportunityPage } from "./pages/SuperAdminOpportunityPage";
 import { SubscribeEntryPage } from "./pages/SubscribeEntryPage";
 import { SubscribeCreateAccountPage } from "./pages/SubscribeCreateAccountPage";
@@ -160,6 +161,10 @@ const routes = [
   {
     path: "/super-admin-p",
     element: <SuperAdminPrivateOpportunitiesPage />,
+  },
+  {
+    path: "/super-admin-sop",
+    element: <SuperAdminSopPage />,
   },
   {
     // Private opportunity editor — no id serves the Figma design's record.
