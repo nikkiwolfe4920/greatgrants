@@ -16,7 +16,7 @@ const NAV_ITEMS = [
     label: "Private Opportunities",
     icon: BookOpen,
     path: "/super-admin-p",
-    match: ["/super-admin-p", "/super-admin-op"],
+    match: ["/super-admin-p", "/super-admin-op", "/super-admin-sop"],
   },
 ] as const;
 

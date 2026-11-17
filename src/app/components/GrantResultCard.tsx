@@ -41,6 +41,8 @@ interface GrantResultCardProps {
   titleMaxChars?: number;
   /** Hide the description under the title. */
   hideDescription?: boolean;
+  /** Slot rendered at the right of the tags row (e.g. Edit / Delete icon buttons). Clicks don't open the card. */
+  actions?: React.ReactNode;
   onOpen: () => void;
   /** Omit to hide the Exclude / Include button. */
   onToggleDismiss?: (e: React.MouseEvent) => void;
@@ -75,6 +77,7 @@ export function GrantResultCard({
   tagsExtra,
   titleMaxChars,
   hideDescription = false,
+  actions,
   onOpen,
   onToggleDismiss,
   onToggleWatch,
@@ -176,6 +179,12 @@ export function GrantResultCard({
             )}
             {tagsExtra}
           </div>
+
+          {actions && (
+            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+              {actions}
+            </div>
+          )}
 
           {(lastViewedLabel || onToggleDismiss || onToggleWatch) && (
           <div className="flex gap-1.5 items-center">
