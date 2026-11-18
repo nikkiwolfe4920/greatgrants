@@ -1,28 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useBlocker, useParams } from "react-router";
 import { toast } from "sonner";
-import {
-  AlertCircle,
-  ArrowLeft,
-  Check,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  DollarSign,
-  FileText,
-  Home,
-  Loader2,
-  Lock,
-  RotateCcw,
-  Trash2,
-  Upload,
-  Plus,
-} from "lucide-react";
+import { AlertCircle, ArrowLeft, Check, Clock, DollarSign, Home, Loader2, Lock, RotateCcw, X } from "lucide-react";
 import { AdminSidebar } from "../components/admin/AdminSidebar";
 import { DatePickerField } from "../components/admin/DatePickerField";
-import { EditableList, EditableText } from "../components/admin/editable";
+import { EditableText } from "../components/admin/editable";
+import { FocusAreasField } from "../components/focus-areas/FocusAreasField";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
+import { Checkbox } from "../components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -31,15 +17,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Switch } from "../components/ui/switch";
 import { TooltipProvider } from "../components/ui/tooltip";
 import {
   DEFAULT_OPPORTUNITY_ID,
   getSeedOpportunity,
-  type OpportunityContact,
-  type OpportunityDetails,
   type PrivateOpportunityDetail,
 } from "@/data/privateOpportunities";
+import { validate, type RequiredKey } from "@/data/sopOpportunities";
 import { usePrivateOpportunityEditor, type SaveState } from "@/hooks/usePrivateOpportunityEditor";
 
 /* ─────────────────────────────────────────────────────────────────
@@ -47,6 +33,7 @@ import { usePrivateOpportunityEditor, type SaveState } from "@/hooks/usePrivateO
 
    Grant Detail layout with every attribute editable in place:
      • edits auto-save (stamp shown), and enable "Publish Changes"
+     • required fields must be filled before publishing
      • Last Published timestamp beside the button
      • leaving with unpublished changes asks for confirmation
      • Open → Closed asks for confirmation and stamps when it closed;
@@ -59,33 +46,19 @@ const SECTIONS = [
   { id: "who-can-apply", label: "Who Can Apply" },
   { id: "assessment-criteria", label: "Assessment Criteria" },
   { id: "restrictions", label: "Restrictions" },
+  { id: "matching", label: "Matching" },
   { id: "grant-details", label: "Grant Details" },
 ] as const;
 
-const DETAIL_FIELDS: { key: keyof OpportunityDetails; label: string }[] = [
-  { key: "opportunityNumber", label: "Opportunity Number" },
-  { key: "fundingAgency", label: "Funding Agency" },
-  { key: "assistanceListing", label: "Assistance Listing (CFDA)" },
-  { key: "awardCeilingFloor", label: "Award Ceiling / Floor" },
-  { key: "totalFundingPool", label: "Total Funding Pool" },
-  { key: "expectedAwards", label: "Expected Number of Awards" },
-  { key: "keyDeadline", label: "Key Deadline" },
-  { key: "applicableToChurches", label: "Applicable to Churches?" },
-  { key: "fundingInstrument", label: "Funding Instrument" },
-  { key: "projectPeriod", label: "Project Period" },
-  { key: "phaseAtHand", label: "Phase at Hand" },
-  { key: "eligibleApplicants", label: "Eligible Applicants" },
-  { key: "matchCostShare", label: "Match / Cost Share" },
-  { key: "closingInfo", label: "Closing Info" },
-];
-
-const QUICK_STATS: { key: keyof PrivateOpportunityDetail; label: string }[] = [
-  { key: "location", label: "Location" },
-  { key: "region", label: "Region" },
-  { key: "openingDateTime", label: "Opening Date" },
-  { key: "closingDateTime", label: "Closing Date" },
-  { key: "recipients", label: "Recipients" },
-  { key: "totalPool", label: "Total Pool" },
+const US_STATES = [
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+  "Delaware", "District of Columbia", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois",
+  "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts",
+  "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada",
+  "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota",
+  "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
+  "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington",
+  "West Virginia", "Wisconsin", "Wyoming",
 ];
 
 function formatStamp(ts: number): string {
@@ -102,22 +75,24 @@ function formatTime(ts: number): string {
   return new Date(ts).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" });
 }
 
-function formatFileSize(bytes: number): string {
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+function digitsOnly(v: string): string {
+  return v.replace(/[^0-9]/g, "");
 }
 
-function fileTypeLabel(file: File): string {
-  const ext = file.name.includes(".") ? file.name.split(".").pop()!.toUpperCase() : "";
-  if (ext === "PDF") return "PDF Document";
-  return ext ? `${ext} File` : "File";
+function formatDigits(v: string): string {
+  return v ? Number(digitsOnly(v)).toLocaleString("en-US") : "";
 }
 
-function SectionHeading({ children }: { children: React.ReactNode }) {
+function SectionHeading({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
     <div className="mb-4">
       <h2 className="text-2xl font-semibold text-gray-900 mb-2" style={{ fontFamily: "Lustria, serif" }}>
         {children}
+        {required && (
+          <span className="text-red-500 text-base align-top ml-1" title="Required to publish" aria-label="required">
+            *
+          </span>
+        )}
       </h2>
       <div className="w-10 h-[3px] bg-teal-500 rounded-full" />
     </div>
@@ -126,6 +101,23 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 function Card({ children }: { children: React.ReactNode }) {
   return <div className="bg-white rounded-xl border border-gray-200 p-6">{children}</div>;
+}
+
+function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
+  return (
+    <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: "Cabin, sans-serif" }}>
+      {children} {required && <span className="text-red-500">*</span>}
+    </div>
+  );
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p role="alert" className="text-xs text-red-600 mt-1">
+      {message}
+    </p>
+  );
 }
 
 function statusBadgeClass(status: "Open" | "Closed") {
@@ -158,24 +150,29 @@ function AutoSaveStamp({ saveState, lastSavedAt }: { saveState: SaveState; lastS
 
 interface PublishControlsProps {
   dirty: boolean;
+  missing: number;
   onPublish: () => void;
   lastPublishedAt: number;
   saveState: SaveState;
   lastSavedAt: number | null;
-  align?: "end" | "start";
 }
 
-function PublishControls({ dirty, onPublish, lastPublishedAt, saveState, lastSavedAt, align = "end" }: PublishControlsProps) {
+function PublishControls({ dirty, missing, onPublish, lastPublishedAt, saveState, lastSavedAt }: PublishControlsProps) {
   return (
-    <div className={`flex flex-col gap-1.5 ${align === "end" ? "items-end" : "items-start"}`}>
+    <div className="flex flex-col gap-1.5 items-end">
       <Button
         onClick={onPublish}
-        disabled={!dirty}
+        disabled={!dirty || missing > 0}
         className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-100"
         style={{ fontFamily: "Cabin, sans-serif" }}
       >
         {dirty ? "Publish Changes" : "Publish"}
       </Button>
+      {missing > 0 && (
+        <span className="text-xs text-red-600" role="status">
+          {missing} required {missing === 1 ? "field" : "fields"} to complete
+        </span>
+      )}
       <span className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
         Last published {formatStamp(lastPublishedAt)}
       </span>
@@ -191,21 +188,18 @@ function OpportunityEditor({ seed }: { seed: PrivateOpportunityDetail }) {
     usePrivateOpportunityEditor(seed);
 
   const [activeSection, setActiveSection] = useState<string>("overview");
-  const [docsExpanded, setDocsExpanded] = useState(true);
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+  const [stateDraft, setStateDraft] = useState("");
   const [stuck, setStuck] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof PrivateOpportunityDetail>(key: K, value: PrivateOpportunityDetail[K]) =>
     update((d) => ({ ...d, [key]: value }));
-  const setDetail = (key: keyof OpportunityDetails, value: string) =>
-    update((d) => ({ ...d, details: { ...d.details, [key]: value } }));
-  const setContact = (key: keyof OpportunityContact, value: string) =>
-    update((d) => ({ ...d, contact: { ...d.contact, [key]: value } }));
 
   const isClosed = draft.status === "Closed";
+  const errors: Partial<Record<RequiredKey, string>> = validate(draft);
+  const missing = Object.keys(errors).length;
 
   // Warn before leaving with unpublished changes — in-app navigation…
   const blocker = useBlocker(
@@ -265,6 +259,7 @@ function OpportunityEditor({ seed }: { seed: PrivateOpportunityDetail }) {
   };
 
   const handlePublish = () => {
+    if (missing > 0) return;
     const at = publish();
     toast.success("Changes published", { description: formatStamp(at) });
   };
@@ -284,21 +279,15 @@ function OpportunityEditor({ seed }: { seed: PrivateOpportunityDetail }) {
     toast("Opportunity closed", { description: "It is no longer receiving applications." });
   };
 
-  const handleFiles = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    const added = Array.from(files).map((file) => ({
-      id: `doc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      name: file.name,
-      type: fileTypeLabel(file),
-      size: formatFileSize(file.size),
-    }));
-    update((d) => ({ ...d, documents: [...d.documents, ...added] }));
-    setDocsExpanded(true);
-  };
-
   const confirmLeave = () => {
     discardDraft();
     blocker.proceed?.();
+  };
+
+  const addState = (name: string) => {
+    if (!name || draft.states.includes(name)) return;
+    set("states", [...draft.states, name]);
+    setStateDraft("");
   };
 
   return (
@@ -321,11 +310,12 @@ function OpportunityEditor({ seed }: { seed: PrivateOpportunityDetail }) {
                 </div>
                 <div className="flex items-center gap-4 shrink-0">
                   <AutoSaveStamp saveState={saveState} lastSavedAt={lastSavedAt} />
+                  {missing > 0 && <span className="text-xs text-red-600">{missing} required to complete</span>}
                   <span className="hidden md:inline text-xs text-gray-500">Last published {formatStamp(lastPublishedAt)}</span>
                   <Button
                     size="sm"
                     onClick={handlePublish}
-                    disabled={!dirty}
+                    disabled={!dirty || missing > 0}
                     className="bg-teal-600 hover:bg-teal-700 text-white font-semibold h-8 text-xs px-4 disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-100"
                   >
                     {dirty ? "Publish Changes" : "Publish"}
@@ -355,18 +345,20 @@ function OpportunityEditor({ seed }: { seed: PrivateOpportunityDetail }) {
                       value={draft.title}
                       onChange={(v) => set("title", v)}
                       label="Opportunity title"
-                      placeholder="Opportunity title"
+                      placeholder="Opportunity title (required)"
                       className="text-[2rem] leading-tight text-gray-900"
                       style={{ fontFamily: "Lustria, serif", fontWeight: 600 }}
                     />
+                    <FieldError message={errors.title} />
                     <div className="mt-3">
                       <EditableText
-                        value={draft.agency}
-                        onChange={(v) => set("agency", v)}
-                        label="Funding agency"
-                        placeholder="Funding agency"
+                        value={draft.funderName}
+                        onChange={(v) => set("funderName", v)}
+                        label="Funder name"
+                        placeholder="Funder name (required)"
                         className="text-sm text-gray-500"
                       />
+                      <FieldError message={errors.funderName} />
                     </div>
 
                     <div className="flex items-center gap-4 flex-wrap mt-3">
@@ -379,28 +371,53 @@ function OpportunityEditor({ seed }: { seed: PrivateOpportunityDetail }) {
                       </Badge>
                       <div className="flex items-center gap-1.5 text-sm text-gray-600">
                         <Clock className="w-4 h-4 text-gray-400" />
-                        <span>Closes</span>
-                        <DatePickerField
-                          value={draft.closeDate}
-                          onChange={(v) => set("closeDate", v)}
-                          label="Close date"
-                          className="font-medium text-gray-800 text-sm"
-                        />
+                        <span>Deadline</span>
+                        <Select
+                          value={draft.deadlineType}
+                          onValueChange={(v) => set("deadlineType", v as "rolling" | "date")}
+                        >
+                          <SelectTrigger className="h-8 w-36 border border-gray-300 text-sm" aria-label="Deadline type">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="rolling">Rolling</SelectItem>
+                            <SelectItem value="date">Specific date</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {draft.deadlineType === "date" && (
+                          <DatePickerField
+                            value={draft.deadline}
+                            onChange={(v) => set("deadline", v)}
+                            label="Deadline"
+                            className="font-medium text-gray-800 text-sm"
+                          />
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5 text-sm text-gray-600">
                         <DollarSign className="w-4 h-4 text-gray-400" />
-                        <div className="w-52">
+                        <span>Max</span>
+                        <div className="w-28">
                           <EditableText
-                            value={draft.awardRange}
-                            onChange={(v) => set("awardRange", v)}
-                            label="Award range"
-                            placeholder="Award range"
+                            value={formatDigits(draft.awardMax)}
+                            onChange={(v) => set("awardMax", digitsOnly(v))}
+                            label="Award maximum"
+                            placeholder="Required"
                             className="font-medium text-gray-800 text-sm"
                           />
                         </div>
-                        <span>per award</span>
+                        <span>Min</span>
+                        <div className="w-24">
+                          <EditableText
+                            value={formatDigits(draft.awardMin)}
+                            onChange={(v) => set("awardMin", digitsOnly(v))}
+                            label="Award minimum"
+                            placeholder="Optional"
+                            className="font-medium text-gray-800 text-sm"
+                          />
+                        </div>
                       </div>
                     </div>
+                    <FieldError message={errors.deadline ?? errors.awardMax} />
                   </div>
 
                   <div className="flex flex-col items-end gap-4 shrink-0 pt-1">
@@ -421,6 +438,7 @@ function OpportunityEditor({ seed }: { seed: PrivateOpportunityDetail }) {
                     </div>
                     <PublishControls
                       dirty={dirty}
+                      missing={missing}
                       onPublish={handlePublish}
                       lastPublishedAt={lastPublishedAt}
                       saveState={saveState}
@@ -484,326 +502,211 @@ function OpportunityEditor({ seed }: { seed: PrivateOpportunityDetail }) {
                         ))}
                       </nav>
                     </div>
-
-                    {/* Documents */}
-                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                      <button
-                        type="button"
-                        onClick={() => setDocsExpanded((v) => !v)}
-                        aria-expanded={docsExpanded}
-                        className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <FileText className="w-5 h-5 text-gray-500" />
-                          <span className="text-sm font-semibold text-gray-900" style={{ fontFamily: "Cabin, sans-serif" }}>
-                            Documents <span className="font-normal text-gray-500">({draft.documents.length})</span>
-                          </span>
-                        </div>
-                        {docsExpanded ? (
-                          <ChevronUp className="w-4 h-4 text-gray-400" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4 text-gray-400" />
-                        )}
-                      </button>
-                      {docsExpanded && (
-                        <div className="border-t border-gray-100 px-3 py-3 space-y-2">
-                          {draft.documents.length === 0 && (
-                            <p className="text-xs text-gray-500 px-2 py-1">No documents yet.</p>
-                          )}
-                          {draft.documents.map((doc) => (
-                            <div
-                              key={doc.id}
-                              className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
-                            >
-                              <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: "#fef2f2" }}>
-                                <FileText className="w-5 h-5 text-red-500" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-semibold text-gray-900 truncate" title={doc.name} style={{ fontFamily: "Cabin, sans-serif" }}>
-                                  {doc.name}
-                                </div>
-                                <div className="text-xs text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>
-                                  {doc.type} · {doc.size}
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => update((d) => ({ ...d, documents: d.documents.filter((x) => x.id !== doc.id) }))}
-                                aria-label={`Remove ${doc.name}`}
-                                className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ))}
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            multiple
-                            className="sr-only"
-                            aria-label="Upload documents"
-                            onChange={(e) => {
-                              handleFiles(e.target.files);
-                              e.target.value = "";
-                            }}
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="w-full gap-2 border-gray-300"
-                            onClick={() => fileInputRef.current?.click()}
-                          >
-                            <Upload className="w-3.5 h-3.5" />
-                            Upload document
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Quick Stats */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-5">
-                      <h3 className="text-sm font-semibold text-gray-900 mb-4" style={{ fontFamily: "Cabin, sans-serif" }}>
-                        Quick Stats
-                      </h3>
-                      <div className="space-y-3">
-                        {QUICK_STATS.slice(0, 2).map(({ key, label }) => (
-                          <QuickStatRow
-                            key={key}
-                            label={label}
-                            value={draft[key] as string}
-                            onChange={(v) => set(key, v as never)}
-                          />
-                        ))}
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-sm text-gray-500" style={{ fontFamily: "Cabin, sans-serif" }}>Status</span>
-                          <Badge className={`text-xs px-2 py-0.5 ${statusBadgeClass(draft.status)}`}>{draft.status}</Badge>
-                        </div>
-                        {QUICK_STATS.slice(2).map(({ key, label }) => (
-                          <QuickStatRow
-                            key={key}
-                            label={label}
-                            value={draft[key] as string}
-                            onChange={(v) => set(key, v as never)}
-                          />
-                        ))}
-                      </div>
-                    </div>
                   </div>
                 </div>
 
                 {/* Main sections */}
                 <div className="lg:col-span-3 space-y-6">
                   <section id="overview" className="scroll-mt-8">
-                    <SectionHeading>Overview</SectionHeading>
+                    <SectionHeading required>Overview</SectionHeading>
                     <Card>
-                      <EditableText
-                        multiline
-                        value={draft.overview}
-                        onChange={(v) => set("overview", v)}
-                        label="Overview"
-                        placeholder="Describe this opportunity…"
-                        className="text-gray-700 leading-relaxed"
-                      />
+                      <div className="mb-5">
+                        <FieldLabel required>Short summary (card blurb)</FieldLabel>
+                        <EditableText
+                          multiline
+                          value={draft.shortSummary}
+                          onChange={(v) => set("shortSummary", v)}
+                          label="Short summary"
+                          placeholder="One or two sentences shown on the opportunity card…"
+                          className="text-gray-700 leading-relaxed"
+                        />
+                        <FieldError message={errors.shortSummary} />
+                      </div>
+                      <div>
+                        <FieldLabel required>Description</FieldLabel>
+                        <EditableText
+                          multiline
+                          value={draft.description}
+                          onChange={(v) => set("description", v)}
+                          label="Description"
+                          placeholder="Describe this opportunity…"
+                          className="text-gray-700 leading-relaxed"
+                        />
+                        <FieldError message={errors.description} />
+                      </div>
                     </Card>
                   </section>
 
                   <section id="eligible-activities" className="scroll-mt-8">
                     <SectionHeading>Eligible Activities</SectionHeading>
                     <Card>
-                      <div className="mb-3">
-                        <EditableText
-                          multiline
-                          value={draft.eligibleActivitiesIntro}
-                          onChange={(v) => set("eligibleActivitiesIntro", v)}
-                          label="Eligible activities introduction"
-                          placeholder="Introduction…"
-                          className="text-gray-700 leading-relaxed"
-                        />
-                      </div>
-                      <EditableList
-                        items={draft.eligibleActivities}
-                        onChange={(items) => set("eligibleActivities", items)}
-                        label="Eligible activity"
-                        addLabel="Add activity"
+                      <EditableText
+                        multiline
+                        value={draft.eligibleActivities}
+                        onChange={(v) => set("eligibleActivities", v)}
+                        label="Eligible activities"
+                        placeholder="Add eligible activities (optional)…"
+                        className="text-gray-700 leading-relaxed"
                       />
-                      <div className="mt-4">
-                        <EditableText
-                          multiline
-                          value={draft.eligibleActivitiesFooter}
-                          onChange={(v) => set("eligibleActivitiesFooter", v)}
-                          label="Eligible activities note"
-                          placeholder="Add a note…"
-                          className="text-gray-700 leading-relaxed"
-                        />
-                      </div>
                     </Card>
                   </section>
 
                   <section id="who-can-apply" className="scroll-mt-8">
-                    <SectionHeading>Who Can Apply?</SectionHeading>
+                    <SectionHeading required>Who Can Apply?</SectionHeading>
                     <Card>
-                      <div className="mb-3">
-                        <EditableText
-                          multiline
-                          value={draft.whoCanApplyIntro}
-                          onChange={(v) => set("whoCanApplyIntro", v)}
-                          label="Who can apply introduction"
-                          placeholder="Introduction…"
-                          className="text-gray-700 leading-relaxed"
-                        />
-                      </div>
-                      <EditableList
-                        items={draft.whoCanApply}
-                        onChange={(items) => set("whoCanApply", items)}
-                        label="Eligible applicant type"
-                        addLabel="Add applicant type"
+                      <EditableText
+                        multiline
+                        value={draft.whoCanApply}
+                        onChange={(v) => set("whoCanApply", v)}
+                        label="Who can apply"
+                        placeholder="Who can apply…"
+                        className="text-gray-700 leading-relaxed"
                       />
-                      <div className="mt-4">
-                        <EditableText
-                          multiline
-                          value={draft.whoCanApplyNotes}
-                          onChange={(v) => set("whoCanApplyNotes", v)}
-                          label="Eligibility notes"
-                          placeholder="Add eligibility notes…"
-                          className="text-gray-700 leading-relaxed"
-                        />
-                      </div>
+                      <FieldError message={errors.whoCanApply} />
                     </Card>
                   </section>
 
                   <section id="assessment-criteria" className="scroll-mt-8">
                     <SectionHeading>Main Assessment Criteria</SectionHeading>
                     <Card>
-                      <div className="mb-5">
-                        <EditableText
-                          multiline
-                          value={draft.criteriaIntro}
-                          onChange={(v) => set("criteriaIntro", v)}
-                          label="Assessment criteria introduction"
-                          placeholder="Introduction…"
-                          className="text-gray-700 leading-relaxed"
-                        />
-                      </div>
-                      <ol className="space-y-3 mb-3">
-                        {draft.criteria.map((c, i) => (
-                          <li key={i} className="group flex items-start gap-4 p-4 rounded-lg border border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-                            <div
-                              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-sm font-semibold text-teal-700"
-                              style={{ backgroundColor: "#cbfbf1" }}
-                              aria-hidden
-                            >
-                              {i + 1}
-                            </div>
-                            <div className="flex-1 min-w-0 space-y-1">
-                              <EditableText
-                                value={c.title}
-                                onChange={(v) =>
-                                  update((d) => ({ ...d, criteria: d.criteria.map((x, j) => (j === i ? { ...x, title: v } : x)) }))
-                                }
-                                label={`Criterion ${i + 1} title`}
-                                placeholder="Criterion title"
-                                className="font-semibold text-gray-900"
-                              />
-                              <EditableText
-                                multiline
-                                value={c.description}
-                                onChange={(v) =>
-                                  update((d) => ({
-                                    ...d,
-                                    criteria: d.criteria.map((x, j) => (j === i ? { ...x, description: v } : x)),
-                                  }))
-                                }
-                                label={`Criterion ${i + 1} description`}
-                                placeholder="Describe this criterion…"
-                                className="text-gray-700"
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => update((d) => ({ ...d, criteria: d.criteria.filter((_, j) => j !== i) }))}
-                              aria-label={`Remove criterion ${i + 1}`}
-                              className="p-1.5 rounded text-gray-300 hover:text-red-600 hover:bg-red-50 focus:text-red-600 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </li>
-                        ))}
-                      </ol>
-                      <button
-                        type="button"
-                        onClick={() => update((d) => ({ ...d, criteria: [...d.criteria, { title: "", description: "" }] }))}
-                        className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:text-teal-800"
-                        style={{ fontFamily: "Cabin, sans-serif" }}
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        Add criterion
-                      </button>
-                      <div className="mt-5 border-t border-gray-100 pt-4">
-                        <EditableText
-                          multiline
-                          value={draft.criteriaFooter}
-                          onChange={(v) => set("criteriaFooter", v)}
-                          label="Assessment criteria note"
-                          placeholder="Add a note…"
-                          className="text-sm text-gray-500 italic"
-                        />
-                      </div>
+                      <EditableText
+                        multiline
+                        value={draft.selectionCriteria}
+                        onChange={(v) => set("selectionCriteria", v)}
+                        label="Selection criteria"
+                        placeholder="Add selection criteria (optional)…"
+                        className="text-gray-700 leading-relaxed"
+                      />
                     </Card>
                   </section>
 
                   <section id="restrictions" className="scroll-mt-8">
                     <SectionHeading>Restrictions</SectionHeading>
                     <Card>
-                      <div className="mb-3">
-                        <EditableText
-                          multiline
-                          value={draft.restrictionsIntro}
-                          onChange={(v) => set("restrictionsIntro", v)}
-                          label="Restrictions introduction"
-                          placeholder="Introduction…"
-                          className="text-gray-700 leading-relaxed"
-                        />
-                      </div>
-                      <EditableList
-                        items={draft.restrictions}
-                        onChange={(items) => set("restrictions", items)}
-                        label="Restriction"
-                        addLabel="Add restriction"
+                      <EditableText
+                        multiline
+                        value={draft.restrictions}
+                        onChange={(v) => set("restrictions", v)}
+                        label="Restrictions"
+                        placeholder="Add restrictions (optional)…"
+                        className="text-gray-700 leading-relaxed"
                       />
                     </Card>
                   </section>
 
+                  <section id="matching" className="scroll-mt-8">
+                    <SectionHeading required>Matching</SectionHeading>
+                    <Card>
+                      <div className="grid grid-cols-2 gap-4">
+                        <FocusAreasField value={draft.focusAreas} onChange={(next) => set("focusAreas", next)} />
+                      </div>
+                      <FieldError message={errors.focusAreas} />
+
+                      <div className="mt-6">
+                        <FieldLabel required>Geography (shown as Location and Region)</FieldLabel>
+                        <div className="flex flex-col gap-3">
+                          <label className="flex items-center gap-2 text-sm text-gray-700">
+                            <Checkbox
+                              checked={draft.nationwide}
+                              onCheckedChange={(c) =>
+                                update((d) => ({ ...d, nationwide: c === true, states: c === true ? [] : d.states }))
+                              }
+                            />
+                            Nationwide
+                          </label>
+                          {!draft.nationwide && (
+                            <>
+                              <Select value={stateDraft} onValueChange={addState}>
+                                <SelectTrigger className="border border-gray-300 max-w-xs" aria-label="Add a state">
+                                  <SelectValue placeholder="Add a state" />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-64">
+                                  {US_STATES.filter((s) => !draft.states.includes(s)).map((s) => (
+                                    <SelectItem key={s} value={s}>
+                                      {s}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {draft.states.length > 0 && (
+                                <ul className="flex flex-wrap gap-2">
+                                  {draft.states.map((s) => (
+                                    <li
+                                      key={s}
+                                      className="flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full border border-teal-200 bg-teal-50 text-sm text-teal-900"
+                                    >
+                                      {s}
+                                      <button
+                                        type="button"
+                                        aria-label={`Remove ${s}`}
+                                        className="p-0.5 rounded-full hover:bg-teal-100"
+                                        onClick={() => set("states", draft.states.filter((x) => x !== s))}
+                                      >
+                                        <X className="size-3.5" />
+                                      </button>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </>
+                          )}
+                        </div>
+                        <FieldError message={errors.geography} />
+                      </div>
+                    </Card>
+                  </section>
+
                   <section id="grant-details" className="scroll-mt-8">
-                    <SectionHeading>Grant Details</SectionHeading>
+                    <SectionHeading required>Grant Details</SectionHeading>
                     <Card>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5">
-                        {DETAIL_FIELDS.map(({ key, label }) => (
-                          <div key={key}>
-                            <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: "Cabin, sans-serif" }}>
-                              {label}
-                            </div>
-                            <EditableText
-                              multiline
-                              value={draft.details[key]}
-                              onChange={(v) => setDetail(key, v)}
-                              label={label}
-                              placeholder="Add…"
-                              className="text-sm text-gray-800 leading-relaxed"
-                            />
-                          </div>
-                        ))}
+                        <div>
+                          <FieldLabel>Open date (optional)</FieldLabel>
+                          <DatePickerField
+                            value={draft.openDate}
+                            onChange={(v) => set("openDate", v)}
+                            label="Open date"
+                            placeholder="Not in the announcement — leave blank"
+                            className="text-sm text-gray-800"
+                          />
+                        </div>
+                        <div>
+                          <FieldLabel>Match / cost share (optional)</FieldLabel>
+                          <EditableText
+                            multiline
+                            value={draft.matchCostShare}
+                            onChange={(v) => set("matchCostShare", v)}
+                            label="Match or cost share"
+                            placeholder="Add…"
+                            className="text-sm text-gray-800 leading-relaxed"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <FieldLabel>Later stages (optional)</FieldLabel>
+                          <EditableText
+                            multiline
+                            value={draft.laterStages}
+                            onChange={(v) => set("laterStages", v)}
+                            label="Later stages"
+                            placeholder="Add…"
+                            className="text-sm text-gray-800 leading-relaxed"
+                          />
+                        </div>
                       </div>
 
                       <div className="mt-8 pt-6 border-t border-gray-100">
                         <div className="text-sm font-semibold text-gray-900 mb-3" style={{ fontFamily: "Cabin, sans-serif" }}>
                           Contact
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-4">
-                          <ContactField label="Program Admin" value={draft.contact.programAdmin} onChange={(v) => setContact("programAdmin", v)} />
-                          <ContactField label="Email" value={draft.contact.email} onChange={(v) => setContact("email", v)} />
-                          <ContactField label="Website" value={draft.contact.website} onChange={(v) => setContact("website", v)} link />
-                        </div>
+                        <FieldLabel required>Contact email or webpage (one is enough)</FieldLabel>
+                        <EditableText
+                          value={draft.contact}
+                          onChange={(v) => set("contact", v)}
+                          label="Contact email or webpage"
+                          placeholder="Add…"
+                          className="text-sm text-teal-600"
+                        />
+                        <FieldError message={errors.contact} />
                       </div>
                     </Card>
                   </section>
@@ -854,46 +757,6 @@ function OpportunityEditor({ seed }: { seed: PrivateOpportunityDetail }) {
         </Dialog>
       </div>
     </TooltipProvider>
-  );
-}
-
-function QuickStatRow({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  return (
-    <div className="flex items-start justify-between gap-3">
-      <span className="text-sm text-gray-500 pt-0.5 shrink-0" style={{ fontFamily: "Cabin, sans-serif" }}>
-        {label}
-      </span>
-      <div className="w-[58%]">
-        <EditableText
-          value={value}
-          onChange={onChange}
-          label={label}
-          placeholder="—"
-          className="text-sm font-medium text-gray-900 text-right"
-        />
-      </div>
-    </div>
-  );
-}
-
-function ContactField({
-  label,
-  value,
-  onChange,
-  link = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  link?: boolean;
-}) {
-  return (
-    <div>
-      <div className="text-xs text-gray-400 mb-1" style={{ fontFamily: "Cabin, sans-serif" }}>
-        {label}
-      </div>
-      <EditableText value={value} onChange={onChange} label={label} placeholder="Add…" className={`text-sm ${link ? "text-teal-600" : "text-gray-800"}`} />
-    </div>
   );
 }
 

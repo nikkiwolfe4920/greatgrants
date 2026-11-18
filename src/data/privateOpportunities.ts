@@ -1,4 +1,5 @@
 import type { GrantResultCardGrant } from "@/app/components/GrantResultCard";
+import { emptyOpportunity, type SopOpportunity } from "@/data/sopOpportunities";
 
 /**
  * Private opportunities — the list shown on /super-admin-p and the detail
@@ -176,219 +177,72 @@ export const PRIVATE_OPPORTUNITIES: PrivateOpportunity[] = [
 
 export type OpportunityStatus = "Open" | "Closed";
 
-export interface CriteriaItem {
-  title: string;
-  description: string;
-}
-
-export interface OpportunityDocument {
-  id: string;
-  name: string;
-  type: string;
-  size: string;
-}
-
-export interface OpportunityDetails {
-  opportunityNumber: string;
-  fundingAgency: string;
-  assistanceListing: string;
-  awardCeilingFloor: string;
-  totalFundingPool: string;
-  expectedAwards: string;
-  keyDeadline: string;
-  applicableToChurches: string;
-  fundingInstrument: string;
-  projectPeriod: string;
-  phaseAtHand: string;
-  eligibleApplicants: string;
-  matchCostShare: string;
-  closingInfo: string;
-}
-
-export interface OpportunityContact {
-  programAdmin: string;
-  email: string;
-  website: string;
-}
-
-export interface PrivateOpportunityDetail {
-  id: string;
-  title: string;
-  agency: string;
+/**
+ * Detail record edited on /super-admin-op. Same fields as the SOP intake
+ * form (see SopOpportunity); status / closedAt drive the Open / Closed
+ * switch on the editor.
+ */
+export interface PrivateOpportunityDetail extends SopOpportunity {
   status: OpportunityStatus;
   /** Epoch ms of the most recent close; null while Open. */
   closedAt: number | null;
-  /** Header "Closes …" text. */
-  closeDate: string;
-  awardRange: string;
-  // Quick Stats
-  location: string;
-  region: string;
-  openingDateTime: string;
-  closingDateTime: string;
-  recipients: string;
-  totalPool: string;
-  // Sections
-  overview: string;
-  eligibleActivitiesIntro: string;
-  eligibleActivities: string[];
-  eligibleActivitiesFooter: string;
-  whoCanApplyIntro: string;
-  whoCanApply: string[];
-  whoCanApplyNotes: string;
-  criteriaIntro: string;
-  criteria: CriteriaItem[];
-  criteriaFooter: string;
-  restrictionsIntro: string;
-  restrictions: string[];
-  details: OpportunityDetails;
-  contact: OpportunityContact;
-  documents: OpportunityDocument[];
 }
 
-/** The record from the Figma design — served at /super-admin-op with no id. */
+/** The record served at /super-admin-op with no id (Lilly Endowment example). */
 export const DEFAULT_OPPORTUNITY_ID = "po-demo";
 
 const DEMO_OPPORTUNITY: PrivateOpportunityDetail = {
-  id: DEFAULT_OPPORTUNITY_ID,
-  title: "Advancing Global Health — Child Development, Care, and Protection Addendum",
-  agency: "U.S. Department of State, Bureau of Global Health Security and Diplomacy (GHSD)",
+  ...emptyOpportunity(DEFAULT_OPPORTUNITY_ID),
   status: "Open",
   closedAt: null,
-  closeDate: "May 31, 2026",
-  awardRange: "$500,000 – $250,000,000",
-  location: "US",
-  region: "International",
-  openingDateTime: "March 5, 12:00 am ET",
-  closingDateTime: "May 31, 11:59 pm ET",
-  recipients: "5",
-  totalPool: "$53M",
-  overview:
-    "This Annual Program Statement addendum supports the Child Development, Care, and Protection priorities within the U.S. Department of State's America First Global Health Strategy. The Child Protection Addendum focuses on three core priorities: strengthening national and sub-national child protection systems and workforce, expanding family-based care alternatives to residential institutions, and improving early childhood development outcomes in vulnerable settings.\n\nThe APS overall has a total funding pool of up to $52.65 million, supporting up to 5 awards under this addendum. This is a two-phase process: Phase 1 requires a 5-page Statement of Interest (SOI), and only the strongest concepts are invited to submit a full Phase 2 application.",
-  eligibleActivitiesIntro:
-    "Eligible projects must address a priority of the Child Development, Care, and Protection addendum, which includes:",
-  eligibleActivities: [
-    "Strengthening national and sub-national child protection systems and workforce",
-    "Expanding family-based care and reducing reliance on residential institutions",
-    "Improving early childhood development outcomes in vulnerable settings",
+  title: "Serving Neighbors Through Congregational Collaborations Initiative",
+  funderName: "Lilly Endowment Inc.",
+  shortSummary:
+    "Planning grants up to $50,000, then up to $5M, for organizations that help congregations and local charities build joint community programs",
+  description: "Background, two aims, four objectives",
+  whoCanApply: "501(c)(3) public charities that work with groups of congregations or charities",
+  eligibleActivities: "Five required program elements",
+  selectionCriteria: "Five unweighted criteria",
+  restrictions: "No housing or property efforts",
+  focusAreas: [
+    "Mental Health Services",
+    "Food Security Initiatives",
+    "Faith-Based Youth Programs",
+    "K-12 Education",
+    "Community Arts",
   ],
-  eligibleActivitiesFooter:
-    "Please refer to the Annual Program Statement for the complete list of eligible activities.",
-  whoCanApplyIntro: "Eligible applicants include organizations of every type:",
-  whoCanApply: ["Domestic and foreign", "Government and private", "For-profit", "Not-for-profit"],
-  whoCanApplyNotes:
-    "Proposers must demonstrate direct child protection, family-based care, or early childhood development programming experience. Organizations without prior U.S. federal award experience are eligible but should review the readiness guidance in the Financial Info and Policy Info steps of the eligibility assessment before applying.\n\nPlease refer to the Annual Program Statement for the complete eligibility requirements.",
-  criteriaIntro: "The main assessment criteria include:",
-  criteria: [
-    {
-      title: "Quality of Program Idea",
-      description: "a clear, feasible concept that addresses a documented child protection, care, or protection gap.",
-    },
-    {
-      title: "Organizational Capacity and Record on Previous Grants",
-      description: "demonstrated ability to manage awards of similar size and complexity.",
-    },
-    {
-      title: "Program Planning / Ability to Achieve Objectives",
-      description: "a realistic implementation plan with measurable outcomes and a credible MEL framework.",
-    },
-    {
-      title: "Strategic alignment with U.S. foreign assistance priorities",
-      description:
-        "explicit alignment with the America First Global Health Strategy's pillars of self-reliance, health systems strengthening, efficiency, and American safety.",
-    },
-  ],
-  criteriaFooter: "Please refer to the Notice of Funding Opportunity for the complete scoring rubric.",
-  restrictionsIntro: "The following are ineligible for funding:",
-  restrictions: [
-    "Direct cash transfers or stipends to individual beneficiaries.",
-    "Construction, renovation, or other major capital improvements to facilities.",
-    "Lobbying, political party activities, or advocacy for specific legislation.",
-    "General institutional operating support that is not tied to Child Protection Addendum program activities.",
-    "Programs that duplicate an existing, actively funded GHSD award without demonstrating clear additionality.",
-  ],
-  details: {
-    opportunityNumber: "DFOP0017890",
-    fundingAgency: "U.S. Department of State — Bureau of Global Health Security and Diplomacy",
-    assistanceListing: "19.029",
-    awardCeilingFloor: "$500,000 – $250,000,000",
-    totalFundingPool: "Up to $52.65M (Child Protection Addendum)",
-    expectedAwards: "Up to 5 awards (Child Protection Addendum)",
-    keyDeadline: "SOI due May 31, 2026, 11:59 pm EST",
-    applicableToChurches: "Yes",
-    fundingInstrument: "Grant or cooperative agreement; cooperative agreements carry substantial federal involvement",
-    projectPeriod: "Up to 5 years",
-    phaseAtHand: "Phase 1 only: Statement of Interest (SOI), not a full application",
-    eligibleApplicants: "U.S. and foreign organizations, including nonprofits, for-profits, and government entities",
-    matchCostShare: "Not required and will not be scored",
-    closingInfo: "Child Protection Addendum: Statement of Interest (SOI) due May 31, 2026, 11:59 pm EST",
-  },
-  contact: {
-    programAdmin: "GHSD Program Office",
-    email: "GHSDGrants@state.gov",
-    website: "https://www.state.gov",
-  },
-  documents: [
-    { id: "doc-1", name: "Notice of Funding Opportunity (NOFO)", type: "PDF Document", size: "2.4 MB" },
-    { id: "doc-2", name: "Funding Opportunity Announcement", type: "PDF Document", size: "1.1 MB" },
-  ],
+  nationwide: true,
+  states: [],
+  awardMax: "50000",
+  awardMin: "",
+  openDate: "",
+  deadlineType: "date",
+  deadline: "Jan 19, 2027",
+  laterStages: "Stage 2, by invitation: implementation grants up to $5M, proposals due Jul 19, 2027",
+  matchCostShare: "No match; disclose other funders if the program exceeds the grant",
+  contact: "servingneighbors@lei.org",
 };
-
-function formatAward(amount: number): string {
-  return `Up to $${amount.toLocaleString("en-US")}`;
-}
 
 /** A blank-ish detail record for a list item that has no authored detail yet. */
 function detailFromListItem(item: PrivateOpportunity): PrivateOpportunityDetail {
   const closed = item.status === "Closed";
   const parsedClose = item.closeDate ? Date.parse(item.closeDate) : NaN;
-  const [agency] = item.title.split(" — ");
+  const [funderName] = item.title.split(" \u2014 ");
+  const hasDate = !!item.closeDate && !Number.isNaN(parsedClose);
   return {
-    ...DEMO_OPPORTUNITY,
-    id: item.id,
-    title: item.title,
-    agency,
+    ...emptyOpportunity(item.id),
     status: closed ? "Closed" : "Open",
-    closedAt: closed && !Number.isNaN(parsedClose) ? parsedClose : null,
-    closeDate: item.closeDate ?? "",
-    awardRange: formatAward(item.maxAmount),
-    location: "US",
-    region: item.location,
-    openingDateTime: "",
-    closingDateTime: item.closeDate ?? "",
-    recipients: "",
-    totalPool: `$${item.maxAmount.toLocaleString("en-US")}`,
-    overview: item.description,
-    eligibleActivitiesIntro: "",
-    eligibleActivities: [],
-    eligibleActivitiesFooter: "",
-    whoCanApplyIntro: "",
-    whoCanApply: item.populations,
-    whoCanApplyNotes: "",
-    criteriaIntro: "",
-    criteria: [],
-    criteriaFooter: "",
-    restrictionsIntro: "",
-    restrictions: [],
-    details: {
-      ...DEMO_OPPORTUNITY.details,
-      opportunityNumber: "",
-      fundingAgency: agency,
-      assistanceListing: "",
-      awardCeilingFloor: formatAward(item.maxAmount),
-      totalFundingPool: "",
-      expectedAwards: "",
-      keyDeadline: item.closeDate ?? "",
-      applicableToChurches: "",
-      fundingInstrument: "",
-      projectPeriod: "",
-      phaseAtHand: "",
-      eligibleApplicants: "",
-      matchCostShare: "",
-      closingInfo: "",
-    },
-    contact: { programAdmin: "", email: "", website: "" },
-    documents: [],
+    closedAt: closed && hasDate ? parsedClose : null,
+    closedEarly: closed,
+    title: item.title,
+    funderName,
+    shortSummary: item.description,
+    description: item.description,
+    whoCanApply: item.populations.join(", "),
+    states: item.states,
+    awardMax: String(item.maxAmount),
+    deadlineType: hasDate ? "date" : "rolling",
+    deadline: hasDate ? item.closeDate! : "",
   };
 }
 
