@@ -29,7 +29,7 @@ interface Stored {
   lastSavedAt: number | null;
 }
 
-const storageKey = (id: string) => `privateOpportunity:v1:${id}`;
+const storageKey = (id: string) => `privateOpportunity:v2:${id}`;
 
 function load(seed: PrivateOpportunityDetail): Stored {
   try {
@@ -109,7 +109,7 @@ export function usePrivateOpportunityEditor(seed: PrivateOpportunityDetail) {
   const setStatus = useCallback(
     (status: "Open" | "Closed") => {
       const closedAt = status === "Closed" ? Date.now() : null;
-      const apply = (d: PrivateOpportunityDetail) => ({ ...d, status, closedAt });
+      const apply = (d: PrivateOpportunityDetail) => ({ ...d, status, closedAt, closedEarly: status === "Closed" });
       setDraft(apply);
       setPublished(apply);
       // Persist right away: closing must stick even if the page is left before autosave fires.
