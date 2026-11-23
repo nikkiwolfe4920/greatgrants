@@ -1,7 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useBlocker, useParams } from "react-router";
 import { toast } from "sonner";
-import { AlertCircle, ArrowLeft, Check, Clock, DollarSign, Home, Loader2, Lock, RotateCcw, X } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  DollarSign,
+  FileText,
+  Home,
+  Loader2,
+  Lock,
+  RotateCcw,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { AdminSidebar } from "../components/admin/AdminSidebar";
 import { DatePickerField } from "../components/admin/DatePickerField";
 import { EditableText } from "../components/admin/editable";
@@ -124,6 +140,149 @@ function statusBadgeClass(status: "Open" | "Closed") {
   return status === "Open"
     ? "bg-green-50 text-green-700 border-green-200"
     : "bg-gray-100 text-gray-600 border-gray-200";
+}
+
+/* ── Documents (left rail) ───────────────────────────────────── */
+
+type OpDocument = { id: string; name: string; type: string; size: string; url?: string };
+
+const SEED_DOCUMENTS: OpDocument[] = [
+  { id: "seed-1", name: "Document 1", type: "PDF Document", size: "2.4 MB" },
+  { id: "seed-2", name: "Document 2", type: ".DOC Document", size: "1.1 MB" },
+];
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function docTypeLabel(name: string): string {
+  const ext = name.includes(".") ? name.split(".").pop()!.toUpperCase() : "";
+  return ext === "PDF" ? "PDF Document" : ext ? `.${ext} Document` : "Document";
+}
+
+function DocumentsCard() {
+  const [open, setOpen] = useState(true);
+  const [docs, setDocs] = useState<OpDocument[]>(SEED_DOCUMENTS);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const urlsRef = useRef<string[]>([]);
+
+  useEffect(() => () => urlsRef.current.forEach((u) => URL.revokeObjectURL(u)), []);
+
+  const onFiles = (files: FileList | null) => {
+    if (!files?.length) return;
+    const added = Array.from(files).map((f) => {
+      const url = URL.createObjectURL(f);
+      urlsRef.current.push(url);
+      return {
+        id: `${Date.now()}-${f.name}-${Math.random().toString(36).slice(2, 7)}`,
+        name: f.name,
+        type: docTypeLabel(f.name),
+        size: formatBytes(f.size),
+        url,
+      };
+    });
+    setDocs((d) => [...d, ...added]);
+    toast.success(added.length === 1 ? "Document uploaded" : `${added.length} documents uploaded`);
+    if (fileInput.current) fileInput.current.value = "";
+  };
+
+  const remove = (doc: OpDocument) => {
+    if (doc.url) {
+      URL.revokeObjectURL(doc.url);
+      urlsRef.current = urlsRef.current.filter((u) => u !== doc.url);
+    }
+    setDocs((d) => d.filter((x) => x.id !== doc.id));
+    toast(`Removed ${doc.name}`);
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden" style={{ fontFamily: "Cabin, sans-serif" }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls="documents-panel"
+        className="w-full flex items-center justify-between px-5 py-4 text-left"
+      >
+        <span className="flex items-center gap-3">
+          <FileText className="w-5 h-5 text-gray-500" />
+          <span className="text-sm font-semibold text-gray-900">
+            Documents <span className="font-normal text-gray-500">({docs.length})</span>
+          </span>
+        </span>
+        {open ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+      </button>
+
+      {open && (
+        <div id="documents-panel" className="border-t border-gray-100 p-3 space-y-2">
+          {docs.map((doc) => {
+            const isPdf = doc.type.startsWith("PDF");
+            const card = (
+              <>
+                <div
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                    isPdf ? "bg-red-50 text-red-500" : "bg-sky-50 text-sky-600"
+                  }`}
+                >
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold text-gray-900 truncate">{doc.name}</div>
+                  <div className="text-xs text-gray-500">
+                    {doc.type} · {doc.size}
+                  </div>
+                </div>
+              </>
+            );
+            return (
+              <div key={doc.id} className="flex items-center gap-1 border border-gray-200 rounded-lg p-3">
+                {doc.url ? (
+                  <a
+                    href={doc.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 min-w-0 flex-1"
+                  >
+                    {card}
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-3 min-w-0 flex-1">{card}</div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => remove(doc)}
+                  aria-label={`Remove ${doc.name}`}
+                  className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            );
+          })}
+
+          <input
+            ref={fileInput}
+            type="file"
+            multiple
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
+            className="hidden"
+            onChange={(e) => onFiles(e.target.files)}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full gap-2"
+            onClick={() => fileInput.current?.click()}
+          >
+            <Upload className="w-4 h-4" />
+            Upload document
+          </Button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /* ── Publish / auto-save cluster ─────────────────────────────── */
@@ -502,6 +661,7 @@ function OpportunityEditor({ seed }: { seed: PrivateOpportunityDetail }) {
                         ))}
                       </nav>
                     </div>
+                    <DocumentsCard />
                   </div>
                 </div>
 
