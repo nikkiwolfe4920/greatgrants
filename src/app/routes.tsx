@@ -31,6 +31,7 @@ import { OnboardingPage } from "./pages/OnboardingPage";
 import { OnboardingPage1 } from "./pages/OnboardingPage1";
 import { OnboardingPage2 } from "./pages/OnboardingPage2";
 import { OnboardingPage3 } from "./pages/OnboardingPage3";
+import { OnboardingFlowPage } from "./pages/OnboardingFlowPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { ProjectDetailsPage } from "./pages/ProjectDetailsPage";
 import { MyGrantReadiness } from "./pages/MyGrantReadiness.tsx";
@@ -180,8 +181,13 @@ const routes = [
     element: <OnboardingPage1 />,
   },
   {
-    path: "/onboarding-2",
+    // Earlier mockup, kept for reference. /onboarding-2 is now the account + setup flow.
+    path: "/onboarding-2-legacy",
     element: <OnboardingPage2 />,
+  },
+  {
+    path: "/onboarding-2",
+    element: <OnboardingFlowPage />,
   },
   {
     path: "/onboarding-3",
